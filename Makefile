@@ -71,20 +71,23 @@ verify-layer1:
 	@echo "[verify-layer1] Running Layer 1 acceptance scenario... [STUB: Task I1]"
 	@echo "  Run: python scripts/verify_layer1.py"
 
-# Start all Docker Compose services. [STUB — implemented in Task A2]
+# Start all Docker Compose services.
 docker-up:
-	@echo "[docker-up] Starting services... [STUB: Task A2]"
-	@echo "  Run: docker compose up --build"
+	@echo "[docker-up] Starting services..."
+	docker compose up --build -d
+	@echo "[docker-up] Services started. Run 'docker compose ps' to check status."
 
-# Stop Docker Compose services. [STUB — implemented in Task A2]
+# Stop Docker Compose services.
 docker-down:
-	@echo "[docker-down] Stopping services... [STUB: Task A2]"
-	@echo "  Run: docker compose down"
+	@echo "[docker-down] Stopping services..."
+	docker compose down
+	@echo "[docker-down] Services stopped."
 
-# Rebuild Docker images. [STUB — implemented in Task A2]
+# Rebuild Docker images.
 docker-build:
-	@echo "[docker-build] Rebuilding images... [STUB: Task A2]"
-	@echo "  Run: docker compose build"
+	@echo "[docker-build] Rebuilding images..."
+	docker compose build
+	@echo "[docker-build] Images rebuilt."
 
 # Remove build artifacts.
 clean:

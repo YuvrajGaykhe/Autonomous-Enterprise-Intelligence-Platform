@@ -1,0 +1,55 @@
+# =============================================================================
+# AI CEO — .dockerignore
+# Prevents unnecessary files from being copied into Docker images.
+# =============================================================================
+
+.git
+.gitignore
+.github
+
+# Python
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist
+build
+
+# IDE and OS
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Caches
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+coverage.xml
+
+# Logs
+*.log
+logs
+
+# Runtime data (not needed in image)
+data/raw
+data/quarantine
+
+# Context docs (not needed in image)
+CONTEXT
+
+# Docker files (avoid recursive copy)
+docker-compose.yml
+docker-compose.override.yml

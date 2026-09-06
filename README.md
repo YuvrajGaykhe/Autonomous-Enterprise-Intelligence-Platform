@@ -13,13 +13,20 @@
 
 ## Prerequisites
 
-<!-- To be completed in Task I2 -->
+- **Docker** and **Docker Compose** (v2) installed
+- **Python 3.11+** (for local development without Docker)
+- **Git**
 
 ---
 
 ## Environment Setup
 
-<!-- To be completed in Task I2 -->
+1. Copy the environment template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Edit `.env` with your values (the defaults work for local Docker development).
+3. **Never commit `.env`** — it is gitignored.
 
 ---
 
@@ -37,7 +44,59 @@
 
 ## Running with Docker Compose
 
-<!-- To be completed in Task A2 and I2 -->
+Start all three services (postgres, api, mock-source):
+
+```bash
+make docker-up
+# or directly:
+docker compose up --build -d
+```
+
+Check service status:
+
+```bash
+docker compose ps
+```
+
+Verify the API is healthy:
+
+```bash
+curl http://localhost:8000/api/v1/health
+```
+
+Verify mock-source is healthy:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Stop all services:
+
+```bash
+make docker-down
+# or:
+docker compose down
+```
+
+Remove all data (including PostgreSQL volume):
+
+```bash
+docker compose down -v
+```
+
+### Services and Ports
+
+| Service | Internal Port | Host Port | Purpose |
+|---|---|---|---|
+| postgres | 5432 | 5432 | PostgreSQL canonical data store |
+| api | 8000 | 8000 | FastAPI application |
+| mock-source | 8080 | 8080 | Mock source data server |
+
+### Startup Order
+
+1. **postgres** starts and becomes healthy (`pg_isready`)
+2. **mock-source** starts
+3. **api** starts after both are available
 
 ---
 
