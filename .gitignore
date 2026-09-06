@@ -1,0 +1,84 @@
+# =============================================================================
+# AI CEO — Layer 1 .gitignore
+# =============================================================================
+
+# --- Environment and secrets ---
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-wheel-metadata/
+MANIFEST
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+.virtualenv/
+
+# --- Pytest / coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+
+# --- Type checking ---
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# --- Ruff / Black ---
+.ruff_cache/
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Alembic ---
+# Do NOT ignore migrations/versions/ — those are committed.
+# Ignore any locally generated temp migration files.
+migrations/versions/*.pyc
+
+# --- Data directories ---
+# Raw ingested data and quarantine output are local only.
+data/raw/*
+data/quarantine/*
+# Keep .gitkeep so directories exist in repo.
+!data/raw/.gitkeep
+!data/quarantine/.gitkeep
+# Demo data CSVs ARE committed (static files with fixed seed).
+!data/demo/
+
+# --- IDE and OS ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Jupyter (not used in Layer 1, but safety) ---
+.ipynb_checkpoints/
+*.ipynb
