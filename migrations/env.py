@@ -26,6 +26,10 @@ if PROJECT_ROOT not in sys.path:
 from app.core.config import get_settings
 from app.core.database import Base
 
+# Import all ORM models so they are registered with Base.metadata
+# before Alembic autogenerate inspects it.
+import app.persistence.models  # noqa: F401
+
 # This is the Alembic Config object, providing access to alembic.ini values.
 config = context.config
 
@@ -34,7 +38,6 @@ settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.effective_database_url)
 
 # The MetaData object for autogenerate support.
-# When B1 adds ORM models that inherit from Base, Alembic will detect them.
 target_metadata = Base.metadata
 
 

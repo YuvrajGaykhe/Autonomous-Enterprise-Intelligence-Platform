@@ -80,6 +80,48 @@ alembic revision --autogenerate -m "describe_the_change"
 
 ---
 
+## ORM Model Layer
+
+Layer 1 uses SQLAlchemy ORM models organized in `app/persistence/models/`.
+
+### Canonical Entity Tables (7)
+
+| Table | Purpose | `is_active` |
+|---|---|---|
+| `organizations` | Enterprise boundary / tenant | No |
+| `employees` | HR and ownership relationships | Yes |
+| `customers` | Customer/account intelligence | Yes |
+| `deals` | Sales/revenue intelligence | Yes |
+| `projects` | Delivery/resource context | Yes |
+| `support_tickets` | Risk/support signals | No |
+| `documents` | Future RAG/institutional memory | No |
+
+### Operational Tables (5)
+
+| Table | Purpose |
+|---|---|
+| `ingestion_runs` | One row per execution; status, timing, counts |
+| `ingestion_errors` | Structured rejected-record and connector errors |
+| `source_records` | Raw/source payload + provenance + content hash |
+| `connector_configs` | Non-secret connector configuration |
+| `ingestion_cursors` | `(source_system, source_entity)` cursor state |
+
+### Provenance Fields
+
+Every canonical entity includes: `id` (UUID PK), `source_system`, `source_entity`,
+`source_id`, `source_updated_at`, `ingested_at`, `ingestion_run_id`, `record_hash`.
+
+**`record_hash`** covers only canonical business fields (excludes provenance fields
+like `ingested_at` and `ingestion_run_id`).
+
+### Source Identity
+
+Unique constraint on `(source_system, source_entity, source_id)` for all canonical
+entities. Source foreign keys (e.g. `customer_source_id`, `owner_source_id`) are
+preserved alongside canonical FKs for unresolved-reference tracking.
+
+---
+
 ## Demo Dataset
 
 <!-- To be completed in Task E2 and I2 -->
