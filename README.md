@@ -122,6 +122,40 @@ preserved alongside canonical FKs for unresolved-reference tracking.
 
 ---
 
+## Canonical Schema Layer
+
+Layer 1 uses Pydantic v2 canonical schemas (`app/schemas/canonical/`) as the
+source-neutral data contract between normalization, validation, ingestion, and the API.
+
+### Seven Canonical Schemas
+
+| Schema | Purpose | `is_active` |
+|---|---|---|
+| `OrganizationCanonical` | Enterprise boundary / tenant | No |
+| `EmployeeCanonical` | HR and ownership relationships | Yes |
+| `CustomerCanonical` | Customer/account intelligence | Yes |
+| `DealCanonical` | Sales/revenue intelligence | Yes |
+| `ProjectCanonical` | Delivery/resource context | Yes |
+| `SupportTicketCanonical` | Risk/support signals | No |
+| `DocumentCanonical` | Future RAG/institutional memory | No |
+
+### Key Properties
+
+- **Pydantic v2** with `from_attributes=True` for ORM compatibility
+- **Universal provenance**: `id`, `source_system`, `source_entity`, `source_id`,
+  `source_updated_at`, `ingested_at`, `ingestion_run_id`, `record_hash`
+- **Decimal** for monetary fields (`amount`, `budget`, `probability`)
+- **Nullable canonical FKs** for unresolved cross-entity references
+- **Source keys preserved** alongside canonical FKs
+- **No source-specific fields** (CRM/ERP/Odoo IDs do not appear)
+
+### Validation Boundary
+
+Canonical schemas provide **structural** validation (types, nullability, required fields).
+They do NOT perform source-specific normalization or business-rule validation.
+
+---
+
 ## Demo Dataset
 
 <!-- To be completed in Task E2 and I2 -->
