@@ -20,8 +20,10 @@ COPY pyproject.toml ./
 # Install runtime dependencies only (no dev extras in the container).
 RUN pip install --no-cache-dir .
 
-# Copy application source.
+# Copy application source and migration configuration.
 COPY app/ ./app/
+COPY alembic.ini ./
+COPY migrations/ ./migrations/
 
 # Expose the API port (matches APP_PORT in .env.example).
 EXPOSE 8000

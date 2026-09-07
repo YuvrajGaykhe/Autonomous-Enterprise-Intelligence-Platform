@@ -32,7 +32,51 @@
 
 ## Database Migration
 
-<!-- To be completed in Task A3 and I2 -->
+Layer 1 uses [Alembic](https://alembic.sqlalchemy.org/) for database schema management.
+
+**Directory structure:**
+```
+alembic.ini              # Alembic config (DB URL is overridden at runtime)
+migrations/
+  env.py                 # Migration environment (reads from app.core.config)
+  script.py.mako         # Migration script template
+  versions/              # Migration files (committed to git)
+```
+
+**Run migrations (upgrade to latest):**
+```bash
+# Locally (with venv active and PostgreSQL running):
+alembic upgrade head
+
+# Via Docker:
+docker compose exec api alembic upgrade head
+
+# Via Makefile:
+make migrate
+```
+
+**Check current migration state:**
+```bash
+alembic current
+alembic history --verbose
+
+# Via Makefile:
+make migration-status
+```
+
+**Downgrade one revision:**
+```bash
+alembic downgrade -1
+```
+
+**Generate a new migration after model changes (B1+):**
+```bash
+alembic revision --autogenerate -m "describe_the_change"
+```
+
+> **Warning:** Do not run `docker compose down -v` unless you intend to destroy
+> the PostgreSQL data volume. Use `docker compose down` (without `-v`) for
+> normal stops.
 
 ---
 

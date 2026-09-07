@@ -4,8 +4,8 @@
 # Targets marked [STUB] will be implemented in their respective tasks.
 # =============================================================================
 
-.PHONY: help install migrate seed ingest-demo test lint format verify-layer1 \
-        docker-up docker-down docker-build clean
+.PHONY: help install migrate migration-status seed ingest-demo test lint format \
+        verify-layer1 docker-up docker-down docker-build clean
 
 # Default target: show available commands.
 help:
@@ -13,7 +13,8 @@ help:
 	@echo "AI CEO — Layer 1 Commands"
 	@echo "========================================"
 	@echo "  make install         Install Python dependencies into virtualenv"
-	@echo "  make migrate         Run Alembic migrations on the configured database"
+	@echo "  make migrate         Run Alembic migrations (upgrade to head)"
+	@echo "  make migration-status Show current Alembic revision and history"
 	@echo "  make seed            Seed the database with the deterministic demo organization"
 	@echo "  make ingest-demo     Run full ingestion of demo CSV data"
 	@echo "  make test            Run the full test suite"
@@ -34,10 +35,19 @@ install:
 	.venv/bin/pip install -e ".[dev]"
 	@echo "[install] Done. Activate with: source .venv/bin/activate"
 
-# Run database migrations. [STUB — implemented in Task A3]
+# Run database migrations.
 migrate:
-	@echo "[migrate] Running Alembic migrations... [STUB: Task A3]"
-	@echo "  Run: alembic upgrade head"
+	@echo "[migrate] Running Alembic migrations..."
+	alembic upgrade head
+	@echo "[migrate] Done."
+
+# Show current migration revision and history.
+migration-status:
+	@echo "[migration-status] Current revision:"
+	@alembic current
+	@echo ""
+	@echo "[migration-status] Migration history:"
+	@alembic history --verbose
 
 # Seed demo organization and reference data. [STUB — implemented in Task E2]
 seed:
