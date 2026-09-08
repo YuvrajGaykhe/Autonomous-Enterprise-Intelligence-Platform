@@ -185,6 +185,42 @@ Source System → Source Schema (B3) → Normalization (D1) → Canonical Schema
 
 ---
 
+## Connector Base Interface
+
+The connector abstraction (`app/connectors/`) defines a source-independent contract
+that all Layer 1 connectors must satisfy.
+
+```
+CSV Connector ─────┐
+Odoo Connector ────┼──> SourceConnector Protocol ──> E1 Ingestion
+REST Connector ────┘
+```
+
+### SourceConnector Protocol
+
+| Method | Returns | Purpose |
+|---|---|---|
+| `health_check()` | `ConnectorHealth` | Verify source reachability |
+| `list_entities()` | `list[SourceEntity]` | Discover available entity types |
+| `fetch_entities(entity_type, cursor, page_size)` | `Page[dict]` | Paginated source record fetch |
+| `get_entity(entity_type, source_id)` | `dict` | Single record by source-native ID |
+| `capabilities()` | `ConnectorCapabilities` | Declare supported features |
+
+### Key Properties
+
+- **Read-only**: no create/update/delete methods exist in the contract
+- **Source-native payloads**: connectors return raw dicts, no normalization
+- **Cursor pagination**: `Page[T]` with `next_cursor` and `has_more`
+- **No database dependency**: no SQLAlchemy, no ORM, no PostgreSQL
+- **No HTTP implementation**: C1 defines the contract; C2-C5 implement it
+
+### Exception Hierarchy
+
+`ConnectorError` → `ConfigurationError` | `AuthenticationError` |
+`UnavailableError` | `RequestError` | `EntityError`
+
+---
+
 ## Demo Dataset
 
 <!-- To be completed in Task E2 and I2 -->
