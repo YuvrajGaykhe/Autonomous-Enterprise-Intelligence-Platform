@@ -156,6 +156,35 @@ They do NOT perform source-specific normalization or business-rule validation.
 
 ---
 
+## Source Schema Layer
+
+Source schemas (`app/schemas/source/`) represent raw payloads from each source system
+BEFORE normalization. They preserve source-native field names, types, and values.
+
+```
+Source System → Source Schema (B3) → Normalization (D1) → Canonical Schema (B2)
+```
+
+### Three Source Systems
+
+| Source | Module | ID Type | Field Naming | Notes |
+|---|---|---|---|---|
+| CSV | `csv.py` | `str` | `customer_name`, `email_address` | All fields are strings (CSV is untyped) |
+| Odoo | `odoo.py` | `int` | `partner_id`, `x_studio_segment` | Odoo-native conventions |
+| REST | `rest.py` | `str` | `customerId`, `ownerId` | camelCase JSON conventions |
+
+### Key Properties
+
+- **No normalization**: source values are preserved exactly (no whitespace stripping,
+  no status mapping, no currency conversion)
+- **No canonical fields**: no `ingestion_run_id`, `ingested_at`, `record_hash`, or
+  canonical UUID `id`
+- **Unknown fields ignored**: `extra="ignore"` drops unmapped source fields from the
+  validated object; raw payloads are preserved in `source_records.raw_payload`
+- **Independent from canonical**: source schemas do NOT inherit from `CanonicalBase`
+
+---
+
 ## Demo Dataset
 
 <!-- To be completed in Task E2 and I2 -->
