@@ -883,3 +883,71 @@ class TestSerialization:
         )
         data = emp.model_dump(mode="json")
         assert data["hire_date"] == "2024-03-15"
+
+
+# ---------------------------------------------------------------------------
+# Transformation-free regression
+# ---------------------------------------------------------------------------
+
+
+class TestTransformationFree:
+    """Canonical schemas must NOT transform values.
+
+    Whitespace stripping, case normalization, and any other value
+    mutations belong to D1 Normalization, not the schema layer.
+    """
+
+    def test_name_whitespace_preserved(self):
+        """Input '  Acme Corp  ' must remain '  Acme Corp  '."""
+        org = OrganizationCanonical(
+            **_provenance_kwargs(source_entity="organizations"),
+            name="  Acme Corp  ",
+        )
+        assert org.name == "  Acme Corp  "
+
+    def test_email_whitespace_preserved(self):
+        emp = EmployeeCanonical(
+            **_provenance_kwargs(source_entity="employees"),
+            name="Test",
+            is_active=True,
+            email="  alice@acme.com  ",
+        )
+        assert emp.email == "  alice@acme.com  "
+
+    def test_source_system_whitespace_preserved(self):
+        org = OrganizationCanonical(
+            **_provenance_kwargs(
+                source_entity="organizations",
+                source_system="  csv_demo  ",
+            ),
+            name="Test",
+        )
+        assert org.source_system == "  csv_demo  "
+
+    def test_source_id_whitespace_preserved(self):
+        org = OrganizationCanonical(
+            **_provenance_kwargs(
+                source_entity="organizations",
+                source_id="  ORG-001  ",
+            ),
+            name="Test",
+        )
+        assert org.source_id == "  ORG-001  "
+
+    def test_record_hash_whitespace_preserved(self):
+        org = OrganizationCanonical(
+            **_provenance_kwargs(
+                source_entity="organizations",
+                record_hash="  abc123  ",
+            ),
+            name="Test",
+        )
+        assert org.record_hash == "  abc123  "
+
+    def test_description_whitespace_preserved(self):
+        ticket = SupportTicketCanonical(
+            **_provenance_kwargs(source_entity="support_tickets"),
+            description="  Leading and trailing spaces  ",
+        )
+        assert ticket.description == "  Leading and trailing spaces  "
+
