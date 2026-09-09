@@ -221,6 +221,52 @@ REST Connector ────┘
 
 ---
 
+## CSV Connector
+
+The CSV connector (`app/connectors/csv.py`) is the first concrete implementation of
+the `SourceConnector` protocol.
+
+```
+CSV files → CsvConnector → Page[dict] → B3 Source Schemas → D1 Normalization
+```
+
+### Configuration
+
+Entity-to-file mappings are declared in `config/connectors/csv_demo.yaml`:
+
+```yaml
+entities:
+  customers:
+    file: customers.csv
+    id_column: customer_id
+```
+
+Mappings can be changed without modifying connector code.
+
+### Supported Entities
+
+All 7 canonical-domain entities: organizations, employees, customers, deals,
+projects, support_tickets, documents.
+
+### Key Properties
+
+- **Source-native values**: all CSV values remain strings, no type conversion
+- **Whitespace preserved**: `"  Acme Corp  "` stays `"  Acme Corp  "`
+- **Stable source IDs**: from configured ID columns (e.g. `customer_id`)
+- **Read-only**: no write operations
+- **Cursor pagination**: offset-based `Page[dict]` with `next_cursor`/`has_more`
+- **Unknown columns accepted**: extra CSV columns appear in the raw dict
+- **No database dependency**: purely file-based
+- **No normalization**: D1 handles field mapping and type conversion
+
+### Current Limitations
+
+- No Excel (`.xlsx`) support yet (will be added if needed)
+- No incremental sync (CSV files are static snapshots)
+- Re-reads entire file per `fetch_entities` call (acceptable for demo-scale data)
+
+---
+
 ## Demo Dataset
 
 <!-- To be completed in Task E2 and I2 -->

@@ -1,0 +1,38 @@
+# CSV connector configuration for csv_demo source.
+#
+# Maps entity types to their CSV filenames and ID columns.
+# The CSV connector reads this to discover available entities
+# and locate source files.
+
+source_name: csv_demo
+source_type: csv
+data_directory: data/demo
+
+entities:
+  organizations:
+    file: organizations.csv
+    id_column: organization_id
+
+  employees:
+    file: employees.csv
+    id_column: employee_id
+
+  customers:
+    file: customers.csv
+    id_column: customer_id
+
+  deals:
+    file: deals.csv
+    id_column: deal_id
+
+  projects:
+    file: projects.csv
+    id_column: project_id
+
+  support_tickets:
+    file: support_tickets.csv
+    id_column: ticket_id
+
+  documents:
+    file: documents.csv
+    id_column: document_id
