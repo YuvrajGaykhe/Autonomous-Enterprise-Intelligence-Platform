@@ -1,0 +1,4 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-001,Acme Platform Deal,CUST-001,EMP-002,negotiation,150000.50,INR,75.0,2026-12-31,true
+DEAL-002,Widget CRM Migration,CUST-002,EMP-001,qualification,45000.00,USD,40.0,2026-09-30,true
+DEAL-003,DataFlow Analytics Suite,CUST-003,EMP-001,won,280000.00,EUR,100.0,2026-06-15,true

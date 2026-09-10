@@ -1,0 +1,4 @@
+customer_id,customer_name,email_address,customer_segment,industry_name,account_owner_id,status,created_date
+CUST-001,Acme Industries,contact@acme-ind.example,Enterprise,Manufacturing,EMP-002,active,2025-01-15
+CUST-002,Widget Corp,info@widget.example,SMB,Retail,EMP-002,active,2025-03-20
+CUST-003,DataFlow Systems,hello@dataflow.example,Enterprise,Technology,EMP-001,active,2025-06-10

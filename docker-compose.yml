@@ -64,7 +64,7 @@ services:
 
   # ---------------------------------------------------------------------------
   # Mock Source — single container serving both /odoo/... and /rest/... paths.
-  # A2 scaffold only. Actual endpoints are implemented in Task C3.
+  # Reads from shared CSV demo data and transforms into source-native payloads.
   # ---------------------------------------------------------------------------
   mock-source:
     build:
@@ -74,6 +74,7 @@ services:
     environment:
       MOCK_SOURCE_HOST: 0.0.0.0
       MOCK_SOURCE_PORT: 8080
+      MOCK_SOURCE_DATA_DIR: /app/data/demo
     ports:
       - "8080:8080"
     healthcheck:

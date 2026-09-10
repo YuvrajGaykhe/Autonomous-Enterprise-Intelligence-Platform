@@ -1,0 +1,3 @@
+ticket_id,customer_id,assignee_id,priority,status,category,subject,description,created_date,resolved_date
+TKT-001,CUST-001,EMP-001,high,open,auth,Login not working after SSO update,Users cannot log in after the SSO provider migration.,2026-09-01,
+TKT-002,CUST-002,EMP-003,medium,resolved,billing,Invoice discrepancy Q3,Invoice totals do not match the agreed contract.,2026-08-15,2026-08-20

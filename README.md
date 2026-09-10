@@ -267,6 +267,45 @@ projects, support_tickets, documents.
 
 ---
 
+## Mock Source Server
+
+The mock-source service (`docker/mock_source.py`) reads from the shared CSV demo
+dataset and serves Odoo-style and REST-style source payloads for C4/C5 connectors.
+
+```
+data/demo/*.csv (shared source of truth)
+      │
+      ├──────────► C2 CsvConnector (raw CSV strings)
+      │
+      └──────────► C3 MockSource (transforms to Odoo/REST JSON)
+                        │
+             ┌──────────┴──────────┐
+             ▼                     ▼
+        /odoo/{entity}        /rest/{entity}
+        (int IDs,              (str IDs,
+         Odoo fields)           camelCase)
+```
+
+### Key Properties
+
+- **CSV-based**: reads from configured `MOCK_SOURCE_DATA_DIR` (default: `data/demo/`)
+- **GET-only**: POST/PUT/PATCH/DELETE return 405
+- **Deterministic**: same CSV data always produces same JSON
+- **Source-native payloads**: Odoo uses `partner_id`, `x_studio_segment`, int IDs;
+  REST uses `customerId`, `ownerId`, string IDs
+- **Pagination**: `?limit=N&offset=M` with `pagination.has_more` and `next_offset`
+- **No database**: CSV files loaded into memory at startup
+- **7 entities**: organizations, employees, customers, deals, projects,
+  support_tickets, documents per source type (14 endpoints total)
+
+### Relationship to Demo Data
+
+Both C2 and C3 consume the same `data/demo/` CSV files. The mock-source transforms
+CSV rows into source-specific representations (Odoo-style and REST-style JSON).
+When E2 generates the full demo dataset, both connectors automatically pick it up.
+
+---
+
 ## Demo Dataset
 
 <!-- To be completed in Task E2 and I2 -->

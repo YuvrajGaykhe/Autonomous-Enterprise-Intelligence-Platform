@@ -1,16 +1,19 @@
 # AI CEO — Mock Source Service Dockerfile
-# Minimal HTTP server for container verification (A2).
-# Task C3 will extend this with actual Odoo/REST mock endpoints.
+# Reads CSV data from data/demo/ and serves Odoo/REST representations.
 
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    MOCK_SOURCE_DATA_DIR=/app/data/demo
 
 WORKDIR /app
 
-# Copy only the mock-source server script.
+# Copy the mock-source server script.
 COPY docker/mock_source.py ./mock_source.py
+
+# Copy the shared demo CSV dataset.
+COPY data/demo/ ./data/demo/
 
 EXPOSE 8080
 

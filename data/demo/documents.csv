@@ -1,0 +1,3 @@
+document_id,title,document_type,body_text,source_uri,owner_id,created_date,updated_date
+DOC-001,Employee Handbook 2026,policy,,https://internal.acme.example/docs/handbook.pdf,EMP-001,2026-01-01,2026-06-15
+DOC-002,Q3 Sales Report,report,,https://internal.acme.example/reports/q3-sales.pdf,EMP-002,2026-07-01,2026-09-05

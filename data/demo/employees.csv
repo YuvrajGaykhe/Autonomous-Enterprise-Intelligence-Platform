@@ -1,0 +1,4 @@
+employee_id,employee_name,email_address,department,title,manager_id,status,hire_date,is_active,organization_id
+EMP-001,Alice Engineer,alice@acme.example,Engineering,Senior Developer,,active,2024-03-15,true,ORG-001
+EMP-002,Bob Manager,bob@acme.example,Sales,Sales Manager,,active,2023-06-01,true,ORG-001
+EMP-003,Carol Analyst,carol@globaltech.example,Analytics,Data Analyst,EMP-002,active,2025-01-10,true,ORG-002
