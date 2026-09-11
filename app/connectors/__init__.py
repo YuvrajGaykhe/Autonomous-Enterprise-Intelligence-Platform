@@ -8,6 +8,7 @@ result types, exception hierarchy, and concrete connector implementations.
 from app.connectors.base import SourceConnector
 from app.connectors.csv import CsvConnector, CsvConnectorConfig
 from app.connectors.odoo import OdooMockConnector, OdooConnectorConfig
+from app.connectors.rest import RestConnector, RestConnectorConfig
 from app.connectors.types import (
     ConnectorCapabilities,
     ConnectorHealth,
@@ -29,6 +30,8 @@ __all__ = [
     "CsvConnectorConfig",
     "OdooMockConnector",
     "OdooConnectorConfig",
+    "RestConnector",
+    "RestConnectorConfig",
     # Result types
     "ConnectorCapabilities",
     "ConnectorHealth",

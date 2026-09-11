@@ -301,6 +301,53 @@ support_tickets, documents.
 
 ---
 
+## Generic REST Connector
+
+`RestConnector` (`app/connectors/rest.py`) implements the `SourceConnector`
+protocol for configurable REST API sources via the C3 mock-source REST namespace.
+
+### Configuration
+
+```yaml
+# config/connectors/rest.yaml
+source_name: rest_demo
+source_type: rest
+base_url: http://mock-source:8080
+timeout: 10
+health_endpoint: /health
+
+auth:
+  mechanism: none  # none | api_key | bearer
+
+entities:
+  customers:
+    path: /rest/customers
+    description: REST customer records
+  # ... all 7 entities
+```
+
+Endpoints are fully configuration-driven. No Python code changes needed to
+point at a different REST API.
+
+### Authentication
+
+Supports `none`, `api_key`, and `bearer` mechanisms. Credentials are resolved
+from environment variables at runtime, never stored in config files.
+
+### Key Properties
+
+- **Configuration-driven**: endpoints, auth, and health path from YAML
+- **HTTP GET only**: communicates with configured REST paths
+- **Source-native payloads**: returns camelCase fields (`ownerId`, `customerId`,
+  `createdAt`, string IDs)
+- **B3 schema validation**: validates against REST source schemas
+- **Cursor pagination**: offset-based via `?limit=N&offset=M`
+- **Retry on transient failures**: connection errors and timeouts only
+- **No normalization**: no canonical field mapping, no UUID generation
+- **No persistence**: no database access
+
+---
+
 ## Mock Source Server
 
 The mock-source service (`docker/mock_source.py`) reads from the shared CSV demo

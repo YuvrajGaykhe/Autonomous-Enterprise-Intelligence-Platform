@@ -1,0 +1,52 @@
+# Generic REST connector configuration.
+#
+# Connects to the C3 mock-source REST namespace.
+# The mock-source reads from data/demo/*.csv and transforms
+# rows into REST-style JSON payloads (string IDs, camelCase).
+#
+# The Generic REST connector is configuration-driven:
+# endpoints and authentication are specified here,
+# not hardcoded in the connector.
+
+source_name: rest_demo
+source_type: rest
+base_url: http://mock-source:8080
+timeout: 10
+health_endpoint: /health
+
+# Authentication (optional).
+# Mechanism: none | api_key | bearer
+# Credentials come from environment variables, not this file.
+auth:
+  mechanism: none
+
+# Entity endpoint mapping.
+# Each entity maps to a REST path relative to base_url.
+entities:
+  organizations:
+    path: /rest/organizations
+    description: REST organization records
+
+  employees:
+    path: /rest/employees
+    description: REST employee records
+
+  customers:
+    path: /rest/customers
+    description: REST customer records
+
+  deals:
+    path: /rest/deals
+    description: REST deal/opportunity records
+
+  projects:
+    path: /rest/projects
+    description: REST project records
+
+  support_tickets:
+    path: /rest/support_tickets
+    description: REST support ticket records
+
+  documents:
+    path: /rest/documents
+    description: REST document records
