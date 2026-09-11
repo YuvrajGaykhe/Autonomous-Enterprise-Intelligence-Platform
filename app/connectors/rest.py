@@ -44,6 +44,10 @@ import httpx
 import yaml
 
 from app.connectors.types import (
+<<<<<<< HEAD
+=======
+    ConnectorAuthenticationError,
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
     ConnectorCapabilities,
     ConnectorConfigurationError,
     ConnectorEntityError,
@@ -78,9 +82,16 @@ _ENTITY_SCHEMAS: dict[str, type] = {
     "documents": RestDocumentSource,
 }
 
+<<<<<<< HEAD
 # Maximum retries for transient network errors (connection refused, timeout)
 _MAX_RETRIES = 2
 _RETRY_DELAY_S = 0.5
+=======
+# Maximum retries for transient network/server errors
+_MAX_RETRIES = 2
+_RETRY_BASE_DELAY_S = 0.5  # exponential backoff: base * 2^attempt
+_RETRY_MAX_DELAY_S = 4.0
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
 
 
 # ---------------------------------------------------------------------------
@@ -620,20 +631,42 @@ class RestConnector:
         endpoint: str,
         params: dict | None = None,
     ) -> dict:
+<<<<<<< HEAD
         """Execute GET request with retry for transient failures.
 
         Retries on connection errors and timeouts only.
         Does NOT retry on 4xx, schema validation, or other errors.
+=======
+        """Execute GET request with retry and exponential backoff.
+
+        Retries on:
+        - Connection errors (ConnectError)
+        - Timeouts (TimeoutException)
+        - Rate limiting (HTTP 429, respects Retry-After)
+        - Transient server errors (HTTP 502, 503, 504)
+
+        Does NOT retry on:
+        - HTTP 400, 401, 403, 404, 409, 422
+        - Schema validation errors
+        - Configuration errors
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
 
         Returns parsed JSON body.
 
         Raises:
+<<<<<<< HEAD
+=======
+            ConnectorAuthenticationError: HTTP 401/403.
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
             ConnectorUnavailableError: connection or timeout failure.
             ConnectorRequestError: HTTP error or malformed response.
         """
         # Check deferred auth errors
         if self._auth_deferred:
+<<<<<<< HEAD
             # Re-attempt auth header resolution
+=======
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
             try:
                 headers = self._config.auth.get_headers()
                 self._client.headers.update(headers)
@@ -654,19 +687,62 @@ class RestConnector:
                     )
 
                 if resp.status_code == 401:
+<<<<<<< HEAD
                     from app.connectors.types import ConnectorAuthenticationError
+=======
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
                     raise ConnectorAuthenticationError(
                         f"HTTP 401 Unauthorized from {endpoint}",
                         source_name=self.source_name,
                     )
 
                 if resp.status_code == 403:
+<<<<<<< HEAD
                     from app.connectors.types import ConnectorAuthenticationError
+=======
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
                     raise ConnectorAuthenticationError(
                         f"HTTP 403 Forbidden from {endpoint}",
                         source_name=self.source_name,
                     )
 
+<<<<<<< HEAD
+=======
+                # Rate limiting: retry with Retry-After if available
+                if resp.status_code == 429:
+                    retry_after = resp.headers.get("Retry-After")
+                    if attempt < _MAX_RETRIES:
+                        delay = _RETRY_MAX_DELAY_S
+                        if retry_after:
+                            try:
+                                delay = min(float(retry_after), _RETRY_MAX_DELAY_S)
+                            except (ValueError, TypeError):
+                                pass
+                        time.sleep(delay)
+                        continue
+                    raise ConnectorRequestError(
+                        f"Rate limited (HTTP 429) from {endpoint} "
+                        f"after {_MAX_RETRIES + 1} attempts",
+                        source_name=self.source_name,
+                    )
+
+                # Transient server errors: retry with backoff
+                if resp.status_code in (502, 503, 504):
+                    if attempt < _MAX_RETRIES:
+                        delay = min(
+                            _RETRY_BASE_DELAY_S * (2 ** attempt),
+                            _RETRY_MAX_DELAY_S,
+                        )
+                        time.sleep(delay)
+                        continue
+                    raise ConnectorRequestError(
+                        f"HTTP {resp.status_code} from {endpoint} "
+                        f"after {_MAX_RETRIES + 1} attempts: "
+                        f"{resp.text[:200]}",
+                        source_name=self.source_name,
+                    )
+
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
                 if resp.status_code >= 400:
                     raise ConnectorRequestError(
                         f"HTTP {resp.status_code} from {endpoint}: "
@@ -685,21 +761,44 @@ class RestConnector:
             except (
                 ConnectorRequestError,
                 ConnectorEntityError,
+<<<<<<< HEAD
             ):
                 raise
             except ConnectorConfigurationError:
                 raise
+=======
+                ConnectorAuthenticationError,
+                ConnectorConfigurationError,
+            ):
+                raise
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
 
             except httpx.ConnectError as exc:
                 last_exc = exc
                 if attempt < _MAX_RETRIES:
+<<<<<<< HEAD
                     time.sleep(_RETRY_DELAY_S)
+=======
+                    delay = min(
+                        _RETRY_BASE_DELAY_S * (2 ** attempt),
+                        _RETRY_MAX_DELAY_S,
+                    )
+                    time.sleep(delay)
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
                     continue
 
             except httpx.TimeoutException as exc:
                 last_exc = exc
                 if attempt < _MAX_RETRIES:
+<<<<<<< HEAD
                     time.sleep(_RETRY_DELAY_S)
+=======
+                    delay = min(
+                        _RETRY_BASE_DELAY_S * (2 ** attempt),
+                        _RETRY_MAX_DELAY_S,
+                    )
+                    time.sleep(delay)
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
                     continue
 
             except Exception as exc:

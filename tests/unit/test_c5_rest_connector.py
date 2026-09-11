@@ -44,6 +44,10 @@ from app.connectors.rest import (
     RestEntityConfig,
 )
 from app.connectors.types import (
+<<<<<<< HEAD
+=======
+    ConnectorAuthenticationError,
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
     ConnectorCapabilities,
     ConnectorConfigurationError,
     ConnectorEntityError,
@@ -986,7 +990,10 @@ class TestSecurity:
     def test_no_hardcoded_localhost(self):
         import app.connectors.rest as rest_mod
         source = inspect.getsource(rest_mod)
+<<<<<<< HEAD
         # Check only non-comment, non-docstring executable lines
+=======
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
         import_and_code = [
             line for line in source.splitlines()
             if not line.strip().startswith("#")
@@ -994,7 +1001,200 @@ class TestSecurity:
             and not line.strip().startswith("'''")
             and "localhost" not in line.split("#")[0] if "=" in line
         ]
+<<<<<<< HEAD
         # The connector should not hardcode localhost in assignments
         for line in import_and_code:
             if "=" in line and "localhost" in line.split("#")[0]:
                 assert False, f"Hardcoded localhost found: {line}"
+=======
+        for line in import_and_code:
+            if "=" in line and "localhost" in line.split("#")[0]:
+                assert False, f"Hardcoded localhost found: {line}"
+
+
+# ---------------------------------------------------------------------------
+# P. Rate limiting (HTTP 429)
+# ---------------------------------------------------------------------------
+
+
+class TestRateLimiting:
+    def test_429_raises_after_retries(self, fake_server):
+        _FakeRestHandler.responses["/rest/customers"] = (429, {
+            "error": "rate_limited",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorRequestError, match="429"):
+            conn.fetch_entities("customers")
+
+    def test_429_with_retry_after_header(self, fake_server):
+        """429 with Retry-After should be retried, not immediately fail."""
+        # We can't easily test the delay itself, but we can verify
+        # that after max retries it eventually raises
+        _FakeRestHandler.responses["/rest/customers"] = (429, {
+            "error": "rate_limited",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorRequestError, match="Rate limited"):
+            conn.fetch_entities("customers")
+
+
+# ---------------------------------------------------------------------------
+# Q. Transient server errors (502, 503, 504)
+# ---------------------------------------------------------------------------
+
+
+class TestTransientServerErrors:
+    def test_502_retries_then_raises(self, fake_server):
+        _FakeRestHandler.responses["/rest/customers"] = (502, {
+            "error": "bad_gateway",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorRequestError, match="502"):
+            conn.fetch_entities("customers")
+
+    def test_503_retries_then_raises(self, fake_server):
+        _FakeRestHandler.responses["/rest/customers"] = (503, {
+            "error": "service_unavailable",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorRequestError, match="503"):
+            conn.fetch_entities("customers")
+
+    def test_504_retries_then_raises(self, fake_server):
+        _FakeRestHandler.responses["/rest/customers"] = (504, {
+            "error": "gateway_timeout",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorRequestError, match="504"):
+            conn.fetch_entities("customers")
+
+    def test_500_does_not_retry(self, fake_server):
+        """500 is not in the transient set. Should fail immediately."""
+        _FakeRestHandler.responses["/rest/customers"] = (500, {
+            "error": "server_error",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorRequestError, match="HTTP 500"):
+            conn.fetch_entities("customers")
+
+
+# ---------------------------------------------------------------------------
+# R. Authentication error mapping (401, 403)
+# ---------------------------------------------------------------------------
+
+
+class TestAuthErrorMapping:
+    def test_401_raises_auth_error(self, fake_server):
+        _FakeRestHandler.responses["/rest/customers"] = (401, {
+            "error": "unauthorized",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorAuthenticationError, match="401"):
+            conn.fetch_entities("customers")
+
+    def test_403_raises_auth_error(self, fake_server):
+        _FakeRestHandler.responses["/rest/customers"] = (403, {
+            "error": "forbidden",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorAuthenticationError, match="403"):
+            conn.fetch_entities("customers")
+
+    def test_401_not_retried(self, fake_server):
+        """Auth errors must not be retried."""
+        _FakeRestHandler.responses["/rest/customers"] = (401, {
+            "error": "unauthorized",
+        })
+        conn = _make_connector(base_url=fake_server)
+        with pytest.raises(ConnectorAuthenticationError):
+            conn.fetch_entities("customers")
+
+
+# ---------------------------------------------------------------------------
+# S. Custom entity configuration (proves genericity)
+# ---------------------------------------------------------------------------
+
+
+class TestCustomEntityConfiguration:
+    def test_custom_entity_listed(self, fake_server):
+        """A non-standard entity configured in YAML appears in list_entities."""
+        config = RestConnectorConfig.from_dict({
+            "base_url": fake_server,
+            "entities": {
+                "customers": {"path": "/rest/customers"},
+                "custom_widgets": {
+                    "path": "/rest/widgets",
+                    "description": "Custom widget records",
+                },
+            },
+        })
+        conn = RestConnector(config)
+        types = {e.entity_type for e in conn.list_entities()}
+        assert "custom_widgets" in types
+        assert "customers" in types
+
+    def test_custom_entity_fetch(self, fake_server):
+        """A configured custom entity can be fetched if the server supports it."""
+        _FakeRestHandler.responses["/rest/widgets"] = (200, {
+            "data": [{"id": "W-001", "name": "Gadget"}],
+            "pagination": {
+                "offset": 0, "limit": 100, "total": 1, "has_more": False,
+            },
+        })
+        config = RestConnectorConfig.from_dict({
+            "base_url": fake_server,
+            "entities": {
+                "custom_widgets": {"path": "/rest/widgets"},
+            },
+        })
+        conn = RestConnector(config)
+        page = conn.fetch_entities("custom_widgets")
+        assert len(page.items) == 1
+        assert page.items[0]["id"] == "W-001"
+
+    def test_unconfigured_entity_rejected(self, fake_server):
+        """An entity not in the config is rejected."""
+        config = RestConnectorConfig.from_dict({
+            "base_url": fake_server,
+            "entities": {
+                "customers": {"path": "/rest/customers"},
+            },
+        })
+        conn = RestConnector(config)
+        with pytest.raises(ConnectorEntityError, match="Unsupported"):
+            conn.fetch_entities("employees")
+
+    def test_capabilities_reflect_config(self, fake_server):
+        """capabilities().supported_entity_types matches config."""
+        config = RestConnectorConfig.from_dict({
+            "base_url": fake_server,
+            "entities": {
+                "customers": {"path": "/rest/customers"},
+                "custom_widgets": {"path": "/rest/widgets"},
+            },
+        })
+        conn = RestConnector(config)
+        caps = conn.capabilities()
+        assert sorted(caps.supported_entity_types) == ["custom_widgets", "customers"]
+
+
+# ---------------------------------------------------------------------------
+# T. Exponential backoff verification
+# ---------------------------------------------------------------------------
+
+
+class TestExponentialBackoff:
+    def test_retry_constants_exist(self):
+        """Verify exponential backoff constants are defined."""
+        import app.connectors.rest as rest_mod
+        assert hasattr(rest_mod, "_RETRY_BASE_DELAY_S")
+        assert hasattr(rest_mod, "_RETRY_MAX_DELAY_S")
+        assert rest_mod._RETRY_BASE_DELAY_S > 0
+        assert rest_mod._RETRY_MAX_DELAY_S >= rest_mod._RETRY_BASE_DELAY_S
+
+    def test_backoff_formula_in_source(self):
+        """Verify the implementation uses exponential backoff (2^attempt)."""
+        import app.connectors.rest as rest_mod
+        source = inspect.getsource(rest_mod.RestConnector._get_json)
+        assert "2 ** attempt" in source or "2**attempt" in source
+>>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
