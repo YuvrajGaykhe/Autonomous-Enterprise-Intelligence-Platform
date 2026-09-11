@@ -267,6 +267,40 @@ projects, support_tickets, documents.
 
 ---
 
+## Odoo Mock Connector
+
+`OdooMockConnector` (`app/connectors/odoo.py`) implements the `SourceConnector`
+protocol for the C3 mock-source Odoo namespace.
+
+### Configuration
+
+```yaml
+# config/connectors/odoo.yaml
+source_name: odoo
+source_type: mock
+base_url: http://mock-source:8080
+timeout: 10
+```
+
+### Supported Entities
+
+All 7 entities: organizations, employees, customers, deals, projects,
+support_tickets, documents.
+
+### Key Properties
+
+- **HTTP GET only**: communicates with `GET /odoo/{entity}` endpoints
+- **Source-native payloads**: returns Odoo-style fields (`partner_id`,
+  `x_studio_segment`, `expected_revenue`, int IDs)
+- **B3 schema validation**: validates responses against Odoo source schemas
+- **Cursor pagination**: offset-based via `?limit=N&offset=M`
+- **Retry on transient failures**: connection errors and timeouts only
+- **No normalization**: no canonical field mapping, no UUID generation
+- **No persistence**: no database access
+- **Docker networking**: uses `http://mock-source:8080` from API container
+
+---
+
 ## Mock Source Server
 
 The mock-source service (`docker/mock_source.py`) reads from the shared CSV demo
