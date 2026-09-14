@@ -1,0 +1,5 @@
+customer_id,customer_name,email_address,customer_segment,industry_name,account_owner_id,status,created_date
+CUST-901,Kestrel Supplies,contact@kestrel-supplies.example,SMB,Retail,EMP-007,active,2026-02-10
+CUST-902,Lantern Retail,,SMB,Retail,EMP-007,active,2026-02-10
+CUST-903,Mosaic Foods,contact@mosaic-foods.example,SMB,Retail,EMP-007,suspended,2026-02-10
+CUST-901,Kestrel Supplies,contact@kestrel-supplies.example,SMB,Retail,EMP-007,active,2026-02-10

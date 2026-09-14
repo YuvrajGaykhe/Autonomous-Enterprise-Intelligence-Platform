@@ -1,0 +1,5 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-901,Kestrel Supplies - Platform Subscription,CUST-901,EMP-007,negotiation,450000.00,INR,60.00,2026-11-30,true
+DEAL-902,Unlisted Account - Renewal,CUST-999,EMP-007,negotiation,450000.00,INR,60.00,2026-11-30,true
+DEAL-903,Kestrel Supplies - Seat Expansion,CUST-901,EMP-007,negotiation,"12,50,000.00",INR,60.00,2026-11-30,true
+DEAL-904,Kestrel Supplies - Support Renewal,CUST-901,EMP-007,negotiation,450000.00,INR,60.00,31/12/2026,true

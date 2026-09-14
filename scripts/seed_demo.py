@@ -5,9 +5,10 @@ Generate the deterministic Layer 1 demo dataset (make seed).
     python scripts/seed_demo.py --check
 
 Writes the csv_demo source files read by the C2 CSV connector and served by
-the C3 mock source to data/demo/. Every value derives from SEED and the fixed
-snapshot date AS_OF, never from the clock or the environment, so every run
-writes byte-identical files; the committed files are this script's output.
+the C3 mock source to data/demo/, and the deliberately malformed csv_demo
+fixture to data/fixtures/csv_demo_bad/. Every value derives from SEED and the
+fixed snapshot date AS_OF, never from the clock or the environment, so every
+run writes byte-identical files; the committed files are this script's output.
 --check regenerates the files in memory and reports stale ones without writing.
 
 The dataset follows spec Section 12: one organization, at least 20 employees,
@@ -17,6 +18,9 @@ selected customers, and a churn-risk scenario (a customer with several recent
 tickets and an active deal). Values stay inside the canonical vocabulary of
 config/mappings/normalization.yaml, so every record normalizes and validates
 identically through the csv_demo, odoo_mock and rest_mock representations.
+The bad fixture carries the Section 12 quality issues (missing email, invalid
+date, unknown customer reference, duplicate row, malformed amount, unknown
+status) beside valid records.
 
 This script never touches the database: ingestion (make ingest-demo) is the
 only path into PostgreSQL.
@@ -652,10 +656,74 @@ def stale_files(files: dict[str, bytes], directory: Path) -> list[str]:
             if not (directory / name).is_file() or (directory / name).read_bytes() != content]
 
 
+# ---------------------------------------------------------------------------
+# Bad fixture
+# ---------------------------------------------------------------------------
+
+BAD_FIXTURE_DIR = PROJECT_ROOT / "data" / "fixtures" / "csv_demo_bad"
+
+# Spec Section 12 deliberate quality issues, kept out of data/demo. Identifiers
+# use the 9xx range so ingesting the fixture after the demo never touches demo
+# records. Entities without issues are header-only files: the CSV connector
+# health check requires every configured file.
+_FIXTURE_CUSTOMER: Row = {
+    "customer_id": "CUST-901", "customer_name": "Kestrel Supplies",
+    "email_address": "contact@kestrel-supplies.example", "customer_segment": "SMB",
+    "industry_name": "Retail", "account_owner_id": "EMP-007", "status": "active",
+    "created_date": "2026-02-10",
+}
+_FIXTURE_DEAL: Row = {
+    "deal_id": "DEAL-901", "deal_name": "Kestrel Supplies - Platform Subscription",
+    "customer_id": "CUST-901", "owner_id": "EMP-007", "stage": "negotiation",
+    "amount": "450000.00", "currency": "INR", "probability": "60.00",
+    "expected_close_date": "2026-11-30", "is_active": "true",
+}
+BAD_FIXTURE_CUSTOMERS: tuple[Row, ...] = (
+    # Valid record.
+    _FIXTURE_CUSTOMER,
+    # Missing email: recommended field, the record stays usable (WARNING).
+    {**_FIXTURE_CUSTOMER, "customer_id": "CUST-902", "customer_name": "Lantern Retail",
+     "email_address": ""},
+    # Unknown status: not in the canonical vocabulary (quarantined).
+    {**_FIXTURE_CUSTOMER, "customer_id": "CUST-903", "customer_name": "Mosaic Foods",
+     "email_address": "contact@mosaic-foods.example", "status": "suspended"},
+    # Duplicate row: an exact repeat of the first record (WARNING).
+    _FIXTURE_CUSTOMER,
+)
+BAD_FIXTURE_DEALS: tuple[Row, ...] = (
+    # Valid record.
+    _FIXTURE_DEAL,
+    # Unknown customer reference: kept with an unresolved customer (WARNING in E1).
+    {**_FIXTURE_DEAL, "deal_id": "DEAL-902", "deal_name": "Unlisted Account - Renewal",
+     "customer_id": "CUST-999"},
+    # Malformed amount: grouping separators are not accepted (quarantined).
+    {**_FIXTURE_DEAL, "deal_id": "DEAL-903", "deal_name": "Kestrel Supplies - Seat Expansion",
+     "amount": "12,50,000.00"},
+    # Invalid date: DD/MM/YYYY instead of the configured YYYY-MM-DD (quarantined).
+    {**_FIXTURE_DEAL, "deal_id": "DEAL-904", "deal_name": "Kestrel Supplies - Support Renewal",
+     "expected_close_date": "31/12/2026"},
+)
+
+
+def build_bad_fixture() -> Dataset:
+    """Every csv_demo entity file; only customers and deals carry records."""
+    dataset: Dataset = {entity: [] for entity in COLUMNS}
+    dataset["customers"] = [dict(row) for row in BAD_FIXTURE_CUSTOMERS]
+    dataset["deals"] = [dict(row) for row in BAD_FIXTURE_DEALS]
+    return dataset
+
+
+# ---------------------------------------------------------------------------
+# Command line
+# ---------------------------------------------------------------------------
+
+
 def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate the deterministic demo dataset.")
     parser.add_argument("--demo-dir", type=Path, default=DEMO_DIR,
-                        help="output directory (default: data/demo)")
+                        help="demo dataset directory (default: data/demo)")
+    parser.add_argument("--bad-fixture-dir", type=Path, default=BAD_FIXTURE_DIR,
+                        help="bad fixture directory (default: data/fixtures/csv_demo_bad)")
     parser.add_argument("--check", action="store_true",
                         help="report stale files and exit 1 instead of writing")
     return parser.parse_args(argv)
@@ -663,20 +731,24 @@ def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
-    dataset = build_demo_dataset()
-    files = render_dataset(dataset)
+    datasets = {"demo": (args.demo_dir, build_demo_dataset()),
+                "bad_fixture": (args.bad_fixture_dir, build_bad_fixture())}
+    outputs = [(directory, render_dataset(dataset)) for directory, dataset in datasets.values()]
     if args.check:
-        stale = stale_files(files, args.demo_dir)
+        stale = [str(directory / name) for directory, files in outputs
+                 for name in stale_files(files, directory)]
         if stale:
-            print(f"seed_demo: stale files in {args.demo_dir}: {', '.join(stale)}", file=sys.stderr)
+            print(f"seed_demo: stale files: {', '.join(stale)}", file=sys.stderr)
             return 1
-        print(f"seed_demo: {len(files)} files up to date in {args.demo_dir}")
+        print(f"seed_demo: {sum(len(files) for _, files in outputs)} files up to date")
         return 0
-    args.demo_dir.mkdir(parents=True, exist_ok=True)
-    for name, content in files.items():
-        (args.demo_dir / name).write_bytes(content)
-    print(json.dumps({"directory": str(args.demo_dir),
-                      "records": {entity: len(rows) for entity, rows in dataset.items()}}, indent=2))
+    for directory, files in outputs:
+        directory.mkdir(parents=True, exist_ok=True)
+        for name, content in files.items():
+            (directory / name).write_bytes(content)
+    print(json.dumps({name: {"directory": str(directory),
+                             "records": {entity: len(rows) for entity, rows in dataset.items()}}
+                      for name, (directory, dataset) in datasets.items()}, indent=2))
     return 0
 
 

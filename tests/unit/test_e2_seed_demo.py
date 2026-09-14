@@ -1,15 +1,16 @@
 """
-E2 demo dataset tests: scripts/seed_demo.py and the committed data/demo files.
+E2 demo dataset tests: scripts/seed_demo.py and the committed data files.
 
 Dataset invariants are checked on generated files read back through the C2 CSV
 connector (what E1 ingests), for the committed seed and two others so that no
 invariant holds only by luck of one seed. The golden tests tie the committed
-files to the generator byte for byte.
+data/demo and bad fixture files to the generator byte for byte.
 """
 
 from __future__ import annotations
 
 import importlib.util
+import json
 import shutil
 import sys
 import uuid
@@ -25,6 +26,7 @@ from app.validation import default_validation_config, validate_source_batch
 
 REPO = Path(__file__).resolve().parents[2]
 DEMO_DIR = REPO / "data" / "demo"
+BAD_FIXTURE_DIR = REPO / "data" / "fixtures" / "csv_demo_bad"
 ENTITIES = ("organizations", "employees", "customers", "deals", "projects", "support_tickets",
             "documents")
 SOURCES = ("csv_demo", "odoo_mock", "rest_mock")
@@ -48,12 +50,22 @@ AS_OF: date = seed_demo.AS_OF
 SEEDS = (seed_demo.SEED, 7, 2027)
 
 
-def _read(directory: Path) -> dict[str, list[dict[str, str]]]:
+def _connector(directory: Path) -> CsvConnector:
     config = CsvConnectorConfig.from_yaml(REPO / "config" / "connectors" / "csv_demo.yaml")
     config.data_directory = str(directory)
-    connector = CsvConnector(config)
+    return CsvConnector(config)
+
+
+def _read(directory: Path) -> dict[str, list[dict[str, str]]]:
+    connector = _connector(directory)
     return {entity: connector.fetch_entities(entity, page_size=10_000).items
             for entity in ENTITIES}
+
+
+def _generate(root: Path, *extra: str) -> int:
+    """Run the command line with both outputs under root (never the repository)."""
+    return seed_demo.main(["--demo-dir", str(root / "demo"),
+                           "--bad-fixture-dir", str(root / "bad"), *extra])
 
 
 def _day(value: str) -> date:
@@ -64,12 +76,16 @@ def _rupees(deal: dict[str, str]) -> Decimal:
     return Decimal(deal["amount"]) * seed_demo.RUPEES_PER_UNIT[deal["currency"]]
 
 
+def _ids(rows: list[dict[str, str]]) -> set[str]:
+    return {next(iter(row.values())) for row in rows}
+
+
 @pytest.fixture(scope="module")
-def cli_dir(tmp_path_factory) -> Path:
+def cli_root(tmp_path_factory) -> Path:
     """Files written by the command line with the committed seed."""
-    directory = tmp_path_factory.mktemp("cli")
-    assert seed_demo.main(["--demo-dir", str(directory)]) == 0
-    return directory
+    root = tmp_path_factory.mktemp("cli")
+    assert _generate(root) == 0
+    return root
 
 
 @pytest.fixture(scope="module", params=SEEDS, ids=lambda seed: f"seed{seed}")
@@ -92,53 +108,72 @@ def by_id(data) -> dict[str, dict[str, dict[str, str]]]:
             for entity, rows in data.items()}
 
 
+@pytest.fixture(scope="module")
+def bad(cli_root) -> dict[str, list[dict[str, str]]]:
+    return _read(cli_root / "bad")
+
+
 def _active_staff(data, *titles: str) -> set[str]:
     return {row["employee_id"] for row in data["employees"]
             if row["title"] in titles and row["is_active"] == "true"}
 
 
 # ---------------------------------------------------------------------------
-# Determinism and the committed files
+# Determinism, the command line and the committed files
 # ---------------------------------------------------------------------------
 
 
-def test_generation_is_byte_identical_across_runs(cli_dir, tmp_path):
-    assert seed_demo.main(["--demo-dir", str(tmp_path)]) == 0
-    names = sorted(path.name for path in cli_dir.iterdir())
-    assert names == sorted(f"{entity}.csv" for entity in ENTITIES)
-    for name in names:
-        assert (tmp_path / name).read_bytes() == (cli_dir / name).read_bytes(), name
+def test_generation_is_byte_identical_across_runs(cli_root, tmp_path):
+    assert _generate(tmp_path) == 0
+    for output in ("demo", "bad"):
+        names = sorted(path.name for path in (cli_root / output).iterdir())
+        assert names == sorted(f"{entity}.csv" for entity in ENTITIES)
+        for name in names:
+            assert (tmp_path / output / name).read_bytes() == (cli_root / output / name).read_bytes()
 
 
-def test_committed_demo_files_match_the_generator(cli_dir, capsys):
-    for entity in ENTITIES:
-        name = f"{entity}.csv"
-        assert (DEMO_DIR / name).read_bytes() == (cli_dir / name).read_bytes(), name
+def test_committed_files_match_the_generator(cli_root, capsys):
+    for committed, output in ((DEMO_DIR, "demo"), (BAD_FIXTURE_DIR, "bad")):
+        for entity in ENTITIES:
+            name = f"{entity}.csv"
+            assert (committed / name).read_bytes() == (cli_root / output / name).read_bytes(), name
+    capsys.readouterr()
     assert seed_demo.main(["--check"]) == 0
-    assert "7 files up to date" in capsys.readouterr().out
+    assert capsys.readouterr().out == "seed_demo: 14 files up to date\n"
 
 
-def test_check_reports_stale_and_missing_files_without_writing(cli_dir, tmp_path, capsys):
-    shutil.copytree(cli_dir, tmp_path, dirs_exist_ok=True)
-    (tmp_path / "deals.csv").write_bytes(b"deal_id\n")
-    (tmp_path / "documents.csv").unlink()
+def test_check_reports_stale_and_missing_files_without_writing(cli_root, tmp_path, capsys):
+    shutil.copytree(cli_root, tmp_path, dirs_exist_ok=True)
+    capsys.readouterr()
+    assert _generate(tmp_path, "--check") == 0
+    assert capsys.readouterr().out == "seed_demo: 14 files up to date\n"
+    (tmp_path / "demo" / "deals.csv").write_bytes(b"deal_id\n")
+    (tmp_path / "bad" / "documents.csv").unlink()
     capsys.readouterr()
 
-    assert seed_demo.main(["--demo-dir", str(tmp_path), "--check"]) == 1
+    assert _generate(tmp_path, "--check") == 1
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert captured.err.startswith("seed_demo: stale files")
-    assert "deals.csv, documents.csv" in captured.err
-    assert (tmp_path / "deals.csv").read_bytes() == b"deal_id\n"
-    assert not (tmp_path / "documents.csv").exists()
+    assert captured.err == (f"seed_demo: stale files: {tmp_path / 'demo' / 'deals.csv'}, "
+                            f"{tmp_path / 'bad' / 'documents.csv'}\n")
+    assert (tmp_path / "demo" / "deals.csv").read_bytes() == b"deal_id\n"
+    assert not (tmp_path / "bad" / "documents.csv").exists()
 
 
-def test_write_creates_the_directory_and_prints_record_counts(tmp_path, capsys):
-    target = tmp_path / "nested" / "demo"
-    assert seed_demo.main(["--demo-dir", str(target)]) == 0
-    summary = capsys.readouterr().out
-    assert '"support_tickets": 80' in summary and str(target) in summary
-    assert (target / "customers.csv").read_bytes().startswith(b"customer_id,customer_name,")
+def test_write_creates_directories_and_prints_record_counts(tmp_path, capsys):
+    root = tmp_path / "nested"
+    capsys.readouterr()
+    assert _generate(root) == 0
+    summary = json.loads(capsys.readouterr().out)
+    assert summary == {
+        "demo": {"directory": str(root / "demo"), "records": {
+            "organizations": 1, "employees": 24, "customers": 50, "deals": 44, "projects": 22,
+            "support_tickets": 80, "documents": 12}},
+        "bad_fixture": {"directory": str(root / "bad"), "records": {
+            "organizations": 0, "employees": 0, "customers": 4, "deals": 4, "projects": 0,
+            "support_tickets": 0, "documents": 0}},
+    }
+    assert (root / "demo" / "customers.csv").read_bytes().startswith(b"customer_id,customer_name,")
 
 
 def test_generation_depends_only_on_the_seed():
@@ -158,11 +193,12 @@ def test_generation_is_total_and_structurally_sound_for_many_seeds():
                 assert created[row["customer_id"]] < row["expected_close_date"] < AS_OF.isoformat()
 
 
-def test_files_use_the_csv_demo_columns_and_newline_endings(generated_dir):
-    for entity in ENTITIES:
-        content = (generated_dir / f"{entity}.csv").read_bytes()
-        assert content.decode("ascii").split("\n", 1)[0] == ",".join(seed_demo.COLUMNS[entity])
-        assert b"\r" not in content and content.endswith(b"\n")
+def test_files_use_the_csv_demo_columns_and_newline_endings(generated_dir, cli_root):
+    for directory in (generated_dir, cli_root / "bad"):
+        for entity in ENTITIES:
+            content = (directory / f"{entity}.csv").read_bytes()
+            assert content.decode("ascii").split("\n", 1)[0] == ",".join(seed_demo.COLUMNS[entity])
+            assert b"\r" not in content and content.endswith(b"\n")
 
 
 def test_unknown_arguments_are_rejected():
@@ -426,9 +462,55 @@ def test_dataset_is_clean_in_every_source_representation(generated_dir, data, en
         assert result.valid_count == len(data[entity])
 
 
-def test_no_value_resembles_a_credential(data):
+def test_no_value_resembles_a_credential(data, bad):
     patterns = default_validation_config().quarantine.sensitive_value_patterns
-    for rows in data.values():
-        for row in rows:
-            for value in row.values():
-                assert not any(pattern.search(value) for pattern in patterns), value
+    for dataset in (data, bad):
+        for rows in dataset.values():
+            for row in rows:
+                for value in row.values():
+                    assert not any(pattern.search(value) for pattern in patterns), value
+
+
+# ---------------------------------------------------------------------------
+# Bad fixture (spec Section 12 deliberate quality issues)
+# ---------------------------------------------------------------------------
+
+
+def test_bad_fixture_has_every_entity_file_and_passes_the_health_check(cli_root, bad):
+    assert _connector(cli_root / "bad").health_check().healthy
+    assert {entity: len(rows) for entity, rows in bad.items()} == {
+        "organizations": 0, "employees": 0, "customers": 4, "deals": 4, "projects": 0,
+        "support_tickets": 0, "documents": 0}
+
+
+def test_bad_fixture_identities_never_collide_with_the_demo(cli_root, bad):
+    demo = _read(cli_root / "demo")
+    for entity in ENTITIES:
+        assert not _ids(bad[entity]) & _ids(demo[entity]), entity
+    assert "CUST-999" not in _ids(demo["customers"]) | _ids(bad["customers"])
+
+
+def test_bad_fixture_customers_carry_their_quality_issues(bad):
+    rows = bad["customers"]
+    result = validate_source_batch("csv_demo", "customers", rows, RUN_ID, INGESTED_AT)
+    assert [record.source_id for record in result.valid] == ["CUST-901", "CUST-902", "CUST-901"]
+    assert [(q.source_id, q.code, q.field_name) for q in result.quarantined] == [
+        ("CUST-903", "UNKNOWN_ENUM_VALUE", "status")]
+    assert [(rows[w.record_index]["customer_id"], w.code, w.field_name) for w in result.warnings] == [
+        ("CUST-902", "MISSING_RECOMMENDED_FIELD", "email"),
+        ("CUST-901", "DUPLICATE_SOURCE_RECORD", "source_id")]
+    assert rows[3] == rows[0]
+
+
+def test_bad_fixture_deals_carry_their_quality_issues(bad):
+    rows = bad["deals"]
+    result = validate_source_batch("csv_demo", "deals", rows, RUN_ID, INGESTED_AT)
+    assert [record.source_id for record in result.valid] == ["DEAL-901", "DEAL-902"]
+    assert [(q.source_id, q.code, q.field_name) for q in result.quarantined] == [
+        ("DEAL-903", "INVALID_DECIMAL", "amount"),
+        ("DEAL-904", "INVALID_DATE", "expected_close_date")]
+    assert result.warnings == ()
+    # D2 accepts the unknown reference; E1 resolves it to NULL with a warning.
+    fixture_customers = _ids(bad["customers"])
+    assert [(record.source_id, record.customer_source_id) for record in result.valid
+            if record.customer_source_id not in fixture_customers] == [("DEAL-902", "CUST-999")]
