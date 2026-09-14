@@ -15,7 +15,7 @@ help:
 	@echo "  make install         Install Python dependencies into virtualenv"
 	@echo "  make migrate         Run Alembic migrations (upgrade to head)"
 	@echo "  make migration-status Show current Alembic revision and history"
-	@echo "  make seed            Seed the database with the deterministic demo organization"
+	@echo "  make seed            Generate the deterministic demo dataset (data/demo)"
 	@echo "  make ingest-demo     Run full ingestion of demo CSV data"
 	@echo "  make test            Run the full test suite"
 	@echo "  make lint            Run ruff + mypy linting"
@@ -49,10 +49,11 @@ migration-status:
 	@echo "[migration-status] Migration history:"
 	@alembic history --verbose
 
-# Seed demo organization and reference data. [STUB — implemented in Task E2]
+# Regenerate the deterministic demo CSV dataset (byte-identical on every run).
+# It writes files only; load them with make ingest-demo. ARGS="--check" verifies.
 seed:
-	@echo "[seed] Seeding demo data... [STUB: Task E2]"
-	@echo "  Run: python scripts/seed_demo.py"
+	@echo "[seed] Generating demo dataset..."
+	.venv/bin/python scripts/seed_demo.py $(ARGS)
 
 # Run a full csv_demo ingestion (idempotent: repeating it is a NOOP).
 # Pass options through ARGS, e.g. make ingest-demo ARGS="--entities customers deals".

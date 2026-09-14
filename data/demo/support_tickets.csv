@@ -1,3 +1,81 @@
 ticket_id,customer_id,assignee_id,priority,status,category,subject,description,created_date,resolved_date
-TKT-001,CUST-001,EMP-001,high,open,auth,Login not working after SSO update,Users cannot log in after the SSO provider migration.,2026-09-01,
-TKT-002,CUST-002,EMP-003,medium,resolved,billing,Invoice discrepancy Q3,Invoice totals do not match the agreed contract.,2026-08-15,2026-08-20
+TKT-001,CUST-020,EMP-019,medium,resolved,data,Scheduled export missing rows,The weekly export omits records updated on the last day of the week.,2026-01-06,2026-01-13
+TKT-002,CUST-004,EMP-019,high,resolved,integration,CRM sync missing contacts,Contacts created in the CRM do not appear after the scheduled sync.,2026-01-07,2026-01-14
+TKT-003,CUST-018,EMP-019,medium,resolved,billing,Invoice total does not match contract,The latest invoice total differs from the amount agreed in the order form.,2026-01-07,2026-01-15
+TKT-004,CUST-008,EMP-019,medium,resolved,auth,Two-factor codes rejected,Several users report that valid two-factor codes are rejected on the first attempt.,2026-01-11,2026-01-20
+TKT-005,CUST-048,EMP-020,medium,open,performance,Mobile app lag on dashboards,Dashboard widgets load slowly on the mobile app over cellular networks.,2026-01-17,
+TKT-006,CUST-049,EMP-019,medium,resolved,performance,Slow report generation,Scheduled reports take more than ten minutes to generate during business hours.,2026-01-25,2026-01-30
+TKT-007,CUST-039,EMP-018,high,resolved,auth,Two-factor codes rejected,Several users report that valid two-factor codes are rejected on the first attempt.,2026-01-26,2026-01-28
+TKT-008,CUST-003,EMP-017,medium,resolved,performance,Mobile app lag on dashboards,Dashboard widgets load slowly on the mobile app over cellular networks.,2026-02-04,2026-02-06
+TKT-009,CUST-014,EMP-019,medium,resolved,onboarding,Help configuring user roles,The customer needs guidance on mapping team responsibilities to user roles.,2026-02-10,2026-02-15
+TKT-010,CUST-009,EMP-017,medium,open,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-02-14,
+TKT-011,CUST-008,EMP-021,medium,resolved,integration,CRM sync missing contacts,Contacts created in the CRM do not appear after the scheduled sync.,2026-02-17,2026-02-19
+TKT-012,CUST-005,EMP-021,medium,resolved,billing,Revised tax invoice requested,The customer needs the invoice reissued with the updated registered address.,2026-02-25,2026-03-04
+TKT-013,CUST-024,EMP-021,medium,resolved,onboarding,Help configuring user roles,The customer needs guidance on mapping team responsibilities to user roles.,2026-02-25,2026-03-04
+TKT-014,CUST-014,EMP-020,medium,resolved,auth,New users cannot sign in,Accounts created this week receive an access denied message on first sign-in.,2026-02-28,2026-03-08
+TKT-015,CUST-015,EMP-018,high,resolved,onboarding,Bulk user import template,The customer asks for the template and steps to import users in bulk.,2026-03-07,2026-03-12
+TKT-016,CUST-021,EMP-018,medium,resolved,performance,Search results load slowly,Searching customer records takes several seconds for large accounts.,2026-03-08,2026-03-10
+TKT-017,CUST-009,EMP-021,high,resolved,integration,API rate limit errors,Batch jobs receive HTTP 429 responses during the nightly import window.,2026-03-09,2026-03-11
+TKT-018,CUST-028,EMP-020,high,resolved,onboarding,Bulk user import template,The customer asks for the template and steps to import users in bulk.,2026-03-10,2026-03-18
+TKT-019,CUST-015,EMP-019,medium,resolved,data,Duplicate records after import,The bulk import created duplicate records for accounts that already existed.,2026-03-14,2026-03-22
+TKT-020,CUST-010,EMP-017,high,resolved,billing,Duplicate charge on monthly invoice,The monthly subscription appears twice on the most recent invoice.,2026-03-18,2026-03-21
+TKT-021,CUST-001,EMP-019,medium,open,data,Scheduled export missing rows,The weekly export omits records updated on the last day of the week.,2026-03-19,
+TKT-022,CUST-006,EMP-019,high,resolved,auth,Two-factor codes rejected,Several users report that valid two-factor codes are rejected on the first attempt.,2026-03-21,2026-03-26
+TKT-023,CUST-041,EMP-017,medium,resolved,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-03-25,2026-03-27
+TKT-024,CUST-004,EMP-017,medium,resolved,billing,Duplicate charge on monthly invoice,The monthly subscription appears twice on the most recent invoice.,2026-03-27,2026-04-01
+TKT-025,CUST-009,EMP-020,medium,resolved,integration,API rate limit errors,Batch jobs receive HTTP 429 responses during the nightly import window.,2026-04-02,2026-04-04
+TKT-026,CUST-046,EMP-020,medium,resolved,data,Scheduled export missing rows,The weekly export omits records updated on the last day of the week.,2026-04-07,2026-04-09
+TKT-027,CUST-047,EMP-018,medium,resolved,integration,API rate limit errors,Batch jobs receive HTTP 429 responses during the nightly import window.,2026-04-07,2026-04-13
+TKT-028,CUST-050,EMP-019,medium,resolved,auth,Two-factor codes rejected,Several users report that valid two-factor codes are rejected on the first attempt.,2026-04-08,2026-04-14
+TKT-029,CUST-026,EMP-017,medium,resolved,integration,Accounting export rejected,The accounting system rejects the export file because of a column mismatch.,2026-04-09,2026-04-16
+TKT-030,CUST-024,EMP-020,medium,resolved,billing,Revised tax invoice requested,The customer needs the invoice reissued with the updated registered address.,2026-04-18,2026-04-20
+TKT-031,CUST-015,EMP-020,medium,resolved,integration,CRM sync missing contacts,Contacts created in the CRM do not appear after the scheduled sync.,2026-04-22,2026-04-26
+TKT-032,CUST-046,EMP-019,high,resolved,onboarding,Bulk user import template,The customer asks for the template and steps to import users in bulk.,2026-04-23,2026-04-24
+TKT-033,CUST-031,EMP-018,medium,open,data,Scheduled export missing rows,The weekly export omits records updated on the last day of the week.,2026-04-25,
+TKT-034,CUST-041,EMP-020,medium,resolved,data,Scheduled export missing rows,The weekly export omits records updated on the last day of the week.,2026-04-27,2026-05-01
+TKT-035,CUST-046,EMP-020,high,resolved,integration,Accounting export rejected,The accounting system rejects the export file because of a column mismatch.,2026-05-03,2026-05-08
+TKT-036,CUST-028,EMP-017,medium,resolved,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-05-04,2026-05-07
+TKT-037,CUST-023,EMP-019,high,resolved,onboarding,Help configuring user roles,The customer needs guidance on mapping team responsibilities to user roles.,2026-05-06,2026-05-07
+TKT-038,CUST-024,EMP-019,medium,resolved,billing,Invoice total does not match contract,The latest invoice total differs from the amount agreed in the order form.,2026-05-09,2026-05-17
+TKT-039,CUST-025,EMP-021,high,open,integration,CRM sync missing contacts,Contacts created in the CRM do not appear after the scheduled sync.,2026-05-10,
+TKT-040,CUST-015,EMP-018,medium,resolved,billing,Revised tax invoice requested,The customer needs the invoice reissued with the updated registered address.,2026-05-11,2026-05-20
+TKT-041,CUST-023,EMP-019,medium,resolved,billing,Invoice total does not match contract,The latest invoice total differs from the amount agreed in the order form.,2026-05-11,2026-05-14
+TKT-042,CUST-048,EMP-021,medium,resolved,auth,Two-factor codes rejected,Several users report that valid two-factor codes are rejected on the first attempt.,2026-05-14,2026-05-23
+TKT-043,CUST-004,EMP-017,high,resolved,billing,Duplicate charge on monthly invoice,The monthly subscription appears twice on the most recent invoice.,2026-05-18,2026-05-24
+TKT-044,CUST-028,EMP-021,medium,resolved,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-05-18,2026-05-21
+TKT-045,CUST-035,EMP-017,medium,resolved,integration,CRM sync missing contacts,Contacts created in the CRM do not appear after the scheduled sync.,2026-05-20,2026-05-22
+TKT-046,CUST-004,EMP-018,high,resolved,data,Scheduled export missing rows,The weekly export omits records updated on the last day of the week.,2026-05-24,2026-06-01
+TKT-047,CUST-045,EMP-018,medium,resolved,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-05-25,2026-06-03
+TKT-048,CUST-020,EMP-017,medium,resolved,performance,Slow report generation,Scheduled reports take more than ten minutes to generate during business hours.,2026-05-26,2026-05-27
+TKT-049,CUST-028,EMP-018,medium,resolved,auth,Two-factor codes rejected,Several users report that valid two-factor codes are rejected on the first attempt.,2026-05-29,2026-05-31
+TKT-050,CUST-041,EMP-017,medium,resolved,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-06-01,2026-06-04
+TKT-051,CUST-026,EMP-021,high,resolved,performance,Mobile app lag on dashboards,Dashboard widgets load slowly on the mobile app over cellular networks.,2026-06-02,2026-06-10
+TKT-052,CUST-038,EMP-017,medium,resolved,billing,Duplicate charge on monthly invoice,The monthly subscription appears twice on the most recent invoice.,2026-06-02,2026-06-07
+TKT-053,CUST-009,EMP-019,medium,resolved,billing,Duplicate charge on monthly invoice,The monthly subscription appears twice on the most recent invoice.,2026-06-03,2026-06-12
+TKT-054,CUST-033,EMP-019,medium,resolved,billing,Invoice total does not match contract,The latest invoice total differs from the amount agreed in the order form.,2026-06-06,2026-06-15
+TKT-055,CUST-029,EMP-017,high,resolved,integration,API rate limit errors,Batch jobs receive HTTP 429 responses during the nightly import window.,2026-06-09,2026-06-17
+TKT-056,CUST-006,EMP-019,medium,resolved,auth,New users cannot sign in,Accounts created this week receive an access denied message on first sign-in.,2026-06-12,2026-06-18
+TKT-057,CUST-006,EMP-021,medium,resolved,integration,API rate limit errors,Batch jobs receive HTTP 429 responses during the nightly import window.,2026-06-20,2026-06-22
+TKT-058,CUST-033,EMP-020,high,resolved,auth,New users cannot sign in,Accounts created this week receive an access denied message on first sign-in.,2026-06-21,2026-06-25
+TKT-059,CUST-050,EMP-021,medium,resolved,billing,Duplicate charge on monthly invoice,The monthly subscription appears twice on the most recent invoice.,2026-06-22,2026-06-24
+TKT-060,CUST-008,EMP-020,high,resolved,integration,Accounting export rejected,The accounting system rejects the export file because of a column mismatch.,2026-06-25,2026-06-29
+TKT-061,CUST-018,EMP-020,medium,resolved,onboarding,Bulk user import template,The customer asks for the template and steps to import users in bulk.,2026-06-27,2026-06-28
+TKT-062,CUST-040,EMP-019,high,resolved,auth,New users cannot sign in,Accounts created this week receive an access denied message on first sign-in.,2026-06-27,2026-07-05
+TKT-063,CUST-025,EMP-021,medium,resolved,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-07-10,2026-07-17
+TKT-064,CUST-038,EMP-018,medium,resolved,integration,API rate limit errors,Batch jobs receive HTTP 429 responses during the nightly import window.,2026-07-10,2026-07-11
+TKT-065,CUST-005,EMP-020,medium,resolved,data,Duplicate records after import,The bulk import created duplicate records for accounts that already existed.,2026-07-24,2026-07-26
+TKT-066,CUST-047,EMP-017,medium,resolved,data,Duplicate records after import,The bulk import created duplicate records for accounts that already existed.,2026-07-25,2026-07-27
+TKT-067,CUST-041,EMP-021,high,resolved,onboarding,Help configuring user roles,The customer needs guidance on mapping team responsibilities to user roles.,2026-08-05,2026-08-11
+TKT-068,CUST-014,EMP-017,medium,resolved,onboarding,Bulk user import template,The customer asks for the template and steps to import users in bulk.,2026-08-07,2026-08-12
+TKT-069,CUST-026,EMP-021,medium,open,billing,Revised tax invoice requested,The customer needs the invoice reissued with the updated registered address.,2026-08-09,
+TKT-070,CUST-024,EMP-018,medium,resolved,billing,Invoice total does not match contract,The latest invoice total differs from the amount agreed in the order form.,2026-08-10,2026-08-11
+TKT-071,CUST-009,EMP-020,medium,resolved,integration,Accounting export rejected,The accounting system rejects the export file because of a column mismatch.,2026-08-11,2026-08-13
+TKT-072,CUST-025,EMP-020,medium,open,billing,Duplicate charge on monthly invoice,The monthly subscription appears twice on the most recent invoice.,2026-08-11,
+TKT-073,CUST-007,EMP-020,high,resolved,performance,Dashboards take over 30 seconds to load,Executive dashboards time out during the morning review; the delay started after the last release.,2026-08-18,2026-08-20
+TKT-074,CUST-009,EMP-019,high,resolved,integration,CRM sync missing contacts,Contacts created in the CRM do not appear after the scheduled sync.,2026-08-18,2026-08-23
+TKT-075,CUST-007,EMP-018,high,open,performance,Nightly data sync times out,"The nightly sync job has failed three nights in a row with timeout errors, leaving reports a day stale.",2026-08-20,
+TKT-076,CUST-007,EMP-021,high,open,integration,Webhook deliveries failing after upgrade,"Order webhooks return HTTP 500 since the platform upgrade, so the customer's ERP is missing updates.",2026-08-23,
+TKT-077,CUST-012,EMP-018,medium,open,onboarding,Admin training session request,The customer requests a training session for newly appointed administrators.,2026-08-23,
+TKT-078,CUST-036,EMP-019,high,open,performance,Mobile app lag on dashboards,Dashboard widgets load slowly on the mobile app over cellular networks.,2026-08-24,
+TKT-079,CUST-007,EMP-017,medium,open,billing,Invoice includes removed licences,The August invoice charges for 40 seats although 12 seats were removed in July.,2026-08-25,
+TKT-080,CUST-007,EMP-020,high,open,performance,Month-end close blocked by slow exports,Finance exports take several hours and block the month-end close; the customer has asked for an escalation call.,2026-08-27,

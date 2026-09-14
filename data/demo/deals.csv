@@ -1,4 +1,45 @@
 deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
-DEAL-001,Acme Platform Deal,CUST-001,EMP-002,negotiation,150000.50,INR,75.0,2026-12-31,true
-DEAL-002,Widget CRM Migration,CUST-002,EMP-001,qualification,45000.00,USD,40.0,2026-09-30,true
-DEAL-003,DataFlow Analytics Suite,CUST-003,EMP-001,won,280000.00,EUR,100.0,2026-06-15,true
+DEAL-001,Meridian Textiles - Seat Expansion,CUST-007,EMP-007,negotiation,5361.44,USD,90.00,2027-03-05,true
+DEAL-002,Keystone Motors - Data Migration,CUST-046,EMP-008,negotiation,28078.31,USD,90.00,2026-12-12,true
+DEAL-003,Oakridge Finserv - Integration Services,CUST-026,EMP-008,qualification,171000.00,INR,30.00,2027-03-07,true
+DEAL-004,Deltaforge Analytics - Analytics Suite,CUST-021,EMP-007,won,4019500.00,INR,100.00,2025-12-30,false
+DEAL-005,Cedarline Motors - Support Renewal,CUST-042,EMP-010,negotiation,24487.95,USD,90.00,2027-01-17,true
+DEAL-006,Unity Pharma - Data Migration,CUST-015,EMP-010,won,8376000.00,INR,100.00,2026-01-23,false
+DEAL-007,Trident Energy - Data Migration,CUST-010,EMP-007,won,10202500.00,INR,100.00,2026-06-10,false
+DEAL-008,Cedarline Motors - Platform Subscription,CUST-042,EMP-010,qualification,4200000.00,INR,30.00,2026-09-29,true
+DEAL-009,Ironwood Foods - Support Renewal,CUST-011,EMP-007,won,5722500.00,INR,100.00,2025-07-07,false
+DEAL-010,Unity Pharma - Integration Services,CUST-015,EMP-010,negotiation,12797000.00,INR,70.00,2027-04-04,true
+DEAL-011,Westbrook Health - Platform Subscription,CUST-019,EMP-010,negotiation,535500.00,INR,90.00,2027-02-01,true
+DEAL-012,Evergrid Health - Platform Subscription,CUST-044,EMP-007,qualification,1080000.00,INR,30.00,2027-04-23,true
+DEAL-013,Redwood Foods - Platform Subscription,CUST-006,EMP-010,won,12162.65,USD,100.00,2024-03-26,false
+DEAL-014,Lumina Energy - Reporting Add-on,CUST-014,EMP-007,qualification,4036500.00,INR,40.00,2027-04-29,true
+DEAL-015,Evergrid Motors - Seat Expansion,CUST-050,EMP-010,negotiation,249000.00,INR,70.00,2026-12-24,true
+DEAL-016,Cedarline Motors - Support Renewal,CUST-042,EMP-010,qualification,83259.03,USD,20.00,2027-03-09,true
+DEAL-017,Westbrook Health - Reporting Add-on,CUST-019,EMP-010,qualification,211500.00,INR,25.00,2027-01-27,true
+DEAL-018,Silverline Foods - Integration Services,CUST-035,EMP-007,qualification,11891.56,USD,20.00,2027-03-15,true
+DEAL-019,Quantix Health - Support Renewal,CUST-037,EMP-010,won,6535500.00,INR,100.00,2025-11-22,false
+DEAL-020,Aurora Pharma - Integration Services,CUST-032,EMP-007,won,1102.40,USD,100.00,2025-06-05,false
+DEAL-021,Trident Energy - Analytics Suite,CUST-010,EMP-007,qualification,6692000.00,INR,10.00,2027-04-22,true
+DEAL-022,Yellowfin Motors - Support Renewal,CUST-029,EMP-007,qualification,5903.61,USD,30.00,2026-11-08,true
+DEAL-023,Northstar Health - Reporting Add-on,CUST-045,EMP-008,won,2010500.00,INR,100.00,2026-01-20,false
+DEAL-024,Redwood Foods - Seat Expansion,CUST-006,EMP-010,won,18397.59,USD,100.00,2025-11-15,false
+DEAL-025,Trident Foods - Platform Subscription,CUST-024,EMP-007,negotiation,497000.00,INR,75.00,2026-10-10,true
+DEAL-026,Evergrid Motors - Support Renewal,CUST-050,EMP-010,negotiation,5548.19,USD,80.00,2026-11-02,true
+DEAL-027,Westbrook Pharma - Data Migration,CUST-003,EMP-010,won,19469.87,USD,100.00,2025-07-23,false
+DEAL-028,Vertex Foods - Analytics Suite,CUST-031,EMP-008,negotiation,2207500.00,INR,80.00,2027-03-28,true
+DEAL-029,Zenith Analytics - Reporting Add-on,CUST-043,EMP-007,negotiation,319000.00,INR,90.00,2027-01-01,true
+DEAL-030,Falconridge Foods - Seat Expansion,CUST-001,EMP-010,qualification,57000.00,INR,20.00,2027-04-04,true
+DEAL-031,Westbrook Textiles - Data Migration,CUST-041,EMP-009,qualification,1109500.00,INR,20.00,2026-10-03,true
+DEAL-032,Cedarline Motors - Support Renewal,CUST-042,EMP-010,qualification,5411500.00,INR,10.00,2027-03-11,true
+DEAL-033,Evergrid Motors - Seat Expansion,CUST-050,EMP-010,won,64500.00,INR,100.00,2025-12-10,false
+DEAL-034,Quantix Health - Reporting Add-on,CUST-037,EMP-010,qualification,96633.33,EUR,40.00,2027-04-13,true
+DEAL-035,Trident Energy - Data Migration,CUST-010,EMP-007,won,106734.93,USD,100.00,2026-01-16,false
+DEAL-036,Oakridge Finserv - Support Renewal,CUST-026,EMP-008,won,336500.00,INR,100.00,2024-03-03,false
+DEAL-037,Redwood Finserv - Analytics Suite,CUST-036,EMP-008,qualification,499000.00,INR,30.00,2026-10-31,true
+DEAL-038,Yellowfin Motors - Analytics Suite,CUST-029,EMP-007,qualification,480000.00,INR,25.00,2027-03-23,true
+DEAL-039,Bluepeak Pharma - Integration Services,CUST-049,EMP-008,negotiation,5830000.00,INR,50.00,2027-04-14,true
+DEAL-040,Westbrook Pharma - Data Migration,CUST-003,EMP-010,negotiation,670000.00,INR,90.00,2026-11-04,true
+DEAL-041,Aurora Pharma - Reporting Add-on,CUST-032,EMP-007,won,569500.00,INR,100.00,2023-03-28,false
+DEAL-042,Quantix Analytics - Platform Subscription,CUST-020,EMP-007,qualification,54500.00,INR,30.00,2027-01-25,true
+DEAL-043,Oakridge Builders - Seat Expansion,CUST-012,EMP-008,negotiation,28843.37,USD,50.00,2026-12-15,true
+DEAL-044,Oakridge Finserv - Support Renewal,CUST-026,EMP-008,negotiation,235000.00,INR,50.00,2027-02-11,true

@@ -1,4 +1,51 @@
 customer_id,customer_name,email_address,customer_segment,industry_name,account_owner_id,status,created_date
-CUST-001,Acme Industries,contact@acme-ind.example,Enterprise,Manufacturing,EMP-002,active,2025-01-15
-CUST-002,Widget Corp,info@widget.example,SMB,Retail,EMP-002,active,2025-03-20
-CUST-003,DataFlow Systems,hello@dataflow.example,Enterprise,Technology,EMP-001,active,2025-06-10
+CUST-001,Falconridge Foods,contact@falconridge-foods.example,SMB,Food and Beverage,EMP-010,active,2025-11-09
+CUST-002,Northstar Textiles,contact@northstar-textiles.example,Enterprise,Manufacturing,EMP-007,inactive,2026-02-02
+CUST-003,Westbrook Pharma,contact@westbrook-pharma.example,Mid-Market,Healthcare,EMP-010,active,2023-12-31
+CUST-004,Redwood Health,contact@redwood-health.example,SMB,Healthcare,EMP-009,active,2025-03-23
+CUST-005,Ironwood Analytics,contact@ironwood-analytics.example,Mid-Market,Technology,EMP-010,active,2024-03-02
+CUST-006,Redwood Foods,contact@redwood-foods.example,Mid-Market,Food and Beverage,EMP-010,active,2023-12-27
+CUST-007,Meridian Textiles,contact@meridian-textiles.example,SMB,Manufacturing,EMP-007,active,2023-03-08
+CUST-008,Bluepeak Retail,contact@bluepeak-retail.example,Mid-Market,Retail,EMP-010,active,2024-12-26
+CUST-009,Quantix Finserv,contact@quantix-finserv.example,SMB,Financial Services,EMP-008,active,2025-05-04
+CUST-010,Trident Energy,contact@trident-energy.example,Enterprise,Energy,EMP-007,active,2025-05-22
+CUST-011,Ironwood Foods,contact@ironwood-foods.example,Enterprise,Food and Beverage,EMP-007,active,2025-03-13
+CUST-012,Oakridge Builders,contact@oakridge-builders.example,Mid-Market,Construction,EMP-008,active,2025-06-25
+CUST-013,Aurora Foods,contact@aurora-foods.example,Mid-Market,Food and Beverage,EMP-009,inactive,2025-07-26
+CUST-014,Lumina Energy,contact@lumina-energy.example,Enterprise,Energy,EMP-007,active,2025-08-17
+CUST-015,Unity Pharma,contact@unity-pharma.example,Enterprise,Healthcare,EMP-010,active,2024-03-23
+CUST-016,Aurora Logistics,contact@aurora-logistics.example,Mid-Market,Logistics,EMP-009,active,2023-04-14
+CUST-017,Westbrook Logistics,contact@westbrook-logistics.example,Mid-Market,Logistics,EMP-009,active,2024-06-15
+CUST-018,Vertex Health,contact@vertex-health.example,SMB,Healthcare,EMP-008,active,2023-04-14
+CUST-019,Westbrook Health,contact@westbrook-health.example,SMB,Healthcare,EMP-010,active,2025-06-02
+CUST-020,Quantix Analytics,contact@quantix-analytics.example,SMB,Technology,EMP-007,active,2023-11-17
+CUST-021,Deltaforge Analytics,contact@deltaforge-analytics.example,Enterprise,Technology,EMP-007,active,2023-05-20
+CUST-022,Cedarline Energy,contact@cedarline-energy.example,Enterprise,Energy,EMP-007,active,2023-09-05
+CUST-023,Bluepeak Analytics,contact@bluepeak-analytics.example,Enterprise,Technology,EMP-010,active,2023-08-16
+CUST-024,Trident Foods,contact@trident-foods.example,SMB,Food and Beverage,EMP-007,active,2024-12-26
+CUST-025,Greenmark Pharma,contact@greenmark-pharma.example,SMB,Healthcare,EMP-008,active,2026-03-12
+CUST-026,Oakridge Finserv,contact@oakridge-finserv.example,SMB,Financial Services,EMP-008,active,2023-08-24
+CUST-027,Deltaforge Health,contact@deltaforge-health.example,Enterprise,Healthcare,EMP-009,inactive,2023-08-20
+CUST-028,Cedarline Health,contact@cedarline-health.example,SMB,Healthcare,EMP-010,active,2025-04-01
+CUST-029,Yellowfin Motors,contact@yellowfin-motors.example,SMB,Automotive,EMP-007,active,2025-03-31
+CUST-030,Northstar Energy,contact@northstar-energy.example,Mid-Market,Energy,EMP-008,active,2023-11-20
+CUST-031,Vertex Foods,contact@vertex-foods.example,Mid-Market,Food and Beverage,EMP-008,active,2023-12-01
+CUST-032,Aurora Pharma,contact@aurora-pharma.example,SMB,Healthcare,EMP-007,active,2023-02-11
+CUST-033,Quantix Pharma,contact@quantix-pharma.example,SMB,Healthcare,EMP-009,active,2025-01-22
+CUST-034,Westbrook Foods,contact@westbrook-foods.example,Mid-Market,Food and Beverage,EMP-010,inactive,2023-09-03
+CUST-035,Silverline Foods,contact@silverline-foods.example,Mid-Market,Food and Beverage,EMP-007,active,2025-06-15
+CUST-036,Redwood Finserv,contact@redwood-finserv.example,SMB,Financial Services,EMP-008,active,2025-07-30
+CUST-037,Quantix Health,contact@quantix-health.example,Enterprise,Healthcare,EMP-010,active,2023-05-12
+CUST-038,Meridian Foods,contact@meridian-foods.example,Mid-Market,Food and Beverage,EMP-007,active,2023-03-19
+CUST-039,Evergrid Textiles,contact@evergrid-textiles.example,SMB,Manufacturing,EMP-009,active,2024-06-18
+CUST-040,Zenith Health,contact@zenith-health.example,Mid-Market,Healthcare,EMP-007,active,2024-02-16
+CUST-041,Westbrook Textiles,contact@westbrook-textiles.example,Mid-Market,Manufacturing,EMP-009,active,2024-08-15
+CUST-042,Cedarline Motors,contact@cedarline-motors.example,Enterprise,Automotive,EMP-010,active,2024-05-01
+CUST-043,Zenith Analytics,contact@zenith-analytics.example,SMB,Technology,EMP-007,active,2023-01-10
+CUST-044,Evergrid Health,contact@evergrid-health.example,Mid-Market,Healthcare,EMP-007,active,2023-04-26
+CUST-045,Northstar Health,contact@northstar-health.example,Mid-Market,Healthcare,EMP-008,active,2024-10-04
+CUST-046,Keystone Motors,contact@keystone-motors.example,Mid-Market,Automotive,EMP-008,active,2025-03-16
+CUST-047,Zenith Builders,contact@zenith-builders.example,SMB,Construction,EMP-009,active,2025-10-26
+CUST-048,Silverline Energy,contact@silverline-energy.example,SMB,Energy,EMP-009,active,2024-10-23
+CUST-049,Bluepeak Pharma,contact@bluepeak-pharma.example,Enterprise,Healthcare,EMP-008,active,2023-02-14
+CUST-050,Evergrid Motors,contact@evergrid-motors.example,SMB,Automotive,EMP-010,active,2023-09-05

@@ -1,3 +1,69 @@
 document_id,title,document_type,body_text,source_uri,owner_id,created_date,updated_date
-DOC-001,Employee Handbook 2026,policy,,https://internal.acme.example/docs/handbook.pdf,EMP-001,2026-01-01,2026-06-15
-DOC-002,Q3 Sales Report,report,,https://internal.acme.example/reports/q3-sales.pdf,EMP-002,2026-07-01,2026-09-05
+DOC-001,Employee Handbook 2026,policy,"Acme Corp Employee Handbook 2026
+
+1. Working hours: core collaboration hours are 10:00 to 16:00 IST, Monday to Friday.
+2. Leave: employees accrue 1.75 days of paid leave per month; requests go to the direct manager.
+3. Conduct: treat colleagues and customers with respect and report concerns to Human Resources.
+4. Equipment: company laptops use full-disk encryption and automatic screen lock.
+5. Expenses: submit claims with receipts within 30 days.",https://internal.acme.example/docs/doc-001,EMP-006,2026-01-05,2026-06-15
+DOC-002,Information Security Policy,policy,"Information Security Policy
+
+Access to customer data is granted on a least-privilege basis and reviewed quarterly.
+Credentials are kept in the approved secrets manager and are never shared by email or chat.
+Security incidents are reported to Engineering within one hour of discovery.
+Production changes require peer review and an approved change request.",https://internal.acme.example/docs/doc-002,EMP-003,2025-11-10,2026-04-02
+DOC-003,Customer Support SLA Policy,policy,"Customer Support SLA Policy
+
+High priority: first response within 2 business hours; resolution target 1 business day.
+Medium priority: first response within 8 business hours; resolution target 5 business days.
+Customers raising three or more tickets within 14 days are escalated to their account owner.",https://internal.acme.example/docs/doc-003,EMP-004,2025-09-01,2026-02-20
+DOC-004,Sales Pipeline Report 2026-09-01,report,"Sales pipeline as of 2026-09-01
+
+Deals by stage: qualification 16, negotiation 14, won 14.
+Open pipeline value of INR-denominated deals: INR 47,342,500.00.
+Largest open negotiation: Unity Pharma - Integration Services (DEAL-010).",https://internal.acme.example/docs/doc-004,EMP-002,2026-09-01,2026-09-01
+DOC-005,Support Ticket Trends August 2026,report,"Support ticket trends, August 2026
+
+Tickets created: 14.
+By category: billing 4, integration 3, onboarding 3, performance 4.
+Escalation: Meridian Textiles (CUST-007) raised 5 tickets between 2026-08-18 and 2026-08-27; 4 remain open while deal DEAL-001 is in negotiation.",https://internal.acme.example/docs/doc-005,EMP-004,2026-09-01,2026-09-01
+DOC-006,Master Services Agreement - Meridian Textiles,contract,"Master Services Agreement between Acme Corp and Meridian Textiles (CUST-007).
+
+Effective date: 2023-03-08.
+Term: 36 months, renewing annually unless either party gives 90 days' written notice.
+Service levels: as defined in the Customer Support SLA Policy.
+Fees: invoiced quarterly in advance; undisputed invoices are payable within 30 days.",https://internal.acme.example/docs/doc-006,EMP-007,2023-03-08,2023-03-08
+DOC-007,Master Services Agreement - Deltaforge Analytics,contract,"Master Services Agreement between Acme Corp and Deltaforge Analytics (CUST-021).
+
+Effective date: 2023-05-20.
+Term: 36 months, renewing annually unless either party gives 90 days' written notice.
+Service levels: as defined in the Customer Support SLA Policy.
+Fees: invoiced quarterly in advance; undisputed invoices are payable within 30 days.",https://internal.acme.example/docs/doc-007,EMP-007,2023-05-20,2025-12-30
+DOC-008,Proposal - Unity Pharma - Integration Services,proposal,"Commercial proposal for Unity Pharma (DEAL-010).
+
+Value: INR 12797000.00.
+Expected close date: 2027-04-04.
+Scope: licences, implementation services and twelve months of standard support.",https://internal.acme.example/docs/doc-008,EMP-010,2026-08-12,2026-08-26
+DOC-009,Account Review Notes - Meridian Textiles,meeting_notes,"Account review: Meridian Textiles (CUST-007)
+
+Attendees: Vikram Pillai (account owner), Karan Kapoor (Head of Customer Support).
+Discussion: 5 support tickets in 9 days, mostly performance issues. The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them.
+Actions: daily status updates until the open tickets are resolved; executive sponsor call next week.",https://internal.acme.example/docs/doc-009,EMP-007,2026-08-30,2026-08-30
+DOC-010,Incident Postmortem - Nightly Data Sync Timeouts,report,"Incident postmortem: nightly data sync timeouts
+
+Impact: nightly sync jobs for large accounts timed out, leaving reports stale.
+Root cause: a query introduced in the latest release scanned full history instead of the changed window.
+Remediation: the query was restored to incremental reads and a runtime alert was added.",https://internal.acme.example/docs/doc-010,EMP-003,2026-08-29,2026-08-31
+DOC-011,Project Kickoff Notes - Deltaforge Analytics CRM Integration,meeting_notes,"Kickoff: Deltaforge Analytics CRM Integration (PROJ-001)
+
+Delivery lead: Arjun Menon.
+Planned timeline: 2026-01-26 to 2026-11-01.
+Budget: INR 2873030.00.
+Next steps: confirm data sources, agree acceptance criteria, schedule weekly check-ins.",https://internal.acme.example/docs/doc-011,EMP-016,2026-01-26,2026-01-26
+DOC-012,Customer Onboarding Runbook,runbook,"Customer onboarding runbook
+
+1. Create the customer workspace and invite the named administrators.
+2. Import users from the customer's template and assign roles.
+3. Configure integrations and run a test sync.
+4. Hold the administrator training session.
+5. Hand over to Customer Support with the agreed SLA.",https://internal.acme.example/docs/doc-012,EMP-024,2025-06-12,2026-05-08

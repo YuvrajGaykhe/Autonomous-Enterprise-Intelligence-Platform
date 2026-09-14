@@ -1,4 +1,25 @@
 employee_id,employee_name,email_address,department,title,manager_id,status,hire_date,is_active,organization_id
-EMP-001,Alice Engineer,alice@acme.example,Engineering,Senior Developer,,active,2024-03-15,true,ORG-001
-EMP-002,Bob Manager,bob@acme.example,Sales,Sales Manager,,active,2023-06-01,true,ORG-001
-EMP-003,Carol Analyst,carol@globaltech.example,Analytics,Data Analyst,EMP-002,active,2025-01-10,true,ORG-002
+EMP-001,Kavya Verma,kavya.verma@acme.example,Executive,Chief Executive Officer,,active,2019-04-01,true,ORG-001
+EMP-002,Isha Khan,isha.khan@acme.example,Sales,VP Sales,EMP-001,active,2021-03-06,true,ORG-001
+EMP-003,Leila Dutta,leila.dutta@acme.example,Engineering,VP Engineering,EMP-001,active,2021-11-27,true,ORG-001
+EMP-004,Karan Kapoor,karan.kapoor@acme.example,Customer Support,Head of Customer Support,EMP-001,active,2021-12-03,true,ORG-001
+EMP-005,Meera Ghosh,meera.ghosh@acme.example,Finance,Finance Director,EMP-001,active,2020-05-02,true,ORG-001
+EMP-006,Sofia Sharma,sofia.sharma@acme.example,Human Resources,HR Manager,EMP-001,active,2020-01-28,true,ORG-001
+EMP-007,Vikram Pillai,vikram.pillai@acme.example,Sales,Account Executive,EMP-002,active,2021-05-28,true,ORG-001
+EMP-008,Neha Joshi,neha.joshi@acme.example,Sales,Account Executive,EMP-002,active,2021-04-27,true,ORG-001
+EMP-009,Lakshmi Bhat,lakshmi.bhat@acme.example,Sales,Account Executive,EMP-002,active,2022-08-01,true,ORG-001
+EMP-010,Nikhil Patel,nikhil.patel@acme.example,Sales,Account Executive,EMP-002,active,2023-05-02,true,ORG-001
+EMP-011,Farhan Fernandes,farhan.fernandes@acme.example,Sales,Account Executive,EMP-002,inactive,2022-02-12,false,ORG-001
+EMP-012,Ananya Iyer,ananya.iyer@acme.example,Engineering,Delivery Lead,EMP-003,active,2023-01-05,true,ORG-001
+EMP-013,Pooja Saxena,pooja.saxena@acme.example,Engineering,Delivery Lead,EMP-003,active,2023-07-03,true,ORG-001
+EMP-014,Priya Desai,priya.desai@acme.example,Engineering,Senior Engineer,EMP-003,active,2022-11-06,true,ORG-001
+EMP-015,Kenji Bose,kenji.bose@acme.example,Engineering,Senior Engineer,EMP-003,active,2024-01-14,true,ORG-001
+EMP-016,Arjun Menon,arjun.menon@acme.example,Engineering,Data Engineer,EMP-003,active,2023-07-01,true,ORG-001
+EMP-017,Tomas Sinha,tomas.sinha@acme.example,Customer Support,Support Engineer,EMP-004,active,2022-10-07,true,ORG-001
+EMP-018,Rahul Agarwal,rahul.agarwal@acme.example,Customer Support,Support Engineer,EMP-004,active,2022-11-12,true,ORG-001
+EMP-019,Sanjay Chatterjee,sanjay.chatterjee@acme.example,Customer Support,Support Engineer,EMP-004,active,2022-06-02,true,ORG-001
+EMP-020,Aditya Mathur,aditya.mathur@acme.example,Customer Support,Support Engineer,EMP-004,active,2023-02-14,true,ORG-001
+EMP-021,Rohan Rao,rohan.rao@acme.example,Customer Support,Support Engineer,EMP-004,active,2023-04-21,true,ORG-001
+EMP-022,Aarav Reddy,aarav.reddy@acme.example,Finance,Financial Analyst,EMP-005,active,2023-02-04,true,ORG-001
+EMP-023,Daniel Nair,daniel.nair@acme.example,Human Resources,Talent Partner,EMP-006,active,2022-02-03,true,ORG-001
+EMP-024,Sneha Gupta,sneha.gupta@acme.example,Operations,Operations Manager,EMP-001,active,2021-08-26,true,ORG-001

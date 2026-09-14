@@ -1,3 +1,23 @@
 project_id,project_name,customer_id,owner_id,status,start_date,end_date,budget,is_active
-PROJ-001,Platform Migration,CUST-001,EMP-001,in_progress,2026-01-01,2026-12-31,500000.00,true
-PROJ-002,CRM Integration,CUST-002,EMP-002,planning,2026-04-01,2026-10-31,120000.00,true
+PROJ-001,Deltaforge Analytics CRM Integration,CUST-021,EMP-016,in_progress,2026-01-26,2026-11-01,2873030.00,true
+PROJ-002,Unity Pharma Analytics Onboarding,CUST-015,EMP-012,in_progress,2026-02-16,2027-02-08,5364495.00,true
+PROJ-003,Trident Energy Platform Rollout,CUST-010,EMP-012,in_progress,2026-07-10,2027-04-21,6181560.00,true
+PROJ-004,Ironwood Foods Analytics Onboarding,CUST-011,EMP-014,in_progress,2025-08-05,2026-02-21,4268800.00,true
+PROJ-005,Redwood Foods CRM Integration,CUST-006,EMP-012,in_progress,2024-04-05,2024-12-13,729980.00,true
+PROJ-006,Quantix Health Support Portal Launch,CUST-037,EMP-013,in_progress,2025-12-04,2026-08-28,6856500.00,true
+PROJ-007,Aurora Pharma Data Warehouse Build,CUST-032,EMP-015,in_progress,2025-06-18,2026-01-27,175230.00,true
+PROJ-008,Northstar Health Support Portal Launch,CUST-045,EMP-012,in_progress,2026-02-17,2027-01-23,651655.00,true
+PROJ-009,Redwood Foods Analytics Onboarding,CUST-006,EMP-016,in_progress,2025-12-12,2026-05-04,1128920.00,true
+PROJ-010,Westbrook Pharma Platform Rollout,CUST-003,EMP-013,in_progress,2025-08-19,2026-01-30,401280.00,true
+PROJ-011,Evergrid Motors Support Portal Launch,CUST-050,EMP-015,in_progress,2026-01-01,2026-12-30,210960.00,true
+PROJ-012,Trident Energy Platform Rollout,CUST-010,EMP-013,in_progress,2026-02-13,2027-01-28,5769270.00,true
+PROJ-013,Oakridge Finserv Support Portal Launch,CUST-026,EMP-012,in_progress,2024-03-20,2024-10-22,133455.00,true
+PROJ-014,Aurora Pharma Analytics Onboarding,CUST-032,EMP-013,in_progress,2023-04-22,2023-08-31,93960.00,true
+PROJ-015,Trident Foods Support Portal Launch,CUST-024,EMP-015,planning,2026-11-06,2027-05-20,149800.00,true
+PROJ-016,Oakridge Finserv CRM Integration,CUST-026,EMP-013,planning,2026-11-21,2027-04-29,201865.00,true
+PROJ-017,Evergrid Motors CRM Integration,CUST-050,EMP-014,planning,2026-09-25,2027-03-22,48720.00,true
+PROJ-018,Westbrook Pharma Data Warehouse Build,CUST-003,EMP-013,planning,2026-09-19,2027-03-02,616910.00,true
+PROJ-019,Vertex Foods CRM Integration,CUST-031,EMP-016,planning,2026-10-11,2027-07-02,1289715.00,true
+PROJ-020,Cedarline Motors Support Portal Launch,CUST-042,EMP-013,planning,2026-10-12,2027-09-04,5570040.00,true
+PROJ-021,Oakridge Builders Support Portal Launch,CUST-012,EMP-012,planning,2026-10-29,2027-03-22,836550.00,true
+PROJ-022,Zenith Analytics Support Portal Launch,CUST-043,EMP-015,planning,2026-09-29,2027-07-23,350100.00,true
