@@ -530,9 +530,54 @@ docker compose down -v
 
 ---
 
+## Ingestion Orchestration (E1)
+
+`app/ingestion/` runs connector → D1 → D2 → PostgreSQL; `app/persistence/repositories/`
+is its data-access layer (repositories never commit or log).
+
+```
+create run → health check → for each entity in dependency order, for each page:
+    fetch → D1 + D2 quality gate → one transaction:
+        source_records → FK resolution → upsert → ingestion_errors → run counts → checkpoint
+→ finalize run status
+```
+
+| Concern | Behaviour |
+|---|---|
+| Identity | Upsert on `(source_system, source_entity, source_id)`; the canonical `id` is D1's UUID5 and never changes |
+| Reconciliation | Each record is `inserted`, `updated` or `unchanged`; unchanged means the same `record_hash`, `source_updated_at` and resolved FKs. Duplicates in a batch: the last occurrence wins. No deletes, no cross-source merging |
+| Foreign keys | `customer_id` is resolved from `customer_source_id` against customers of the same source; unresolved → NULL + `UNRESOLVED_REFERENCE` warning. `employees.organization_id` stays NULL: the canonical contract carries no organization source key (open B1/B2 gap) |
+| Transactions | One transaction per fetched page, advisory-locked per source entity; a failed batch rolls back completely |
+| Quarantine | One `ingestion_errors` ERROR row per rejected record, with D2's redacted payload in `detail`; D2 warnings become WARNING rows |
+| Raw capture | Append-only `source_records` rows per run for every record with a known source identity (unmodified payload; never logged) |
+| Status | `FAILED` (health check failed, or failures with nothing committed) · `PARTIAL_SUCCESS` (entity or batch failure, or rejected records) · `NOOP` (nothing inserted or updated) · `SUCCESS` |
+| Failures | Connector authentication/configuration errors stop the run; other connector errors fail one entity; `IntegrityError`/`DataError` fail one batch (`BATCH_FAILED`, SQLSTATE only); anything else marks the run `FAILED` and propagates |
+| Checkpoint | `ingestion_cursors` advances only when an entity's final page commits. Only `full` mode exists: no connector supports incremental sync |
+| Counts | `fetched = inserted + updated + unchanged + rejected + failed`; records of a failed batch are included in `records_fetched` and described by its `BATCH_FAILED` row |
+
+Logs and summaries carry identifiers, counts and exception class names only.
+
+---
+
 ## Ingestion Commands
 
-<!-- To be completed in Task E1 and I2 -->
+```bash
+make ingest-demo
+```
+
+Equivalent to `python scripts/ingest_demo.py`, which prints the run summary as JSON.
+Running it again is a `NOOP`. Options (pass through `ARGS="..."` with make):
+
+| Option | Purpose |
+|---|---|
+| `--source {csv_demo,odoo_mock,rest_mock}` | Connector from `config/connectors/` (default `csv_demo`) |
+| `--entities customers deals ...` | Limit the run; parents are still processed first |
+| `--page-size N` | Records per batch transaction (default 100) |
+| `--base-url URL` | HTTP sources only, e.g. `http://localhost:8080` outside Docker |
+| `--data-directory DIR` | `csv_demo` only |
+
+Exit status: `0` SUCCESS / PARTIAL_SUCCESS / NOOP, `1` FAILED, `2` invalid request or
+connector configuration (no run created). The database comes from `DATABASE_URL`.
 
 ---
 

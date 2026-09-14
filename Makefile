@@ -54,10 +54,11 @@ seed:
 	@echo "[seed] Seeding demo data... [STUB: Task E2]"
 	@echo "  Run: python scripts/seed_demo.py"
 
-# Run full demo ingestion. [STUB — implemented in Task E1]
+# Run a full csv_demo ingestion (idempotent: repeating it is a NOOP).
+# Pass options through ARGS, e.g. make ingest-demo ARGS="--entities customers deals".
 ingest-demo:
-	@echo "[ingest-demo] Running demo ingestion... [STUB: Task E1]"
-	@echo "  Run: python scripts/ingest_demo.py"
+	@echo "[ingest-demo] Running ingestion..."
+	.venv/bin/python scripts/ingest_demo.py $(ARGS)
 
 # Run the full test suite.
 test:
