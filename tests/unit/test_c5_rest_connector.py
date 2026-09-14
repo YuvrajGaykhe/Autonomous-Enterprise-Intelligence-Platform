@@ -44,10 +44,7 @@ from app.connectors.rest import (
     RestEntityConfig,
 )
 from app.connectors.types import (
-<<<<<<< HEAD
-=======
     ConnectorAuthenticationError,
->>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
     ConnectorCapabilities,
     ConnectorConfigurationError,
     ConnectorEntityError,
@@ -990,10 +987,6 @@ class TestSecurity:
     def test_no_hardcoded_localhost(self):
         import app.connectors.rest as rest_mod
         source = inspect.getsource(rest_mod)
-<<<<<<< HEAD
-        # Check only non-comment, non-docstring executable lines
-=======
->>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
         import_and_code = [
             line for line in source.splitlines()
             if not line.strip().startswith("#")
@@ -1001,12 +994,6 @@ class TestSecurity:
             and not line.strip().startswith("'''")
             and "localhost" not in line.split("#")[0] if "=" in line
         ]
-<<<<<<< HEAD
-        # The connector should not hardcode localhost in assignments
-        for line in import_and_code:
-            if "=" in line and "localhost" in line.split("#")[0]:
-                assert False, f"Hardcoded localhost found: {line}"
-=======
         for line in import_and_code:
             if "=" in line and "localhost" in line.split("#")[0]:
                 assert False, f"Hardcoded localhost found: {line}"
@@ -1197,4 +1184,3 @@ class TestExponentialBackoff:
         import app.connectors.rest as rest_mod
         source = inspect.getsource(rest_mod.RestConnector._get_json)
         assert "2 ** attempt" in source or "2**attempt" in source
->>>>>>> 0919b02 (C5: Audit and correct generic REST connector)
