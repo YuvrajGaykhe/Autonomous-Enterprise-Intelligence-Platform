@@ -9,9 +9,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
 
+from app.ingestion.orchestrator import ENTITY_ORDER, MAX_PAGE_SIZE, EntityStatus
 from app.persistence.repositories.runs import RunStatus
 
 
@@ -144,3 +146,59 @@ class ErrorListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class EntityType(StrEnum):
+    """Canonical entity types, in dependency order."""
+
+    ORGANIZATIONS = "organizations"
+    EMPLOYEES = "employees"
+    CUSTOMERS = "customers"
+    DEALS = "deals"
+    PROJECTS = "projects"
+    SUPPORT_TICKETS = "support_tickets"
+    DOCUMENTS = "documents"
+
+
+class IngestionRunRequest(BaseModel):
+    """Start a synchronous ingestion run.
+
+    Connection details (URLs, directories, credentials) cannot be supplied:
+    the source is built from its committed configuration. entities omitted
+    means every entity the source provides; parents always run first.
+    dry_run is accepted for contract compatibility, but only false is
+    supported.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: str = Field(min_length=1, max_length=100)
+    entities: list[EntityType] | None = Field(default=None, min_length=1,
+                                              max_length=len(ENTITY_ORDER))
+    mode: Literal["full"] = "full"
+    dry_run: StrictBool = False
+    page_size: StrictInt = Field(default=100, ge=1, le=MAX_PAGE_SIZE)
+
+
+class EntityRunResult(BaseModel):
+    """One entity's outcome. failure is an exception class name or error code."""
+
+    entity_type: str
+    status: EntityStatus
+    records_fetched: int
+    records_inserted: int
+    records_updated: int
+    records_unchanged: int
+    records_rejected: int
+    records_failed: int
+    warnings: int
+    batches_committed: int
+    batches_failed: int
+    failure: str | None
+
+
+class IngestionRunCreatedResponse(IngestionRunResponse):
+    """The completed run, plus the per-entity results known only at execution time."""
+
+    batches_committed: int
+    entities: list[EntityRunResult]

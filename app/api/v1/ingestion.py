@@ -1,9 +1,17 @@
 """
 Ingestion runs (spec Section 10).
 
-    GET /api/v1/ingestion/runs                    list runs (filters, limit/offset)
-    GET /api/v1/ingestion/runs/{run_id}           run detail and counts
-    GET /api/v1/ingestion/runs/{run_id}/errors    structured errors (safe findings)
+    POST /api/v1/ingestion/runs                   start a run (synchronous)
+    GET  /api/v1/ingestion/runs                   list runs (filters, limit/offset)
+    GET  /api/v1/ingestion/runs/{run_id}          run detail and counts
+    GET  /api/v1/ingestion/runs/{run_id}/errors   structured errors (safe findings)
+
+POST executes the run through E1 before responding and returns 201 with the
+completed run, whatever its status (a FAILED run is still a created run).
+Requests that are invalid, ask for dry_run, name an unknown source, or that
+E1 rejects create no run (422). A system failure during the run leaves the
+run FAILED in the database and returns a generic 500; the request ID is
+logged beside the run ID when the run finishes.
 
 Pagination is explicit and stable: runs are ordered newest first
 (started_at, id descending) and errors by (created_at, id); every page
@@ -15,28 +23,38 @@ app.api.ingestion_errors.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Sequence
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.api.dependencies import get_sessions, read_snapshot
+from app.api.connectors import ConnectorProvider
+from app.api.dependencies import get_connectors, get_sessions, read_snapshot
 from app.api.errors import ApiError, ErrorCode, ErrorResponse
 from app.api.ingestion_errors import safe_findings, safe_message
+from app.api.request_id import request_id_of
 from app.api.v1.schemas import (
+    EntityRunResult,
     ErrorFinding,
     ErrorListResponse,
     ErrorSeverity,
     IngestionErrorResponse,
+    IngestionRunCreatedResponse,
+    IngestionRunRequest,
     IngestionRunResponse,
     RunListResponse,
 )
-from app.ingestion.errors import IngestionCode
+from app.api.v1.sources import resolve_connector
+from app.ingestion.errors import IngestionCode, IngestionRequestError
+from app.ingestion.orchestrator import IngestionRequest, RunSummary, run_ingestion
 from app.persistence.models import IngestionError, IngestionRun
 from app.persistence.repositories import run_queries
 from app.persistence.repositories.runs import RunStatus
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ingestion/runs", tags=["ingestion"])
 
@@ -46,6 +64,85 @@ MAX_OFFSET = 2_147_483_647
 
 INVALID_REQUEST_RESPONSE = {"model": ErrorResponse, "description": "Invalid request parameters"}
 RUN_NOT_FOUND_RESPONSE = {"model": ErrorResponse, "description": "The ingestion run does not exist"}
+START_REJECTED_RESPONSE = {
+    "model": ErrorResponse,
+    "description": "Invalid or unsupported request, unknown source, or a request the source "
+                   "cannot serve; no run is created",
+}
+START_FAILED_RESPONSE = {
+    "model": ErrorResponse,
+    "description": "Source misconfigured (no run is created) or a system failure during the run "
+                   "(the run is marked FAILED)",
+}
+
+
+@router.post(
+    "",
+    status_code=HTTPStatus.CREATED,
+    response_model=IngestionRunCreatedResponse,
+    responses={HTTPStatus.UNPROCESSABLE_ENTITY.value: START_REJECTED_RESPONSE,
+               HTTPStatus.INTERNAL_SERVER_ERROR.value: START_FAILED_RESPONSE},
+)
+def start_run(
+    body: IngestionRunRequest,
+    request: Request,
+    response: Response,
+    sessions: sessionmaker[Session] = Depends(get_sessions),
+    connectors: ConnectorProvider = Depends(get_connectors),
+) -> IngestionRunCreatedResponse:
+    """Run one ingestion to completion and return the run."""
+    if body.dry_run:
+        raise ApiError(HTTPStatus.UNPROCESSABLE_ENTITY, ErrorCode.UNSUPPORTED_OPTION,
+                       "dry_run is not supported: every Layer 1 ingestion run persists its "
+                       "results", {"option": "dry_run"})
+    if body.source not in connectors.source_names:
+        raise ApiError(HTTPStatus.UNPROCESSABLE_ENTITY, ErrorCode.SOURCE_NOT_FOUND,
+                       "source is not configured",
+                       {"available_sources": list(connectors.source_names)})
+    connector = resolve_connector(connectors, body.source)
+    entities = None if body.entities is None else [entity.value for entity in body.entities]
+    request_id = request_id_of(request)
+    logger.info("ingestion_run_requested request_id=%s source=%s entities=%s", request_id,
+                body.source, "all" if entities is None else ",".join(entities))
+    try:
+        summary = run_ingestion(connector, sessions, IngestionRequest(
+            entities=entities, mode=body.mode, page_size=body.page_size))
+    except IngestionRequestError as exc:
+        raise ApiError(HTTPStatus.UNPROCESSABLE_ENTITY, ErrorCode.INVALID_INGESTION_REQUEST,
+                       "ingestion request is not valid for this source",
+                       {"source": body.source, "reason": str(exc)}) from None
+    logger.info("ingestion_run_finished request_id=%s run_id=%s status=%s", request_id,
+                summary.run_id, summary.status.value)
+
+    with read_snapshot(sessions) as session:
+        run = run_responses(session, [_existing_run(session, summary.run_id)])[0]
+    response.headers["Location"] = str(request.app.url_path_for(
+        "get_run", run_id=str(summary.run_id)))
+    return IngestionRunCreatedResponse(
+        **run.model_dump(),
+        batches_committed=summary.batches_committed,
+        entities=_entity_results(summary),
+    )
+
+
+def _entity_results(summary: RunSummary) -> list[EntityRunResult]:
+    return [
+        EntityRunResult(
+            entity_type=entity.entity_type,
+            status=entity.status,
+            records_fetched=entity.counts.fetched,
+            records_inserted=entity.counts.inserted,
+            records_updated=entity.counts.updated,
+            records_unchanged=entity.counts.unchanged,
+            records_rejected=entity.counts.rejected,
+            records_failed=entity.records_failed,
+            warnings=entity.counts.warnings,
+            batches_committed=entity.batches_committed,
+            batches_failed=entity.batches_failed,
+            failure=entity.failure,
+        )
+        for entity in summary.entities
+    ]
 
 
 @router.get(
