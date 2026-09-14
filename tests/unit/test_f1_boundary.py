@@ -32,7 +32,17 @@ def test_api_modules_exist():
         "app/api/errors.py", "app/api/request_id.py", "app/api/dependencies.py",
         "app/api/v1/router.py", "app/api/v1/health.py", "app/api/v1/schemas.py",
         "app/api/connectors.py", "app/api/v1/sources.py",
+        "app/api/ingestion_errors.py", "app/api/v1/ingestion.py",
     }
+
+
+def test_api_never_reads_raw_payload_fields():
+    for name, tree in _trees():
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute):
+                assert node.attr not in {"raw_payload", "raw_record", "raw_value"}, name
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                assert node.value not in {"raw_payload", "raw_record", "raw_value"}, name
 
 
 def test_api_builds_connectors_only_through_the_registry():
