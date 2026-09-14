@@ -418,6 +418,48 @@ unmapped fields, duplicate targets, unknown enum values, and other inconsistenci
 
 ---
 
+## Validation and Quarantine (D2)
+
+`app/validation/` is the quality gate that runs immediately after D1.
+
+| Stage | Responsibility | Output |
+|---|---|---|
+| D1 normalization | Source-specific data → canonical form | Canonical records or `NormalizationError` |
+| D2 validation | Canonical contract check → partition | Valid records **or** quarantine records, plus warnings |
+
+```
+source records → D1 normalize → D2 quality gate ─┬─→ valid canonical records → E1
+                                                  └─→ quarantine records      → E1 persists
+```
+
+Entry points: `validate_source_batch` (D1 + D2 for source-native records) and
+`validate_canonical_batch` (D2 for canonical records). Both return a
+`QualityGateResult` in input order. Valid records are the unmodified D1 objects.
+
+### Failure Model
+
+| Category | Examples | Behaviour |
+|---|---|---|
+| **DATA failure** | Missing required field, unknown enum, invalid identifier or relationship key, invalid date/datetime/decimal/currency, wrong canonical type, non-mapping record | `QuarantineRecord`; the rest of the batch continues |
+| **SYSTEM failure** | Unsupported source/entity, unexpected D1 error, configuration error, broken pipeline invariant (provenance mismatch, `record_hash`/`id` mismatch, E1 FK already set), programming bug | Exception (`QualityGateSystemError`, `CanonicalInvariantError`, or the original error); nothing is quarantined |
+| **WARNING** | Duplicate source identity, missing recommended field (email) | Record stays valid; finding reported |
+
+D2 never catches exceptions broadly: D1 error codes are classified explicitly,
+and unclassified codes fail closed as system failures.
+
+### Quarantine Record
+
+Each `QuarantineRecord` carries `ingestion_run_id`, `source_system`, `entity_type`,
+`record_index`, `stage` (`normalization` or `validation`), `source_id`, `canonical_id`,
+ordered `findings` (stable `code`, `field_name`, message, safe `raw_value`), and a
+safe copy of the raw record. Values under credential-like keys and bearer or
+query-string credentials are redacted; long strings are truncated. Persisting
+quarantine records (`ingestion_errors`, `data/quarantine/`) belongs to E1.
+
+Policy (redaction, limits, warning rules) lives in `config/validation/quality_gate.yaml`.
+
+---
+
 ## Demo Dataset
 
 <!-- To be completed in Task E2 and I2 -->

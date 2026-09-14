@@ -1,0 +1,52 @@
+# =============================================================================
+# D2 quality gate configuration.
+#
+# The canonical contract (field kinds, enum values, decimal limits, source
+# vocabulary) is owned by D1 in config/mappings/. This file configures only
+# D2 policy. Loaded and validated by app/validation/config.py.
+# =============================================================================
+
+version: 1
+
+# Spec Section 13 "Quarantine" and Section 14 "Log identifiers and operational
+# metadata, not secrets": quarantine payloads keep a safe, bounded copy of the
+# raw record for debugging.
+quarantine:
+  max_string_length: 2000
+  max_depth: 8
+  redaction: "[REDACTED]"
+  # Mapping keys whose values are always redacted. Keys are compared
+  # case-insensitively with non-alphanumerics removed, as substrings
+  # ("Authorization", "api_key", "X-Api-Key" all match).
+  sensitive_keys:
+    - password
+    - passwd
+    - secret
+    - token
+    - apikey
+    - authorization
+    - credential
+    - cookie
+    - privatekey
+    - accesskey
+    - session
+  # String values redacted wherever they appear (payloads and messages):
+  # bearer credentials and credentials embedded in URL query strings.
+  # Credential headers such as "Authorization: Basic ..." are covered by
+  # sensitive_keys; ordinary words ("Basic plan") are not redacted.
+  sensitive_value_patterns:
+    - '(?i)\bbearer\s+[A-Za-z0-9._~+/\-]{16,}=*'
+    - '(?i)\b(api[_-]?key|access[_-]?token|token|password|secret)=[^&\s''"]+'
+
+# WARNING findings keep the record valid (spec Section 13 severity model:
+# "record is usable but has a known quality limitation").
+warnings:
+  # Spec Section 13 Uniqueness: "Duplicate source identities detected".
+  # Duplicates are reported, never quarantined or dropped; E1 upserts by
+  # source identity.
+  duplicate_source_identity: true
+  # Spec Section 12 bad-fixture issue "missing email": email is optional in
+  # the canonical schema, so a missing email is a warning, not a rejection.
+  recommended_fields:
+    customers: [email]
+    employees: [email]
