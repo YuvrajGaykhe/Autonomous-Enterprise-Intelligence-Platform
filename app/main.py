@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.api.connectors import ConnectorProvider
 from app.api.errors import install_error_handlers
 from app.api.request_id import RequestIdMiddleware
 from app.api.v1.router import api_router
@@ -36,12 +37,18 @@ def _create_engine() -> Engine:
     )
 
 
-def create_app(*, sessions: sessionmaker[Session] | None = None) -> FastAPI:
+def create_app(
+    *,
+    sessions: sessionmaker[Session] | None = None,
+    connectors: ConnectorProvider | None = None,
+) -> FastAPI:
     """Create and configure the FastAPI application.
 
     Args:
         sessions: session factory to use; by default one is bound to a new
             engine for DATABASE_URL, disposed when the application shuts down.
+        connectors: connector provider to use; by default the committed
+            config/connectors/ sources, each built on first use.
     """
     engine: Engine | None = None
     if sessions is None:
@@ -63,6 +70,7 @@ def create_app(*, sessions: sessionmaker[Session] | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.sessions = sessions
+    app.state.connectors = ConnectorProvider() if connectors is None else connectors
     app.add_middleware(RequestIdMiddleware)
     install_error_handlers(app)
     app.include_router(api_router)

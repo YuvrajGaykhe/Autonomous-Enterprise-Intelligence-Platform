@@ -31,7 +31,24 @@ def test_api_modules_exist():
     assert {name for name, _ in _trees()} >= {
         "app/api/errors.py", "app/api/request_id.py", "app/api/dependencies.py",
         "app/api/v1/router.py", "app/api/v1/health.py", "app/api/v1/schemas.py",
+        "app/api/connectors.py", "app/api/v1/sources.py",
     }
+
+
+def test_api_builds_connectors_only_through_the_registry():
+    for name, tree in _trees():
+        for module in _imported_modules(tree):
+            assert not module.startswith(("app.connectors.csv", "app.connectors.odoo",
+                                          "app.connectors.rest")), f"{name}: {module}"
+
+
+def test_connector_construction_lives_only_in_the_registry():
+    for path in [*sorted((REPO / "app").rglob("*.py")), REPO / "scripts" / "ingest_demo.py"]:
+        if path == REPO / "app" / "connectors" / "registry.py":
+            continue
+        source = path.read_text(encoding="utf-8")
+        assert "SOURCE_CONFIG_FILES = {" not in source, path
+        assert "def build_connector" not in source, path
 
 
 def test_api_never_normalizes_validates_or_reads_source_schemas_itself():

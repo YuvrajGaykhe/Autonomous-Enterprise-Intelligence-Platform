@@ -10,8 +10,16 @@ from __future__ import annotations
 from fastapi import Request
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.api.connectors import ConnectorProvider
+
 
 def get_sessions(request: Request) -> sessionmaker[Session]:
     """The application's session factory. Routes own their transactions."""
     sessions: sessionmaker[Session] = request.app.state.sessions
     return sessions
+
+
+def get_connectors(request: Request) -> ConnectorProvider:
+    """The application's connector provider."""
+    connectors: ConnectorProvider = request.app.state.connectors
+    return connectors
