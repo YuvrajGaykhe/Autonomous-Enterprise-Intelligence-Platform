@@ -41,6 +41,7 @@ SOURCE_NOT_FOUND_RESPONSE = {"model": ErrorResponse, "description": "The source 
 SOURCE_MISCONFIGURED_RESPONSE = {
     "model": ErrorResponse, "description": "A source connector configuration is invalid",
 }
+INVALID_REQUEST_RESPONSE = {"model": ErrorResponse, "description": "Invalid request parameters"}
 
 
 def resolve_connector(connectors: ConnectorProvider, source: str) -> SourceConnector:
@@ -89,6 +90,7 @@ def _summary(source: str, connector: SourceConnector) -> SourceSummary:
     response_model=SourceHealthResponse,
     responses={
         HTTPStatus.NOT_FOUND.value: SOURCE_NOT_FOUND_RESPONSE,
+        HTTPStatus.UNPROCESSABLE_ENTITY.value: INVALID_REQUEST_RESPONSE,
         HTTPStatus.INTERNAL_SERVER_ERROR.value: SOURCE_MISCONFIGURED_RESPONSE,
     },
 )

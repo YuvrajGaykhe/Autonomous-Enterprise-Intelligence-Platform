@@ -653,7 +653,142 @@ connector configuration (no run created). The database comes from `DATABASE_URL`
 
 ## API Usage Examples
 
-<!-- To be completed in Task F1/F2 and I2 -->
+The API is versioned under `/api/v1` (synchronous FastAPI routes). Interactive documentation is
+served at `/docs` and the schema at `/openapi.json`. The examples assume the API on
+`localhost:8000`. Canonical entity and metrics routes arrive in F2.
+
+| Method | Path | Purpose | Success |
+|---|---|---|---|
+| GET | `/api/v1/health` | Liveness and readiness (PostgreSQL reachable) | `200` healthy · `503` unhealthy |
+| GET | `/api/v1/sources` | Configured sources and their capabilities | `200` |
+| GET | `/api/v1/sources/{source}/health` | Run one connector health check | `200` |
+| POST | `/api/v1/ingestion/runs` | Run one ingestion to completion | `201` + `Location` |
+| GET | `/api/v1/ingestion/runs` | List runs (`source_system`, `status`, `limit`, `offset`) | `200` |
+| GET | `/api/v1/ingestion/runs/{run_id}` | Run detail and counts | `200` |
+| GET | `/api/v1/ingestion/runs/{run_id}/errors` | Structured errors (`severity`, `limit`, `offset`) | `200` |
+
+### Health and sources
+
+```bash
+curl http://localhost:8000/api/v1/health
+# {"status": "healthy", "service": "ai-ceo-layer1", "version": "0.1.0", "checks": {"database": "ok"}}
+
+curl http://localhost:8000/api/v1/sources
+# {"sources": [{"source": "csv_demo", "source_type": "csv",
+#   "capabilities": {"supported_entity_types": ["customers", ...], "supports_incremental": false,
+#                    "supports_health_check": true, "read_only": true}}, ...]}
+
+curl http://localhost:8000/api/v1/sources/odoo_mock/health
+# {"source": "odoo_mock", "status": "healthy", "latency_ms": 3.1, "error_type": null,
+#  "checked_at": "2026-09-14T12:00:00Z"}
+```
+
+Application health and connector health are separate: `/health` returns `503` only when
+PostgreSQL is unreachable. A connector check always returns `200` with `status` `healthy`,
+`unhealthy` or `unsupported`; `error_type` is the connector exception class when the check
+raised. Connector messages, URLs and data paths are never returned.
+
+### Starting a run
+
+```bash
+curl -i -X POST http://localhost:8000/api/v1/ingestion/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"source": "csv_demo", "entities": ["customers", "deals"], "mode": "full", "dry_run": false}'
+# HTTP/1.1 201 Created
+# location: /api/v1/ingestion/runs/5f0c...
+# x-request-id: 2b7e...
+# {"run_id": "5f0c...", "source_system": "csv_demo", "status": "SUCCESS",
+#  "records_fetched": 94, "records_raw_persisted": 94, "records_inserted": 94, ...,
+#  "batches_committed": 2, "entities": [{"entity_type": "customers", "status": "completed", ...}]}
+```
+
+| Field | Rule |
+|---|---|
+| `source` | Required; one of the configured sources |
+| `entities` | Optional; omitted means every entity the source provides; parents always run first |
+| `mode` | `full` only |
+| `dry_run` | Optional, default `false`; `true` is rejected with `422 UNSUPPORTED_OPTION` |
+| `page_size` | Optional integer 1–10000 (default 100): records per batch transaction |
+
+The run executes before the response is sent, and the response is the completed run whatever
+its status: a run whose source health check fails is `201` with status `FAILED`. Repeating a
+request is idempotent (`NOOP`). Unknown fields are rejected, so connection details such as base
+URLs or data directories cannot be supplied through the API.
+
+### Runs and errors
+
+```bash
+curl 'http://localhost:8000/api/v1/ingestion/runs?status=PARTIAL_SUCCESS&limit=10'
+curl http://localhost:8000/api/v1/ingestion/runs/5f0c...
+curl 'http://localhost:8000/api/v1/ingestion/runs/5f0c.../errors?severity=ERROR'
+# {"items": [{"id": "...", "severity": "ERROR", "code": "UNKNOWN_ENUM_VALUE",
+#   "message": "value is not in the canonical vocabulary for this field",
+#   "source_system": "csv_demo", "source_entity": "customers", "source_id": "CUST-903",
+#   "created_at": "...", "findings": [{"code": "UNKNOWN_ENUM_VALUE", "field_name": "status",
+#   "severity": "ERROR", "message": "value is not in the canonical vocabulary for this field"}]}],
+#  "total": 3, "limit": 50, "offset": 0}
+```
+
+- **Pagination**: `limit` 1–500 (default 50) and `offset` ≥ 0; every page reports `total`,
+  `limit` and `offset`. Runs are ordered newest first (`started_at`, then `id`); errors by
+  `created_at`, then `id`. Each request reads one read-only snapshot.
+- **Counts**: `records_fetched = records_inserted + records_updated + records_unchanged +
+  records_rejected + records_failed`. `records_raw_persisted` counts captured raw records and
+  `batches_failed` counts rolled-back batches. `batches_committed` and per-entity results are
+  only in the `POST` response.
+- **Safe error messages**: stored D1/D2 diagnostics quote the rejected source value
+  (e.g. `unknown value 'suspended'`) and keep a redacted copy of the raw record. The API never
+  returns them. Errors raised by E1 itself (`UNRESOLVED_REFERENCE`, `CONNECTOR_UNHEALTHY`,
+  `CONNECTOR_FAILED`, `BATCH_FAILED`) keep their stored message, which names entities, fields,
+  counts and exception classes only. Every D1/D2 code maps to a fixed description, and any
+  other code reads `record failed data quality checks`. `raw_record`, `raw_value`, source keys and
+  stored D1/D2 messages stay in `ingestion_errors` for debugging.
+
+### Error responses
+
+Every error has one shape, and the same `request_id` is sent in the `X-Request-ID` header (a
+client-supplied `X-Request-ID` of 1–64 characters `[A-Za-z0-9._-]` is reused):
+
+```json
+{"error": {"code": "SOURCE_NOT_FOUND", "message": "source is not configured",
+           "details": {"available_sources": ["csv_demo", "odoo_mock", "rest_mock"]},
+           "request_id": "2b7e..."}}
+```
+
+| Code | Status | Meaning |
+|---|---|---|
+| `INVALID_REQUEST` | 422 | Parameter or body validation failed (`details` lists location, message and type) |
+| `NOT_FOUND` / `METHOD_NOT_ALLOWED` | 404 / 405 | Unknown route or method |
+| `SOURCE_NOT_FOUND` | 404 (path) · 422 (`POST` body) | The source is not configured |
+| `SOURCE_MISCONFIGURED` | 500 | The source's connector configuration is invalid |
+| `RUN_NOT_FOUND` | 404 | The ingestion run does not exist |
+| `UNSUPPORTED_OPTION` | 422 | `dry_run: true` was requested |
+| `INVALID_INGESTION_REQUEST` | 422 | E1 rejected the request for this source (e.g. entities it does not provide) |
+| `INTERNAL_ERROR` | 500 | Unexpected failure; the message is generic and details are never exposed |
+
+Rejected requests (`422`, `SOURCE_MISCONFIGURED`) create no run. A system failure during a run
+returns `500 INTERNAL_ERROR` after E1 has marked the run `FAILED`.
+
+### API limitations
+
+- **No authentication or authorization**: Layer 1 is a prototype, and anyone who can reach the
+  API can start runs. Deploy it only on a trusted network.
+- **Synchronous runs**: `POST /ingestion/runs` holds the request open for the whole run. There is
+  no server-side timeout, and a client disconnect does not cancel the run.
+- **No dry run and full mode only**: E1 has neither dry-run semantics nor incremental sync.
+- **Counts**: the run report has no `normalized` count, because E1 does not record one.
+  Per-entity results are not persisted, so only the `POST` response includes them.
+- **Error order within a batch**: errors written in one batch share `created_at` and are ordered
+  by `id`, not by record order.
+- **Correlation on system failure**: a `500` during a run carries the request ID but not the run
+  ID (E1 does not expose it). The run is listed as `FAILED`, and the request ID is logged beside
+  the run ID only for runs that finish. A run interrupted by a process crash stays `RUNNING`.
+- **Source configuration**: sources come from `config/connectors/*.yaml`, and each connector is
+  built once per process, so configuration changes need a restart. The `connector_configs` table
+  is not used.
+- **Docker**: the API image needs `config/` and does not contain `data/`. Until the image is
+  updated, `csv_demo` runs through the containerised API fail their health check; `odoo_mock` and
+  `rest_mock` read from the mock-source container.
 
 ---
 
