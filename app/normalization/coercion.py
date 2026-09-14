@@ -1,273 +1,432 @@
 """
-Type coercion utilities for D1 normalization.
+Type coercion primitives for D1 normalization.
 
-Converts source-native values to canonical Python types according to
-the spec's type normalization rules (Section 7).
+Every function is pure: its result is fully determined by the value and the
+explicit rule parameters passed in (null tokens, formats, precision, ...),
+which the pipeline takes from the centralized normalization configuration.
 
-Design principles:
-    - Explicit, not magical. Each coercion function has a clear contract.
-    - Never guess silently. Ambiguous values raise CoercionError.
-    - Preserve semantics. None stays None. Zero stays zero. False stays
-      False. Empty string becomes None only when it represents a missing
-      value (null token), not when it represents an intentional empty value.
-    - No lossy rounding. Decimal values are parsed from string
-      representations to preserve precision.
+Principles (spec Section 7):
+    - Never guess silently. Unrecognized or ambiguous input raises a
+      NormalizationError subclass with a stable ErrorCode.
+    - Explicit null handling. None and blank strings are null; configured
+      null tokens are null for tokenized kinds. The caller decides whether
+      null is acceptable for the canonical field.
+    - Strict source types. Text kinds accept only str; a JSON number in a
+      string field is an error, not a silent conversion.
+    - No lossy conversion. Decimals are never rounded or truncated;
+      datetimes are converted to UTC without changing the instant.
 """
 
 from __future__ import annotations
 
-from datetime import date, datetime
-from decimal import Decimal, InvalidOperation
+import math
+import re
+from collections.abc import Mapping
+from datetime import UTC, date, datetime, tzinfo
+from decimal import Context, Decimal, Inexact
 
-from app.normalization.errors import CoercionError
+from app.normalization.errors import (
+    CoercionError,
+    ErrorCode,
+    IdentifierError,
+    describe_value,
+)
 
+IDENTIFIER_TYPES = frozenset({"string", "integer"})
 
-# Tokens that should be treated as null/missing.
-# Spec Section 7: "NULL / N/A / - / empty -> Map configured null tokens to null."
-_NULL_TOKENS = frozenset({
-    "",
-    "null",
-    "none",
-    "n/a",
-    "na",
-    "-",
-    "nil",
-})
-
-# Accepted boolean truthy values.
-# Spec Section 7: "true / True / yes / 1 -> Normalize to boolean using
-# explicit accepted values."
-_TRUE_TOKENS = frozenset({"true", "yes", "1"})
-_FALSE_TOKENS = frozenset({"false", "no", "0"})
+_ENUM_SEPARATORS = re.compile(r"[\s\-]+")
 
 
-def coerce_str(value: object) -> str | None:
-    """Coerce a value to a string, mapping null tokens to None.
+def _is_null(text: str, null_tokens: frozenset[str]) -> bool:
+    stripped = text.strip()
+    return not stripped or stripped.casefold() in null_tokens
 
-    Whitespace-only strings are treated as null tokens per the spec's
-    "empty" null token rule.
 
-    Args:
-        value: Source value.
+def _require_str(value: object, kind: str) -> str:
+    if not isinstance(value, str):
+        raise CoercionError(
+            f"expected a string for a {kind} value, got {type(value).__name__} "
+            f"{describe_value(value)}",
+            code=ErrorCode.INVALID_TYPE,
+            raw_value=value,
+        )
+    return value
 
-    Returns:
-        String value, or None if the value is a null token.
+
+def coerce_string(value: object, *, null_tokens: frozenset[str]) -> str | None:
+    """Trim a string; blank and null tokens become None."""
+    if value is None:
+        return None
+    text = _require_str(value, "string")
+    return None if _is_null(text, null_tokens) else text.strip()
+
+
+def coerce_text(value: object) -> str | None:
+    """Preserve free text exactly; only blank text becomes None.
+
+    Null tokens are not applied: "N/A" inside a description is content.
     """
     if value is None:
         return None
-    s = str(value).strip()
-    if s.lower() in _NULL_TOKENS:
-        return None
-    return s
+    text = _require_str(value, "text")
+    return text if text.strip() else None
 
 
-def coerce_email(value: object) -> str | None:
-    """Coerce an email value: trim whitespace and lowercase.
-
-    Spec Section 7: "Emails with surrounding spaces -> Trim and lowercase
-    for normalized comparison."
-
-    Args:
-        value: Source email value.
-
-    Returns:
-        Lowercased, trimmed email string, or None.
-    """
-    if value is None:
-        return None
-    s = str(value).strip()
-    if s.lower() in _NULL_TOKENS:
-        return None
-    return s.lower()
+def coerce_email(value: object, *, null_tokens: frozenset[str]) -> str | None:
+    """Trim and lowercase an email for normalized comparison."""
+    text = coerce_string(value, null_tokens=null_tokens)
+    return None if text is None else text.lower()
 
 
-def coerce_bool(value: object) -> bool | None:
-    """Coerce a value to a boolean.
+def coerce_boolean(
+    value: object,
+    *,
+    null_tokens: frozenset[str],
+    true_tokens: frozenset[str],
+    false_tokens: frozenset[str],
+) -> bool | None:
+    """Normalize a boolean using explicit accepted representations.
 
-    Spec Section 7: "true / True / yes / 1 -> Normalize to boolean
-    using explicit accepted values."
-
-    Accepts Python bool directly, or string representations.
-    None and null tokens return None.
-
-    Args:
-        value: Source value.
-
-    Returns:
-        Boolean value, or None if null.
-
-    Raises:
-        CoercionError: If the value is not a recognized boolean.
+    Accepts bool, the integers 0 and 1, and configured string tokens
+    (case-insensitive, trimmed). Everything else is rejected.
     """
     if value is None:
         return None
     if isinstance(value, bool):
         return value
-    s = str(value).strip().lower()
-    if s in _NULL_TOKENS:
-        return None
-    if s in _TRUE_TOKENS:
-        return True
-    if s in _FALSE_TOKENS:
-        return False
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        if _is_null(value, null_tokens):
+            return None
+        token = value.strip().casefold()
+        if token in true_tokens:
+            return True
+        if token in false_tokens:
+            return False
     raise CoercionError(
-        f"Cannot coerce '{value}' to boolean",
-        field_name=None,
+        f"cannot interpret {describe_value(value)} as a boolean",
+        code=ErrorCode.INVALID_BOOLEAN,
         raw_value=value,
-        target_type="bool",
     )
 
 
-def coerce_date(value: object) -> date | None:
-    """Coerce a value to a date.
+def normalize_enum_token(text: str) -> str:
+    """Lexically normalize an enum label: trim, casefold, spaces/hyphens -> '_'."""
+    return _ENUM_SEPARATORS.sub("_", text.strip().casefold())
 
-    Supports ISO 8601 format (YYYY-MM-DD). Rejects ambiguous formats
-    per spec: "Parse using source-specific format configuration; reject
-    ambiguous values."
 
-    Args:
-        value: Source date value (string or date).
-
-    Returns:
-        date object, or None if null.
-
-    Raises:
-        CoercionError: If the value cannot be parsed as a date.
-    """
+def coerce_enum(
+    value: object,
+    *,
+    null_tokens: frozenset[str],
+    allowed: frozenset[str],
+    aliases: Mapping[str, str],
+) -> str | None:
+    """Map a source label to a canonical enum value; unknown labels are rejected."""
     if value is None:
         return None
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, date):
-        return value
-    s = str(value).strip()
-    if s.lower() in _NULL_TOKENS:
+    text = _require_str(value, "enum")
+    if _is_null(text, null_tokens):
         return None
-    try:
-        return date.fromisoformat(s)
-    except (ValueError, TypeError) as exc:
+    token = normalize_enum_token(text)
+    token = aliases.get(token, token)
+    if token not in allowed:
         raise CoercionError(
-            f"Cannot coerce '{value}' to date (expected YYYY-MM-DD)",
-            field_name=None,
+            f"unknown value {describe_value(value)}; expected one of {sorted(allowed)}",
+            code=ErrorCode.UNKNOWN_ENUM_VALUE,
             raw_value=value,
-            target_type="date",
-        ) from exc
+        )
+    return token
 
 
-def coerce_datetime(value: object) -> datetime | None:
-    """Coerce a value to a datetime.
-
-    Supports ISO 8601 formats. If only a date is provided (YYYY-MM-DD),
-    it is promoted to midnight UTC-naive datetime for compatibility.
-
-    Args:
-        value: Source datetime value (string or datetime).
-
-    Returns:
-        datetime object, or None if null.
-
-    Raises:
-        CoercionError: If the value cannot be parsed as a datetime.
-    """
+def coerce_currency(
+    value: object,
+    *,
+    null_tokens: frozenset[str],
+    codes: frozenset[str],
+    aliases: Mapping[str, str],
+) -> str | None:
+    """Normalize a currency to an uppercase ISO 4217 code."""
     if value is None:
         return None
-    if isinstance(value, datetime):
-        return value
-    if isinstance(value, date):
-        return datetime(value.year, value.month, value.day)
-    s = str(value).strip()
-    if s.lower() in _NULL_TOKENS:
+    text = _require_str(value, "currency")
+    if _is_null(text, null_tokens):
         return None
-    try:
-        return datetime.fromisoformat(s)
-    except (ValueError, TypeError) as exc:
-        # Try date-only format and promote to datetime
-        try:
-            d = date.fromisoformat(s)
-            return datetime(d.year, d.month, d.day)
-        except (ValueError, TypeError):
-            pass
+    stripped = text.strip()
+    code = aliases.get(stripped, stripped.upper())
+    if code not in codes:
         raise CoercionError(
-            f"Cannot coerce '{value}' to datetime",
-            field_name=None,
+            f"{describe_value(value)} is not a configured ISO 4217 currency code",
+            code=ErrorCode.INVALID_CURRENCY,
             raw_value=value,
-            target_type="datetime",
-        ) from exc
+        )
+    return code
 
 
-def coerce_decimal(value: object) -> Decimal | None:
-    """Coerce a value to Decimal for fixed-precision financial values.
+def coerce_decimal(
+    value: object,
+    *,
+    null_tokens: frozenset[str],
+    precision: int,
+    scale: int,
+    minimum: Decimal | None = None,
+    maximum: Decimal | None = None,
+    decimal_separator: str = ".",
+    thousands_separator: str | None = None,
+) -> Decimal | None:
+    """Normalize a fixed-precision decimal without rounding.
 
-    Spec Section 7: "Store numeric amount + ISO currency code separately."
-    Never guess locale silently. Does NOT silently round.
-
-    Accepts: int, float, Decimal, numeric strings.
-    Float values are converted via str(float) to preserve the displayed
-    representation rather than the binary floating-point bits.
-
-    Args:
-        value: Source numeric value.
-
-    Returns:
-        Decimal value, or None if null.
-
-    Raises:
-        CoercionError: If the value cannot be parsed as a number.
+    The result is quantized to exactly ``scale`` fractional digits, which
+    only adds or removes insignificant zeros. Values with more significant
+    fractional digits than ``scale``, more integer digits than
+    ``precision - scale``, or outside [minimum, maximum] are rejected.
     """
     if value is None:
         return None
+    if isinstance(value, bool):
+        raise CoercionError(
+            f"cannot interpret boolean {value!r} as a decimal",
+            code=ErrorCode.INVALID_TYPE,
+            raw_value=value,
+        )
     if isinstance(value, Decimal):
-        return value
-    if isinstance(value, bool):
-        # Prevent bool being treated as int
-        raise CoercionError(
-            f"Cannot coerce boolean '{value}' to Decimal",
-            field_name=None,
-            raw_value=value,
-            target_type="Decimal",
-        )
-    if isinstance(value, (int, float)):
-        try:
-            return Decimal(str(value))
-        except InvalidOperation as exc:
+        number = value
+    elif isinstance(value, int):
+        number = Decimal(value)
+    elif isinstance(value, float):
+        if not math.isfinite(value):
             raise CoercionError(
-                f"Cannot coerce '{value}' to Decimal",
-                field_name=None,
+                f"non-finite number {value!r}",
+                code=ErrorCode.INVALID_DECIMAL,
                 raw_value=value,
-                target_type="Decimal",
-            ) from exc
-    s = str(value).strip()
-    if s.lower() in _NULL_TOKENS:
-        return None
-    try:
-        return Decimal(s)
-    except InvalidOperation as exc:
+            )
+        number = Decimal(repr(value))
+    elif isinstance(value, str):
+        if _is_null(value, null_tokens):
+            return None
+        number = _parse_decimal_text(value, decimal_separator, thousands_separator)
+    else:
         raise CoercionError(
-            f"Cannot coerce '{value}' to Decimal",
-            field_name=None,
+            f"cannot interpret {type(value).__name__} {describe_value(value)} as a decimal",
+            code=ErrorCode.INVALID_TYPE,
             raw_value=value,
-            target_type="Decimal",
-        ) from exc
+        )
+
+    if not number.is_finite():
+        raise CoercionError(
+            f"non-finite number {describe_value(value)}",
+            code=ErrorCode.INVALID_DECIMAL,
+            raw_value=value,
+        )
+    fractional_digits = _significant_fractional_digits(number)
+    if fractional_digits > scale:
+        raise CoercionError(
+            f"{describe_value(value)} has {fractional_digits} fractional digits; "
+            f"canonical scale is {scale} and values are never rounded",
+            code=ErrorCode.DECIMAL_SCALE_EXCEEDED,
+            raw_value=value,
+        )
+    if abs(number) >= Decimal(1).scaleb(precision - scale):
+        raise CoercionError(
+            f"{describe_value(value)} exceeds canonical precision "
+            f"({precision}, {scale})",
+            code=ErrorCode.DECIMAL_PRECISION_EXCEEDED,
+            raw_value=value,
+        )
+    # Inexact is trapped: quantizing may only add or drop insignificant zeros.
+    quantized = number.quantize(
+        Decimal(1).scaleb(-scale), context=Context(prec=precision, traps=[Inexact])
+    )
+    if quantized.is_zero():
+        quantized = abs(quantized)
+    if (minimum is not None and quantized < minimum) or (
+        maximum is not None and quantized > maximum
+    ):
+        raise CoercionError(
+            f"{describe_value(value)} is outside the canonical range "
+            f"[{minimum}, {maximum}]",
+            code=ErrorCode.DECIMAL_OUT_OF_RANGE,
+            raw_value=value,
+        )
+    return quantized
 
 
-def coerce_int_id_to_str(value: object) -> str | None:
-    """Convert an integer source ID (e.g. Odoo) to its string representation.
+def _significant_fractional_digits(number: Decimal) -> int:
+    """Count fractional digits excluding trailing zeros, without context rounding."""
+    if number.is_zero():
+        return 0
+    _, digits, exponent = number.as_tuple()
+    coefficient = "".join(str(digit) for digit in digits)
+    trailing_zeros = len(coefficient) - len(coefficient.rstrip("0"))
+    return max(0, -(exponent + trailing_zeros))
 
-    Odoo uses integer IDs; canonical source_id is always a string.
 
-    Args:
-        value: Source integer ID.
+def _parse_decimal_text(
+    text: str,
+    decimal_separator: str,
+    thousands_separator: str | None,
+) -> Decimal:
+    stripped = text.strip()
+    if thousands_separator is None:
+        integer_part = r"[0-9]+"
+    else:
+        sep = re.escape(thousands_separator)
+        integer_part = rf"(?:[0-9]{{1,3}}(?:{sep}[0-9]{{3}})+|[0-9]+)"
+    pattern = rf"[+-]?{integer_part}(?:{re.escape(decimal_separator)}[0-9]+)?"
+    if not re.fullmatch(pattern, stripped):
+        raise CoercionError(
+            f"{describe_value(text)} is not a plain decimal number for this source "
+            f"(decimal separator {decimal_separator!r}, "
+            f"thousands separator {thousands_separator!r})",
+            code=ErrorCode.INVALID_DECIMAL,
+            raw_value=text,
+        )
+    if thousands_separator is not None:
+        stripped = stripped.replace(thousands_separator, "")
+    if decimal_separator != ".":
+        stripped = stripped.replace(decimal_separator, ".")
+    return Decimal(stripped)
 
-    Returns:
-        String representation, or None if null.
+
+def _parse_candidates(text: str, formats: tuple[str, ...]) -> list[datetime]:
+    candidates = []
+    for fmt in formats:
+        try:
+            candidates.append(datetime.strptime(text, fmt))
+        except ValueError:
+            continue
+    return candidates
+
+
+def coerce_date(
+    value: object,
+    *,
+    null_tokens: frozenset[str],
+    formats: tuple[str, ...],
+) -> date | None:
+    """Parse a calendar date using the source's configured formats.
+
+    A value matching several formats with different results is ambiguous
+    and rejected (e.g. 03/04/2026 under both DD/MM and MM/DD).
     """
     if value is None:
         return None
-    if isinstance(value, bool):
+    if isinstance(value, datetime):
         raise CoercionError(
-            f"Cannot coerce boolean '{value}' to string ID",
-            field_name=None,
+            f"expected a date, got datetime {describe_value(value)}",
+            code=ErrorCode.INVALID_TYPE,
             raw_value=value,
-            target_type="str",
         )
-    return str(value)
+    if isinstance(value, date):
+        return value
+    text = _require_str(value, "date")
+    if _is_null(text, null_tokens):
+        return None
+    results = {candidate.date() for candidate in _parse_candidates(text.strip(), formats)}
+    if not results:
+        raise CoercionError(
+            f"{describe_value(value)} does not match configured date formats {list(formats)}",
+            code=ErrorCode.INVALID_DATE,
+            raw_value=value,
+        )
+    if len(results) > 1:
+        raise CoercionError(
+            f"{describe_value(value)} is ambiguous under configured date formats",
+            code=ErrorCode.AMBIGUOUS_DATE,
+            raw_value=value,
+        )
+    return results.pop()
+
+
+def coerce_datetime(
+    value: object,
+    *,
+    null_tokens: frozenset[str],
+    formats: tuple[str, ...],
+    naive_timezone: tzinfo | None,
+) -> datetime | None:
+    """Parse a timestamp and return a timezone-aware UTC datetime.
+
+    Aware inputs are converted to UTC. Naive inputs are interpreted in the
+    source's configured ``naive_timezone``; if the source policy is to
+    reject naive timestamps (``naive_timezone is None``) they raise
+    NAIVE_DATETIME_REJECTED.
+    """
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        candidates = [value]
+    elif isinstance(value, date):
+        raise CoercionError(
+            f"expected a datetime, got date {describe_value(value)}",
+            code=ErrorCode.INVALID_TYPE,
+            raw_value=value,
+        )
+    else:
+        text = _require_str(value, "datetime")
+        if _is_null(text, null_tokens):
+            return None
+        candidates = _parse_candidates(text.strip(), formats)
+        if not candidates:
+            raise CoercionError(
+                f"{describe_value(value)} does not match configured datetime formats "
+                f"{list(formats)}",
+                code=ErrorCode.INVALID_DATETIME,
+                raw_value=value,
+            )
+
+    instants: set[datetime] = set()
+    for candidate in candidates:
+        if candidate.utcoffset() is None:
+            if naive_timezone is None:
+                continue
+            candidate = candidate.replace(tzinfo=naive_timezone)
+        instants.add(candidate.astimezone(UTC))
+    if not instants:
+        raise CoercionError(
+            f"{describe_value(value)} has no UTC offset and this source rejects "
+            f"naive timestamps",
+            code=ErrorCode.NAIVE_DATETIME_REJECTED,
+            raw_value=value,
+        )
+    if len(instants) > 1:
+        raise CoercionError(
+            f"{describe_value(value)} is ambiguous under configured datetime formats",
+            code=ErrorCode.AMBIGUOUS_DATETIME,
+            raw_value=value,
+        )
+    return instants.pop()
+
+
+def normalize_identifier(
+    value: object,
+    *,
+    identifier_type: str,
+    invalid_code: ErrorCode,
+) -> str | None:
+    """Normalize a source identifier to its canonical string form.
+
+    string:  str only; trimmed; blank becomes None.
+    integer: positive int only (not bool, float, or numeric string).
+    None always becomes None; the caller decides whether that is allowed.
+    """
+    if value is None:
+        return None
+    if identifier_type == "integer":
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise IdentifierError(
+                f"expected a positive integer identifier, got {type(value).__name__} "
+                f"{describe_value(value)}",
+                code=invalid_code,
+                raw_value=value,
+            )
+        return str(value)
+    if not isinstance(value, str):
+        raise IdentifierError(
+            f"expected a string identifier, got {type(value).__name__} "
+            f"{describe_value(value)}",
+            code=invalid_code,
+            raw_value=value,
+        )
+    return value.strip() or None

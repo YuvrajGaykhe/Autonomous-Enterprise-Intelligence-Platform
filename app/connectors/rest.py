@@ -198,7 +198,7 @@ class RestConnectorConfig:
     @classmethod
     def from_dict(cls, config: dict[str, Any]) -> RestConnectorConfig:
         """Create configuration from a plain dictionary."""
-        source_name = config.get("source_name", "rest_demo")
+        source_name = config.get("source_name", "rest_mock")
         source_type = config.get("source_type", "rest")
         base_url = config.get("base_url")
         timeout = config.get("timeout", 10)

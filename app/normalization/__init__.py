@@ -2,23 +2,36 @@
 D1 Normalization package for Layer 1.
 
 Public API:
-    normalize: Convert a single source-native record to canonical form.
-    normalize_batch: Convert a batch of records, collecting errors separately.
-    canonical_id: Generate a deterministic UUID for a source identity triple.
-    record_hash: Compute SHA-256 over canonical business fields.
+    normalize:        Convert one source-native record to canonical form.
+    normalize_batch:  Convert a batch, collecting per-record errors.
+    canonical_id:     Deterministic UUID for a source identity triple.
+    record_hash:      SHA-256 of a canonical record's business content.
+    load_config / default_config / NormalizationConfig:
+                      Centralized normalization configuration
+                      (config/mappings/).
 
-Exception hierarchy:
+Exception hierarchy (all carry a stable ErrorCode and record context):
     NormalizationError
         UnsupportedSourceError
         UnsupportedEntityError
+        InvalidRecordError
+        IdentifierError
         FieldMappingError
         CoercionError
+        SchemaValidationError
+    NormalizationConfigError (configuration fault, not a record error)
 """
 
+from app.normalization.config import NormalizationConfig, default_config, load_config
 from app.normalization.errors import (
     CoercionError,
+    ErrorCode,
     FieldMappingError,
+    IdentifierError,
+    InvalidRecordError,
+    NormalizationConfigError,
     NormalizationError,
+    SchemaValidationError,
     UnsupportedEntityError,
     UnsupportedSourceError,
 )
@@ -30,9 +43,17 @@ __all__ = [
     "normalize_batch",
     "canonical_id",
     "record_hash",
+    "NormalizationConfig",
+    "default_config",
+    "load_config",
+    "ErrorCode",
     "NormalizationError",
     "UnsupportedSourceError",
     "UnsupportedEntityError",
+    "InvalidRecordError",
+    "IdentifierError",
     "FieldMappingError",
     "CoercionError",
+    "SchemaValidationError",
+    "NormalizationConfigError",
 ]

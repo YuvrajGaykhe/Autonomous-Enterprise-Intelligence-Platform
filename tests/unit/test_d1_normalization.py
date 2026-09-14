@@ -1,1056 +1,616 @@
 """
-D1 Normalization Tests.
+D1 normalization pipeline tests.
 
-Comprehensive test suite for the normalization pipeline covering:
-A. Interface / public API
-B. Entity coverage (all 7 entities x 3 sources)
-C. Field mapping correctness
-D. Type conversions (str, int, float, Decimal, bool, date, datetime)
-E. Identity (deterministic UUIDs, record_hash)
-F. Relationships (source keys, canonical FK = None)
-G. Null semantics (None, empty, whitespace, zero, false)
-H. Error handling (malformed, missing, unsupported)
-I. Boundary (no SQLAlchemy, no database, no HTTP, no connectors)
-J. Determinism (repeated normalization = same output)
-K. Batch normalization
+Covers:
+A. Public API and source-system vocabulary consistency with connectors
+B. Invocation contract (ingestion_run_id, ingested_at)
+C. Provenance, including per-record source_updated_at
+D. Structured errors: exact type, stable code, full context
+E. Batch isolation
+F. Input immutability
+G. Determinism (in-process and across interpreter processes)
+H. Purity and dependency boundaries
 """
 
 from __future__ import annotations
 
 import ast
-import hashlib
+import copy
 import json
-import uuid
-from datetime import date, datetime
-from decimal import Decimal
+import os
+import subprocess
+import sys
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from types import MappingProxyType
 
 import pytest
+from d1_support import (
+    ABSENT,
+    CASE_KEYS,
+    INGESTED_AT,
+    RUN_ID,
+    assert_error,
+    business,
+    case_id,
+    full_case,
+    utc,
+    with_value,
+)
+from pydantic import ValidationError
 
+import app.normalization as normalization
+import app.normalization.pipeline as pipeline
+from app.connectors.csv import CsvConnectorConfig
+from app.connectors.odoo import SUPPORTED_ENTITIES as ODOO_ENTITIES
+from app.connectors.odoo import OdooConnectorConfig
+from app.connectors.rest import RestConnectorConfig
+from app.connectors.types import ConnectorError
 from app.normalization import (
     CoercionError,
+    ErrorCode,
     FieldMappingError,
+    IdentifierError,
+    InvalidRecordError,
+    NormalizationConfigError,
     NormalizationError,
+    SchemaValidationError,
     UnsupportedEntityError,
     UnsupportedSourceError,
     canonical_id,
+    default_config,
     normalize,
     normalize_batch,
-    record_hash,
-)
-from app.normalization.coercion import (
-    coerce_bool,
-    coerce_date,
-    coerce_datetime,
-    coerce_decimal,
-    coerce_email,
-    coerce_int_id_to_str,
-    coerce_str,
-)
-from app.normalization.mappings import (
-    SUPPORTED_ENTITIES,
-    SUPPORTED_SOURCES,
-    extract_source_id,
-    get_mapper,
-    has_is_active,
 )
 
+REPO = Path(__file__).resolve().parents[2]
+TESTS_DIR = Path(__file__).resolve().parent
+D1_DIR = REPO / "app" / "normalization"
+
 
 # ---------------------------------------------------------------------------
-# Test fixtures
+# A. Public API and vocabulary
 # ---------------------------------------------------------------------------
 
-_RUN_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
-_INGESTED_AT = datetime(2026, 9, 14, 12, 0, 0)
+
+def test_public_api_exports():
+    for name in normalization.__all__:
+        assert hasattr(normalization, name), name
 
 
-def _csv_customer() -> dict[str, Any]:
-    return {
-        "customer_id": "CUST-001",
-        "customer_name": "Acme Industries",
-        "email_address": " Contact@Acme.Example ",
-        "customer_segment": "Enterprise",
-        "industry_name": "Manufacturing",
-        "account_owner_id": "EMP-002",
-        "status": "active",
-        "created_date": "2025-01-15",
+def test_d1_vocabulary_is_the_canonical_source_systems():
+    assert default_config().source_systems == ("csv_demo", "odoo_mock", "rest_mock")
+
+
+def test_connector_configuration_files_use_canonical_source_names():
+    connectors = REPO / "config" / "connectors"
+    names = {
+        "csv": CsvConnectorConfig.from_yaml(connectors / "csv_demo.yaml").source_name,
+        "odoo": OdooConnectorConfig.from_yaml(connectors / "odoo.yaml").source_name,
+        "rest": RestConnectorConfig.from_yaml(connectors / "rest.yaml").source_name,
     }
+    assert names == {"csv": "csv_demo", "odoo": "odoo_mock", "rest": "rest_mock"}
+    assert set(names.values()) == set(default_config().source_systems)
 
 
-def _odoo_customer() -> dict[str, Any]:
-    return {
-        "id": 42,
-        "name": "Widget Corp",
-        "email": " info@widget.example ",
-        "x_studio_segment": "SMB",
-        "industry_id": "Retail",
-        "user_id": 7,
-        "active": True,
-        "create_date": "2025-03-20T10:30:00",
-        "customer_rank": 1,
-    }
+def test_connector_defaults_use_canonical_source_names():
+    assert CsvConnectorConfig.from_dict({}).source_name == "csv_demo"
+    assert OdooConnectorConfig.from_dict({"base_url": "http://mock"}).source_name == "odoo_mock"
+    rest = RestConnectorConfig.from_dict(
+        {"base_url": "http://mock", "entities": {"customers": {"path": "/rest/customers"}}}
+    )
+    assert rest.source_name == "rest_mock"
 
 
-def _rest_customer() -> dict[str, Any]:
-    return {
-        "id": "REST-C-001",
-        "name": "RestCo",
-        "email": " rest@example.com ",
-        "segment": "Enterprise",
-        "industry": "Tech",
-        "ownerId": "EMP-005",
-        "status": "active",
-        "createdAt": "2025-06-01",
-        "isActive": True,
-    }
+def test_every_connector_entity_is_mapped_by_d1():
+    connectors = REPO / "config" / "connectors"
+    sources = default_config().sources
+    csv_entities = CsvConnectorConfig.from_yaml(connectors / "csv_demo.yaml").entities
+    rest_entities = RestConnectorConfig.from_yaml(connectors / "rest.yaml").entities
+    assert set(csv_entities) <= set(sources["csv_demo"].entities)
+    assert set(ODOO_ENTITIES) <= set(sources["odoo_mock"].entities)
+    assert set(rest_entities) <= set(sources["rest_mock"].entities)
 
 
-def _csv_employee() -> dict[str, Any]:
-    return {
-        "employee_id": "EMP-001",
-        "employee_name": "Alice Engineer",
-        "email_address": " Alice@Acme.Example ",
-        "department": "Engineering",
-        "title": "Senior Developer",
-        "manager_id": None,
-        "status": "active",
-        "hire_date": "2024-03-15",
-        "is_active": "true",
-        "organization_id": "ORG-001",
-    }
+def test_legacy_source_names_do_not_remain_in_code_config_or_connector_tests():
+    files = [
+        *REPO.glob("app/**/*.py"),
+        *REPO.glob("config/**/*.yaml"),
+        *REPO.glob("tests/unit/test_c*.py"),
+        REPO / "README.md",
+    ]
+    legacy = ["rest_demo", "odoo_demo", "source_name: odoo\n", '"source_name", "odoo")',
+              '"source_name": "odoo"']
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        for token in legacy:
+            assert token not in text, f"{token!r} found in {path.relative_to(REPO)}"
 
 
-def _odoo_employee() -> dict[str, Any]:
-    return {
-        "id": 10,
-        "name": "Bob Manager",
-        "work_email": " bob@acme.example ",
-        "department_id": "Sales",
-        "job_title": "Sales Manager",
-        "parent_id": None,
-        "active": True,
-        "x_hire_date": "2023-06-01",
-        "company_id": 1,
-    }
-
-
-def _csv_deal() -> dict[str, Any]:
-    return {
-        "deal_id": "DEAL-001",
-        "deal_name": "Acme Platform Deal",
-        "customer_id": "CUST-001",
-        "owner_id": "EMP-002",
-        "stage": "negotiation",
-        "amount": "150000.50",
-        "currency": "INR",
-        "probability": "75.0",
-        "expected_close_date": "2026-12-31",
-        "is_active": "true",
-    }
-
-
-def _odoo_deal() -> dict[str, Any]:
-    return {
-        "id": 5,
-        "name": "Odoo Deal",
-        "partner_id": 42,
-        "user_id": 10,
-        "stage_id": "qualification",
-        "expected_revenue": 45000.0,
-        "company_currency": "USD",
-        "probability": 40.0,
-        "date_deadline": "2026-09-30",
-        "active": True,
-    }
-
-
-def _rest_deal() -> dict[str, Any]:
-    return {
-        "id": "REST-D-001",
-        "name": "REST Deal",
-        "customerId": "REST-C-001",
-        "ownerId": "EMP-005",
-        "stage": "closed_won",
-        "amount": 99000.0,
-        "currency": "EUR",
-        "probability": 100.0,
-        "expectedCloseDate": "2026-06-30",
-        "isActive": False,
-    }
-
-
-def _csv_organization() -> dict[str, Any]:
-    return {
-        "organization_id": "ORG-001",
-        "organization_name": "Acme Corp",
-        "industry": "Technology",
-        "country": "India",
-        "status": "active",
-    }
-
-
-def _csv_project() -> dict[str, Any]:
-    return {
-        "project_id": "PROJ-001",
-        "project_name": "Platform Migration",
-        "customer_id": "CUST-001",
-        "owner_id": "EMP-001",
-        "status": "in_progress",
-        "start_date": "2026-01-01",
-        "end_date": "2026-12-31",
-        "budget": "500000.00",
-        "is_active": "true",
-    }
-
-
-def _csv_support_ticket() -> dict[str, Any]:
-    return {
-        "ticket_id": "TKT-001",
-        "customer_id": "CUST-001",
-        "assignee_id": "EMP-001",
-        "priority": "high",
-        "status": "open",
-        "category": "auth",
-        "subject": "Login not working after SSO update",
-        "description": "Users cannot log in after the SSO provider migration.",
-        "created_date": "2026-09-01",
-        "resolved_date": None,
-    }
-
-
-def _csv_document() -> dict[str, Any]:
-    return {
-        "document_id": "DOC-001",
-        "title": "Employee Handbook 2026",
-        "document_type": "policy",
-        "body_text": "",
-        "source_uri": "https://internal.acme.example/docs/handbook.pdf",
-        "owner_id": "EMP-001",
-        "created_date": "2026-01-01",
-        "updated_date": "2026-06-15",
-    }
+@pytest.mark.parametrize("retired", ["odoo", "rest_demo", "odoo_demo", "REST_MOCK"])
+def test_retired_source_names_are_rejected(retired):
+    with pytest.raises(NormalizationError) as excinfo:
+        normalize(retired, "customers", {"id": 1}, RUN_ID, INGESTED_AT)
+    assert_error(excinfo.value, UnsupportedSourceError, ErrorCode.UNSUPPORTED_SOURCE,
+                 source_system=retired, entity_type="customers", source_id=None, field_name=None)
 
 
 # ---------------------------------------------------------------------------
-# A. Interface / Public API
+# B. Invocation contract
 # ---------------------------------------------------------------------------
 
-
-class TestInterface:
-    def test_normalize_exists(self):
-        assert callable(normalize)
-
-    def test_normalize_batch_exists(self):
-        assert callable(normalize_batch)
-
-    def test_canonical_id_exists(self):
-        assert callable(canonical_id)
-
-    def test_record_hash_exists(self):
-        assert callable(record_hash)
-
-    def test_normalize_returns_canonical(self):
-        result = normalize(
-            "csv_demo", "customers", _csv_customer(),
-            _RUN_ID, _INGESTED_AT,
-        )
-        from app.schemas.canonical import CanonicalBase
-        assert isinstance(result, CanonicalBase)
-
-    def test_normalize_returns_correct_subclass(self):
-        from app.schemas.canonical import CustomerCanonical
-        result = normalize(
-            "csv_demo", "customers", _csv_customer(),
-            _RUN_ID, _INGESTED_AT,
-        )
-        assert isinstance(result, CustomerCanonical)
+CALLERS = {
+    "normalize": lambda run_id, at: normalize("csv_demo", "customers",
+                                              full_case("csv_demo", "customers")[0], run_id, at),
+    "normalize_batch": lambda run_id, at: normalize_batch("csv_demo", "customers",
+                                                          [full_case("csv_demo", "customers")[0]],
+                                                          run_id, at),
+}
 
 
-# ---------------------------------------------------------------------------
-# B. Entity coverage: all 7 entities x 3 sources
-# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("caller", sorted(CALLERS))
+def test_naive_ingested_at_is_rejected(caller):
+    with pytest.raises(ValueError, match="timezone-aware"):
+        CALLERS[caller](RUN_ID, datetime(2026, 9, 14, 12))
 
 
-class TestEntityCoverage:
-    """Every supported source/entity combination normalizes without error."""
+@pytest.mark.parametrize("caller", sorted(CALLERS))
+@pytest.mark.parametrize(("run_id", "ingested_at"), [
+    (str(RUN_ID), INGESTED_AT), (RUN_ID, "2026-09-14T12:00:00Z"), (None, INGESTED_AT),
+])
+def test_invalid_run_context_types_are_rejected(caller, run_id, ingested_at):
+    with pytest.raises(TypeError):
+        CALLERS[caller](run_id, ingested_at)
 
-    @pytest.fixture(autouse=True)
-    def _records(self):
-        self.csv_records = {
-            "organizations": _csv_organization(),
-            "employees": _csv_employee(),
-            "customers": _csv_customer(),
-            "deals": _csv_deal(),
-            "projects": _csv_project(),
-            "support_tickets": _csv_support_ticket(),
-            "documents": _csv_document(),
-        }
-        self.odoo_records = {
-            "organizations": {"id": 1, "name": "Acme", "industry_id": "Tech", "country_id": "IN", "active": True},
-            "employees": _odoo_employee(),
-            "customers": _odoo_customer(),
-            "deals": _odoo_deal(),
-            "projects": {"id": 3, "name": "Odoo Proj", "partner_id": 42, "user_id": 10, "stage_id": "active", "date_start": "2026-01-01", "date": "2026-12-31", "x_budget": 100000.0, "active": True},
-            "support_tickets": {"id": 20, "partner_id": 42, "user_id": 10, "priority": "high", "stage_id": "open", "category_id": "billing", "name": "Invoice issue", "description": "Desc", "create_date": "2026-08-01", "close_date": None},
-            "documents": {"id": 50, "name": "Policy Doc", "type": "policy", "datas": "text content", "url": "https://example.com", "owner_id": 10, "create_date": "2026-01-01", "write_date": "2026-06-01"},
-        }
-        self.rest_records = {
-            "organizations": {"id": "REST-O-001", "name": "RestOrg", "industry": "Tech", "country": "US", "status": "active"},
-            "employees": {"id": "REST-E-001", "name": "REST Employee", "email": "re@example.com", "department": "Eng", "title": "Dev", "managerId": None, "status": "active", "hireDate": "2025-01-01", "isActive": True, "organizationId": "REST-O-001"},
-            "customers": _rest_customer(),
-            "deals": _rest_deal(),
-            "projects": {"id": "REST-P-001", "name": "REST Project", "customerId": "REST-C-001", "ownerId": "EMP-005", "status": "active", "startDate": "2026-01-01", "endDate": "2026-06-30", "budget": 75000.0, "isActive": True},
-            "support_tickets": {"id": "REST-T-001", "customerId": "REST-C-001", "assigneeId": "EMP-005", "priority": "medium", "status": "closed", "category": "billing", "subject": "Invoice", "description": "Desc", "createdAt": "2026-07-01", "resolvedAt": "2026-07-05"},
-            "documents": {"id": "REST-DOC-001", "title": "REST Doc", "documentType": "report", "bodyText": "Some text", "sourceUri": "https://example.com/doc", "ownerId": "EMP-005", "createdAt": "2026-01-01", "updatedAt": "2026-06-01"},
-        }
 
-    @pytest.mark.parametrize("entity", sorted(SUPPORTED_ENTITIES))
-    def test_csv_entity(self, entity):
-        result = normalize("csv_demo", entity, self.csv_records[entity], _RUN_ID, _INGESTED_AT)
-        assert result.source_system == "csv_demo"
-        assert result.source_entity == entity
+def test_batch_validates_run_context_before_consuming_records():
+    consumed = []
 
-    @pytest.mark.parametrize("entity", sorted(SUPPORTED_ENTITIES))
-    def test_odoo_entity(self, entity):
-        result = normalize("odoo_mock", entity, self.odoo_records[entity], _RUN_ID, _INGESTED_AT)
-        assert result.source_system == "odoo_mock"
-        assert result.source_entity == entity
+    def records():
+        consumed.append(True)
+        yield full_case("csv_demo", "customers")[0]
 
-    @pytest.mark.parametrize("entity", sorted(SUPPORTED_ENTITIES))
-    def test_rest_entity(self, entity):
-        result = normalize("rest_demo", entity, self.rest_records[entity], _RUN_ID, _INGESTED_AT)
-        assert result.source_system == "rest_demo"
-        assert result.source_entity == entity
+    with pytest.raises(ValueError):
+        normalize_batch("csv_demo", "customers", records(), RUN_ID, datetime(2026, 1, 1))
+    assert consumed == []
+
+
+def test_ingested_at_is_normalized_to_utc():
+    ist = timezone(timedelta(hours=5, minutes=30))
+    obj = normalize("csv_demo", "customers", full_case("csv_demo", "customers")[0], RUN_ID,
+                    datetime(2026, 9, 14, 17, 30, tzinfo=ist))
+    assert obj.ingested_at == utc(2026, 9, 14, 12)
+    assert obj.ingested_at.utcoffset() == timedelta(0)
 
 
 # ---------------------------------------------------------------------------
-# C. Field mapping correctness
+# C. Provenance
 # ---------------------------------------------------------------------------
 
 
-class TestFieldMapping:
-    def test_csv_customer_fields(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.name == "Acme Industries"
-        assert result.email == "contact@acme.example"  # lowered, trimmed
-        assert result.segment == "Enterprise"
-        assert result.industry == "Manufacturing"
-        assert result.owner_source_id == "EMP-002"
-        assert result.status == "active"
+@pytest.mark.parametrize(("source", "entity"), CASE_KEYS, ids=case_id)
+def test_provenance_fields(source, entity):
+    record, expected = full_case(source, entity)
+    obj = normalize(source, entity, record, RUN_ID, INGESTED_AT)
+    assert obj.id == canonical_id(source, entity, expected["source_id"])
+    assert obj.source_system == source
+    assert obj.source_entity == entity
+    assert obj.source_id == expected["source_id"]
+    assert obj.ingestion_run_id == RUN_ID
+    assert obj.ingested_at == INGESTED_AT
+    assert obj.source_updated_at == expected["source_updated_at"]
 
-    def test_odoo_customer_fields(self):
-        result = normalize("odoo_mock", "customers", _odoo_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.name == "Widget Corp"
-        assert result.email == "info@widget.example"
-        assert result.segment == "SMB"
-        assert result.industry == "Retail"
-        assert result.owner_source_id == "7"  # Odoo int -> str
-        assert result.is_active is True
 
-    def test_rest_customer_fields(self):
-        result = normalize("rest_demo", "customers", _rest_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.name == "RestCo"
-        assert result.email == "rest@example.com"
-        assert result.segment == "Enterprise"
-        assert result.owner_source_id == "EMP-005"
+@pytest.mark.parametrize(("source", "entity"), CASE_KEYS, ids=case_id)
+def test_canonical_datetimes_are_never_naive(source, entity):
+    record, _ = full_case(source, entity)
+    obj = normalize(source, entity, record, RUN_ID, INGESTED_AT)
+    datetimes = {name: value for name, value in obj.model_dump().items()
+                 if isinstance(value, datetime)}
+    assert "ingested_at" in datetimes
+    for name, value in datetimes.items():
+        assert value.utcoffset() == timedelta(0), name
 
-    def test_csv_employee_fields(self):
-        result = normalize("csv_demo", "employees", _csv_employee(), _RUN_ID, _INGESTED_AT)
-        assert result.name == "Alice Engineer"
-        assert result.email == "alice@acme.example"
-        assert result.department == "Engineering"
-        assert result.title == "Senior Developer"
-        assert result.manager_source_id is None
-        assert result.hire_date == date(2024, 3, 15)
-        assert result.is_active is True
 
-    def test_odoo_employee_fields(self):
-        result = normalize("odoo_mock", "employees", _odoo_employee(), _RUN_ID, _INGESTED_AT)
-        assert result.name == "Bob Manager"
-        assert result.email == "bob@acme.example"
-        assert result.department == "Sales"
-        assert result.title == "Sales Manager"
-        assert result.manager_source_id is None
-        assert result.hire_date == date(2023, 6, 1)
-
-    def test_csv_deal_amount_is_decimal(self):
-        result = normalize("csv_demo", "deals", _csv_deal(), _RUN_ID, _INGESTED_AT)
-        assert isinstance(result.amount, Decimal)
-        assert result.amount == Decimal("150000.50")
-        assert result.currency == "INR"
-
-    def test_odoo_deal_amount_is_decimal(self):
-        result = normalize("odoo_mock", "deals", _odoo_deal(), _RUN_ID, _INGESTED_AT)
-        assert isinstance(result.amount, Decimal)
-        assert result.amount == Decimal("45000.0")
-        assert result.currency == "USD"
-
-    def test_rest_deal_amount_is_decimal(self):
-        result = normalize("rest_demo", "deals", _rest_deal(), _RUN_ID, _INGESTED_AT)
-        assert isinstance(result.amount, Decimal)
-        assert result.amount == Decimal("99000.0")
-
-    def test_csv_organization_fields(self):
-        result = normalize("csv_demo", "organizations", _csv_organization(), _RUN_ID, _INGESTED_AT)
-        assert result.name == "Acme Corp"
-        assert result.industry == "Technology"
-        assert result.country == "India"
-
-    def test_csv_project_budget_is_decimal(self):
-        result = normalize("csv_demo", "projects", _csv_project(), _RUN_ID, _INGESTED_AT)
-        assert isinstance(result.budget, Decimal)
-        assert result.budget == Decimal("500000.00")
-
-    def test_csv_support_ticket_dates(self):
-        result = normalize("csv_demo", "support_tickets", _csv_support_ticket(), _RUN_ID, _INGESTED_AT)
-        assert result.created_at == datetime(2026, 9, 1)
-        assert result.resolved_at is None
-
-    def test_csv_document_fields(self):
-        result = normalize("csv_demo", "documents", _csv_document(), _RUN_ID, _INGESTED_AT)
-        assert result.title == "Employee Handbook 2026"
-        assert result.document_type == "policy"
-        assert result.source_uri == "https://internal.acme.example/docs/handbook.pdf"
-        assert result.owner_source_id == "EMP-001"
+@pytest.mark.parametrize(("source", "field", "first", "second"), [
+    ("csv_demo", "updated_date", "2026-01-01", "2026-02-02 10:00:00"),
+    ("odoo_mock", "write_date", "2026-01-01 00:00:00", "2026-02-02 10:00:00"),
+    ("rest_mock", "updatedAt", "2026-01-01T00:00:00Z", "2026-02-02T15:30:00+05:30"),
+])
+def test_source_updated_at_is_extracted_per_record(source, field, first, second):
+    record, _ = full_case(source, "documents")
+    id_field = {"csv_demo": "document_id", "odoo_mock": "id", "rest_mock": "id"}[source]
+    other_id = 2 if source == "odoo_mock" else "DOC-XYZ"
+    records = [with_value(record, field, first),
+               with_value(with_value(record, field, second), id_field, other_id)]
+    ok, failures = normalize_batch(source, "documents", records, RUN_ID, INGESTED_AT)
+    assert failures == []
+    assert [obj.source_updated_at for obj in ok] == [utc(2026, 1, 1), utc(2026, 2, 2, 10)]
 
 
 # ---------------------------------------------------------------------------
-# D. Type conversions
+# D. Structured errors
 # ---------------------------------------------------------------------------
 
+ERROR_CASES = [
+    ("unsupported-source", "sap_mock", "customers", {"id": "C1"},
+     UnsupportedSourceError, ErrorCode.UNSUPPORTED_SOURCE, None, None),
+    ("unsupported-entity", "csv_demo", "invoices", {"invoice_id": "I1"},
+     UnsupportedEntityError, ErrorCode.UNSUPPORTED_ENTITY, None, None),
+    ("invalid-record", "rest_mock", "deals", ["DEAL-1"],
+     InvalidRecordError, ErrorCode.INVALID_RECORD, None, None),
+    ("source-id-missing", "csv_demo", "customers", {"customer_name": "Acme", "status": "active"},
+     IdentifierError, ErrorCode.SOURCE_ID_MISSING, None, "source_id"),
+    ("source-id-invalid", "odoo_mock", "customers", {"id": "7", "name": "Acme", "active": True},
+     IdentifierError, ErrorCode.SOURCE_ID_INVALID, None, "source_id"),
+    ("required-field-missing", "csv_demo", "customers", {"customer_id": "C1", "status": "active"},
+     FieldMappingError, ErrorCode.REQUIRED_FIELD_MISSING, "C1", "name"),
+    ("invalid-decimal", "csv_demo", "deals",
+     with_value(full_case("csv_demo", "deals")[0], "amount", "abc"),
+     CoercionError, ErrorCode.INVALID_DECIMAL, "DEAL-001", "amount"),
+    ("decimal-scale", "csv_demo", "deals",
+     with_value(full_case("csv_demo", "deals")[0], "probability", "10.001"),
+     CoercionError, ErrorCode.DECIMAL_SCALE_EXCEEDED, "DEAL-001", "probability"),
+    ("unknown-enum", "rest_mock", "projects",
+     with_value(full_case("rest_mock", "projects")[0], "status", "stalled"),
+     CoercionError, ErrorCode.UNKNOWN_ENUM_VALUE, "PROJ-002", "status"),
+    ("invalid-currency", "odoo_mock", "deals",
+     with_value(full_case("odoo_mock", "deals")[0], "company_currency", "US$"),
+     CoercionError, ErrorCode.INVALID_CURRENCY, "1", "currency"),
+    ("relationship-key", "odoo_mock", "deals",
+     with_value(full_case("odoo_mock", "deals")[0], "partner_id", "1"),
+     IdentifierError, ErrorCode.RELATIONSHIP_KEY_INVALID, "1", "customer_source_id"),
+    ("naive-datetime", "rest_mock", "customers",
+     with_value(full_case("rest_mock", "customers")[0], "createdAt", "2026-01-01T00:00:00"),
+     CoercionError, ErrorCode.NAIVE_DATETIME_REJECTED, "CUST-003", "created_at"),
+    ("invalid-boolean", "rest_mock", "deals",
+     with_value(full_case("rest_mock", "deals")[0], "isActive", "sometimes"),
+     CoercionError, ErrorCode.INVALID_BOOLEAN, "DEAL-003", "is_active"),
+    ("invalid-date", "odoo_mock", "projects",
+     with_value(full_case("odoo_mock", "projects")[0], "date", "31/10/2026"),
+     CoercionError, ErrorCode.INVALID_DATE, "2", "end_date"),
+]
 
-class TestCoercion:
-    # coerce_str
-    def test_str_none(self):
-        assert coerce_str(None) is None
 
-    def test_str_normal(self):
-        assert coerce_str("hello") == "hello"
+@pytest.mark.parametrize(
+    ("source", "entity", "record", "error_type", "code", "source_id", "field_name"),
+    [case[1:] for case in ERROR_CASES], ids=[case[0] for case in ERROR_CASES],
+)
+def test_errors_carry_type_code_and_full_context(source, entity, record, error_type, code,
+                                                 source_id, field_name):
+    with pytest.raises(NormalizationError) as excinfo:
+        normalize(source, entity, record, RUN_ID, INGESTED_AT)
+    assert_error(excinfo.value, error_type, code, source_system=source, entity_type=entity,
+                 source_id=source_id, field_name=field_name)
+    location = "/".join(p for p in (source, entity, source_id) if p is not None)
+    assert location in excinfo.value.message
 
-    def test_str_whitespace(self):
-        assert coerce_str("  hello  ") == "hello"
 
-    def test_str_null_token_na(self):
-        assert coerce_str("N/A") is None
+def test_coercion_error_retains_raw_value():
+    record = with_value(full_case("csv_demo", "deals")[0], "amount", "12.345")
+    with pytest.raises(CoercionError) as excinfo:
+        normalize("csv_demo", "deals", record, RUN_ID, INGESTED_AT)
+    assert excinfo.value.raw_value == "12.345"
+    assert "12.345" in excinfo.value.reason
 
-    def test_str_null_token_dash(self):
-        assert coerce_str("-") is None
 
-    def test_str_null_token_empty(self):
-        assert coerce_str("") is None
+def test_schema_validation_error_has_context(monkeypatch):
+    real_map_record = pipeline.map_record
 
-    def test_str_null_token_whitespace_only(self):
-        assert coerce_str("   ") is None
+    def map_with_wrong_type(config, profile, mapping, record):
+        updated_at, fields = real_map_record(config, profile, mapping, record)
+        return updated_at, {**fields, "name": 123}
 
-    def test_str_zero_not_null(self):
-        assert coerce_str("0") == "0"
+    monkeypatch.setattr(pipeline, "map_record", map_with_wrong_type)
+    with pytest.raises(NormalizationError) as excinfo:
+        normalize("csv_demo", "customers", full_case("csv_demo", "customers")[0], RUN_ID,
+                  INGESTED_AT)
+    assert_error(excinfo.value, SchemaValidationError, ErrorCode.SCHEMA_VALIDATION_FAILED,
+                 source_system="csv_demo", entity_type="customers", source_id="CUST-001",
+                 field_name="name")
+    assert isinstance(excinfo.value.__cause__, ValidationError)
 
-    # coerce_email
-    def test_email_trim_lowercase(self):
-        assert coerce_email("  Alice@EXAMPLE.COM  ") == "alice@example.com"
 
-    def test_email_none(self):
-        assert coerce_email(None) is None
+def test_unexpected_exceptions_become_structured_errors(monkeypatch):
+    def explode(*args):
+        raise RuntimeError("boom")
 
-    def test_email_null_token(self):
-        assert coerce_email("N/A") is None
+    monkeypatch.setattr(pipeline, "map_record", explode)
+    with pytest.raises(NormalizationError) as excinfo:
+        normalize("csv_demo", "customers", full_case("csv_demo", "customers")[0], RUN_ID,
+                  INGESTED_AT)
+    assert_error(excinfo.value, NormalizationError, ErrorCode.UNEXPECTED_ERROR,
+                 source_system="csv_demo", entity_type="customers", source_id="CUST-001",
+                 field_name=None)
+    assert isinstance(excinfo.value.__cause__, RuntimeError)
 
-    # coerce_bool
-    def test_bool_true_string(self):
-        assert coerce_bool("true") is True
 
-    def test_bool_false_string(self):
-        assert coerce_bool("false") is False
+def test_exception_hierarchy():
+    for cls in (UnsupportedSourceError, UnsupportedEntityError, InvalidRecordError,
+                IdentifierError, FieldMappingError, CoercionError, SchemaValidationError):
+        assert issubclass(cls, NormalizationError)
+    assert not issubclass(NormalizationError, ConnectorError)
+    assert not issubclass(NormalizationConfigError, NormalizationError)
 
-    def test_bool_yes(self):
-        assert coerce_bool("yes") is True
 
-    def test_bool_no(self):
-        assert coerce_bool("no") is False
+def test_error_codes_are_stable_strings():
+    assert all(code.value == code.name for code in ErrorCode)
+    assert len({code.value for code in ErrorCode}) == len(ErrorCode)
 
-    def test_bool_one(self):
-        assert coerce_bool("1") is True
 
-    def test_bool_zero(self):
-        assert coerce_bool("0") is False
-
-    def test_bool_python_true(self):
-        assert coerce_bool(True) is True
-
-    def test_bool_python_false(self):
-        assert coerce_bool(False) is False
-
-    def test_bool_none(self):
-        assert coerce_bool(None) is None
-
-    def test_bool_invalid(self):
-        with pytest.raises(CoercionError):
-            coerce_bool("maybe")
-
-    # coerce_date
-    def test_date_iso(self):
-        assert coerce_date("2026-01-15") == date(2026, 1, 15)
-
-    def test_date_none(self):
-        assert coerce_date(None) is None
-
-    def test_date_null_token(self):
-        assert coerce_date("N/A") is None
-
-    def test_date_invalid(self):
-        with pytest.raises(CoercionError):
-            coerce_date("15/01/2026")
-
-    def test_date_from_datetime(self):
-        dt = datetime(2026, 1, 15, 10, 30)
-        assert coerce_date(dt) == date(2026, 1, 15)
-
-    def test_date_object(self):
-        d = date(2026, 1, 15)
-        assert coerce_date(d) == d
-
-    # coerce_datetime
-    def test_datetime_iso(self):
-        assert coerce_datetime("2026-01-15T10:30:00") == datetime(2026, 1, 15, 10, 30)
-
-    def test_datetime_date_only(self):
-        assert coerce_datetime("2026-01-15") == datetime(2026, 1, 15)
-
-    def test_datetime_none(self):
-        assert coerce_datetime(None) is None
-
-    def test_datetime_invalid(self):
-        with pytest.raises(CoercionError):
-            coerce_datetime("not-a-date")
-
-    def test_datetime_object(self):
-        dt = datetime(2026, 1, 15, 10, 30)
-        assert coerce_datetime(dt) == dt
-
-    # coerce_decimal
-    def test_decimal_string(self):
-        assert coerce_decimal("150000.50") == Decimal("150000.50")
-
-    def test_decimal_int(self):
-        assert coerce_decimal(42) == Decimal("42")
-
-    def test_decimal_float(self):
-        result = coerce_decimal(45000.0)
-        assert isinstance(result, Decimal)
-        assert result == Decimal("45000.0")
-
-    def test_decimal_none(self):
-        assert coerce_decimal(None) is None
-
-    def test_decimal_null_token(self):
-        assert coerce_decimal("N/A") is None
-
-    def test_decimal_invalid(self):
-        with pytest.raises(CoercionError):
-            coerce_decimal("not-a-number")
-
-    def test_decimal_bool_rejected(self):
-        with pytest.raises(CoercionError):
-            coerce_decimal(True)
-
-    def test_decimal_zero(self):
-        assert coerce_decimal(0) == Decimal("0")
-
-    def test_decimal_zero_string(self):
-        assert coerce_decimal("0") == Decimal("0")
-
-    # coerce_int_id_to_str
-    def test_int_id_to_str(self):
-        assert coerce_int_id_to_str(42) == "42"
-
-    def test_int_id_none(self):
-        assert coerce_int_id_to_str(None) is None
-
-    def test_int_id_bool_rejected(self):
-        with pytest.raises(CoercionError):
-            coerce_int_id_to_str(True)
+def test_with_context_never_overwrites_known_context():
+    error = CoercionError("bad", code=ErrorCode.INVALID_TYPE, source_id="A", field_name="amount")
+    error.with_context(source_system="csv_demo", entity_type="deals", source_id="B",
+                       field_name="other")
+    assert (error.source_system, error.entity_type, error.source_id, error.field_name) == (
+        "csv_demo", "deals", "A", "amount")
 
 
 # ---------------------------------------------------------------------------
-# E. Identity (deterministic UUIDs, record_hash)
+# E. Batch isolation
 # ---------------------------------------------------------------------------
 
 
-class TestIdentity:
-    def test_canonical_id_deterministic(self):
-        id1 = canonical_id("csv_demo", "customers", "CUST-001")
-        id2 = canonical_id("csv_demo", "customers", "CUST-001")
-        assert id1 == id2
+def test_batch_isolates_malformed_records():
+    good, _ = full_case("csv_demo", "customers")
+    marker = object()
+    records = [
+        None, good, ["list"], "string", 42, marker,
+        with_value(good, "customer_id", ABSENT),
+        with_value(good, "customer_id", "CUST-002"),
+        with_value(good, "status", "churned"),
+        with_value(good, "customer_id", "CUST-003"),
+        {},
+    ]
+    ok, failures = normalize_batch("csv_demo", "customers", records, RUN_ID, INGESTED_AT)
 
-    def test_canonical_id_is_uuid(self):
-        cid = canonical_id("csv_demo", "customers", "CUST-001")
-        assert isinstance(cid, uuid.UUID)
-
-    def test_canonical_id_different_source_id(self):
-        id1 = canonical_id("csv_demo", "customers", "CUST-001")
-        id2 = canonical_id("csv_demo", "customers", "CUST-002")
-        assert id1 != id2
-
-    def test_canonical_id_different_source_system(self):
-        id1 = canonical_id("csv_demo", "customers", "CUST-001")
-        id2 = canonical_id("odoo_mock", "customers", "CUST-001")
-        assert id1 != id2
-
-    def test_canonical_id_different_entity(self):
-        id1 = canonical_id("csv_demo", "customers", "CUST-001")
-        id2 = canonical_id("csv_demo", "employees", "CUST-001")
-        assert id1 != id2
-
-    def test_record_hash_deterministic(self):
-        fields = {"name": "Acme", "status": "active"}
-        h1 = record_hash(fields)
-        h2 = record_hash(fields)
-        assert h1 == h2
-
-    def test_record_hash_different_values(self):
-        h1 = record_hash({"name": "Acme"})
-        h2 = record_hash({"name": "Widget"})
-        assert h1 != h2
-
-    def test_record_hash_excludes_provenance(self):
-        fields = {"name": "Acme", "ingested_at": "2026-01-01", "ingestion_run_id": "xyz"}
-        fields_clean = {"name": "Acme"}
-        assert record_hash(fields) == record_hash(fields_clean)
-
-    def test_record_hash_is_hex_string(self):
-        h = record_hash({"x": 1})
-        assert isinstance(h, str)
-        assert len(h) == 64  # SHA-256 hex
-
-    def test_normalize_sets_id_from_source_identity(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        expected_id = canonical_id("csv_demo", "customers", "CUST-001")
-        assert result.id == expected_id
-
-    def test_normalize_sets_record_hash(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert isinstance(result.record_hash, str)
-        assert len(result.record_hash) == 64
+    assert [obj.source_id for obj in ok] == ["CUST-001", "CUST-002", "CUST-003"]
+    expected_failed = [records[i] for i in (0, 2, 3, 4, 5, 6, 8, 10)]
+    assert len(failures) == len(expected_failed)
+    assert all(actual is expected for (actual, _), expected in zip(failures, expected_failed, strict=True))
+    assert [type(error) for _, error in failures] == [
+        InvalidRecordError, InvalidRecordError, InvalidRecordError, InvalidRecordError,
+        InvalidRecordError, IdentifierError, CoercionError, IdentifierError,
+    ]
+    assert [error.code for _, error in failures] == [
+        ErrorCode.INVALID_RECORD, ErrorCode.INVALID_RECORD, ErrorCode.INVALID_RECORD,
+        ErrorCode.INVALID_RECORD, ErrorCode.INVALID_RECORD, ErrorCode.SOURCE_ID_MISSING,
+        ErrorCode.UNKNOWN_ENUM_VALUE, ErrorCode.SOURCE_ID_MISSING,
+    ]
+    for _, error in failures:
+        assert (error.source_system, error.entity_type) == ("csv_demo", "customers")
+    assert failures[6][1].source_id == "CUST-001"
 
 
-# ---------------------------------------------------------------------------
-# F. Relationships
-# ---------------------------------------------------------------------------
+def test_batch_accepts_any_iterable():
+    good, _ = full_case("rest_mock", "deals")
+    ok, failures = normalize_batch("rest_mock", "deals", (r for r in [good, None]), RUN_ID,
+                                   INGESTED_AT)
+    assert len(ok) == 1 and len(failures) == 1
 
 
-class TestRelationships:
-    def test_csv_deal_customer_source_id(self):
-        result = normalize("csv_demo", "deals", _csv_deal(), _RUN_ID, _INGESTED_AT)
-        assert result.customer_source_id == "CUST-001"
+def test_batch_with_unsupported_source_fails_per_record_without_raising():
+    ok, failures = normalize_batch("odoo", "customers", [{"id": 1}, {"id": 2}], RUN_ID, INGESTED_AT)
+    assert ok == []
+    assert [error.code for _, error in failures] == [ErrorCode.UNSUPPORTED_SOURCE] * 2
 
-    def test_csv_deal_owner_source_id(self):
-        result = normalize("csv_demo", "deals", _csv_deal(), _RUN_ID, _INGESTED_AT)
-        assert result.owner_source_id == "EMP-002"
 
-    def test_csv_deal_customer_id_is_none(self):
-        """canonical FK is None because D1 does not resolve it."""
-        result = normalize("csv_demo", "deals", _csv_deal(), _RUN_ID, _INGESTED_AT)
-        assert result.customer_id is None
+def test_batch_continues_after_unexpected_error(monkeypatch):
+    real_map_record = pipeline.map_record
 
-    def test_odoo_deal_customer_source_id_from_partner(self):
-        result = normalize("odoo_mock", "deals", _odoo_deal(), _RUN_ID, _INGESTED_AT)
-        assert result.customer_source_id == "42"  # partner_id int -> str
+    def explode_for_one(config, profile, mapping, record):
+        if record.get("customer_id") == "CUST-002":
+            raise RuntimeError("boom")
+        return real_map_record(config, profile, mapping, record)
 
-    def test_odoo_deal_owner_source_id_from_user(self):
-        result = normalize("odoo_mock", "deals", _odoo_deal(), _RUN_ID, _INGESTED_AT)
-        assert result.owner_source_id == "10"  # user_id int -> str
+    monkeypatch.setattr(pipeline, "map_record", explode_for_one)
+    good, _ = full_case("csv_demo", "customers")
+    records = [good, with_value(good, "customer_id", "CUST-002"),
+               with_value(good, "customer_id", "CUST-003")]
+    ok, failures = normalize_batch("csv_demo", "customers", records, RUN_ID, INGESTED_AT)
+    assert [obj.source_id for obj in ok] == ["CUST-001", "CUST-003"]
+    assert failures[0][1].code == ErrorCode.UNEXPECTED_ERROR
+    assert failures[0][1].source_id == "CUST-002"
 
-    def test_rest_deal_customer_source_id(self):
-        result = normalize("rest_demo", "deals", _rest_deal(), _RUN_ID, _INGESTED_AT)
-        assert result.customer_source_id == "REST-C-001"
 
-    def test_csv_employee_manager_source_id_none(self):
-        result = normalize("csv_demo", "employees", _csv_employee(), _RUN_ID, _INGESTED_AT)
-        assert result.manager_source_id is None
+def test_empty_batch():
+    assert normalize_batch("csv_demo", "customers", [], RUN_ID, INGESTED_AT) == ([], [])
 
-    def test_csv_employee_organization_id_none(self):
-        """Canonical FK to org is not resolved by D1."""
-        result = normalize("csv_demo", "employees", _csv_employee(), _RUN_ID, _INGESTED_AT)
-        assert result.organization_id is None
 
-    def test_csv_ticket_customer_source_id(self):
-        result = normalize("csv_demo", "support_tickets", _csv_support_ticket(), _RUN_ID, _INGESTED_AT)
-        assert result.customer_source_id == "CUST-001"
-
-    def test_csv_ticket_assignee_source_id(self):
-        result = normalize("csv_demo", "support_tickets", _csv_support_ticket(), _RUN_ID, _INGESTED_AT)
-        assert result.assignee_source_id == "EMP-001"
-
-    def test_cross_entity_identity_consistency(self):
-        """Same source_id in same source produces same canonical_id for that entity."""
-        deal = normalize("csv_demo", "deals", _csv_deal(), _RUN_ID, _INGESTED_AT)
-        # The deal references CUST-001 as customer_source_id
-        # If we normalize that customer, its canonical ID should be deterministic
-        customer = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        expected_customer_id = canonical_id("csv_demo", "customers", "CUST-001")
-        assert customer.id == expected_customer_id
-        assert deal.customer_source_id == customer.source_id
+@pytest.mark.parametrize(("source", "entity"), CASE_KEYS, ids=case_id)
+def test_batch_output_equals_single_record_output(source, entity):
+    record, _ = full_case(source, entity)
+    ok, failures = normalize_batch(source, entity, [record], RUN_ID, INGESTED_AT)
+    assert failures == []
+    assert ok[0].model_dump() == normalize(source, entity, record, RUN_ID, INGESTED_AT).model_dump()
 
 
 # ---------------------------------------------------------------------------
-# G. Null semantics
+# F. Immutability
 # ---------------------------------------------------------------------------
 
 
-class TestNullSemantics:
-    def test_none_preserved(self):
-        rec = _csv_customer()
-        rec["email_address"] = None
-        result = normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
-        assert result.email is None
+@pytest.mark.parametrize(("source", "entity"), CASE_KEYS, ids=case_id)
+def test_normalize_does_not_mutate_input(source, entity):
+    record, expected = full_case(source, entity)
+    snapshot = copy.deepcopy(record)
+    obj = normalize(source, entity, record, RUN_ID, INGESTED_AT)
+    assert record == snapshot
+    assert list(record) == list(snapshot)
+    record.clear()
+    assert business(obj) == expected["fields"]
 
-    def test_empty_string_becomes_none_for_str(self):
-        rec = _csv_customer()
-        rec["customer_segment"] = ""
-        result = normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
-        assert result.segment is None
 
-    def test_whitespace_becomes_none_for_str(self):
-        rec = _csv_customer()
-        rec["customer_segment"] = "   "
-        result = normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
-        assert result.segment is None
+@pytest.mark.parametrize(("source", "entity"), CASE_KEYS, ids=case_id)
+def test_read_only_mapping_input_is_supported(source, entity):
+    record, expected = full_case(source, entity)
+    obj = normalize(source, entity, MappingProxyType(record), RUN_ID, INGESTED_AT)
+    assert business(obj) == expected["fields"]
 
-    def test_zero_preserved_for_decimal(self):
-        rec = _csv_deal()
-        rec["amount"] = "0"
-        result = normalize("csv_demo", "deals", rec, _RUN_ID, _INGESTED_AT)
-        assert result.amount == Decimal("0")
 
-    def test_false_preserved_for_bool(self):
-        rec = _csv_deal()
-        rec["is_active"] = "false"
-        result = normalize("csv_demo", "deals", rec, _RUN_ID, _INGESTED_AT)
-        assert result.is_active is False
-
-    def test_zero_float_preserved_for_decimal(self):
-        rec = _rest_deal()
-        rec["amount"] = 0.0
-        result = normalize("rest_demo", "deals", rec, _RUN_ID, _INGESTED_AT)
-        assert result.amount == Decimal("0.0")
-
-    def test_na_becomes_none(self):
-        rec = _csv_customer()
-        rec["customer_segment"] = "N/A"
-        result = normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
-        assert result.segment is None
-
-    def test_dash_becomes_none(self):
-        rec = _csv_customer()
-        rec["customer_segment"] = "-"
-        result = normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
-        assert result.segment is None
-
-    def test_missing_optional_field_is_none(self):
-        rec = {"customer_id": "CUST-X", "customer_name": "Test"}
-        result = normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
-        assert result.email is None
-        assert result.segment is None
+def test_batch_does_not_mutate_input_list_or_records():
+    records = [full_case("odoo_mock", "deals")[0], None, full_case("odoo_mock", "deals")[0]]
+    snapshot = copy.deepcopy(records)
+    identities = [id(r) for r in records]
+    normalize_batch("odoo_mock", "deals", records, RUN_ID, INGESTED_AT)
+    assert records == snapshot
+    assert [id(r) for r in records] == identities
 
 
 # ---------------------------------------------------------------------------
-# H. Error handling
+# G. Determinism
 # ---------------------------------------------------------------------------
 
 
-class TestErrorHandling:
-    def test_unsupported_source(self):
-        with pytest.raises(UnsupportedSourceError, match="fantasy_source"):
-            normalize("fantasy_source", "customers", {}, _RUN_ID, _INGESTED_AT)
+def _all_outputs() -> list[list[str]]:
+    outputs = []
+    for key in CASE_KEYS:
+        record, _ = full_case(*key)
+        obj = normalize(key[0], key[1], record, RUN_ID, INGESTED_AT)
+        outputs.append([key[0], key[1], str(obj.id), obj.record_hash, obj.model_dump_json()])
+    return outputs
 
-    def test_unsupported_entity(self):
-        with pytest.raises(UnsupportedEntityError, match="widgets"):
-            normalize("csv_demo", "widgets", {}, _RUN_ID, _INGESTED_AT)
 
-    def test_missing_source_id(self):
-        with pytest.raises(FieldMappingError, match="customer_id"):
-            normalize("csv_demo", "customers", {"customer_name": "Test"}, _RUN_ID, _INGESTED_AT)
+def test_repeated_normalization_is_identical():
+    assert _all_outputs() == _all_outputs()
 
-    def test_empty_source_id(self):
-        rec = _csv_customer()
-        rec["customer_id"] = ""
-        with pytest.raises(FieldMappingError, match="Empty"):
-            normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
 
-    def test_invalid_date(self):
-        rec = _csv_customer()
-        rec["created_date"] = "not-a-date"
-        with pytest.raises((CoercionError, NormalizationError)):
-            normalize("csv_demo", "customers", rec, _RUN_ID, _INGESTED_AT)
+_SUBPROCESS_OUTPUTS = """
+import json, sys
+sys.path[:0] = [{repo!r}, {tests!r}]
+from d1_support import CASE_KEYS, INGESTED_AT, RUN_ID, full_case
+from app.normalization import normalize
+outputs = []
+for key in CASE_KEYS:
+    record, _ = full_case(*key)
+    obj = normalize(key[0], key[1], record, RUN_ID, INGESTED_AT)
+    outputs.append([key[0], key[1], str(obj.id), obj.record_hash, obj.model_dump_json()])
+print(json.dumps(outputs))
+"""
 
-    def test_invalid_decimal(self):
-        rec = _csv_deal()
-        rec["amount"] = "not-a-number"
-        with pytest.raises((CoercionError, NormalizationError)):
-            normalize("csv_demo", "deals", rec, _RUN_ID, _INGESTED_AT)
 
-    def test_invalid_boolean(self):
-        rec = _csv_deal()
-        rec["is_active"] = "maybe"
-        with pytest.raises((CoercionError, NormalizationError)):
-            normalize("csv_demo", "deals", rec, _RUN_ID, _INGESTED_AT)
+def _run_python(code: str, **env: str) -> str:
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, check=True, cwd=TESTS_DIR,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1", **env},
+    )
+    return result.stdout
 
-    def test_error_includes_context(self):
-        try:
-            normalize("csv_demo", "customers", {"customer_name": "Test"}, _RUN_ID, _INGESTED_AT)
-        except NormalizationError as exc:
-            assert exc.source_system == "csv_demo"
-            assert exc.entity_type == "customers"
 
-    def test_normalization_error_hierarchy(self):
-        assert issubclass(UnsupportedSourceError, NormalizationError)
-        assert issubclass(UnsupportedEntityError, NormalizationError)
-        assert issubclass(FieldMappingError, NormalizationError)
-        assert issubclass(CoercionError, NormalizationError)
-
-    def test_normalization_error_not_connector_error(self):
-        """D1 errors are distinct from connector errors."""
-        from app.connectors.types import ConnectorError
-        assert not issubclass(NormalizationError, ConnectorError)
+@pytest.mark.parametrize("hash_seed", ["0", "4242"])
+def test_output_is_identical_across_processes(hash_seed):
+    code = _SUBPROCESS_OUTPUTS.format(repo=str(REPO), tests=str(TESTS_DIR))
+    assert json.loads(_run_python(code, PYTHONHASHSEED=hash_seed)) == _all_outputs()
 
 
 # ---------------------------------------------------------------------------
-# I. Boundary tests (D1 must NOT import DB/HTTP/connector internals)
+# H. Purity and boundaries
 # ---------------------------------------------------------------------------
 
+FORBIDDEN_MODULE_PREFIXES = (
+    "sqlalchemy", "psycopg2", "alembic", "httpx", "requests", "urllib3", "aiohttp",
+    "fastapi", "starlette", "uvicorn", "pydantic_settings", "dotenv", "openai", "anthropic",
+    "langchain", "neo4j", "app.persistence", "app.connectors", "app.core", "app.api",
+    "app.ingestion", "app.validation",
+)
 
-class TestBoundary:
-    """Verify D1 does not have infrastructure dependencies."""
+_SUBPROCESS_IMPORTS = """
+import json, sys
+sys.path.insert(0, {repo!r})
+import app.normalization as normalization
+loaded_at_import = normalization.default_config.cache_info().currsize
+import uuid
+from datetime import datetime, timezone
+normalization.normalize("csv_demo", "customers",
+    {{"customer_id": "C1", "customer_name": "Acme", "status": "active"}},
+    uuid.UUID(int=1), datetime(2026, 1, 1, tzinfo=timezone.utc))
+print(json.dumps({{"loaded_at_import": loaded_at_import, "modules": sorted(sys.modules)}}))
+"""
 
-    def _module_imports(self, module_path: str) -> set[str]:
-        """Parse a Python file's AST and return all imported module names."""
-        source = Path(module_path).read_text()
-        tree = ast.parse(source)
-        imports = set()
+
+def test_runtime_import_closure_has_no_database_http_or_connector_dependencies():
+    result = json.loads(_run_python(_SUBPROCESS_IMPORTS.format(repo=str(REPO))))
+    leaked = [m for m in result["modules"]
+              if m.startswith(FORBIDDEN_MODULE_PREFIXES)]
+    assert leaked == []
+    assert result["loaded_at_import"] == 0, "configuration must load lazily, not at import"
+    app_modules = {m for m in result["modules"] if m.startswith("app.")}
+    assert all(m.startswith(("app.normalization", "app.schemas")) for m in app_modules)
+
+
+ALLOWED_STDLIB_AND_THIRD_PARTY = {
+    "__future__", "collections", "dataclasses", "datetime", "decimal", "enum", "functools",
+    "hashlib", "json", "math", "pathlib", "re", "types", "typing", "uuid", "yaml", "pydantic",
+}
+FORBIDDEN_NAMES = {"open", "print", "input", "eval", "exec", "__import__"}
+FORBIDDEN_ATTRIBUTES = {"environ", "getenv", "now", "utcnow", "today", "uuid1", "uuid4",
+                        "random", "urandom", "system", "popen", "sleep"}
+
+
+def _d1_trees():
+    for path in sorted(D1_DIR.glob("*.py")):
+        yield path.name, ast.parse(path.read_text(encoding="utf-8"))
+
+
+def test_d1_imports_are_allowlisted():
+    for name, tree in _d1_trees():
         for node in ast.walk(tree):
+            modules = []
             if isinstance(node, ast.Import):
-                for alias in node.names:
-                    imports.add(alias.name.split(".")[0])
+                modules = [alias.name for alias in node.names]
             elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports.add(node.module.split(".")[0])
-        return imports
-
-    def _all_d1_imports(self) -> set[str]:
-        """Collect all imports across all D1 modules."""
-        d1_dir = Path(__file__).resolve().parent.parent.parent / "app" / "normalization"
-        all_imports = set()
-        for py_file in d1_dir.glob("*.py"):
-            all_imports.update(self._module_imports(str(py_file)))
-        return all_imports
-
-    def test_no_sqlalchemy_import(self):
-        imports = self._all_d1_imports()
-        assert "sqlalchemy" not in imports
-
-    def test_no_httpx_import(self):
-        imports = self._all_d1_imports()
-        assert "httpx" not in imports
-
-    def test_no_requests_import(self):
-        imports = self._all_d1_imports()
-        assert "requests" not in imports
-
-    def test_no_database_module_import(self):
-        """D1 must not import persistence/database modules."""
-        d1_dir = Path(__file__).resolve().parent.parent.parent / "app" / "normalization"
-        for py_file in d1_dir.glob("*.py"):
-            source = py_file.read_text()
-            tree = ast.parse(source)
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and node.module:
-                    assert "persistence" not in node.module, (
-                        f"{py_file.name} imports persistence module"
-                    )
-                    assert "models" not in node.module or "schemas" in node.module, (
-                        f"{py_file.name} imports models module"
-                    )
-
-    def test_no_connector_instantiation(self):
-        """D1 must not import connector classes (only types for error checking)."""
-        d1_dir = Path(__file__).resolve().parent.parent.parent / "app" / "normalization"
-        for py_file in d1_dir.glob("*.py"):
-            source = py_file.read_text()
-            tree = ast.parse(source)
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and node.module:
-                    if "app.connectors" in node.module:
-                        # Only types.py imports are allowed (for error hierarchy check)
-                        for alias in node.names:
-                            assert alias.name.startswith("Connector"), (
-                                f"{py_file.name} imports non-error connector class: {alias.name}"
-                            )
+                assert node.level == 0, f"{name}: relative import"
+                modules = [node.module]
+            for module in modules:
+                if module.split(".")[0] == "app":
+                    assert module.startswith(("app.normalization", "app.schemas.canonical")), (
+                        f"{name} imports {module}")
+                else:
+                    assert module.split(".")[0] in ALLOWED_STDLIB_AND_THIRD_PARTY, (
+                        f"{name} imports {module}")
 
 
-# ---------------------------------------------------------------------------
-# J. Determinism
-# ---------------------------------------------------------------------------
+def test_d1_has_no_side_effecting_or_nondeterministic_calls():
+    for name, tree in _d1_trees():
+        for node in ast.walk(tree):
+            assert not isinstance(node, (ast.Global, ast.Nonlocal)), f"{name}: global state"
+            if isinstance(node, ast.Name):
+                assert node.id not in FORBIDDEN_NAMES, f"{name}: {node.id}"
+            if isinstance(node, ast.Attribute):
+                assert node.attr not in FORBIDDEN_ATTRIBUTES, f"{name}: .{node.attr}"
 
 
-class TestDeterminism:
-    def test_normalize_idempotent(self):
-        r1 = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        r2 = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert r1.id == r2.id
-        assert r1.record_hash == r2.record_hash
-        assert r1.name == r2.name
-        assert r1.email == r2.email
-
-    def test_normalize_stable_across_calls(self):
-        """Multiple calls with the same input produce identical canonical objects."""
-        results = [
-            normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-            for _ in range(5)
-        ]
-        ids = {r.id for r in results}
-        hashes = {r.record_hash for r in results}
-        assert len(ids) == 1
-        assert len(hashes) == 1
-
-    def test_odoo_normalize_idempotent(self):
-        r1 = normalize("odoo_mock", "customers", _odoo_customer(), _RUN_ID, _INGESTED_AT)
-        r2 = normalize("odoo_mock", "customers", _odoo_customer(), _RUN_ID, _INGESTED_AT)
-        assert r1.id == r2.id
-        assert r1.record_hash == r2.record_hash
-
-    def test_rest_normalize_idempotent(self):
-        r1 = normalize("rest_demo", "deals", _rest_deal(), _RUN_ID, _INGESTED_AT)
-        r2 = normalize("rest_demo", "deals", _rest_deal(), _RUN_ID, _INGESTED_AT)
-        assert r1.id == r2.id
-        assert r1.record_hash == r2.record_hash
+def test_only_memoization_is_the_immutable_default_config():
+    cached = []
+    for name, tree in _d1_trees():
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                for decorator in node.decorator_list:
+                    target = decorator.func if isinstance(decorator, ast.Call) else decorator
+                    label = target.attr if isinstance(target, ast.Attribute) else getattr(target, "id", "")
+                    if label in {"lru_cache", "cache", "cached_property"}:
+                        cached.append((name, node.name))
+    assert cached == [("config.py", "default_config")]
 
 
-# ---------------------------------------------------------------------------
-# K. Batch normalization
-# ---------------------------------------------------------------------------
+def test_filesystem_access_is_confined_to_the_config_loader():
+    for name, tree in _d1_trees():
+        if name == "config.py":
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute):
+                assert node.attr not in {"read_text", "read_bytes", "open", "glob"}, name
 
 
-class TestBatch:
-    def test_batch_all_success(self):
-        records = [_csv_customer()]
-        ok, errs = normalize_batch("csv_demo", "customers", records, _RUN_ID, _INGESTED_AT)
-        assert len(ok) == 1
-        assert len(errs) == 0
+def test_normalization_runs_with_explicit_config_and_no_default_config(monkeypatch):
+    config = normalization.load_config(REPO / "config" / "mappings")
 
-    def test_batch_mixed(self):
-        good = _csv_customer()
-        bad = {"customer_name": "No ID"}  # missing customer_id
-        ok, errs = normalize_batch("csv_demo", "customers", [good, bad], _RUN_ID, _INGESTED_AT)
-        assert len(ok) == 1
-        assert len(errs) == 1
-        assert isinstance(errs[0][1], NormalizationError)
+    def forbidden():
+        raise AssertionError("default_config must not be used when config is explicit")
 
-    def test_batch_all_failures(self):
-        bad1 = {"customer_name": "No ID 1"}
-        bad2 = {"customer_name": "No ID 2"}
-        ok, errs = normalize_batch("csv_demo", "customers", [bad1, bad2], _RUN_ID, _INGESTED_AT)
-        assert len(ok) == 0
-        assert len(errs) == 2
-
-    def test_batch_empty(self):
-        ok, errs = normalize_batch("csv_demo", "customers", [], _RUN_ID, _INGESTED_AT)
-        assert len(ok) == 0
-        assert len(errs) == 0
-
-    def test_batch_preserves_order(self):
-        c1 = _csv_customer()
-        c2 = dict(c1)
-        c2["customer_id"] = "CUST-002"
-        c2["customer_name"] = "Second"
-        ok, errs = normalize_batch("csv_demo", "customers", [c1, c2], _RUN_ID, _INGESTED_AT)
-        assert len(ok) == 2
-        assert ok[0].source_id == "CUST-001"
-        assert ok[1].source_id == "CUST-002"
-
-
-# ---------------------------------------------------------------------------
-# L. Provenance fields
-# ---------------------------------------------------------------------------
-
-
-class TestProvenance:
-    def test_source_system_set(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.source_system == "csv_demo"
-
-    def test_source_entity_set(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.source_entity == "customers"
-
-    def test_source_id_set(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.source_id == "CUST-001"
-
-    def test_ingestion_run_id_set(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.ingestion_run_id == _RUN_ID
-
-    def test_ingested_at_set(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.ingested_at == _INGESTED_AT
-
-    def test_source_updated_at_none_default(self):
-        result = normalize("csv_demo", "customers", _csv_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.source_updated_at is None
-
-    def test_source_updated_at_passed_through(self):
-        ts = datetime(2026, 9, 1, 10, 0, 0)
-        result = normalize(
-            "csv_demo", "customers", _csv_customer(),
-            _RUN_ID, _INGESTED_AT, source_updated_at=ts,
-        )
-        assert result.source_updated_at == ts
-
-    def test_odoo_source_id_is_string(self):
-        """Odoo integer IDs must be converted to strings in source_id."""
-        result = normalize("odoo_mock", "customers", _odoo_customer(), _RUN_ID, _INGESTED_AT)
-        assert result.source_id == "42"
-        assert isinstance(result.source_id, str)
-
-
-# ---------------------------------------------------------------------------
-# M. Mappings module API
-# ---------------------------------------------------------------------------
-
-
-class TestMappingsAPI:
-    def test_supported_sources(self):
-        assert "csv_demo" in SUPPORTED_SOURCES
-        assert "odoo_mock" in SUPPORTED_SOURCES
-        assert "rest_demo" in SUPPORTED_SOURCES
-
-    def test_supported_entities(self):
-        expected = {"organizations", "employees", "customers", "deals",
-                    "projects", "support_tickets", "documents"}
-        assert SUPPORTED_ENTITIES == expected
-
-    def test_has_is_active(self):
-        assert has_is_active("employees") is True
-        assert has_is_active("customers") is True
-        assert has_is_active("deals") is True
-        assert has_is_active("projects") is True
-        assert has_is_active("organizations") is False
-        assert has_is_active("support_tickets") is False
-        assert has_is_active("documents") is False
-
-    def test_get_mapper_returns_callable(self):
-        mapper = get_mapper("csv_demo", "customers")
-        assert callable(mapper)
-
-    def test_extract_source_id_csv(self):
-        sid = extract_source_id("csv_demo", "customers", _csv_customer())
-        assert sid == "CUST-001"
-
-    def test_extract_source_id_odoo(self):
-        sid = extract_source_id("odoo_mock", "customers", _odoo_customer())
-        assert sid == "42"
-
-    def test_extract_source_id_rest(self):
-        sid = extract_source_id("rest_demo", "customers", _rest_customer())
-        assert sid == "REST-C-001"
+    monkeypatch.setattr(pipeline, "default_config", forbidden)
+    obj = normalize("rest_mock", "customers", full_case("rest_mock", "customers")[0], RUN_ID,
+                    INGESTED_AT, config=config)
+    assert obj.source_id == "CUST-003"
+    assert obj.ingested_at.tzinfo is UTC

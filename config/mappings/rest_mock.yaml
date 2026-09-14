@@ -1,0 +1,107 @@
+# =============================================================================
+# D1 mapping configuration — rest_mock (C5 RestConnector, C3 /rest/...).
+#
+# columns: source field -> canonical field(s); derived: explicit derivations.
+# =============================================================================
+
+source: rest_mock
+identifier_type: string
+
+# The REST contract is ISO 8601 with an explicit offset ("Z" or "+HH:MM").
+# Timestamps without an offset are ambiguous and rejected, never guessed.
+naive_datetime_timezone: reject
+date_formats: ["%Y-%m-%d"]
+datetime_formats:
+  - "%Y-%m-%dT%H:%M:%S%z"
+  - "%Y-%m-%dT%H:%M:%S.%f%z"
+  - "%Y-%m-%dT%H:%M:%S"
+  - "%Y-%m-%dT%H:%M:%S.%f"
+  - "%Y-%m-%d"
+
+decimal:
+  decimal_separator: "."
+  thousands_separator: null
+
+entities:
+  organizations:
+    columns:
+      id: source_id
+      name: name
+      industry: industry
+      country: country
+      status: status
+
+  employees:
+    # organizationId is not mapped: the canonical Employee schema has no
+    # organization source key (B1/B2 gap, outside D1).
+    columns:
+      id: source_id
+      name: name
+      email: email
+      department: department
+      title: title
+      managerId: manager_source_id
+      status: status
+      hireDate: hire_date
+      isActive: is_active
+
+  customers:
+    columns:
+      id: source_id
+      name: name
+      email: email
+      segment: segment
+      industry: industry
+      ownerId: owner_source_id
+      status: status
+      createdAt: created_at
+      isActive: is_active
+
+  deals:
+    columns:
+      id: source_id
+      name: name
+      customerId: customer_source_id
+      ownerId: owner_source_id
+      stage: stage
+      amount: amount
+      currency: currency
+      probability: probability
+      expectedCloseDate: expected_close_date
+      isActive: is_active
+
+  projects:
+    columns:
+      id: source_id
+      name: name
+      customerId: customer_source_id
+      ownerId: owner_source_id
+      status: status
+      startDate: start_date
+      endDate: end_date
+      budget: budget
+      isActive: is_active
+
+  support_tickets:
+    columns:
+      id: source_id
+      customerId: customer_source_id
+      assigneeId: assignee_source_id
+      priority: priority
+      status: status
+      category: category
+      subject: subject
+      description: description
+      createdAt: created_at
+      resolvedAt: resolved_at
+
+  documents:
+    columns:
+      id: source_id
+      title: title
+      documentType: document_type
+      bodyText: body_text
+      sourceUri: source_uri
+      ownerId: owner_source_id
+      createdAt: created_at
+      updatedAt: [updated_at, source_updated_at]

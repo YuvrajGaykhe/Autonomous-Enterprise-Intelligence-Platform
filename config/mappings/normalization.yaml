@@ -1,0 +1,130 @@
+# =============================================================================
+# D1 normalization — source-independent canonical rules.
+#
+# Loaded by app/normalization/config.py and validated against the B2
+# canonical schemas. Per-source mappings live in <source_system>.yaml.
+# =============================================================================
+
+version: 1
+
+# Canonical source_system vocabulary. One <name>.yaml file per entry.
+source_systems:
+  - csv_demo
+  - odoo_mock
+  - rest_mock
+
+# Spec Section 7: "NULL / N/A / - / empty -> map configured null tokens to null".
+# Compared case-insensitively after trimming. Blank values are always null.
+# Tokens apply to string, email, enum, currency, decimal, date, datetime and
+# boolean fields. Free text and identifiers do not use tokens.
+null_tokens: ["null", "n/a", "-"]
+
+# Spec Section 7: "true / True / yes / 1 -> normalize to boolean using explicit
+# accepted values". Compared case-insensitively after trimming. Native JSON
+# booleans and the integers 0/1 are also accepted.
+boolean_tokens:
+  true_values: ["true", "yes", "1"]
+  false_values: ["false", "no", "0"]
+
+# Spec Section 7: store the numeric amount and the ISO currency code separately.
+# Codes are uppercase ISO 4217 codes. Aliases map unambiguous symbols only
+# ("$" is deliberately absent: USD, CAD, AUD, ... share it).
+currency:
+  codes: [
+    AED, AFN, ALL, AMD, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF,
+    BMD, BND, BOB, BRL, BSD, BTN, BWP, BYN, BZD, CAD, CDF, CHF, CLP, CNY, COP,
+    CRC, CUP, CVE, CZK, DJF, DKK, DOP, DZD, EGP, ERN, ETB, EUR, FJD, FKP, GBP,
+    GEL, GHS, GIP, GMD, GNF, GTQ, GYD, HKD, HNL, HTG, HUF, IDR, ILS, INR, IQD,
+    IRR, ISK, JMD, JOD, JPY, KES, KGS, KHR, KMF, KPW, KRW, KWD, KYD, KZT, LAK,
+    LBP, LKR, LRD, LSL, LYD, MAD, MDL, MGA, MKD, MMK, MNT, MOP, MRU, MUR, MVR,
+    MWK, MXN, MYR, MZN, NAD, NGN, NIO, NOK, NPR, NZD, OMR, PAB, PEN, PGK, PHP,
+    PKR, PLN, PYG, QAR, RON, RSD, RUB, RWF, SAR, SBD, SCR, SDG, SEK, SGD, SHP,
+    SLE, SOS, SRD, SSP, STN, SVC, SYP, SZL, THB, TJS, TMT, TND, TOP, TRY, TTD,
+    TWD, TZS, UAH, UGX, USD, UYU, UZS, VES, VND, VUV, WST, XAF, XCD, XCG, XOF,
+    XPF, YER, ZAR, ZMW, ZWG,
+  ]
+  aliases:
+    "₹": INR
+    "€": EUR
+    "£": GBP
+
+# Canonical kind of every business field (must cover B2 exactly, excluding
+# provenance fields and the E1-resolved FKs customer_id / organization_id).
+#
+# Kinds: string (trimmed), text (preserved), email, enum, boolean, decimal,
+# currency, date, datetime (UTC-aware), source_key (relationship identifier).
+#
+# Enum values are the canonical vocabulary observed in the committed source
+# data (data/demo) plus the "inactive" state that the Odoo/REST boolean
+# representations of active state necessarily produce. Extend here when new
+# source values are confirmed; unknown labels are rejected, never guessed.
+#
+# Decimal precision/scale mirror the B1 Numeric columns so values can never
+# be silently rounded by PostgreSQL.
+canonical_fields:
+  organizations:
+    name: {kind: string}
+    industry: {kind: string}
+    country: {kind: string}
+    status: {kind: enum, values: [active, inactive]}
+
+  employees:
+    name: {kind: string}
+    email: {kind: email}
+    department: {kind: string}
+    title: {kind: string}
+    manager_source_id: {kind: source_key}
+    status: {kind: enum, values: [active, inactive]}
+    hire_date: {kind: date}
+    is_active: {kind: boolean}
+
+  customers:
+    name: {kind: string}
+    email: {kind: email}
+    segment: {kind: string}
+    industry: {kind: string}
+    status: {kind: enum, values: [active, inactive]}
+    owner_source_id: {kind: source_key}
+    created_at: {kind: datetime}
+    is_active: {kind: boolean}
+
+  deals:
+    name: {kind: string}
+    stage: {kind: enum, values: [qualification, negotiation, won]}
+    amount: {kind: decimal, precision: 15, scale: 2}
+    currency: {kind: currency}
+    probability: {kind: decimal, precision: 5, scale: 2, min: 0, max: 100}
+    expected_close_date: {kind: date}
+    is_active: {kind: boolean}
+    customer_source_id: {kind: source_key}
+    owner_source_id: {kind: source_key}
+
+  projects:
+    name: {kind: string}
+    status: {kind: enum, values: [planning, in_progress]}
+    start_date: {kind: date}
+    end_date: {kind: date}
+    budget: {kind: decimal, precision: 15, scale: 2}
+    is_active: {kind: boolean}
+    customer_source_id: {kind: source_key}
+    owner_source_id: {kind: source_key}
+
+  support_tickets:
+    subject: {kind: string}
+    description: {kind: text}
+    priority: {kind: enum, values: [medium, high]}
+    status: {kind: enum, values: [open, resolved]}
+    category: {kind: string}
+    created_at: {kind: datetime}
+    resolved_at: {kind: datetime}
+    customer_source_id: {kind: source_key}
+    assignee_source_id: {kind: source_key}
+
+  documents:
+    title: {kind: string}
+    document_type: {kind: string}
+    body_text: {kind: text}
+    source_uri: {kind: string}
+    owner_source_id: {kind: source_key}
+    created_at: {kind: datetime}
+    updated_at: {kind: datetime}

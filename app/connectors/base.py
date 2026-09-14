@@ -48,7 +48,7 @@ class SourceConnector(Protocol):
 
     Attributes:
         source_name: logical source identifier (e.g. 'csv_demo',
-            'odoo_demo'). Maps to source_system in canonical records.
+            'odoo_mock'). Maps to source_system in canonical records.
         source_type: connector technology (e.g. 'csv', 'odoo', 'rest').
 
     All methods are read-only. No write operations are permitted.

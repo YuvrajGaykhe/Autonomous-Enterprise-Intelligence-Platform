@@ -109,7 +109,7 @@ class TestConnectorHealth:
     def test_unhealthy_with_message(self):
         h = ConnectorHealth(
             healthy=False,
-            source_name="odoo_demo",
+            source_name="odoo_mock",
             message="Connection refused",
             latency_ms=1500.0,
         )
@@ -378,11 +378,11 @@ class TestExceptionHierarchy:
     def test_entity_error_has_entity_context(self):
         err = ConnectorEntityError(
             "not found",
-            source_name="odoo_demo",
+            source_name="odoo_mock",
             entity_type="customers",
             source_id="42",
         )
-        assert err.source_name == "odoo_demo"
+        assert err.source_name == "odoo_mock"
         assert err.entity_type == "customers"
         assert err.source_id == "42"
 

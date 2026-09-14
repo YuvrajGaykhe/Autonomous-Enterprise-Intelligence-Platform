@@ -1,0 +1,116 @@
+# =============================================================================
+# D1 mapping configuration — csv_demo (C2 CsvConnector, data/demo/*.csv).
+#
+# columns: source column -> canonical field (spec Section 12 shape). A column
+#          may feed several canonical fields by listing them.
+# derived: explicit derivations where the source carries a canonical value in
+#          another representation.
+# Unlisted source columns are ignored (raw rows are preserved by E1).
+# =============================================================================
+
+source: csv_demo
+identifier_type: string
+
+# CSV exports carry no UTC offset: naive timestamps are interpreted as UTC.
+naive_datetime_timezone: UTC
+date_formats: ["%Y-%m-%d"]
+datetime_formats:
+  - "%Y-%m-%d"
+  - "%Y-%m-%d %H:%M:%S"
+  - "%Y-%m-%dT%H:%M:%S"
+  - "%Y-%m-%dT%H:%M:%S%z"
+
+decimal:
+  decimal_separator: "."
+  thousands_separator: null
+
+entities:
+  organizations:
+    columns:
+      organization_id: source_id
+      organization_name: name
+      industry: industry
+      country: country
+      status: status
+
+  employees:
+    # organization_id is not mapped: the canonical Employee schema has no
+    # organization source key (B1/B2 gap, outside D1).
+    columns:
+      employee_id: source_id
+      employee_name: name
+      email_address: email
+      department: department
+      title: title
+      manager_id: manager_source_id
+      status: status
+      hire_date: hire_date
+      is_active: is_active
+
+  customers:
+    columns:
+      customer_id: source_id
+      customer_name: name
+      email_address: email
+      customer_segment: segment
+      industry_name: industry
+      account_owner_id: owner_source_id
+      status: status
+      created_date: created_at
+    derived:
+      # customers.csv has no is_active column; active state is carried by status.
+      is_active:
+        rule: enum_membership
+        from: status
+        enum_of: status
+        true_values: [active]
+        false_values: [inactive]
+
+  deals:
+    columns:
+      deal_id: source_id
+      deal_name: name
+      customer_id: customer_source_id
+      owner_id: owner_source_id
+      stage: stage
+      amount: amount
+      currency: currency
+      probability: probability
+      expected_close_date: expected_close_date
+      is_active: is_active
+
+  projects:
+    columns:
+      project_id: source_id
+      project_name: name
+      customer_id: customer_source_id
+      owner_id: owner_source_id
+      status: status
+      start_date: start_date
+      end_date: end_date
+      budget: budget
+      is_active: is_active
+
+  support_tickets:
+    columns:
+      ticket_id: source_id
+      customer_id: customer_source_id
+      assignee_id: assignee_source_id
+      priority: priority
+      status: status
+      category: category
+      subject: subject
+      description: description
+      created_date: created_at
+      resolved_date: resolved_at
+
+  documents:
+    columns:
+      document_id: source_id
+      title: title
+      document_type: document_type
+      body_text: body_text
+      source_uri: source_uri
+      owner_id: owner_source_id
+      created_date: created_at
+      updated_date: [updated_at, source_updated_at]

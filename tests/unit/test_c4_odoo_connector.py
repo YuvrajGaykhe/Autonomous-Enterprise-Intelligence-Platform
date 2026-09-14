@@ -60,7 +60,7 @@ from app.connectors.types import (
 def _make_config(**overrides: Any) -> OdooConnectorConfig:
     """Create a test configuration."""
     defaults = {
-        "source_name": "odoo",
+        "source_name": "odoo_mock",
         "source_type": "mock",
         "base_url": "http://localhost:9999",
         "timeout": 5,
@@ -229,7 +229,7 @@ def connector(fake_server):
 
 class TestIdentity:
     def test_source_name(self, connector):
-        assert connector.source_name == "odoo"
+        assert connector.source_name == "odoo_mock"
 
     def test_source_type(self, connector):
         assert connector.source_type == "mock"
@@ -305,7 +305,7 @@ class TestHealthCheck:
     def test_healthy_source(self, connector):
         health = connector.health_check()
         assert health.healthy is True
-        assert health.source_name == "odoo"
+        assert health.source_name == "odoo_mock"
         assert health.latency_ms is not None
         assert health.latency_ms >= 0
 
@@ -321,7 +321,7 @@ class TestHealthCheck:
         conn = _make_connector(base_url="http://127.0.0.1:1", timeout=0.5)
         health = conn.health_check()
         assert health.healthy is False
-        assert health.source_name == "odoo"
+        assert health.source_name == "odoo_mock"
 
     def test_timeout_source(self):
         conn = _make_connector(base_url="http://192.0.2.1:9999", timeout=0.5)
@@ -690,25 +690,25 @@ class TestReadOnlyBoundary:
 class TestConfiguration:
     def test_config_from_dict(self):
         config = OdooConnectorConfig.from_dict({
-            "source_name": "odoo",
+            "source_name": "odoo_mock",
             "source_type": "mock",
             "base_url": "http://localhost:8080",
             "timeout": 5,
         })
-        assert config.source_name == "odoo"
+        assert config.source_name == "odoo_mock"
         assert config.base_url == "http://localhost:8080"
         assert config.timeout == 5.0
 
     def test_config_from_yaml(self, tmp_path):
         yaml_path = tmp_path / "odoo.yaml"
         yaml_path.write_text(
-            "source_name: odoo\n"
+            "source_name: odoo_mock\n"
             "source_type: mock\n"
             "base_url: http://mock-source:8080\n"
             "timeout: 10\n"
         )
         config = OdooConnectorConfig.from_yaml(yaml_path)
-        assert config.source_name == "odoo"
+        assert config.source_name == "odoo_mock"
         assert config.base_url == "http://mock-source:8080"
 
     def test_config_missing_file(self, tmp_path):
@@ -718,7 +718,7 @@ class TestConfiguration:
     def test_config_missing_base_url(self):
         with pytest.raises(ConnectorConfigurationError, match="base_url"):
             OdooConnectorConfig.from_dict({
-                "source_name": "odoo",
+                "source_name": "odoo_mock",
                 "source_type": "mock",
             })
 
@@ -745,7 +745,7 @@ class TestConfiguration:
         config = OdooConnectorConfig.from_dict({
             "base_url": "http://localhost:8080",
         })
-        assert config.source_name == "odoo"
+        assert config.source_name == "odoo_mock"
         assert config.source_type == "mock"
         assert config.timeout == 10.0
 

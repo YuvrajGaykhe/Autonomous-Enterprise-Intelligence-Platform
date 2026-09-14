@@ -139,7 +139,7 @@ class OdooConnectorConfig:
     @classmethod
     def from_dict(cls, config: dict[str, Any]) -> OdooConnectorConfig:
         """Create configuration from a plain dictionary."""
-        source_name = config.get("source_name", "odoo")
+        source_name = config.get("source_name", "odoo_mock")
         source_type = config.get("source_type", "mock")
         base_url = config.get("base_url")
         timeout = config.get("timeout", 10)

@@ -8,7 +8,7 @@
 # endpoints and authentication are specified here,
 # not hardcoded in the connector.
 
-source_name: rest_demo
+source_name: rest_mock
 source_type: rest
 base_url: http://mock-source:8080
 timeout: 10

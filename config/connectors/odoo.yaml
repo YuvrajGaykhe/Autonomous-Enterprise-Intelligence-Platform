@@ -4,7 +4,7 @@
 # The mock-source reads from data/demo/*.csv and transforms
 # rows into Odoo-style JSON payloads.
 
-source_name: odoo
+source_name: odoo_mock
 source_type: mock
 base_url: http://mock-source:8080
 timeout: 10

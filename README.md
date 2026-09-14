@@ -276,7 +276,7 @@ protocol for the C3 mock-source Odoo namespace.
 
 ```yaml
 # config/connectors/odoo.yaml
-source_name: odoo
+source_name: odoo_mock
 source_type: mock
 base_url: http://mock-source:8080
 timeout: 10
@@ -310,7 +310,7 @@ protocol for configurable REST API sources via the C3 mock-source REST namespace
 
 ```yaml
 # config/connectors/rest.yaml
-source_name: rest_demo
+source_name: rest_mock
 source_type: rest
 base_url: http://mock-source:8080
 timeout: 10
@@ -384,6 +384,37 @@ data/demo/*.csv (shared source of truth)
 Both C2 and C3 consume the same `data/demo/` CSV files. The mock-source transforms
 CSV rows into source-specific representations (Odoo-style and REST-style JSON).
 When E2 generates the full demo dataset, both connectors automatically pick it up.
+
+---
+
+## Normalization Engine (D1)
+
+`app/normalization/` converts source-native connector payloads into validated
+canonical Pydantic entities. It is pure: no database, HTTP, or connector access.
+
+```
+Connector Page[dict] → normalize() / normalize_batch() → canonical entity → D2 / E1
+```
+
+### Configuration (`config/mappings/`)
+
+| File | Contents |
+|---|---|
+| `normalization.yaml` | Source-system vocabulary (`csv_demo`, `odoo_mock`, `rest_mock`), null and boolean tokens, ISO 4217 codes, canonical field kinds, enum values, decimal precision/scale |
+| `<source>.yaml` | Identifier type, date/datetime formats, naive-datetime policy, decimal separators, `columns` (source field → canonical field) and explicit `derived` rules |
+
+The loader validates the configuration against the canonical schemas and rejects
+unmapped fields, duplicate targets, unknown enum values, and other inconsistencies.
+
+### Key Rules
+
+- **Identity**: `canonical_id` is UUID5 of `source_system:source_entity:source_id`; Odoo IDs must be positive integers.
+- **Datetimes**: always timezone-aware UTC; naive values follow the source policy (CSV and Odoo: UTC, REST: rejected).
+- **Decimals**: quantized to the canonical scale; values exceeding precision, scale, or range are rejected, never rounded.
+- **Enums and currency**: configured canonical values; unknown labels are rejected; currencies are uppercase ISO 4217 codes.
+- **`record_hash`**: SHA-256 of canonical business fields only, excluding provenance and the E1-resolved `customer_id` / `organization_id`.
+- **`source_updated_at`**: extracted per record where the source provides it.
+- **Errors**: every failure is a `NormalizationError` subclass with a stable `ErrorCode` and `source_system`, `entity_type`, `source_id`, `field_name`; `normalize_batch` never aborts on a malformed record.
 
 ---
 

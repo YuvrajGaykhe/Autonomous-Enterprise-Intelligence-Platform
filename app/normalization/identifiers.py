@@ -2,19 +2,24 @@
 Deterministic identity generation for D1 normalization.
 
 Provides:
-    canonical_id: Deterministic UUID5 from source identity triple.
-    record_hash: SHA-256 of sorted canonical business fields.
+    canonical_id: Deterministic UUID5 from the source identity triple.
+    record_hash:  SHA-256 over the canonical business content of a
+                  validated canonical record.
 
 Design decisions:
-    - UUID5 (name-based, SHA-1) ensures the same (source_system,
-      source_entity, source_id) always produces the same canonical UUID.
-    - The namespace UUID is a fixed project-specific constant. Changing
-      it would change every canonical ID, so it must never be modified
-      after initial deployment.
-    - record_hash excludes provenance fields (id, ingested_at,
-      ingestion_run_id, record_hash itself, source_updated_at) so that
-      re-ingestion of an unchanged record produces the same hash. This
-      enables idempotent upsert detection in E1.
+    - UUID5 with a fixed project namespace: the same (source_system,
+      source_entity, source_id) always yields the same canonical UUID.
+      The namespace MUST NOT change once records are persisted.
+    - record_hash is computed from the validated canonical object, never
+      from raw mapper output, over the business fields only. It excludes
+      all provenance fields (id, source_system, source_entity, source_id,
+      source_updated_at, ingested_at, ingestion_run_id, record_hash) and
+      the canonical FK fields resolved later by E1. Identical business
+      content therefore always yields the identical hash, which is the
+      secondary content identity of spec Section 7.
+    - Serialization is canonical: sorted keys, compact separators,
+      Decimals without insignificant trailing zeros, datetimes as UTC
+      ISO 8601. Naive datetimes and unsupported types are rejected.
 """
 
 from __future__ import annotations
@@ -22,80 +27,64 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from datetime import UTC, date, datetime
 from decimal import Decimal
-from datetime import date, datetime
 
+from app.normalization.contract import BUSINESS_FIELDS, CANONICAL_SCHEMAS
+from app.schemas.canonical import CanonicalBase
 
 # Fixed namespace for AI CEO Layer 1 canonical identity generation.
-# This MUST NOT change after initial deployment or all canonical IDs
-# will shift, breaking foreign key references.
 _NAMESPACE = uuid.UUID("a1c30e00-b1a7-4e5f-9c3d-1a2b3c4d5e6f")
 
-# Fields excluded from record_hash computation.
-# These are provenance/system fields that change on re-ingestion
-# without the business content changing.
-_HASH_EXCLUDED_FIELDS = frozenset({
-    "id",
-    "ingested_at",
-    "ingestion_run_id",
-    "record_hash",
-    "source_updated_at",
-})
+_ENTITY_BY_SCHEMA = {schema: entity for entity, schema in CANONICAL_SCHEMAS.items()}
 
 
-def canonical_id(
-    source_system: str,
-    source_entity: str,
-    source_id: str,
-) -> uuid.UUID:
-    """Generate a deterministic canonical UUID for a source record.
-
-    The same (source_system, source_entity, source_id) triple always
-    produces the same UUID5. Different triples produce different UUIDs
-    (within the practical collision resistance of SHA-1).
-
-    Args:
-        source_system: Logical source name (e.g. "csv_demo").
-        source_entity: Entity type (e.g. "customers").
-        source_id: Stable identifier from the source system.
-
-    Returns:
-        Deterministic UUID5.
-    """
-    name = f"{source_system}:{source_entity}:{source_id}"
-    return uuid.uuid5(_NAMESPACE, name)
+def canonical_id(source_system: str, source_entity: str, source_id: str) -> uuid.UUID:
+    """Generate the deterministic canonical UUID for a source record."""
+    return uuid.uuid5(_NAMESPACE, f"{source_system}:{source_entity}:{source_id}")
 
 
-def _json_default(obj: object) -> str:
-    """JSON serializer for types not natively supported by json.dumps."""
-    if isinstance(obj, Decimal):
-        return str(obj)
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    if isinstance(obj, uuid.UUID):
-        return str(obj)
-    raise TypeError(f"Cannot serialize {type(obj).__name__}")
-
-
-def record_hash(fields: dict) -> str:
-    """Compute a deterministic SHA-256 hash of canonical business fields.
-
-    Excludes provenance fields so that re-ingestion of an unchanged
-    record produces the same hash, enabling idempotent upsert detection.
-
-    The hash is computed over a JSON-serialized, sorted representation
-    of the fields to ensure determinism regardless of dict ordering.
-
-    Args:
-        fields: Canonical field name -> value mapping.
-
-    Returns:
-        Hex-encoded SHA-256 digest string.
-    """
-    hashable = {
-        k: v for k, v in fields.items()
-        if k not in _HASH_EXCLUDED_FIELDS
+def hash_payload(canonical: CanonicalBase) -> dict[str, object]:
+    """Return the canonical business-content payload that record_hash covers."""
+    entity_type = _ENTITY_BY_SCHEMA.get(type(canonical))
+    if entity_type is None:
+        raise TypeError(f"Not a canonical entity schema: {type(canonical).__name__}")
+    return {
+        name: _canonical_value(name, getattr(canonical, name))
+        for name in BUSINESS_FIELDS[entity_type]
     }
-    # Sort keys for deterministic ordering
-    payload = json.dumps(hashable, sort_keys=True, default=_json_default)
+
+
+def record_hash(canonical: CanonicalBase) -> str:
+    """Compute the hex SHA-256 record hash of a canonical record."""
+    payload = json.dumps(
+        hash_payload(canonical),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _canonical_value(field_name: str, value: object) -> object:
+    """Convert a canonical field value to its deterministic JSON form."""
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    if isinstance(value, Decimal):
+        if not value.is_finite():
+            raise ValueError(f"Non-finite Decimal in field '{field_name}' cannot be hashed")
+        if value.is_zero():
+            return "0"
+        return format(value.normalize(), "f")
+    if isinstance(value, datetime):
+        if value.utcoffset() is None:
+            raise ValueError(f"Naive datetime in field '{field_name}' cannot be hashed")
+        return value.astimezone(UTC).isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    raise TypeError(
+        f"Unsupported value type {type(value).__name__} in field '{field_name}'"
+    )

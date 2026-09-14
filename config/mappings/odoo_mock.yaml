@@ -1,0 +1,106 @@
+# =============================================================================
+# D1 mapping configuration — odoo_mock (C4 OdooMockConnector, C3 /odoo/...).
+#
+# Odoo-specific field names terminate here (spec Section 5).
+# columns: source field -> canonical field(s); derived: explicit derivations.
+# =============================================================================
+
+source: odoo_mock
+
+# Odoo record IDs and many2one references are positive JSON integers.
+identifier_type: integer
+
+# Odoo stores and serves datetimes as naive UTC ("YYYY-MM-DD HH:MM:SS").
+naive_datetime_timezone: UTC
+date_formats: ["%Y-%m-%d"]
+datetime_formats: ["%Y-%m-%d %H:%M:%S"]
+
+decimal:
+  decimal_separator: "."
+  thousands_separator: null
+
+entities:
+  organizations:
+    columns:
+      id: source_id
+      name: name
+      industry_id: industry
+      country_id: country
+    derived:
+      # Odoo represents active state as the boolean "active" field.
+      status: {rule: boolean_to_enum, from: active, true_value: active, false_value: inactive}
+
+  employees:
+    columns:
+      id: source_id
+      name: name
+      work_email: email
+      department_id: department
+      job_title: title
+      parent_id: manager_source_id
+      x_hire_date: hire_date
+      active: is_active
+    derived:
+      status: {rule: boolean_to_enum, from: active, true_value: active, false_value: inactive}
+
+  customers:
+    columns:
+      id: source_id
+      name: name
+      email: email
+      x_studio_segment: segment
+      industry_id: industry
+      user_id: owner_source_id
+      create_date: created_at
+      active: is_active
+    derived:
+      status: {rule: boolean_to_enum, from: active, true_value: active, false_value: inactive}
+
+  deals:
+    columns:
+      id: source_id
+      name: name
+      partner_id: customer_source_id
+      user_id: owner_source_id
+      stage_id: stage
+      expected_revenue: amount
+      company_currency: currency
+      probability: probability
+      date_deadline: expected_close_date
+      active: is_active
+
+  projects:
+    columns:
+      id: source_id
+      name: name
+      partner_id: customer_source_id
+      user_id: owner_source_id
+      stage_id: status
+      date_start: start_date
+      date: end_date
+      x_budget: budget
+      active: is_active
+
+  support_tickets:
+    columns:
+      id: source_id
+      partner_id: customer_source_id
+      user_id: assignee_source_id
+      priority: priority
+      stage_id: status
+      category_id: category
+      name: subject
+      description: description
+      create_date: created_at
+      close_date: resolved_at
+
+  documents:
+    columns:
+      id: source_id
+      name: title
+      type: document_type
+      datas: body_text
+      url: source_uri
+      owner_id: owner_source_id
+      create_date: created_at
+      write_date: [updated_at, source_updated_at]

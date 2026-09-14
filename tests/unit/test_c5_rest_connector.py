@@ -78,7 +78,7 @@ def _entity_config() -> dict[str, dict]:
 def _make_config(**overrides: Any) -> RestConnectorConfig:
     """Create a test configuration."""
     defaults: dict[str, Any] = {
-        "source_name": "rest_demo",
+        "source_name": "rest_mock",
         "source_type": "rest",
         "base_url": "http://localhost:9998",
         "timeout": 5,
@@ -267,14 +267,14 @@ def connector(fake_server):
 class TestConfiguration:
     def test_config_from_dict(self):
         config = _make_config()
-        assert config.source_name == "rest_demo"
+        assert config.source_name == "rest_mock"
         assert config.source_type == "rest"
         assert config.timeout == 5.0
 
     def test_config_from_yaml(self, tmp_path):
         yaml_path = tmp_path / "rest.yaml"
         yaml_path.write_text(
-            "source_name: rest_demo\n"
+            "source_name: rest_mock\n"
             "source_type: rest\n"
             "base_url: http://mock-source:8080\n"
             "timeout: 10\n"
@@ -286,7 +286,7 @@ class TestConfiguration:
             "    path: /rest/customers\n"
         )
         config = RestConnectorConfig.from_yaml(yaml_path)
-        assert config.source_name == "rest_demo"
+        assert config.source_name == "rest_mock"
         assert config.base_url == "http://mock-source:8080"
         assert "customers" in config.entities
 
@@ -324,7 +324,7 @@ class TestConfiguration:
             "base_url": "http://localhost:8080",
             "entities": {"customers": {"path": "/c"}},
         })
-        assert config.source_name == "rest_demo"
+        assert config.source_name == "rest_mock"
         assert config.source_type == "rest"
         assert config.timeout == 10.0
         assert config.health_endpoint == "/health"
@@ -355,7 +355,7 @@ class TestConfiguration:
 
 class TestProtocol:
     def test_source_name(self, connector):
-        assert connector.source_name == "rest_demo"
+        assert connector.source_name == "rest_mock"
 
     def test_source_type(self, connector):
         assert connector.source_type == "rest"
@@ -431,7 +431,7 @@ class TestHealthCheck:
     def test_healthy_source(self, connector):
         health = connector.health_check()
         assert health.healthy is True
-        assert health.source_name == "rest_demo"
+        assert health.source_name == "rest_mock"
         assert health.latency_ms is not None
         assert health.latency_ms >= 0
 
