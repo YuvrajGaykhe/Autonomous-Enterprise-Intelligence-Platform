@@ -462,7 +462,77 @@ Policy (redaction, limits, warning rules) lives in `config/validation/quality_ga
 
 ## Demo Dataset
 
-<!-- To be completed in Task E2 and I2 -->
+`scripts/seed_demo.py` generates the synthetic enterprise behind every connector. It is
+deterministic: values derive from a fixed seed and the snapshot date 2026-09-01, never from
+the clock, so each run writes byte-identical files and the committed CSVs are its output.
+
+```bash
+make seed                  # regenerate data/demo and the bad fixture
+make seed ARGS="--check"   # exit 1 if a committed file differs; writes nothing
+```
+
+The script only writes files. Load them with `make ingest-demo`: ingestion is the only path
+into PostgreSQL.
+
+### data/demo
+
+| Entity | Records | Contents |
+|---|---|---|
+| organizations | 1 | Acme Corp, the single internal company |
+| employees | 24 | CEO-rooted reporting tree across seven departments; one inactive former account executive |
+| customers | 50 | Enterprise / Mid-Market / SMB segments; 4 inactive; owned by active account executives |
+| deals | 44 | qualification, negotiation and won; INR, USD and EUR; owned by the customer's account owner |
+| projects | 22 | delivery for every won deal (in progress or planning) plus planned work for open negotiations |
+| support_tickets | 80 | numbered in creation order; recent tickets are open, resolved tickets carry a resolved date |
+| documents | 12 | policies, reports, contracts, a proposal, meeting notes and a runbook with full body text |
+
+- Every reference (customer, owner, assignee, manager) resolves inside the dataset; deals,
+  projects and tickets belong to active customers.
+- Values use only the canonical vocabulary in `config/mappings/normalization.yaml`, so the
+  dataset normalizes and validates with no quarantine and no warnings as `csv_demo`,
+  `odoo_mock` and `rest_mock` payloads.
+- **Churn-risk scenario** (spec Section 12): `CUST-007` raised five tickets within nine days
+  (four open, four high priority) while deal `DEAL-001` is in negotiation. `CUST-004`,
+  `CUST-015` and `CUST-028` have four tickets each spread over several months. Layer 1 stores
+  these facts; it does not score churn.
+- Figures quoted in the reports and meeting notes are checked against the records by tests.
+
+The mock source copies `data/demo` into its image at build time: rebuild it
+(`docker compose build mock-source`) after regenerating.
+
+### Bad fixture: data/fixtures/csv_demo_bad
+
+A separate `csv_demo` directory with the spec Section 12 quality issues beside valid records.
+Its identifiers use the 9xx range, so ingesting it after the demo never modifies demo records.
+Entities without issues are header-only files because the CSV health check requires every
+configured file.
+
+```bash
+make ingest-demo ARGS="--data-directory data/fixtures/csv_demo_bad"
+```
+
+| Record | Issue | Outcome |
+|---|---|---|
+| CUST-901 | valid | inserted |
+| CUST-902 | missing email | inserted; `MISSING_RECOMMENDED_FIELD` warning |
+| CUST-903 | unknown status `suspended` | quarantined; `UNKNOWN_ENUM_VALUE` error |
+| CUST-901 (repeat) | exact duplicate row | stored once; `DUPLICATE_SOURCE_RECORD` warning |
+| DEAL-901 | valid | inserted and linked to CUST-901 |
+| DEAL-902 | unknown customer `CUST-999` | inserted with `customer_id` NULL; `UNRESOLVED_REFERENCE` warning |
+| DEAL-903 | malformed amount `12,50,000.00` | quarantined; `INVALID_DECIMAL` error |
+| DEAL-904 | date `31/12/2026` (DD/MM/YYYY) | quarantined; `INVALID_DATE` error |
+
+The run finishes `PARTIAL_SUCCESS` (8 fetched, 4 inserted, 1 unchanged, 3 rejected, 3 warnings);
+repeating it inserts and updates nothing.
+
+### Dataset limitations
+
+- `employees.csv` carries `organization_id` (served as `organizationId` / `company_id` by the
+  mock source), but the canonical Employee contract has no organization source key, so
+  `employees.organization_id` stays NULL after ingestion (the open B1/B2 gap noted under E1).
+- The canonical vocabulary is deliberately narrow (deal stages qualification, negotiation and
+  won; project statuses planning and in_progress; ticket priorities medium and high; ticket
+  statuses open and resolved). Richer states require a D1 configuration change.
 
 ---
 
