@@ -8,6 +8,9 @@ Later tasks will extend this as needed.
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+SERVICE_NAME = "ai-ceo-layer1"
+SERVICE_VERSION = "0.1.0"
+
 
 class Settings(BaseSettings):
     """Layer 1 application settings. Values come from environment variables."""
