@@ -9,6 +9,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 REPOSITORIES_DIR = REPO / "app" / "persistence" / "repositories"
+INGESTION_DIR = REPO / "app" / "ingestion"
 
 
 def _trees(directory: Path):
@@ -52,8 +53,37 @@ def test_repositories_do_not_log_or_print():
                 assert node.id != "print", name
 
 
-def test_repositories_have_no_broad_exception_handlers():
-    for name, tree in _trees(REPOSITORIES_DIR):
+def test_reconciliation_planner_performs_no_database_access():
+    tree = ast.parse((INGESTION_DIR / "reconciliation.py").read_text(encoding="utf-8"))
+    imported = _imported_names(tree)
+    assert not any(module.startswith("sqlalchemy") for module in imported)
+    assert "app.persistence.repositories.canonical.PersistedState" in imported
+    assert not any(module.startswith("app.persistence.repositories.") and
+                   not module.endswith(("canonical", "PersistedState")) for module in imported)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute):
+            assert node.attr not in {"execute", "scalar", "scalars", "add", "flush"}, node.attr
+
+
+def test_ingestion_uses_no_textual_sql_and_does_not_print():
+    for name, tree in _trees(INGESTION_DIR):
+        assert "sqlalchemy.text" not in _imported_names(tree), name
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute):
+                assert node.attr not in {"exec_driver_sql", "text"}, f"{name}: .{node.attr}"
+            if isinstance(node, ast.Name):
+                assert node.id != "print", name
+
+
+def test_ingestion_never_imports_concrete_connectors_or_source_schemas():
+    for name, tree in _trees(INGESTION_DIR):
+        for module in _imported_names(tree):
+            assert not module.startswith(("app.connectors.csv", "app.connectors.odoo",
+                                          "app.connectors.rest", "app.schemas.source")), name
+
+
+def test_e1_has_no_broad_exception_handlers():
+    for name, tree in [*_trees(REPOSITORIES_DIR), *_trees(INGESTION_DIR)]:
         for node in ast.walk(tree):
             if isinstance(node, ast.ExceptHandler):
                 assert node.type is not None, f"{name}: bare except"
