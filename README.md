@@ -643,6 +643,62 @@ Logs and summaries carry identifiers, counts and exception class names only.
 
 ---
 
+## Observability (G1)
+
+### Structured logs
+
+The API (at startup) and `make ingest-demo` configure the `app` logger from two settings. Logs go
+to stderr, so the ingest command's JSON summary on stdout stays machine-readable.
+
+| Setting | Values | Default |
+|---|---|---|
+| `APP_LOG_LEVEL` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` (case-insensitive) | `INFO` |
+| `LOG_FORMAT` | `json` (one JSON object per line) or `text` | `json` |
+
+Invalid values stop API startup and make `ingest-demo` exit with status `2`.
+
+```text
+# LOG_FORMAT=json
+{"timestamp":"2026-09-15T09:30:01.412Z","level":"INFO","logger":"app.ingestion.orchestrator","event":"run_finished","run_id":"5f0c...","status":"SUCCESS","fetched":94,"inserted":94,"updated":0,"unchanged":0,"rejected":0,"failed":0,"warnings":0,"duration_seconds":0.4123}
+# LOG_FORMAT=text
+2026-09-15T09:30:01.412Z INFO app.ingestion.orchestrator run_finished run_id=5f0c... status=SUCCESS ... duration_seconds=0.4123
+```
+
+Every JSON line has `timestamp` (UTC, milliseconds), `level`, `logger` and `event`, followed by
+the event's fields as typed JSON values. Text lines escape carriage returns and newlines.
+
+| Event | Level | Logger | Fields |
+|---|---|---|---|
+| `run_started` | INFO | `app.ingestion.orchestrator` | `run_id`, `source_system`, `entities` |
+| `connector_health_check_failed` | WARNING | orchestrator | `run_id`, `source_system`, `failure` |
+| `batch_fetched` | INFO | orchestrator | `run_id`, `entity`, `page`, `records`, `has_more` |
+| `record_normalized` | DEBUG | orchestrator | `run_id`, `entity`, `page`, `record_index`, `source_id` |
+| `record_rejected` | WARNING | orchestrator | `run_id`, `entity`, `page`, `record_index`, `source_id`, `stage`, `codes` |
+| `batch_committed` | INFO | orchestrator | `run_id`, `entity`, `page`, `fetched`, `inserted`, `updated`, `unchanged`, `rejected`, `warnings` |
+| `batch_failed` | WARNING | orchestrator | `run_id`, `entity`, `page`, `records`, `database_error`, `sqlstate` |
+| `entity_failed` | WARNING | orchestrator | `run_id`, `entity`, `page`, `failure`, `run_stopped` |
+| `run_finished` | INFO | orchestrator | `run_id`, `status`, run counts, `duration_seconds` |
+| `run_failed` | ERROR | orchestrator | `run_id`, `failure` |
+| `retry_scheduled` | WARNING | `app.connectors.rest`, `app.connectors.odoo` | `source`, `attempt`, `max_attempts`, `delay_seconds`, `reason` |
+| `connector_health_check` | INFO | `app.api.v1.sources` | `source`, `status`, `error_type` |
+| `ingestion_run_requested` / `ingestion_run_finished` | INFO | `app.api.v1.ingestion` | `request_id`, `source`, `entities` / `request_id`, `run_id`, `status` |
+| `readiness_check_failed`, `source_misconfigured`, `request_failed` | WARNING / ERROR | API | dependency or source, exception class; `request_failed` adds `request_id`, `method`, `path` |
+
+- `record_normalized` is per accepted record and only built at `DEBUG`. `record_rejected`'s
+  `codes` lists the distinct finding codes in finding order; `stage` is `normalization` or
+  `validation`.
+- `retry_scheduled` is logged just before each backoff sleep; `reason` is `http_429`, `http_502`,
+  `http_503`, `http_504` or the httpx exception class.
+- **Never logged**: source values, raw records, rejected values, connector messages, URLs,
+  headers, credentials, exception messages or tracebacks (only the exception class).
+
+### In-process counters
+
+`GET /api/v1/metrics/ingestion` also returns `process`: counters for the runs this API process
+executed since it started (see [Ingestion metrics](#ingestion-metrics)).
+
+---
+
 ## Ingestion Commands
 
 ```bash
@@ -660,8 +716,9 @@ Running it again is a `NOOP`. Options (pass through `ARGS="..."` with make):
 | `--base-url URL` | HTTP sources only, e.g. `http://localhost:8080` outside Docker |
 | `--data-directory DIR` | `csv_demo` only |
 
-Exit status: `0` SUCCESS / PARTIAL_SUCCESS / NOOP, `1` FAILED, `2` invalid request or
-connector configuration (no run created). The database comes from `DATABASE_URL`.
+Exit status: `0` SUCCESS / PARTIAL_SUCCESS / NOOP, `1` FAILED, `2` invalid request, connector
+configuration or logging settings (no run created). The database comes from `DATABASE_URL`. Log
+events go to stderr in the `LOG_FORMAT` format at `APP_LOG_LEVEL`.
 
 ---
 
@@ -812,12 +869,18 @@ curl http://localhost:8000/api/v1/metrics/ingestion
 #  "sources": [{"source_system": "csv_demo", "runs_total": 2, ...,
 #               "last_run": {"run_id": "...", "status": "NOOP", "started_at": "...",
 #                            "finished_at": "..."},
-#               "last_successful_run": {...}}, ...]}
+#               "last_successful_run": {...}}, ...],
+#  "process": {"started_at": "2026-09-15T09:00:00.184322Z", "runs_total": 2,
+#              "runs_by_status": {"RUNNING": 0, "SUCCESS": 1, "PARTIAL_SUCCESS": 0, "FAILED": 0,
+#                                 "NOOP": 1},
+#              "records_fetched_total": 466, "records_inserted_total": 233, ...,
+#              "connector_request_failures_total": 0, "validation_errors_total": 0,
+#              "ingestion_duration_seconds": {"count": 2, "sum": 0.8231}}}
 ```
 
-Every value is derived from the database (`ingestion_runs`, `ingestion_errors`, `source_records`
-and the canonical tables) in one read-only snapshot, so metrics survive restarts and agree across
-API processes. Nothing is counted in memory.
+`totals` and `sources` are derived from the database (`ingestion_runs`, `ingestion_errors`,
+`source_records` and the canonical tables) in one read-only snapshot, so they survive restarts and
+agree across API processes. `process` is counted in memory by the API process that answers.
 
 | Metric | Definition |
 |---|---|
@@ -838,6 +901,24 @@ API processes. Nothing is counted in memory.
 - **Attribution**: runs, their errors and their raw records count toward the run's
   `source_system`. A `RUNNING` run contributes the counts it has committed so far but no duration.
 - **Never exposed**: error messages, run error summaries, raw records and source values.
+
+`process` holds in-process counters (spec Section 16 names) for runs started through
+`POST /api/v1/ingestion/runs` in this API process:
+
+| Counter | Definition |
+|---|---|
+| `started_at` | When this application process started; every counter begins at zero then |
+| `runs_total`, `runs_by_status` | Runs started here; `RUNNING` counts runs still in progress |
+| `records_fetched_total` … `records_rejected_total` | Counts of committed batches; records of a failed batch count as fetched |
+| `connector_request_failures_total` | Failed connector health checks and failed page fetches |
+| `validation_errors_total` | Records rejected by the D1/D2 quality gate |
+| `ingestion_duration_seconds` | `count` of finished runs and `sum` of their `finished_at − started_at` |
+
+The counters use the same definitions as the database-derived metrics and are updated when E1
+commits, so for a process that performed every ingestion against an empty database they agree
+with `totals`. They reset when the process restarts, are not shared between API workers, and do
+not include runs of `make ingest-demo` or other processes; the database-derived metrics remain the
+durable record.
 
 ### Error responses
 
@@ -884,9 +965,10 @@ returns `500 INTERNAL_ERROR` after E1 has marked the run `FAILED`.
   is not used.
 - **Docker images bake in the dataset**: the API and mock-source images copy `data/demo` at build
   time, so regenerated data needs `docker compose build`.
-- **Container logs**: the application does not configure logging, so under Uvicorn only warnings
-  and errors (such as `request_failed`) reach the container logs; INFO events such as
-  `ingestion_run_finished` are not emitted.
+- **Logs and counters are per process**: structured logs go to the process's stderr (no log
+  shipping), `process` counters reset on restart and cover one API worker only, and there is no
+  Prometheus exposition. `retry_scheduled` carries the source but not the run ID (connectors do
+  not know the run); it appears between the run's `batch_fetched` events in the same process.
 - **Entity queries**: the only filter is `source_system`; there are no field filters, search or
   alternative sort orders. Pagination is by offset, and each page is its own snapshot, so an
   ingestion that inserts records between two page requests can shift later pages.
