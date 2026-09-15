@@ -1,6 +1,6 @@
 # AI CEO — Project Context Document
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
-**Last updated: 2026-09-06 | Maintained by: Yuvraj Gaykhe**
+**Last updated: 2026-09-15 | Maintained by: Yuvraj Gaykhe**
 
 > **Purpose**: This file is the single source of truth for all confirmed project understanding, design decisions, and task state. Read this file at the start of any new session before asking questions or writing code.
 
@@ -241,6 +241,13 @@ class SourceConnector(Protocol):
 - Do not execute Excel formulas/macros
 - Human governance boundary: Layer 1 never sends emails, modifies CRM records, or takes external business actions
 
+### 10.1 How these are enforced (Task G2)
+
+- `app/core/security.py`: connector `base_url` validation (http/https, host, port 1–65535, no embedded credentials, query or fragment); REST paths that cannot name another host; timeouts finite and at most 300 s; a GET-only, same-origin, no-redirect HTTP client used by the Odoo mock and REST connectors.
+- CSV imports: plain `.csv` file names only; files must resolve inside the data directory (symlinks included), be regular files and stay within `max_file_bytes` (default 50 MiB).
+- Secrets: `Settings` hides the database password and URL from repr; engines never echo SQL; `make secret-scan` (`scripts/secret_scan.py`) must report 0 findings over tracked files.
+- Tests prove the constraints: static boundaries (no eval/exec/pickle/unsafe YAML, no textual SQL, logging only via `log_event` with exception class names) and an end-to-end canary test showing secrets never reach API responses, OpenAPI, logs or `ingest-demo` output.
+
 ---
 
 ## 11. Layer 2 Handoff Contract
@@ -266,25 +273,25 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 
 | Phase | Task | Description | Status |
 |---|---|---|---|
-| A — Foundation | A1 | Repository scaffolding | ✅ In Progress |
-| A — Foundation | A2 | Docker Compose + service definitions | ⏳ Pending approval |
-| A — Foundation | A3 | Alembic setup + all 11 migrations | ⏳ Pending approval |
-| B — Core Contracts | B1 | SQLAlchemy ORM models | ⏳ Pending approval |
-| B — Core Contracts | B2 | Pydantic canonical schemas | ⏳ Pending approval |
-| B — Core Contracts | B3 | Pydantic source schemas | ⏳ Pending approval |
-| C — Connectors | C1 | Connector base interface | ⏳ Pending approval |
-| C — Connectors | C2 | CSV connector | ⏳ Pending approval |
-| C — Connectors | C3 | Mock-source HTTP server | ⏳ Pending approval |
-| C — Connectors | C4 | Odoo mock connector | ⏳ Pending approval |
-| C — Connectors | C5 | Generic REST connector | ⏳ Pending approval |
-| D — Normalization | D1 | Normalization engine | ⏳ Pending approval |
-| D — Normalization | D2 | Validation and quarantine engine | ⏳ Pending approval |
-| E — Orchestration | E1 | Ingestion orchestrator | ⏳ Pending approval |
-| E — Orchestration | E2 | Demo data generation | ⏳ Pending approval |
-| F — API | F1 | FastAPI routes — health, sources, ingestion | ⏳ Pending approval |
-| F — API | F2 | FastAPI routes — canonical entities + metrics | ⏳ Pending approval |
-| G — Observability | G1 | Structured logging + ingestion metrics counters | ⏳ Pending approval |
-| G — Observability | G2 | Secret hygiene audit + security constraints | ⏳ Pending approval |
+| A — Foundation | A1 | Repository scaffolding | ✅ Complete — pushed (314c19b) |
+| A — Foundation | A2 | Docker Compose + service definitions | ✅ Complete — pushed (52124bf) |
+| A — Foundation | A3 | Alembic setup + all 11 migrations | ✅ Complete — pushed (4d7e524) |
+| B — Core Contracts | B1 | SQLAlchemy ORM models | ✅ Complete — pushed (55f423d) |
+| B — Core Contracts | B2 | Pydantic canonical schemas | ✅ Complete — pushed (09a42bc, 123a89b) |
+| B — Core Contracts | B3 | Pydantic source schemas | ✅ Complete — pushed (e66589c) |
+| C — Connectors | C1 | Connector base interface | ✅ Complete — pushed (1e7a8dd) |
+| C — Connectors | C2 | CSV connector | ✅ Complete — pushed (b7a836c) |
+| C — Connectors | C3 | Mock-source HTTP server | ✅ Complete — pushed (c7110cf) |
+| C — Connectors | C4 | Odoo mock connector | ✅ Complete — pushed (62fb748) |
+| C — Connectors | C5 | Generic REST connector | ✅ Complete — pushed (b78c4da, 2c4f149) |
+| D — Normalization | D1 | Normalization engine | ✅ Complete — pushed (571f9b0, b150256) |
+| D — Normalization | D2 | Validation and quarantine engine | ✅ Complete — pushed (ee266d8) |
+| E — Orchestration | E1 | Ingestion orchestrator | ✅ Complete — pushed (dba0cce..865c634) |
+| E — Orchestration | E2 | Demo data generation | ✅ Complete — pushed (ca41425..baa92f8) |
+| F — API | F1 | FastAPI routes — health, sources, ingestion | ✅ Complete — pushed (b0f8be3..fd69fb2) |
+| F — API | F2 | FastAPI routes — canonical entities + metrics | ✅ Complete — pushed (207d4f3, dfbaea3) |
+| G — Observability | G1 | Structured logging + ingestion metrics counters | ✅ Complete — pushed (4322763..edc753f) |
+| G — Observability | G2 | Secret hygiene audit + security constraints | ✅ Complete locally — not pushed (a756925..5895189); see Section 14 |
 | H — Tests | H1 | Unit tests | ⏳ Pending approval |
 | H — Tests | H2 | Connector contract tests | ⏳ Pending approval |
 | H — Tests | H3 | Database integration tests | ⏳ Pending approval |
@@ -295,6 +302,8 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 
 **Total: 26 tasks across 9 phases.**
 
+Release state (2026-09-15): `origin/main` is `edc753f` (A1–G1, plus the separately approved Docker packaging commit `11398ca`). G2 is committed locally only and awaits review before any push. H1–I2 have not started.
+
 ---
 
 ## 13. Source Documents
@@ -302,3 +311,33 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 - `CONTEXT/INTRODUCTION/AI_CEO_Project_Proposal.pdf`
 - `CONTEXT/INTRODUCTION/AI CEO - Review 1 Presentation.pptx`
 - `CONTEXT/Layer1_Prompt/AI_CEO_Layer_1_Master_Build_Prompt.pdf` (Sections 2–23 are the engineering spec)
+
+---
+
+## 14. Phase Record — G2 (Secret hygiene audit + security constraints)
+
+**Scope source**: spec Section 14 (Security and Safety), the Section 15 "Security" test layer ("Secrets not returned/logged; invalid configuration rejected"), Section 10 ("Do not expose connector secrets"), and the Section 21 anti-pattern "Secrets in .env committed to Git".
+
+**Out of scope, unchanged**: authentication (none, by design for the prototype), D1/D2 semantics, E1 persistence and status semantics, F1/F2 contracts, G1 metric and logging semantics, and Docker files.
+
+| Milestone | Commit | What it adds | Tests | Mutation |
+|---|---|---|---|---|
+| M1 | `a756925` | `app/core/security.py`: URL, path and timeout validation; GET-only, same-origin, no-redirect client; Odoo mock and REST connectors use it | 158 | 57/57 killed |
+| M2 | `4c82700` | CSV file-name, directory-containment (symlinks) and size-limit checks at config parse and at every read | 70 | 36/36 killed |
+| M3 | `03c8c71` | `scripts/secret_scan.py` + `make secret-scan`; `Settings` repr hides credentials; `get_engine` never echoes SQL and hides parameters; static security boundary tests | 111 | 84/84 killed (2 first-run survivors were real test gaps, fixed) |
+| M4 | `5895189` | End-to-end secret canary integration test; README "Security (G2)" section | 5 | 10/10 injected leaks killed |
+
+**Design decisions**
+- Rejection messages name the broken rule, never the configured value (URLs can embed credentials).
+- The read-only client re-checks every request, so a code path that bypasses configuration validation still cannot write or reach another host.
+- CSV files are re-checked at read time, so directly constructed configurations, symlinks and oversized files are refused too.
+- The secret scan never prints matched values (fingerprints only); synthetic test fixtures are pinned by path, rule and fingerprint rather than by widening the rules.
+- Integration changes to released code were narrow: C2, C4 and C5 config parsing and client construction; `app/core/config.py` and `app/core/database.py`; the Makefile. Valid configurations behave as before.
+
+**Verification at `5895189`**: full suite 3462 passed; ruff 69 findings (baseline 71; two pre-existing B904 removed on replaced lines); mypy 9 errors (baseline 9); secret scan 0 findings over 208 tracked text files.
+
+**Known limitations**
+- No host allowlist: URL validation is structural.
+- CSV health checks and entity discovery only check that files exist; the containment and size checks run when files are read.
+- The secret scan is heuristic: tracked text files only (not git history or PDF/PPTX); generic rules skip values under 8 characters or marked as placeholders, and may report a long non-secret value assigned to a secret-named variable.
+- Canonical business fields are returned as ingested; a credential stored in a source business field is data and is exposed by the entity API.
