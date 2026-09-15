@@ -31,6 +31,7 @@ Does NOT:
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,6 +50,7 @@ from app.connectors.types import (
     Page,
     SourceEntity,
 )
+from app.core.logging import log_event
 from app.schemas.source.odoo import (
     OdooCustomerSource,
     OdooDealSource,
@@ -89,6 +91,19 @@ SUPPORTED_ENTITIES = sorted(_ENTITY_SCHEMAS.keys())
 # Maximum retries for transient network errors (connection refused, timeout)
 _MAX_RETRIES = 2
 _RETRY_DELAY_S = 0.5
+
+logger = logging.getLogger(__name__)
+
+
+def _log_retry(source_name: str, attempt: int, reason: str) -> None:
+    """G1 retry_scheduled event for the sleep about to happen (attempt is 0-based).
+
+    Only the source name, attempt numbers, delay and the exception class are
+    logged: never URLs or exception messages.
+    """
+    log_event(logger, logging.WARNING, "retry_scheduled", source=source_name,
+              attempt=attempt + 1, max_attempts=_MAX_RETRIES + 1, delay_seconds=_RETRY_DELAY_S,
+              reason=reason)
 
 
 # ---------------------------------------------------------------------------
@@ -545,12 +560,14 @@ class OdooMockConnector:
             except httpx.ConnectError as exc:
                 last_exc = exc
                 if attempt < _MAX_RETRIES:
+                    _log_retry(self.source_name, attempt, type(exc).__name__)
                     time.sleep(_RETRY_DELAY_S)
                     continue
 
             except httpx.TimeoutException as exc:
                 last_exc = exc
                 if attempt < _MAX_RETRIES:
+                    _log_retry(self.source_name, attempt, type(exc).__name__)
                     time.sleep(_RETRY_DELAY_S)
                     continue
 

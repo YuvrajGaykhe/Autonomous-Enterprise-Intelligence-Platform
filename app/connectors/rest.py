@@ -34,6 +34,7 @@ Does NOT:
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from dataclasses import dataclass, field
@@ -54,6 +55,7 @@ from app.connectors.types import (
     Page,
     SourceEntity,
 )
+from app.core.logging import log_event
 from app.schemas.source.rest import (
     RestCustomerSource,
     RestDealSource,
@@ -83,6 +85,19 @@ _ENTITY_SCHEMAS: dict[str, type] = {
 _MAX_RETRIES = 2
 _RETRY_BASE_DELAY_S = 0.5  # exponential backoff: base * 2^attempt
 _RETRY_MAX_DELAY_S = 4.0
+
+logger = logging.getLogger(__name__)
+
+
+def _log_retry(source_name: str, attempt: int, delay: float, reason: str) -> None:
+    """G1 retry_scheduled event for the sleep about to happen (attempt is 0-based).
+
+    Only the source name, attempt numbers, delay and a reason label (HTTP
+    status or exception class) are logged: never URLs, headers or messages.
+    """
+    log_event(logger, logging.WARNING, "retry_scheduled", source=source_name,
+              attempt=attempt + 1, max_attempts=_MAX_RETRIES + 1, delay_seconds=delay,
+              reason=reason)
 
 
 # ---------------------------------------------------------------------------
@@ -685,6 +700,7 @@ class RestConnector:
                                 delay = min(float(retry_after), _RETRY_MAX_DELAY_S)
                             except (ValueError, TypeError):
                                 pass
+                        _log_retry(self.source_name, attempt, delay, "http_429")
                         time.sleep(delay)
                         continue
                     raise ConnectorRequestError(
@@ -700,6 +716,8 @@ class RestConnector:
                             _RETRY_BASE_DELAY_S * (2 ** attempt),
                             _RETRY_MAX_DELAY_S,
                         )
+                        _log_retry(self.source_name, attempt, delay,
+                                   f"http_{resp.status_code}")
                         time.sleep(delay)
                         continue
                     raise ConnectorRequestError(
@@ -739,6 +757,7 @@ class RestConnector:
                         _RETRY_BASE_DELAY_S * (2 ** attempt),
                         _RETRY_MAX_DELAY_S,
                     )
+                    _log_retry(self.source_name, attempt, delay, type(exc).__name__)
                     time.sleep(delay)
                     continue
 
@@ -749,6 +768,7 @@ class RestConnector:
                         _RETRY_BASE_DELAY_S * (2 ** attempt),
                         _RETRY_MAX_DELAY_S,
                     )
+                    _log_retry(self.source_name, attempt, delay, type(exc).__name__)
                     time.sleep(delay)
                     continue
 

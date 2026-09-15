@@ -34,6 +34,15 @@ running again, which is safe because persistence is idempotent.
 
 Logs and persisted failure text carry identifiers, counts and exception
 class names only: never source values, connector messages, or payloads.
+
+Log events (app.core.logging), each with the run ID:
+    run_started, run_finished (with duration_seconds), run_failed
+    connector_health_check_failed, entity_failed
+    batch_fetched       per fetched page, before the quality gate
+    record_normalized   DEBUG, per record the quality gate accepted
+    record_rejected     WARNING, per record the quality gate quarantined
+                        (stage and finding codes, never values)
+    batch_committed, batch_failed
 """
 
 from __future__ import annotations
@@ -59,11 +68,17 @@ from app.connectors.types import (
     ConnectorHealth,
     Page,
 )
+from app.core.logging import log_event
 from app.ingestion.batch import Checkpoint, commit_batch
 from app.ingestion.errors import ConnectorContractError, IngestionCode, IngestionRequestError
 from app.normalization import NormalizationConfig, default_config
 from app.persistence.repositories import errors, runs
-from app.validation import ValidationConfig, default_validation_config, validate_source_batch
+from app.validation import (
+    QualityGateResult,
+    ValidationConfig,
+    default_validation_config,
+    validate_source_batch,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -237,8 +252,8 @@ def run_ingestion(
         runs.create_run(session, run_id=context.run_id, source_system=context.source_system,
                         source_entity=entities[0] if len(entities) == 1 else None,
                         mode=runs.RunMode.FULL, started_at=started_at)
-    logger.info("run_started run_id=%s source_system=%s entities=%s", context.run_id,
-                context.source_system, ",".join(entities))
+    log_event(logger, logging.INFO, "run_started", run_id=context.run_id,
+              source_system=context.source_system, entities=",".join(entities))
 
     finished = False
     try:
@@ -311,12 +326,11 @@ def _execute(
     summary = RunSummary(context.run_id, context.source_system, status, started_at, finished_at,
                          tuple(summaries), error_summary)
     counts = summary.counts
-    logger.info(
-        "run_finished run_id=%s status=%s fetched=%d inserted=%d updated=%d unchanged=%d "
-        "rejected=%d failed=%d warnings=%d", context.run_id, status.value, counts.fetched,
-        counts.inserted, counts.updated, counts.unchanged, counts.rejected,
-        summary.records_failed, counts.warnings,
-    )
+    log_event(logger, logging.INFO, "run_finished", run_id=context.run_id, status=status.value,
+              fetched=counts.fetched, inserted=counts.inserted, updated=counts.updated,
+              unchanged=counts.unchanged, rejected=counts.rejected,
+              failed=summary.records_failed, warnings=counts.warnings,
+              duration_seconds=(finished_at - started_at).total_seconds())
     return summary
 
 
@@ -340,8 +354,8 @@ def _check_health(context: _Context, capabilities: ConnectorCapabilities) -> boo
         source_system=context.source_system,
         detail=_detail({"failure": failure}),
     ))
-    logger.warning("connector_health_check_failed run_id=%s source_system=%s failure=%s",
-                   context.run_id, context.source_system, failure)
+    log_event(logger, logging.WARNING, "connector_health_check_failed", run_id=context.run_id,
+              source_system=context.source_system, failure=failure)
     return False
 
 
@@ -365,17 +379,20 @@ def _ingest_entity(context: _Context, entity: str) -> tuple[EntitySummary, bool]
                 detail=_detail({"exception": failure, "page_index": page_index,
                                 "run_stopped": fatal}),
             ))
-            logger.warning("entity_failed run_id=%s entity=%s page=%d failure=%s run_stopped=%s",
-                           context.run_id, entity, page_index, failure, fatal)
+            log_event(logger, logging.WARNING, "entity_failed", run_id=context.run_id,
+                      entity=entity, page=page_index, failure=failure, run_stopped=fatal)
             return EntitySummary(entity, EntityStatus.FAILED, counts, batches, 0, raw_persisted,
                                  0, failure), fatal
 
         items = _page_items(page, cursor, context.page_size)
+        log_event(logger, logging.INFO, "batch_fetched", run_id=context.run_id, entity=entity,
+                  page=page_index, records=len(items), has_more=page.has_more)
         ingested_at = context.now()
         gate = validate_source_batch(
             context.source_system, entity, items, context.run_id, ingested_at,
             normalization_config=context.normalization, validation_config=context.validation,
         )
+        _log_quality_gate(context, entity, page_index, gate)
         try:
             result = commit_batch(
                 context.sessions, run_id=context.run_id, gate=gate, raw_records=items,
@@ -390,16 +407,36 @@ def _ingest_entity(context: _Context, entity: str) -> tuple[EntitySummary, bool]
         counts = counts + result.counts
         batches += 1
         raw_persisted += result.raw_persisted
-        logger.info("batch_committed run_id=%s entity=%s page=%d fetched=%d inserted=%d "
-                    "updated=%d unchanged=%d rejected=%d warnings=%d", context.run_id, entity,
-                    page_index, result.counts.fetched, result.counts.inserted,
-                    result.counts.updated, result.counts.unchanged, result.counts.rejected,
-                    result.counts.warnings)
+        log_event(logger, logging.INFO, "batch_committed", run_id=context.run_id, entity=entity,
+                  page=page_index, fetched=result.counts.fetched, inserted=result.counts.inserted,
+                  updated=result.counts.updated, unchanged=result.counts.unchanged,
+                  rejected=result.counts.rejected, warnings=result.counts.warnings)
         if not page.has_more:
             return EntitySummary(entity, EntityStatus.COMPLETED, counts, batches, 0,
                                  raw_persisted), False
         cursor = page.next_cursor
         page_index += 1
+
+
+def _log_quality_gate(
+    context: _Context,
+    entity: str,
+    page_index: int,
+    gate: QualityGateResult,
+) -> None:
+    """record_normalized per accepted record (DEBUG only), then record_rejected per rejection."""
+    if logger.isEnabledFor(logging.DEBUG):
+        rejected = {record.record_index for record in gate.quarantined}
+        accepted = (index for index in range(gate.total_records) if index not in rejected)
+        for record_index, record in zip(accepted, gate.valid, strict=False):
+            log_event(logger, logging.DEBUG, "record_normalized", run_id=context.run_id,
+                      entity=entity, page=page_index, record_index=record_index,
+                      source_id=record.source_id)
+    for quarantined in gate.quarantined:
+        log_event(logger, logging.WARNING, "record_rejected", run_id=context.run_id,
+                  entity=entity, page=page_index, record_index=quarantined.record_index,
+                  source_id=quarantined.source_id, stage=quarantined.stage.value,
+                  codes=",".join(dict.fromkeys(f.code for f in quarantined.findings)))
 
 
 def _page_items(page: object, cursor: str | None, page_size: int) -> list[object]:
@@ -437,9 +474,8 @@ def _record_failed_batch(
                             "database_error": database_error, "sqlstate": sqlstate}),
         )], created_at=created_at)
         runs.add_run_counts(session, context.run_id, counts)
-    logger.warning("batch_failed run_id=%s entity=%s page=%d records=%d database_error=%s "
-                   "sqlstate=%s", context.run_id, entity, page_index, records, database_error,
-                   sqlstate)
+    log_event(logger, logging.WARNING, "batch_failed", run_id=context.run_id, entity=entity,
+              page=page_index, records=records, database_error=database_error, sqlstate=sqlstate)
 
 
 def _run_status(entities: Sequence[EntitySummary]) -> runs.RunStatus:
@@ -480,4 +516,4 @@ def _abort(context: _Context) -> None:
         runs.finish_run(session, context.run_id, status=runs.RunStatus.FAILED,
                         finished_at=context.now(),
                         error_summary=f"run aborted by system failure: {label}")
-    logger.error("run_failed run_id=%s failure=%s", context.run_id, label)
+    log_event(logger, logging.ERROR, "run_failed", run_id=context.run_id, failure=label)
