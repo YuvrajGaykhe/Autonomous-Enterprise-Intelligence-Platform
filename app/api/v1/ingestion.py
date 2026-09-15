@@ -48,6 +48,7 @@ from app.api.v1.schemas import (
     RunListResponse,
 )
 from app.api.v1.sources import resolve_connector
+from app.core.logging import log_event
 from app.ingestion.errors import IngestionCode, IngestionRequestError
 from app.ingestion.orchestrator import IngestionRequest, RunSummary, run_ingestion
 from app.persistence.models import IngestionError, IngestionRun
@@ -102,8 +103,8 @@ def start_run(
     connector = resolve_connector(connectors, body.source)
     entities = None if body.entities is None else [entity.value for entity in body.entities]
     request_id = request_id_of(request)
-    logger.info("ingestion_run_requested request_id=%s source=%s entities=%s", request_id,
-                body.source, "all" if entities is None else ",".join(entities))
+    log_event(logger, logging.INFO, "ingestion_run_requested", request_id=request_id,
+              source=body.source, entities="all" if entities is None else ",".join(entities))
     try:
         summary = run_ingestion(connector, sessions, IngestionRequest(
             entities=entities, mode=body.mode, page_size=body.page_size))
@@ -111,8 +112,8 @@ def start_run(
         raise ApiError(HTTPStatus.UNPROCESSABLE_ENTITY, ErrorCode.INVALID_INGESTION_REQUEST,
                        "ingestion request is not valid for this source",
                        {"source": body.source, "reason": str(exc)}) from None
-    logger.info("ingestion_run_finished request_id=%s run_id=%s status=%s", request_id,
-                summary.run_id, summary.status.value)
+    log_event(logger, logging.INFO, "ingestion_run_finished", request_id=request_id,
+              run_id=summary.run_id, status=summary.status.value)
 
     with read_snapshot(sessions) as session:
         run = run_responses(session, [_existing_run(session, summary.run_id)])[0]

@@ -31,6 +31,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.api.request_id import REQUEST_ID_HEADER, request_id_of
+from app.core.logging import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -127,8 +128,8 @@ async def _handle_http_error(request: Request, exc: StarletteHTTPException) -> R
 
 
 async def _handle_unhandled_error(request: Request, exc: Exception) -> Response:
-    logger.error("request_failed request_id=%s method=%s path=%s failure=%s",
-                 request_id_of(request), request.method, request.url.path, type(exc).__name__)
+    log_event(logger, logging.ERROR, "request_failed", request_id=request_id_of(request),
+              method=request.method, path=request.url.path, failure=type(exc).__name__)
     return error_response(request, HTTPStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR,
                           "internal server error")
 

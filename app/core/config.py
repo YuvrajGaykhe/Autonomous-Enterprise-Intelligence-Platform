@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     app_log_level: str = "INFO"
+    # json (one object per line) or text; see app.core.logging.
+    log_format: str = "json"
     app_debug: bool = False
 
     # --- Mock Source ---

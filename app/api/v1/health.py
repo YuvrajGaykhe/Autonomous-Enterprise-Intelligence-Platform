@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.api.dependencies import get_sessions
 from app.api.v1.schemas import DependencyStatus, HealthChecks, HealthResponse, HealthStatus
 from app.core.config import SERVICE_NAME, SERVICE_VERSION
+from app.core.logging import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ def _database_status(sessions: sessionmaker[Session]) -> DependencyStatus:
         with sessions() as session:
             session.execute(select(1))
     except (DBAPIError, PoolTimeoutError) as exc:
-        logger.warning("readiness_check_failed dependency=database failure=%s",
-                       type(exc).__name__)
+        log_event(logger, logging.WARNING, "readiness_check_failed", dependency="database",
+                  failure=type(exc).__name__)
         return DependencyStatus.UNAVAILABLE
     return DependencyStatus.OK

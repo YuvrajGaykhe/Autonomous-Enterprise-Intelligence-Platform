@@ -31,6 +31,7 @@ from app.api.v1.schemas import (
 )
 from app.connectors.base import SourceConnector
 from app.connectors.types import ConnectorConfigurationError, ConnectorError, ConnectorHealth
+from app.core.logging import log_event
 from app.ingestion.errors import ConnectorContractError
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,8 @@ def resolve_connector(connectors: ConnectorProvider, source: str) -> SourceConne
                        "source is not configured",
                        {"available_sources": list(connectors.source_names)}) from None
     except ConnectorConfigurationError as exc:
-        logger.error("source_misconfigured source=%s failure=%s", source, type(exc).__name__)
+        log_event(logger, logging.ERROR, "source_misconfigured", source=source,
+                  failure=type(exc).__name__)
         raise ApiError(HTTPStatus.INTERNAL_SERVER_ERROR, ErrorCode.SOURCE_MISCONFIGURED,
                        "source connector configuration is invalid", {"source": source}) from None
 
@@ -101,8 +103,8 @@ def source_health(
     """Run a connector health check."""
     connector = resolve_connector(connectors, source)
     status, latency_ms, error_type = _check(connector)
-    logger.info("connector_health_check source=%s status=%s error_type=%s",
-                source, status.value, error_type)
+    log_event(logger, logging.INFO, "connector_health_check", source=source,
+              status=status.value, error_type=error_type)
     return SourceHealthResponse(source=source, status=status, latency_ms=latency_ms,
                                 error_type=error_type, checked_at=datetime.now(UTC))
 

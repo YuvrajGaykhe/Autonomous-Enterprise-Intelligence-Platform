@@ -8,11 +8,14 @@ Run a Layer 1 ingestion from the command line (make ingest-demo).
 Prints the run summary as JSON (identifiers and counts only). Exit status:
     0  the run finished SUCCESS, PARTIAL_SUCCESS or NOOP
     1  the run finished FAILED
-    2  invalid request or connector configuration; no run was created
+    2  invalid request, connector configuration or logging settings; no run
+       was created
 System failures (database unavailable, programming errors) propagate with a
 traceback after the run is marked FAILED.
 
-The database comes from DATABASE_URL / POSTGRES_* (app.core.config).
+The database comes from DATABASE_URL / POSTGRES_* (app.core.config). Log
+events go to stderr as configured by APP_LOG_LEVEL and LOG_FORMAT
+(app.core.logging), so stdout carries only the summary.
 Credentials are never accepted on the command line and never printed.
 """
 
@@ -20,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -35,6 +37,7 @@ from sqlalchemy.orm import sessionmaker  # noqa: E402
 from app.connectors import ConnectorConfigurationError  # noqa: E402
 from app.connectors.registry import SOURCE_CONFIG_FILES, build_connector  # noqa: E402
 from app.core.config import get_settings  # noqa: E402
+from app.core.logging import configured_logging, resolve_format, resolve_level  # noqa: E402
 from app.ingestion.errors import IngestionRequestError  # noqa: E402
 from app.ingestion.orchestrator import IngestionRequest, run_ingestion  # noqa: E402
 from app.persistence.repositories.runs import RunStatus  # noqa: E402
@@ -55,8 +58,19 @@ def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
-    engine = create_engine(get_settings().effective_database_url, echo=False, pool_pre_ping=True)
+    settings = get_settings()
+    try:
+        resolve_level(settings.app_log_level)
+        resolve_format(settings.log_format)
+    except ValueError as exc:
+        print(f"ingest_demo: invalid logging settings: {exc}", file=sys.stderr)
+        return 2
+    with configured_logging(settings.app_log_level, settings.log_format):
+        return _ingest(args, settings.effective_database_url)
+
+
+def _ingest(args: argparse.Namespace, database_url: str) -> int:
+    engine = create_engine(database_url, echo=False, pool_pre_ping=True)
     try:
         connector = build_connector(args.source, base_url=args.base_url,
                                     data_directory=args.data_directory)

@@ -3,7 +3,9 @@ FastAPI application entry point.
 
 create_app wires the application-scoped resources (the database session
 factory), the request-ID middleware, the structured error handlers and the
-versioned /api/v1 router.
+versioned /api/v1 router. Application startup configures structured logging
+from APP_LOG_LEVEL and LOG_FORMAT (app.core.logging); invalid values stop
+startup.
 
 The API engine never echoes SQL and hides bound parameters from database
 error messages, so source payload values cannot reach logs through a
@@ -22,6 +24,7 @@ from app.api.errors import install_error_handlers
 from app.api.request_id import RequestIdMiddleware
 from app.api.v1.router import api_router
 from app.core.config import SERVICE_VERSION, get_settings
+from app.core.logging import configured_logging
 
 # Bounds how long a readiness probe waits for an unreachable PostgreSQL host.
 DATABASE_CONNECT_TIMEOUT_SECONDS = 5
@@ -57,7 +60,9 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        yield
+        settings = get_settings()
+        with configured_logging(settings.app_log_level, settings.log_format):
+            yield
         if engine is not None:
             engine.dispose()
 
