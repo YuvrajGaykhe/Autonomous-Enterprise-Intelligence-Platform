@@ -6,6 +6,7 @@ Only settings required for container startup are defined here.
 Later tasks will extend this as needed.
 """
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVICE_NAME = "ai-ceo-layer1"
@@ -27,8 +28,9 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     postgres_db: str = "ai_ceo_layer1"
     postgres_user: str = "ai_ceo"
-    postgres_password: str = "changeme"
-    database_url: str | None = None
+    # G2: credentials stay out of repr(), so logging or printing Settings cannot leak them.
+    postgres_password: str = Field(default="changeme", repr=False)
+    database_url: str | None = Field(default=None, repr=False)
 
     # --- FastAPI ---
     app_env: str = "development"

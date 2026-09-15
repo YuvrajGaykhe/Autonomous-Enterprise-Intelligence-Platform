@@ -5,7 +5,7 @@
 # =============================================================================
 
 .PHONY: help install migrate migration-status seed ingest-demo test lint format \
-        verify-layer1 docker-up docker-down docker-build clean
+        secret-scan verify-layer1 docker-up docker-down docker-build clean
 
 # Default target: show available commands.
 help:
@@ -20,6 +20,7 @@ help:
 	@echo "  make test            Run the full test suite"
 	@echo "  make lint            Run ruff + mypy linting"
 	@echo "  make format          Run black + ruff --fix formatting"
+	@echo "  make secret-scan     Scan tracked files for committed secrets"
 	@echo "  make verify-layer1   Run the complete Layer 1 acceptance scenario"
 	@echo "  make docker-up       Start all services with Docker Compose"
 	@echo "  make docker-down     Stop and remove Docker Compose services"

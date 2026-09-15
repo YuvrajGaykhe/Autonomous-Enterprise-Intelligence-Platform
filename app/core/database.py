@@ -40,11 +40,17 @@ class Base(DeclarativeBase):
 
 
 def get_engine():
-    """Create and return a synchronous SQLAlchemy engine."""
+    """Create and return a synchronous SQLAlchemy engine.
+
+    G2: SQL is never echoed and bound parameters are hidden from database
+    error messages, in every environment, so source payload values cannot
+    reach logs (spec Section 14).
+    """
     settings = get_settings()
     return create_engine(
         settings.effective_database_url,
-        echo=(settings.app_env == "development"),
+        echo=False,
+        hide_parameters=True,
         pool_pre_ping=True,
     )
 
