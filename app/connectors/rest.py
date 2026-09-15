@@ -56,6 +56,13 @@ from app.connectors.types import (
     SourceEntity,
 )
 from app.core.logging import log_event
+from app.core.security import (
+    UnsafeConfigurationError,
+    read_only_client,
+    validate_base_url,
+    validate_request_path,
+    validate_timeout,
+)
 from app.schemas.source.rest import (
     RestCustomerSource,
     RestDealSource,
@@ -225,21 +232,30 @@ class RestConnectorConfig:
                 source_name=source_name,
             )
 
-        if not isinstance(base_url, str) or not base_url.startswith("http"):
+        # G2: messages name the broken rule, never the URL (it may embed credentials).
+        try:
+            validate_base_url(base_url)
+        except UnsafeConfigurationError as exc:
             raise ConnectorConfigurationError(
-                f"Invalid base_url: '{base_url}'. Must be an HTTP(S) URL.",
+                f"Invalid base_url: {exc}",
                 source_name=source_name,
-            )
+            ) from None
 
         try:
-            timeout = float(timeout)
-            if timeout <= 0:
-                raise ValueError
-        except (TypeError, ValueError):
+            timeout = validate_timeout(timeout)
+        except UnsafeConfigurationError as exc:
             raise ConnectorConfigurationError(
-                f"Invalid timeout: '{timeout}'. Must be a positive number.",
+                f"Invalid timeout: {exc}",
                 source_name=source_name,
-            )
+            ) from None
+
+        try:
+            validate_request_path(health_endpoint)
+        except UnsafeConfigurationError as exc:
+            raise ConnectorConfigurationError(
+                f"Invalid health_endpoint: {exc}",
+                source_name=source_name,
+            ) from None
 
         # Parse auth
         raw_auth = config.get("auth", {})
@@ -272,6 +288,13 @@ class RestConnectorConfig:
                     f"Entity '{entity_type}' requires a 'path'",
                     source_name=source_name,
                 )
+            try:
+                validate_request_path(entity_path)
+            except UnsafeConfigurationError as exc:
+                raise ConnectorConfigurationError(
+                    f"Entity '{entity_type}' has an invalid path: {exc}",
+                    source_name=source_name,
+                ) from None
             entities[entity_type] = RestEntityConfig(
                 entity_type=entity_type,
                 path=entity_path,
@@ -325,11 +348,8 @@ class RestConnector:
         else:
             self._auth_deferred = False
 
-        self._client = httpx.Client(
-            base_url=config.base_url,
-            timeout=config.timeout,
-            headers=auth_headers,
-        )
+        # G2: GET-only, same-origin, no-redirect client (app.core.security).
+        self._client = read_only_client(config.base_url, config.timeout, auth_headers)
 
     @property
     def source_name(self) -> str:

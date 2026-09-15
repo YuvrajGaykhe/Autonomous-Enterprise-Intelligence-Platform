@@ -51,6 +51,12 @@ from app.connectors.types import (
     SourceEntity,
 )
 from app.core.logging import log_event
+from app.core.security import (
+    UnsafeConfigurationError,
+    read_only_client,
+    validate_base_url,
+    validate_timeout,
+)
 from app.schemas.source.odoo import (
     OdooCustomerSource,
     OdooDealSource,
@@ -165,21 +171,22 @@ class OdooConnectorConfig:
                 source_name=source_name,
             )
 
-        if not isinstance(base_url, str) or not base_url.startswith("http"):
+        # G2: messages name the broken rule, never the URL (it may embed credentials).
+        try:
+            validate_base_url(base_url)
+        except UnsafeConfigurationError as exc:
             raise ConnectorConfigurationError(
-                f"Invalid base_url: '{base_url}'. Must be an HTTP(S) URL.",
+                f"Invalid base_url: {exc}",
                 source_name=source_name,
-            )
+            ) from None
 
         try:
-            timeout = float(timeout)
-            if timeout <= 0:
-                raise ValueError
-        except (TypeError, ValueError):
+            timeout = validate_timeout(timeout)
+        except UnsafeConfigurationError as exc:
             raise ConnectorConfigurationError(
-                f"Invalid timeout: '{timeout}'. Must be a positive number.",
+                f"Invalid timeout: {exc}",
                 source_name=source_name,
-            )
+            ) from None
 
         return cls(
             source_name=source_name,
@@ -208,10 +215,8 @@ class OdooMockConnector:
             config: parsed Odoo connector configuration.
         """
         self._config = config
-        self._client = httpx.Client(
-            base_url=config.base_url,
-            timeout=config.timeout,
-        )
+        # G2: GET-only, same-origin, no-redirect client (app.core.security).
+        self._client = read_only_client(config.base_url, config.timeout)
 
     @property
     def source_name(self) -> str:
