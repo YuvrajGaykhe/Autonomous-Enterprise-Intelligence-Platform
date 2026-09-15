@@ -699,6 +699,91 @@ executed since it started (see [Ingestion metrics](#ingestion-metrics)).
 
 ---
 
+## Security (G2)
+
+Layer 1 enforces the spec Section 14 constraints in code, and its tests prove that secrets are
+never returned or logged (spec Section 15).
+
+### Source access
+
+Every connector uses the checks in `app/core/security.py`:
+
+| Check | Rule |
+|---|---|
+| `base_url` (Odoo mock, REST) | `http` or `https`; a host; a port from 1 to 65535 if one is given. No embedded credentials, query string, fragment, whitespace or control characters |
+| REST `health_endpoint` and entity `path` | one leading `/`. No `//`, backslash, `..` segment, query or fragment, so a path can never name another host |
+| `timeout` | finite seconds, greater than 0 and at most 300; booleans are rejected |
+| HTTP client | GET only, only to `base_url`'s scheme, host and port, and redirects are never followed. Any other request is refused before it is sent |
+| CSV entity `file` | a plain file name ending in `.csv` (any case), with no directory components or control characters |
+| CSV reads | the file must resolve inside the data directory (symlinks included), be a regular file, and be no larger than `max_file_bytes`. The limit defaults to 52,428,800 bytes (50 MiB) and can be set in the connector YAML |
+
+Invalid configuration raises `ConnectorConfigurationError`, with messages such as
+`Invalid base_url: <rule>`, `Invalid timeout: <rule>`, `Entity '<type>' has an invalid path: <rule>`,
+`Entity '<type>' has an invalid file: <rule>` and `Invalid max_file_bytes: <rule>`. Messages name
+the broken rule, never the value, because a URL can embed credentials. `ingest_demo --base-url` is
+validated the same way. A refused CSV read raises `ConnectorRequestError`
+(`Source file for entity '<type>' was refused: <rule>`), and E1 records it as a connector failure.
+
+### Secrets
+
+- Credentials come only from environment variables: `.env` is gitignored, and `.env.example`
+  holds placeholders only. REST authentication names the variable in `auth.env_var`, never its
+  value.
+- `Settings` hides `postgres_password` and `database_url` from `repr()`. No engine echoes SQL, and
+  the API engine and `app.core.database.get_engine` also hide bound parameters from database errors.
+- These are never returned by the API, logged, or printed by `ingest-demo`: credentials, connector
+  exception messages, upstream response bodies, URLs, raw records, raw values and exception text.
+  API errors use fixed messages, and logs carry only exception class names.
+
+### Secret scan
+
+```bash
+make secret-scan
+```
+
+This runs `scripts/secret_scan.py` over every git-tracked text file. Each finding is printed as
+`path:line: rule [fingerprint]`. The fingerprint is the first 12 hex characters of the value's
+SHA-256; the value itself is never printed. Exit status is `0` when the scan is clean, `1` when it
+has findings, and `2` when it could not run.
+
+| Rules | What they find |
+|---|---|
+| Provider | private keys, AWS access key IDs, GitHub, Slack, `sk-` style and Google API keys, JWTs |
+| Generic | credentials in URLs; bearer tokens; quoted assignments to password, secret, token or key names; unquoted assignments in `.env*`, `.ini`, `.cfg`, `.conf`, `.properties`, `.sh` and YAML files |
+| Hygiene | no tracked `.env` file (only `.env.example`); `.gitignore` ignores `.env`; every secret-named `.env.example` value is a placeholder |
+
+Generic rules skip visible placeholders and templates (such as `changeme`, `synthetic`, `example`,
+`${...}` and `{...}`) and values shorter than 8 characters. Six synthetic D2/C5 test fixtures are
+pinned in `ALLOWED_FINDINGS` by path, rule and fingerprint, each with a reason.
+
+### Security tests
+
+| Test file | Covers |
+|---|---|
+| `tests/unit/test_g2_outbound_safety.py` | URL, path and timeout rules; the GET-only, same-origin client; connector configuration; `--base-url` |
+| `tests/unit/test_g2_import_safety.py` | CSV file names, directory containment, symlinks and size limits |
+| `tests/unit/test_g2_secret_hygiene.py` | scanner rules and command; the clean repository; `Settings` repr; engine flags |
+| `tests/unit/test_g2_security_boundary.py` | static checks: no eval, exec, pickle or unsafe YAML loading; HTTP clients built only in `app.core.security`; connectors only GET; logging only through `log_event`, with no credential-named fields or exception text; no textual SQL; no credential-shaped API fields |
+| `tests/integration/test_g2_secret_canary.py` | canary secrets injected through the environment, upstream responses, CSV payloads, request bodies, an unreachable `DATABASE_URL` and exceptions never appear in any API response, the OpenAPI document, JSON or text logs, or `ingest-demo` output |
+
+### Security limitations
+
+- **No authentication**: see [API limitations](#api-limitations).
+- **No host allowlist**: URL validation is structural, so any well-formed host in committed
+  configuration or `--base-url` is accepted.
+- **CSV files are checked when read**: health checks and entity discovery only check that the
+  configured files exist.
+- **The secret scan is heuristic**: it covers tracked text files only, not git history or binary
+  documents (PDF, PPTX). Generic rules miss values shorter than 8 characters or marked as
+  placeholders. They also report a long non-placeholder value assigned to a secret-named variable
+  even when it is not a secret; rename such variables rather than widening the markers.
+- **Canonical business data is returned as ingested**: if a source stores a credential inside a
+  business field (for example document `body_text`), the entity API returns it.
+- **`ingest-demo` system failures** still end with a Python traceback. The canary test verifies
+  that the database error text does not contain the password.
+
+---
+
 ## Ingestion Commands
 
 ```bash
