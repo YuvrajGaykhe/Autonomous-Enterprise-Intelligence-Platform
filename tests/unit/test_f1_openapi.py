@@ -38,8 +38,18 @@ def _schema(response):
     return response["content"]["application/json"]["schema"]
 
 
-def test_exactly_the_f1_operations_are_published(spec):
-    assert {(method, path) for method, path, _ in _operations(spec)} == F1_OPERATIONS
+# F2 adds a list and a detail route per canonical entity type (tests/unit/test_f2_entities_openapi.py).
+ENTITY_TYPES = ("organizations", "employees", "customers", "deals", "projects", "support_tickets",
+                "documents")
+F2_ENTITY_OPERATIONS = {
+    ("get", path) for entity in ENTITY_TYPES
+    for path in (f"/api/v1/entities/{entity}", f"/api/v1/entities/{entity}/{{entity_id}}")
+}
+
+
+def test_exactly_the_f1_and_f2_operations_are_published(spec):
+    assert {(method, path) for method, path, _ in _operations(spec)} == \
+        F1_OPERATIONS | F2_ENTITY_OPERATIONS
 
 
 def test_api_metadata(spec):
@@ -76,6 +86,17 @@ def test_success_responses_reference_named_models(spec):
         ("get", "/api/v1/ingestion/runs/{run_id}"): ("200", "IngestionRunResponse"),
         ("get", "/api/v1/ingestion/runs/{run_id}/errors"): ("200", "ErrorListResponse"),
     }
+    for entity, (page, record) in {
+        "organizations": ("OrganizationListResponse", "OrganizationCanonical"),
+        "employees": ("EmployeeListResponse", "EmployeeCanonical"),
+        "customers": ("CustomerListResponse", "CustomerCanonical"),
+        "deals": ("DealListResponse", "DealCanonical"),
+        "projects": ("ProjectListResponse", "ProjectCanonical"),
+        "support_tickets": ("SupportTicketListResponse", "SupportTicketCanonical"),
+        "documents": ("DocumentListResponse", "DocumentCanonical"),
+    }.items():
+        expected[("get", f"/api/v1/entities/{entity}")] = ("200", page)
+        expected[("get", f"/api/v1/entities/{entity}/{{entity_id}}")] = ("200", record)
     for method, path, operation in _operations(spec):
         status, model = expected[(method, path)]
         assert _schema(operation["responses"][status]) == {

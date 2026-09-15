@@ -15,6 +15,16 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
 
 from app.ingestion.orchestrator import ENTITY_ORDER, MAX_PAGE_SIZE, EntityStatus
 from app.persistence.repositories.runs import RunStatus
+from app.schemas.canonical import (
+    CanonicalBase,
+    CustomerCanonical,
+    DealCanonical,
+    DocumentCanonical,
+    EmployeeCanonical,
+    OrganizationCanonical,
+    ProjectCanonical,
+    SupportTicketCanonical,
+)
 
 
 class HealthStatus(StrEnum):
@@ -202,3 +212,60 @@ class IngestionRunCreatedResponse(IngestionRunResponse):
 
     batches_committed: int
     entities: list[EntityRunResult]
+
+
+class EntityPage(BaseModel):
+    """One limit/offset page of canonical records in source-identity order."""
+
+    total: int
+    limit: int
+    offset: int
+
+
+class OrganizationListResponse(EntityPage):
+    items: list[OrganizationCanonical]
+
+
+class EmployeeListResponse(EntityPage):
+    items: list[EmployeeCanonical]
+
+
+class CustomerListResponse(EntityPage):
+    items: list[CustomerCanonical]
+
+
+class DealListResponse(EntityPage):
+    items: list[DealCanonical]
+
+
+class ProjectListResponse(EntityPage):
+    items: list[ProjectCanonical]
+
+
+class SupportTicketListResponse(EntityPage):
+    items: list[SupportTicketCanonical]
+
+
+class DocumentListResponse(EntityPage):
+    items: list[DocumentCanonical]
+
+
+# Record and page models for each canonical entity type.
+ENTITY_RECORDS: dict[EntityType, type[CanonicalBase]] = {
+    EntityType.ORGANIZATIONS: OrganizationCanonical,
+    EntityType.EMPLOYEES: EmployeeCanonical,
+    EntityType.CUSTOMERS: CustomerCanonical,
+    EntityType.DEALS: DealCanonical,
+    EntityType.PROJECTS: ProjectCanonical,
+    EntityType.SUPPORT_TICKETS: SupportTicketCanonical,
+    EntityType.DOCUMENTS: DocumentCanonical,
+}
+ENTITY_PAGES: dict[EntityType, type[EntityPage]] = {
+    EntityType.ORGANIZATIONS: OrganizationListResponse,
+    EntityType.EMPLOYEES: EmployeeListResponse,
+    EntityType.CUSTOMERS: CustomerListResponse,
+    EntityType.DEALS: DealListResponse,
+    EntityType.PROJECTS: ProjectListResponse,
+    EntityType.SUPPORT_TICKETS: SupportTicketListResponse,
+    EntityType.DOCUMENTS: DocumentListResponse,
+}

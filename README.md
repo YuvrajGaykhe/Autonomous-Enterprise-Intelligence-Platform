@@ -669,7 +669,7 @@ connector configuration (no run created). The database comes from `DATABASE_URL`
 
 The API is versioned under `/api/v1` (synchronous FastAPI routes). Interactive documentation is
 served at `/docs` and the schema at `/openapi.json`. The examples assume the API on
-`localhost:8000`. Canonical entity and metrics routes arrive in F2.
+`localhost:8000`. The ingestion metrics route is not implemented yet.
 
 | Method | Path | Purpose | Success |
 |---|---|---|---|
@@ -680,6 +680,11 @@ served at `/docs` and the schema at `/openapi.json`. The examples assume the API
 | GET | `/api/v1/ingestion/runs` | List runs (`source_system`, `status`, `limit`, `offset`) | `200` |
 | GET | `/api/v1/ingestion/runs/{run_id}` | Run detail and counts | `200` |
 | GET | `/api/v1/ingestion/runs/{run_id}/errors` | Structured errors (`severity`, `limit`, `offset`) | `200` |
+| GET | `/api/v1/entities/{entity_type}` | Canonical records (`source_system`, `limit`, `offset`) | `200` |
+| GET | `/api/v1/entities/{entity_type}/{id}` | One canonical record by canonical id | `200` |
+
+`entity_type` is one of `organizations`, `employees`, `customers`, `deals`, `projects`,
+`support_tickets` or `documents`.
 
 ### Health and sources
 
@@ -758,6 +763,40 @@ curl 'http://localhost:8000/api/v1/ingestion/runs/5f0c.../errors?severity=ERROR'
   other code reads `record failed data quality checks`. `raw_record`, `raw_value`, source keys and
   stored D1/D2 messages stay in `ingestion_errors` for debugging.
 
+### Canonical entities
+
+These are the stable Layer 2 handoff contract: records come from the canonical tables, never
+from a source system, and consumers do not need to know which connector produced them.
+
+```bash
+curl 'http://localhost:8000/api/v1/entities/customers?source_system=csv_demo&limit=2'
+# {"items": [{"id": "0b3f...", "source_system": "csv_demo", "source_entity": "customers",
+#   "source_id": "CUST-001", "source_updated_at": null, "ingested_at": "...",
+#   "ingestion_run_id": "5f0c...", "record_hash": "9a1e...", "name": "Falconridge Foods",
+#   "email": "contact@falconridge-foods.example", "segment": "...", "industry": "...",
+#   "status": "...", "owner_source_id": "EMP-010", "created_at": "...", "is_active": true}, ...],
+#  "total": 50, "limit": 2, "offset": 0}
+
+curl http://localhost:8000/api/v1/entities/deals/0b3f...
+# {"id": "...", "source_id": "DEAL-001", "amount": "5361.44", "currency": "USD",
+#  "probability": "90.00", "customer_source_id": "CUST-007", "customer_id": "...", ...}
+```
+
+- **Records**: every canonical column is returned: the business fields and the provenance fields
+  `id`, `source_system`, `source_entity`, `source_id`, `source_updated_at`, `ingested_at`,
+  `ingestion_run_id` and `record_hash`. Documents include the full `body_text`. Unresolved
+  references keep their source key with a `null` canonical id (e.g. `customer_id`).
+- **Identity**: `{id}` is the canonical UUID. An id that belongs to another entity type is
+  `404 ENTITY_NOT_FOUND`, and an unknown entity type is `404 NOT_FOUND`.
+- **Pagination and order**: `limit` 1–500 (default 50) and `offset` ≥ 0, with `total`, `limit`
+  and `offset` on every page. Records are ordered by source identity (`source_system`,
+  `source_entity`, `source_id`), which is unique and unchanged by re-ingestion. Each request reads
+  one read-only snapshot.
+- **Decimals**: `amount`, `probability` and `budget` are JSON strings (e.g. `"5361.44"`), never
+  floats.
+- **No raw payloads**: rejected records never reach the canonical tables, and raw source payloads
+  in `source_records` are not served.
+
 ### Error responses
 
 Every error has one shape, and the same `request_id` is sent in the `X-Request-ID` header (a
@@ -778,6 +817,7 @@ client-supplied `X-Request-ID` of 1–64 characters `[A-Za-z0-9._-]` is reused):
 | `RUN_NOT_FOUND` | 404 | The ingestion run does not exist |
 | `UNSUPPORTED_OPTION` | 422 | `dry_run: true` was requested |
 | `INVALID_INGESTION_REQUEST` | 422 | E1 rejected the request for this source (e.g. entities it does not provide) |
+| `ENTITY_NOT_FOUND` | 404 | No record of that entity type has the id (`details` names the `entity_type`) |
 | `INTERNAL_ERROR` | 500 | Unexpected failure; the message is generic and details are never exposed |
 
 Rejected requests (`422`, `SOURCE_MISCONFIGURED`) create no run. A system failure during a run
@@ -805,6 +845,10 @@ returns `500 INTERNAL_ERROR` after E1 has marked the run `FAILED`.
 - **Container logs**: the application does not configure logging, so under Uvicorn only warnings
   and errors (such as `request_failed`) reach the container logs; INFO events such as
   `ingestion_run_finished` are not emitted.
+- **Entity queries**: the only filter is `source_system`; there are no field filters, search or
+  alternative sort orders. Pagination is by offset, and each page is its own snapshot, so an
+  ingestion that inserts records between two page requests can shift later pages.
+- **Metrics**: `GET /api/v1/metrics/ingestion` is not implemented yet.
 
 ---
 
