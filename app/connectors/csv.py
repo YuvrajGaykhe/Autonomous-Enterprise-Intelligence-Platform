@@ -39,6 +39,36 @@ from app.connectors.types import (
     Page,
     SourceEntity,
 )
+from app.core.security import (
+    DEFAULT_MAX_IMPORT_BYTES,
+    SecurityConstraintError,
+    UnsafeConfigurationError,
+    check_import_file,
+    validate_import_file_name,
+    validate_max_file_bytes,
+)
+
+
+def _checked_file_name(source_name: str, entity_type: str, file_name: object) -> str:
+    """G2: an entity file must be a plain .csv name inside the data directory."""
+    try:
+        return validate_import_file_name(file_name)
+    except UnsafeConfigurationError as exc:
+        raise ConnectorConfigurationError(
+            f"Entity '{entity_type}' has an invalid file: {exc}",
+            source_name=source_name,
+        ) from None
+
+
+def _checked_max_file_bytes(source_name: str, value: object) -> int:
+    """G2: the per-file import size limit (spec Section 14)."""
+    try:
+        return validate_max_file_bytes(value)
+    except UnsafeConfigurationError as exc:
+        raise ConnectorConfigurationError(
+            f"Invalid max_file_bytes: {exc}",
+            source_name=source_name,
+        ) from None
 
 
 @dataclass
@@ -58,6 +88,7 @@ class CsvConnectorConfig:
     source_type: str
     data_directory: str
     entities: dict[str, CsvEntityConfig] = field(default_factory=dict)
+    max_file_bytes: int = DEFAULT_MAX_IMPORT_BYTES
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> CsvConnectorConfig:
@@ -97,6 +128,8 @@ class CsvConnectorConfig:
         source_name = raw.get("source_name", "csv_demo")
         source_type = raw.get("source_type", "csv")
         data_directory = raw.get("data_directory", "data/demo")
+        max_file_bytes = _checked_max_file_bytes(
+            source_name, raw.get("max_file_bytes", DEFAULT_MAX_IMPORT_BYTES))
 
         entities: dict[str, CsvEntityConfig] = {}
         raw_entities = raw.get("entities", {})
@@ -121,7 +154,7 @@ class CsvConnectorConfig:
                 )
             entities[entity_type] = CsvEntityConfig(
                 entity_type=entity_type,
-                file=file_name,
+                file=_checked_file_name(source_name, entity_type, file_name),
                 id_column=id_column,
             )
 
@@ -130,6 +163,7 @@ class CsvConnectorConfig:
             source_type=source_type,
             data_directory=data_directory,
             entities=entities,
+            max_file_bytes=max_file_bytes,
         )
 
     @classmethod
@@ -141,12 +175,14 @@ class CsvConnectorConfig:
         source_name = config.get("source_name", "csv_demo")
         source_type = config.get("source_type", "csv")
         data_directory = config.get("data_directory", "data/demo")
+        max_file_bytes = _checked_max_file_bytes(
+            source_name, config.get("max_file_bytes", DEFAULT_MAX_IMPORT_BYTES))
 
         entities: dict[str, CsvEntityConfig] = {}
         for entity_type, entity_cfg in config.get("entities", {}).items():
             entities[entity_type] = CsvEntityConfig(
                 entity_type=entity_type,
-                file=entity_cfg["file"],
+                file=_checked_file_name(source_name, entity_type, entity_cfg["file"]),
                 id_column=entity_cfg["id_column"],
             )
 
@@ -155,6 +191,7 @@ class CsvConnectorConfig:
             source_type=source_type,
             data_directory=data_directory,
             entities=entities,
+            max_file_bytes=max_file_bytes,
         )
 
 
@@ -237,6 +274,17 @@ class CsvConnector:
                 f"Source file not found: {file_path}",
                 source_name=self.source_name,
             )
+
+        # G2: re-checked at read time, so directly constructed configs, symlinks
+        # and oversized files are refused too (app.core.security).
+        try:
+            file_path = check_import_file(self._data_dir(), self._config.entities[entity_type].file,
+                                          self._config.max_file_bytes)
+        except SecurityConstraintError as exc:
+            raise ConnectorRequestError(
+                f"Source file for entity '{entity_type}' was refused: {exc}",
+                source_name=self.source_name,
+            ) from None
 
         try:
             with open(file_path, "r", encoding="utf-8", newline="") as f:

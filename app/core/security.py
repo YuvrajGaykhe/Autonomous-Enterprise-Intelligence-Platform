@@ -15,6 +15,15 @@ Outbound HTTP (Odoo mock and Generic REST connectors):
                            base_url's scheme, host and port, and never follows
                            redirects
 
+Imported files (CSV connector):
+
+    validate_import_file_name  a plain file name (no directory components or
+                               control characters) with an allowed suffix
+    validate_max_file_bytes    a positive integer size limit
+    check_import_file          the named file resolves inside its data
+                               directory (symlinks included), is a regular
+                               file and is within the size limit
+
 Validation keeps accidental requests away from unintended hosts; the client
 enforces the read-only, same-origin rule on every request, so a code path
 that bypasses configuration validation still cannot write to a source or
@@ -28,7 +37,8 @@ chains.
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
+from pathlib import Path, PurePosixPath
 
 import httpx
 
@@ -37,6 +47,8 @@ ALLOWED_METHOD = "GET"
 MIN_PORT = 1
 MAX_PORT = 65535
 MAX_TIMEOUT_SECONDS = 300.0
+CSV_SUFFIXES = frozenset({".csv"})
+DEFAULT_MAX_IMPORT_BYTES = 50 * 1024 * 1024
 
 
 class SecurityConstraintError(Exception):
@@ -49,6 +61,10 @@ class UnsafeConfigurationError(SecurityConstraintError, ValueError):
 
 class OutboundRequestRefused(SecurityConstraintError):
     """A connector tried to send a request the read-only client does not allow."""
+
+
+class ImportFileRejected(SecurityConstraintError):
+    """A file to import is outside its directory, not a regular file, or too large."""
 
 
 def _has_whitespace_or_control(value: str) -> bool:
@@ -122,6 +138,60 @@ def validate_timeout(value: object) -> float:
     if not math.isfinite(seconds) or seconds <= 0 or seconds > MAX_TIMEOUT_SECONDS:
         raise UnsafeConfigurationError(message)
     return seconds
+
+
+def validate_import_file_name(value: object, suffixes: Collection[str] = CSV_SUFFIXES) -> str:
+    """Return value if it is a plain file name with one of the suffixes (case-insensitive).
+
+    Raises:
+        UnsafeConfigurationError: the value breaks a rule listed in the module docstring.
+    """
+    if not isinstance(value, str) or not value:
+        raise UnsafeConfigurationError("must be a non-empty string")
+    if any(not char.isprintable() for char in value):
+        raise UnsafeConfigurationError("must not contain control characters")
+    if "/" in value or "\\" in value or value in {".", ".."}:
+        raise UnsafeConfigurationError("must be a plain file name without directory components")
+    if PurePosixPath(value).suffix.lower() not in suffixes:
+        raise UnsafeConfigurationError(f"must have one of the suffixes {', '.join(sorted(suffixes))}")
+    return value
+
+
+def validate_max_file_bytes(value: object) -> int:
+    """Return value if it is a positive integer byte limit (booleans are not).
+
+    Raises:
+        UnsafeConfigurationError: the value is not a positive integer.
+    """
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise UnsafeConfigurationError("must be a positive integer number of bytes")
+    return value
+
+
+def check_import_file(
+    directory: Path,
+    name: str,
+    max_bytes: int,
+    suffixes: Collection[str] = CSV_SUFFIXES,
+) -> Path:
+    """The resolved path of a file that is safe to import from directory.
+
+    Raises:
+        UnsafeConfigurationError: name or max_bytes breaks a validation rule.
+        ImportFileRejected: the file resolves outside directory, is not a
+            regular file, or is larger than max_bytes.
+    """
+    validate_import_file_name(name, suffixes)
+    validate_max_file_bytes(max_bytes)
+    root = directory.resolve()
+    path = (root / name).resolve()
+    if not path.is_relative_to(root):
+        raise ImportFileRejected("resolves outside the data directory")
+    if not path.is_file():
+        raise ImportFileRejected("is not a regular file")
+    if path.stat().st_size > max_bytes:
+        raise ImportFileRejected(f"is larger than the {max_bytes}-byte import limit")
+    return path
 
 
 def _origin(url: httpx.URL) -> tuple[str, str, int | None]:
