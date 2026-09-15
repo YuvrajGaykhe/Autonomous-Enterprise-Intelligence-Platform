@@ -284,14 +284,14 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 | C — Connectors | C3 | Mock-source HTTP server | ✅ Complete — pushed (c7110cf) |
 | C — Connectors | C4 | Odoo mock connector | ✅ Complete — pushed (62fb748) |
 | C — Connectors | C5 | Generic REST connector | ✅ Complete — pushed (b78c4da, 2c4f149) |
-| D — Normalization | D1 | Normalization engine | ✅ Complete — pushed (571f9b0, b150256) |
-| D — Normalization | D2 | Validation and quarantine engine | ✅ Complete — pushed (ee266d8) |
-| E — Orchestration | E1 | Ingestion orchestrator | ✅ Complete — pushed (dba0cce..865c634) |
-| E — Orchestration | E2 | Demo data generation | ✅ Complete — pushed (ca41425..baa92f8) |
-| F — API | F1 | FastAPI routes — health, sources, ingestion | ✅ Complete — pushed (b0f8be3..fd69fb2) |
-| F — API | F2 | FastAPI routes — canonical entities + metrics | ✅ Complete — pushed (207d4f3, dfbaea3) |
-| G — Observability | G1 | Structured logging + ingestion metrics counters | ✅ Complete — pushed (4322763..edc753f) |
-| G — Observability | G2 | Secret hygiene audit + security constraints | ✅ Complete locally — not pushed (a756925..5895189); see Section 14 |
+| D — Normalization | D1 | Normalization engine | ✅ Complete — pushed (571f9b0, ceaa4d1) |
+| D — Normalization | D2 | Validation and quarantine engine | ✅ Complete — pushed (3e53cef) |
+| E — Orchestration | E1 | Ingestion orchestrator | ✅ Complete — pushed (0eef137..68ae118) |
+| E — Orchestration | E2 | Demo data generation | ✅ Complete — pushed (2b90494..798e431) |
+| F — API | F1 | FastAPI routes — health, sources, ingestion | ✅ Complete — pushed (17e906e..1708b49) |
+| F — API | F2 | FastAPI routes — canonical entities + metrics | ✅ Complete — pushed (2be74dd, 53693fe) |
+| G — Observability | G1 | Structured logging + ingestion metrics counters | ✅ Complete — pushed (4cb6631..1934ea6) |
+| G — Observability | G2 | Secret hygiene audit + security constraints | ✅ Complete locally — not pushed (f8b79b7..e9e08bf); see Section 14 |
 | H — Tests | H1 | Unit tests | ⏳ Pending approval |
 | H — Tests | H2 | Connector contract tests | ⏳ Pending approval |
 | H — Tests | H3 | Database integration tests | ⏳ Pending approval |
@@ -302,7 +302,7 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 
 **Total: 26 tasks across 9 phases.**
 
-Release state (2026-09-15): `origin/main` is `edc753f` (A1–G1, plus the separately approved Docker packaging commit `11398ca`). G2 is committed locally only and awaits review before any push. H1–I2 have not started.
+Release state (2026-09-15): `origin/main` is `1934ea6` (A1–G1, plus the separately approved Docker packaging commit `84cb36c`). G2 is committed locally only and awaits review before any push. H1–I2 have not started.
 
 ---
 
@@ -322,10 +322,10 @@ Release state (2026-09-15): `origin/main` is `edc753f` (A1–G1, plus the separa
 
 | Milestone | Commit | What it adds | Tests | Mutation |
 |---|---|---|---|---|
-| M1 | `a756925` | `app/core/security.py`: URL, path and timeout validation; GET-only, same-origin, no-redirect client; Odoo mock and REST connectors use it | 158 | 57/57 killed |
-| M2 | `4c82700` | CSV file-name, directory-containment (symlinks) and size-limit checks at config parse and at every read | 70 | 36/36 killed |
-| M3 | `03c8c71` | `scripts/secret_scan.py` + `make secret-scan`; `Settings` repr hides credentials; `get_engine` never echoes SQL and hides parameters; static security boundary tests | 111 | 84/84 killed (2 first-run survivors were real test gaps, fixed) |
-| M4 | `5895189` | End-to-end secret canary integration test; README "Security (G2)" section | 5 | 10/10 injected leaks killed |
+| M1 | `f8b79b7` | `app/core/security.py`: URL, path and timeout validation; GET-only, same-origin, no-redirect client; Odoo mock and REST connectors use it | 158 | 57/57 killed |
+| M2 | `2761d50` | CSV file-name, directory-containment (symlinks) and size-limit checks at config parse and at every read | 70 | 36/36 killed |
+| M3 | `b461c58` | `scripts/secret_scan.py` + `make secret-scan`; `Settings` repr hides credentials; `get_engine` never echoes SQL and hides parameters; static security boundary tests | 111 | 84/84 killed (2 first-run survivors were real test gaps, fixed) |
+| M4 | `e9e08bf` | End-to-end secret canary integration test; README "Security (G2)" section | 5 | 10/10 injected leaks killed |
 
 **Design decisions**
 - Rejection messages name the broken rule, never the configured value (URLs can embed credentials).
@@ -334,7 +334,7 @@ Release state (2026-09-15): `origin/main` is `edc753f` (A1–G1, plus the separa
 - The secret scan never prints matched values (fingerprints only); synthetic test fixtures are pinned by path, rule and fingerprint rather than by widening the rules.
 - Integration changes to released code were narrow: C2, C4 and C5 config parsing and client construction; `app/core/config.py` and `app/core/database.py`; the Makefile. Valid configurations behave as before.
 
-**Verification at `5895189`**: full suite 3462 passed; ruff 69 findings (baseline 71; two pre-existing B904 removed on replaced lines); mypy 9 errors (baseline 9); secret scan 0 findings over 208 tracked text files.
+**Verification at `e9e08bf`**: full suite 3462 passed; ruff 69 findings (baseline 71; two pre-existing B904 removed on replaced lines); mypy 9 errors (baseline 9); secret scan 0 findings over 208 tracked text files.
 
 **Known limitations**
 - No host allowlist: URL validation is structural.
