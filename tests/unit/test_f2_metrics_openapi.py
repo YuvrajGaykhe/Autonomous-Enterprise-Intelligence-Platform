@@ -55,9 +55,12 @@ def test_the_metrics_operation_is_a_parameterless_get(spec):
 def test_the_response_has_totals_and_per_source_metrics(spec):
     schemas = spec["components"]["schemas"]
     response = schemas["IngestionMetricsResponse"]
-    assert set(response["properties"]) == set(response["required"]) == {"totals", "sources"}
+    # G1 adds the in-process counters (tests/unit/test_g1_process_metrics_openapi.py).
+    assert set(response["properties"]) == set(response["required"]) == {
+        "totals", "sources", "process"}
     assert response["properties"]["totals"] == _ref("IngestionMetrics")
     assert response["properties"]["sources"]["items"] == _ref("SourceIngestionMetrics")
+    assert response["properties"]["process"] == _ref("ProcessIngestionMetrics")
 
 
 def test_every_metric_is_required_and_includes_the_spec_names(spec):

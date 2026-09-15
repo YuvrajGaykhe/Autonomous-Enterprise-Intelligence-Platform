@@ -43,6 +43,12 @@ Log events (app.core.logging), each with the run ID:
     record_rejected     WARNING, per record the quality gate quarantined
                         (stage and finding codes, never values)
     batch_committed, batch_failed
+
+An optional RunObserver (G1 process metrics) is notified at the points where
+the database reflects the work: run created, batch committed, failed batch
+recorded, connector failure recorded, run finished. A run that ends by a
+system failure is reported finished as FAILED exactly once, even when
+marking it FAILED in the database fails too.
 """
 
 from __future__ import annotations
@@ -55,6 +61,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Protocol
 
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
@@ -191,6 +198,37 @@ class RunSummary:
         }
 
 
+class RunObserver(Protocol):
+    """Receives run progress as E1 persists it (app.observability.metrics.ProcessMetrics)."""
+
+    def run_started(self) -> None: ...
+
+    def batch_committed(self, counts: runs.RunCounts) -> None: ...
+
+    def batch_failed(self, records: int) -> None: ...
+
+    def connector_failed(self) -> None: ...
+
+    def run_finished(self, status: runs.RunStatus, duration_seconds: float) -> None: ...
+
+
+class _NoObserver:
+    def run_started(self) -> None:
+        pass
+
+    def batch_committed(self, counts: runs.RunCounts) -> None:
+        pass
+
+    def batch_failed(self, records: int) -> None:
+        pass
+
+    def connector_failed(self) -> None:
+        pass
+
+    def run_finished(self, status: runs.RunStatus, duration_seconds: float) -> None:
+        pass
+
+
 def _utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -205,6 +243,7 @@ class _Context:
     clock: Callable[[], datetime]
     normalization: NormalizationConfig
     validation: ValidationConfig
+    observer: RunObserver
 
     def now(self) -> datetime:
         return _aware_utc(self.clock())
@@ -232,8 +271,11 @@ def run_ingestion(
     clock: Callable[[], datetime] = _utc_now,
     normalization_config: NormalizationConfig | None = None,
     validation_config: ValidationConfig | None = None,
+    observer: RunObserver | None = None,
 ) -> RunSummary:
     """Execute one ingestion run and return its summary.
+
+    observer, when given, is notified of the run's progress (see RunObserver).
 
     Raises:
         IngestionRequestError: the request is invalid; no run is created.
@@ -246,7 +288,8 @@ def run_ingestion(
     entities = _select_entities(connector.source_name, capabilities, request, normalization)
 
     context = _Context(connector, sessions, uuid.uuid4(), connector.source_name,
-                       request.page_size, clock, normalization, validation)
+                       request.page_size, clock, normalization, validation,
+                       _NoObserver() if observer is None else observer)
     started_at = context.now()
     with sessions.begin() as session:
         runs.create_run(session, run_id=context.run_id, source_system=context.source_system,
@@ -254,6 +297,7 @@ def run_ingestion(
                         mode=runs.RunMode.FULL, started_at=started_at)
     log_event(logger, logging.INFO, "run_started", run_id=context.run_id,
               source_system=context.source_system, entities=",".join(entities))
+    context.observer.run_started()
 
     finished = False
     try:
@@ -262,7 +306,7 @@ def run_ingestion(
         return summary
     finally:
         if not finished:
-            _abort(context)
+            _abort(context, started_at)
 
 
 def _select_entities(
@@ -326,11 +370,13 @@ def _execute(
     summary = RunSummary(context.run_id, context.source_system, status, started_at, finished_at,
                          tuple(summaries), error_summary)
     counts = summary.counts
+    duration_seconds = (finished_at - started_at).total_seconds()
     log_event(logger, logging.INFO, "run_finished", run_id=context.run_id, status=status.value,
               fetched=counts.fetched, inserted=counts.inserted, updated=counts.updated,
               unchanged=counts.unchanged, rejected=counts.rejected,
               failed=summary.records_failed, warnings=counts.warnings,
-              duration_seconds=(finished_at - started_at).total_seconds())
+              duration_seconds=duration_seconds)
+    context.observer.run_finished(status, duration_seconds)
     return summary
 
 
@@ -354,6 +400,7 @@ def _check_health(context: _Context, capabilities: ConnectorCapabilities) -> boo
         source_system=context.source_system,
         detail=_detail({"failure": failure}),
     ))
+    context.observer.connector_failed()
     log_event(logger, logging.WARNING, "connector_health_check_failed", run_id=context.run_id,
               source_system=context.source_system, failure=failure)
     return False
@@ -379,6 +426,7 @@ def _ingest_entity(context: _Context, entity: str) -> tuple[EntitySummary, bool]
                 detail=_detail({"exception": failure, "page_index": page_index,
                                 "run_stopped": fatal}),
             ))
+            context.observer.connector_failed()
             log_event(logger, logging.WARNING, "entity_failed", run_id=context.run_id,
                       entity=entity, page=page_index, failure=failure, run_stopped=fatal)
             return EntitySummary(entity, EntityStatus.FAILED, counts, batches, 0, raw_persisted,
@@ -404,6 +452,7 @@ def _ingest_entity(context: _Context, entity: str) -> tuple[EntitySummary, bool]
             return EntitySummary(entity, EntityStatus.FAILED, counts + failed, batches, 1,
                                  raw_persisted, len(items), IngestionCode.BATCH_FAILED.value), False
 
+        context.observer.batch_committed(result.counts)
         counts = counts + result.counts
         batches += 1
         raw_persisted += result.raw_persisted
@@ -474,6 +523,7 @@ def _record_failed_batch(
                             "database_error": database_error, "sqlstate": sqlstate}),
         )], created_at=created_at)
         runs.add_run_counts(session, context.run_id, counts)
+    context.observer.batch_failed(records)
     log_event(logger, logging.WARNING, "batch_failed", run_id=context.run_id, entity=entity,
               page=page_index, records=records, database_error=database_error, sqlstate=sqlstate)
 
@@ -508,12 +558,17 @@ def _error_summary(healthy: bool, entities: Sequence[EntitySummary]) -> str | No
     return "; ".join(parts) or None
 
 
-def _abort(context: _Context) -> None:
+def _abort(context: _Context, started_at: datetime) -> None:
     """Mark the run FAILED while a system failure propagates."""
     failure = sys.exc_info()[1]
     label = "interrupted" if failure is None else type(failure).__name__
-    with context.sessions.begin() as session:
-        runs.finish_run(session, context.run_id, status=runs.RunStatus.FAILED,
-                        finished_at=context.now(),
-                        error_summary=f"run aborted by system failure: {label}")
+    finished_at = context.now()
+    try:
+        with context.sessions.begin() as session:
+            runs.finish_run(session, context.run_id, status=runs.RunStatus.FAILED,
+                            finished_at=finished_at,
+                            error_summary=f"run aborted by system failure: {label}")
+    finally:
+        context.observer.run_finished(runs.RunStatus.FAILED,
+                                      (finished_at - started_at).total_seconds())
     log_event(logger, logging.ERROR, "run_failed", run_id=context.run_id, failure=label)

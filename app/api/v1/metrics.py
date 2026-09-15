@@ -3,15 +3,17 @@ Operational ingestion metrics (spec Sections 10 and 16).
 
     GET /api/v1/metrics/ingestion
 
-Every value is derived from what E1 persisted (ingestion_runs,
+totals and sources are derived from what E1 persisted (ingestion_runs,
 ingestion_errors, source_records and the canonical tables) in one read-only
-snapshot, so the metrics survive restarts, agree across API processes and are
-never estimated. Nothing is counted in process memory; in-process counters
-are G1's.
+snapshot, so they survive restarts, agree across API processes and are never
+estimated. process holds the in-process counters (G1) of the API process
+answering the request, which start at zero with that process.
 
     totals    every source system combined
     sources   each configured source and each source system with persisted
               data, sorted by name; sources without data report zeros
+    process   runs executed by this process since it started
+              (app.observability.metrics.ProcessMetrics)
 
 Counts reconcile with the run report: the totals are sums over runs, and a
 RUNNING run contributes the counts it has committed so far but no duration.
@@ -28,18 +30,21 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.connectors import ConnectorProvider
-from app.api.dependencies import get_connectors, get_sessions, read_snapshot
+from app.api.dependencies import get_connectors, get_process_metrics, get_sessions, read_snapshot
 from app.api.v1.schemas import (
     CanonicalRecordCounts,
+    DurationSummary,
     ErrorSeverity,
     ErrorSeverityCounts,
     IngestionMetrics,
     IngestionMetricsResponse,
+    ProcessIngestionMetrics,
     RunReference,
     RunStatusCounts,
     SourceIngestionMetrics,
 )
 from app.ingestion.errors import IngestionCode
+from app.observability.metrics import ProcessMetrics
 from app.persistence.repositories import metrics_queries
 from app.persistence.repositories.runs import RunStatus
 
@@ -58,8 +63,9 @@ ErrorKey = tuple[str, str | None]
 def ingestion_metrics(
     sessions: sessionmaker[Session] = Depends(get_sessions),
     connectors: ConnectorProvider = Depends(get_connectors),
+    process_metrics: ProcessMetrics = Depends(get_process_metrics),
 ) -> IngestionMetricsResponse:
-    """Operational ingestion metrics derived from persisted runs, errors and records."""
+    """Database-derived ingestion metrics, plus this process's in-process counters."""
     with read_snapshot(sessions) as session:
         runs = metrics_queries.run_aggregates(session)
         raw = metrics_queries.raw_record_counts(session)
@@ -97,7 +103,27 @@ def ingestion_metrics(
         runs, sum(raw.values()), all_errors,
         {entity: sum(per_source.values()) for entity, per_source in canonical.items()},
     ))
-    return IngestionMetricsResponse(totals=totals, sources=sources)
+    return IngestionMetricsResponse(totals=totals, sources=sources,
+                                    process=_process(process_metrics))
+
+
+def _process(process_metrics: ProcessMetrics) -> ProcessIngestionMetrics:
+    snapshot = process_metrics.snapshot()
+    return ProcessIngestionMetrics(
+        started_at=snapshot.started_at,
+        runs_total=snapshot.runs_total,
+        runs_by_status=RunStatusCounts(**snapshot.runs_by_status),
+        records_fetched_total=snapshot.records_fetched_total,
+        records_inserted_total=snapshot.records_inserted_total,
+        records_updated_total=snapshot.records_updated_total,
+        records_unchanged_total=snapshot.records_unchanged_total,
+        records_rejected_total=snapshot.records_rejected_total,
+        connector_request_failures_total=snapshot.connector_request_failures_total,
+        validation_errors_total=snapshot.validation_errors_total,
+        ingestion_duration_seconds=DurationSummary(
+            count=snapshot.ingestion_duration_seconds_count,
+            sum=round(snapshot.ingestion_duration_seconds_sum, 6)),
+    )
 
 
 def _metrics(

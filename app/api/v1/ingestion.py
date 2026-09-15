@@ -32,7 +32,12 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.connectors import ConnectorProvider
-from app.api.dependencies import get_connectors, get_sessions, read_snapshot
+from app.api.dependencies import (
+    get_connectors,
+    get_process_metrics,
+    get_sessions,
+    read_snapshot,
+)
 from app.api.errors import ApiError, ErrorCode, ErrorResponse
 from app.api.ingestion_errors import safe_findings, safe_message
 from app.api.request_id import request_id_of
@@ -51,6 +56,7 @@ from app.api.v1.sources import resolve_connector
 from app.core.logging import log_event
 from app.ingestion.errors import IngestionCode, IngestionRequestError
 from app.ingestion.orchestrator import IngestionRequest, RunSummary, run_ingestion
+from app.observability.metrics import ProcessMetrics
 from app.persistence.models import IngestionError, IngestionRun
 from app.persistence.repositories import run_queries
 from app.persistence.repositories.runs import RunStatus
@@ -90,6 +96,7 @@ def start_run(
     response: Response,
     sessions: sessionmaker[Session] = Depends(get_sessions),
     connectors: ConnectorProvider = Depends(get_connectors),
+    process_metrics: ProcessMetrics = Depends(get_process_metrics),
 ) -> IngestionRunCreatedResponse:
     """Run one ingestion to completion and return the run."""
     if body.dry_run:
@@ -107,7 +114,8 @@ def start_run(
               source=body.source, entities="all" if entities is None else ",".join(entities))
     try:
         summary = run_ingestion(connector, sessions, IngestionRequest(
-            entities=entities, mode=body.mode, page_size=body.page_size))
+            entities=entities, mode=body.mode, page_size=body.page_size),
+            observer=process_metrics)
     except IngestionRequestError as exc:
         raise ApiError(HTTPStatus.UNPROCESSABLE_ENTITY, ErrorCode.INVALID_INGESTION_REQUEST,
                        "ingestion request is not valid for this source",

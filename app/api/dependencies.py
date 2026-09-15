@@ -14,6 +14,7 @@ from fastapi import Request
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.connectors import ConnectorProvider
+from app.observability.metrics import ProcessMetrics
 
 
 def get_sessions(request: Request) -> sessionmaker[Session]:
@@ -40,3 +41,9 @@ def get_connectors(request: Request) -> ConnectorProvider:
     """The application's connector provider."""
     connectors: ConnectorProvider = request.app.state.connectors
     return connectors
+
+
+def get_process_metrics(request: Request) -> ProcessMetrics:
+    """The application's in-process ingestion counters."""
+    process_metrics: ProcessMetrics = request.app.state.process_metrics
+    return process_metrics

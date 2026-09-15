@@ -106,8 +106,18 @@ def _assert_totals_are_sums_over_sources(body: dict) -> None:
 
 
 def test_an_empty_database_reports_zeros_for_every_configured_source(client):
-    assert _metrics(client) == {"totals": _zero(),
-                                "sources": [_empty_source(name) for name in CONFIGURED]}
+    body = _metrics(client)
+    # G1 in-process counters (tests/integration/test_g1_process_metrics.py) start at zero.
+    process = body.pop("process")
+    assert datetime.fromisoformat(process.pop("started_at")).utcoffset() == timedelta(0)
+    assert process == {
+        "runs_total": 0, "runs_by_status": dict.fromkeys(STATUSES, 0),
+        "records_fetched_total": 0, "records_inserted_total": 0, "records_updated_total": 0,
+        "records_unchanged_total": 0, "records_rejected_total": 0,
+        "connector_request_failures_total": 0, "validation_errors_total": 0,
+        "ingestion_duration_seconds": {"count": 0, "sum": 0.0},
+    }
+    assert body == {"totals": _zero(), "sources": [_empty_source(name) for name in CONFIGURED]}
 
 
 def test_sources_come_from_the_provider_without_building_connectors(e1_sessions):

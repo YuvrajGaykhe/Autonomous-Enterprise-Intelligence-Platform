@@ -346,8 +346,42 @@ class SourceIngestionMetrics(IngestionMetrics):
     last_successful_run: RunReference | None
 
 
+class DurationSummary(BaseModel):
+    """Finished runs (count) and their summed duration in seconds (sum)."""
+
+    count: int
+    sum: float
+
+
+class ProcessIngestionMetrics(BaseModel):
+    """Counters for ingestion runs executed by this API process since started_at.
+
+    They start at zero when the process starts and are not persisted; runs of
+    other processes (other API workers, the ingest-demo command) are not
+    included. runs_by_status RUNNING counts runs still in progress. Record
+    counts come from committed batches (a failed batch's records count as
+    fetched); every rejected record is one validation error;
+    connector_request_failures_total counts failed health checks and failed
+    page fetches; ingestion_duration_seconds covers finished runs.
+    """
+
+    started_at: datetime
+    runs_total: int
+    runs_by_status: RunStatusCounts
+    records_fetched_total: int
+    records_inserted_total: int
+    records_updated_total: int
+    records_unchanged_total: int
+    records_rejected_total: int
+    connector_request_failures_total: int
+    validation_errors_total: int
+    ingestion_duration_seconds: DurationSummary
+
+
 class IngestionMetricsResponse(BaseModel):
-    """Metrics for every source system combined, and per source system (sorted by name)."""
+    """Database-derived metrics for every source system combined and per source system
+    (sorted by name), plus the in-process counters of the API process answering."""
 
     totals: IngestionMetrics
     sources: list[SourceIngestionMetrics]
+    process: ProcessIngestionMetrics
