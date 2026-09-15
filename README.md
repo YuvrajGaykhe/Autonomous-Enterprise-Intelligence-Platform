@@ -669,7 +669,7 @@ connector configuration (no run created). The database comes from `DATABASE_URL`
 
 The API is versioned under `/api/v1` (synchronous FastAPI routes). Interactive documentation is
 served at `/docs` and the schema at `/openapi.json`. The examples assume the API on
-`localhost:8000`. The ingestion metrics route is not implemented yet.
+`localhost:8000`.
 
 | Method | Path | Purpose | Success |
 |---|---|---|---|
@@ -682,6 +682,7 @@ served at `/docs` and the schema at `/openapi.json`. The examples assume the API
 | GET | `/api/v1/ingestion/runs/{run_id}/errors` | Structured errors (`severity`, `limit`, `offset`) | `200` |
 | GET | `/api/v1/entities/{entity_type}` | Canonical records (`source_system`, `limit`, `offset`) | `200` |
 | GET | `/api/v1/entities/{entity_type}/{id}` | One canonical record by canonical id | `200` |
+| GET | `/api/v1/metrics/ingestion` | Operational ingestion metrics, in total and per source | `200` |
 
 `entity_type` is one of `organizations`, `employees`, `customers`, `deals`, `projects`,
 `support_tickets` or `documents`.
@@ -797,6 +798,47 @@ curl http://localhost:8000/api/v1/entities/deals/0b3f...
 - **No raw payloads**: rejected records never reach the canonical tables, and raw source payloads
   in `source_records` are not served.
 
+### Ingestion metrics
+
+```bash
+curl http://localhost:8000/api/v1/metrics/ingestion
+# {"totals": {"runs_total": 6, "runs_by_status": {"RUNNING": 0, "SUCCESS": 3, "PARTIAL_SUCCESS": 0,
+#             "FAILED": 0, "NOOP": 3},
+#             "records_fetched_total": 1398, "records_raw_persisted_total": 1398, ...,
+#             "errors_by_severity": {"ERROR": 0, "WARNING": 0, "INFO": 0},
+#             "connector_request_failures_total": 0, "validation_errors_total": 0,
+#             "ingestion_duration_seconds_total": ...,
+#             "canonical_records": {"organizations": 3, "employees": ..., ...}},
+#  "sources": [{"source_system": "csv_demo", "runs_total": 2, ...,
+#               "last_run": {"run_id": "...", "status": "NOOP", "started_at": "...",
+#                            "finished_at": "..."},
+#               "last_successful_run": {...}}, ...]}
+```
+
+Every value is derived from the database (`ingestion_runs`, `ingestion_errors`, `source_records`
+and the canonical tables) in one read-only snapshot, so metrics survive restarts and agree across
+API processes. Nothing is counted in memory.
+
+| Metric | Definition |
+|---|---|
+| `runs_total`, `runs_by_status` | Runs, and runs per status (all five statuses always listed) |
+| `records_fetched_total` … `records_rejected_total`, `warnings_total` | Sums of the run report counts |
+| `records_raw_persisted_total` | Raw `source_records` rows captured by the runs |
+| `records_failed_total` | `fetched − (inserted + updated + unchanged + rejected)`: records of failed batches |
+| `batches_failed_total` | `BATCH_FAILED` errors |
+| `errors_by_severity` | `ingestion_errors` rows per severity (`ERROR`, `WARNING`, `INFO`) |
+| `connector_request_failures_total` | `CONNECTOR_UNHEALTHY` and `CONNECTOR_FAILED` errors |
+| `validation_errors_total` | `ERROR` findings other than `CONNECTOR_*` and `BATCH_FAILED`: the D1/D2 rejections |
+| `ingestion_duration_seconds_total` | Sum of `finished_at − started_at` over finished runs |
+| `canonical_records` | Canonical records per entity type |
+| `last_run`, `last_successful_run` | Per source: the newest run, and the newest `SUCCESS`, `PARTIAL_SUCCESS` or `NOOP` run |
+
+- **Sources**: `totals` covers everything; `sources` lists every configured source (zeros when it
+  has no data) and any other source system with runs or canonical records, sorted by name.
+- **Attribution**: runs, their errors and their raw records count toward the run's
+  `source_system`. A `RUNNING` run contributes the counts it has committed so far but no duration.
+- **Never exposed**: error messages, run error summaries, raw records and source values.
+
 ### Error responses
 
 Every error has one shape, and the same `request_id` is sent in the `X-Request-ID` header (a
@@ -848,7 +890,6 @@ returns `500 INTERNAL_ERROR` after E1 has marked the run `FAILED`.
 - **Entity queries**: the only filter is `source_system`; there are no field filters, search or
   alternative sort orders. Pagination is by offset, and each page is its own snapshot, so an
   ingestion that inserts records between two page requests can shift later pages.
-- **Metrics**: `GET /api/v1/metrics/ingestion` is not implemented yet.
 
 ---
 

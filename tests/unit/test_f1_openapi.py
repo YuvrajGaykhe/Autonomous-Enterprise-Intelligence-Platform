@@ -47,9 +47,12 @@ F2_ENTITY_OPERATIONS = {
 }
 
 
+F2_METRICS_OPERATIONS = {("get", "/api/v1/metrics/ingestion")}
+
+
 def test_exactly_the_f1_and_f2_operations_are_published(spec):
     assert {(method, path) for method, path, _ in _operations(spec)} == \
-        F1_OPERATIONS | F2_ENTITY_OPERATIONS
+        F1_OPERATIONS | F2_ENTITY_OPERATIONS | F2_METRICS_OPERATIONS
 
 
 def test_api_metadata(spec):
@@ -85,6 +88,7 @@ def test_success_responses_reference_named_models(spec):
         ("get", "/api/v1/ingestion/runs"): ("200", "RunListResponse"),
         ("get", "/api/v1/ingestion/runs/{run_id}"): ("200", "IngestionRunResponse"),
         ("get", "/api/v1/ingestion/runs/{run_id}/errors"): ("200", "ErrorListResponse"),
+        ("get", "/api/v1/metrics/ingestion"): ("200", "IngestionMetricsResponse"),
     }
     for entity, (page, record) in {
         "organizations": ("OrganizationListResponse", "OrganizationCanonical"),

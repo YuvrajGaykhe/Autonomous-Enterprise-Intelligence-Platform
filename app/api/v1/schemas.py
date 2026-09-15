@@ -269,3 +269,85 @@ ENTITY_PAGES: dict[EntityType, type[EntityPage]] = {
     EntityType.SUPPORT_TICKETS: SupportTicketListResponse,
     EntityType.DOCUMENTS: DocumentListResponse,
 }
+
+
+class RunStatusCounts(BaseModel):
+    """Runs per status; every status is always present."""
+
+    RUNNING: int
+    SUCCESS: int
+    PARTIAL_SUCCESS: int
+    FAILED: int
+    NOOP: int
+
+
+class ErrorSeverityCounts(BaseModel):
+    """ingestion_errors rows per severity; every severity is always present."""
+
+    ERROR: int
+    WARNING: int
+    INFO: int
+
+
+class CanonicalRecordCounts(BaseModel):
+    """Canonical records per entity type; every type is always present."""
+
+    organizations: int
+    employees: int
+    customers: int
+    deals: int
+    projects: int
+    support_tickets: int
+    documents: int
+
+
+class RunReference(BaseModel):
+    run_id: uuid.UUID
+    status: RunStatus
+    started_at: datetime
+    finished_at: datetime | None
+
+
+class IngestionMetrics(BaseModel):
+    """Operational ingestion metrics derived from persisted runs, errors and records.
+
+    records_failed_total = records_fetched_total - (records_inserted_total
+    + records_updated_total + records_unchanged_total + records_rejected_total).
+    batches_failed_total counts BATCH_FAILED errors; connector_request_failures_total
+    counts CONNECTOR_UNHEALTHY and CONNECTOR_FAILED errors; validation_errors_total
+    counts ERROR findings other than those E1 system codes.
+    ingestion_duration_seconds_total sums finished_at - started_at over finished runs.
+    """
+
+    runs_total: int
+    runs_by_status: RunStatusCounts
+    records_fetched_total: int
+    records_raw_persisted_total: int
+    records_inserted_total: int
+    records_updated_total: int
+    records_unchanged_total: int
+    records_rejected_total: int
+    records_failed_total: int
+    warnings_total: int
+    batches_failed_total: int
+    errors_by_severity: ErrorSeverityCounts
+    connector_request_failures_total: int
+    validation_errors_total: int
+    ingestion_duration_seconds_total: float
+    canonical_records: CanonicalRecordCounts
+
+
+class SourceIngestionMetrics(IngestionMetrics):
+    """One source system's metrics. last_successful_run is the newest SUCCESS,
+    PARTIAL_SUCCESS or NOOP run."""
+
+    source_system: str
+    last_run: RunReference | None
+    last_successful_run: RunReference | None
+
+
+class IngestionMetricsResponse(BaseModel):
+    """Metrics for every source system combined, and per source system (sorted by name)."""
+
+    totals: IngestionMetrics
+    sources: list[SourceIngestionMetrics]
