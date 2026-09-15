@@ -22,6 +22,13 @@ RUN pip install --no-cache-dir .
 
 # Copy application source and migration configuration.
 COPY app/ ./app/
+# Runtime configuration resolved relative to the project root (/app/config):
+# connectors, normalization mappings (D1), and the quality gate (D2).
+COPY config/ ./config/
+# Committed demo dataset read by the csv_demo connector (data_directory: data/demo,
+# resolved against /app). The mock-source image bakes in the same files, so rebuild
+# both images after regenerating data/demo. Test fixtures are deliberately excluded.
+COPY data/demo/ ./data/demo/
 COPY alembic.ini ./
 COPY migrations/ ./migrations/
 

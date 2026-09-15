@@ -497,8 +497,8 @@ into PostgreSQL.
   these facts; it does not score churn.
 - Figures quoted in the reports and meeting notes are checked against the records by tests.
 
-The mock source copies `data/demo` into its image at build time: rebuild it
-(`docker compose build mock-source`) after regenerating.
+The API and mock-source images both copy `data/demo` at build time: rebuild them
+(`docker compose build`) after regenerating. The bad fixture is not copied into either image.
 
 ### Bad fixture: data/fixtures/csv_demo_bad
 
@@ -545,6 +545,20 @@ make docker-up
 # or directly:
 docker compose up --build -d
 ```
+
+Apply migrations once the stack is healthy (the schema is never created at startup):
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+The API image contains the application, `config/` and the committed `data/demo` dataset, so every
+source works inside the stack: `csv_demo` reads the files baked into the image, while `odoo_mock`
+and `rest_mock` call the mock-source service. Tests, scripts, test fixtures and local caches are
+not copied into the image, and nothing is mounted from the host except the PostgreSQL volume. To
+load the bad fixture into the containerised database, run
+`make ingest-demo ARGS="--data-directory data/fixtures/csv_demo_bad"` on the host (the default
+`DATABASE_URL` points at the published PostgreSQL port).
 
 Check service status:
 
@@ -786,9 +800,11 @@ returns `500 INTERNAL_ERROR` after E1 has marked the run `FAILED`.
 - **Source configuration**: sources come from `config/connectors/*.yaml`, and each connector is
   built once per process, so configuration changes need a restart. The `connector_configs` table
   is not used.
-- **Docker**: the API image needs `config/` and does not contain `data/`. Until the image is
-  updated, `csv_demo` runs through the containerised API fail their health check; `odoo_mock` and
-  `rest_mock` read from the mock-source container.
+- **Docker images bake in the dataset**: the API and mock-source images copy `data/demo` at build
+  time, so regenerated data needs `docker compose build`.
+- **Container logs**: the application does not configure logging, so under Uvicorn only warnings
+  and errors (such as `request_failed`) reach the container logs; INFO events such as
+  `ingestion_run_finished` are not emitted.
 
 ---
 

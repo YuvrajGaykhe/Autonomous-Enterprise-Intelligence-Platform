@@ -11,9 +11,10 @@
 .venv
 venv
 env
-__pycache__
-*.pyc
-*.pyo
+# Patterns match from the build-context root: ** also excludes nested caches.
+**/__pycache__
+**/*.pyc
+**/*.pyo
 *.egg-info
 dist
 build
@@ -23,7 +24,7 @@ build
 .vscode
 *.swp
 *.swo
-.DS_Store
+**/.DS_Store
 Thumbs.db
 
 # Environment secrets
