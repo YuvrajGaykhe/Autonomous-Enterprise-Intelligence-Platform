@@ -7,7 +7,62 @@
 
 ## Architecture
 
-<!-- To be completed in Task I2 -->
+Layer 1 is the Connector Layer. It reads enterprise sources **read-only**, captures each raw
+payload with its provenance, normalizes and validates it deterministically, upserts canonical
+records into PostgreSQL, and serves them over a versioned HTTP API to later AI CEO layers. No
+LLM is involved: every transformation is configuration-driven code.
+
+```
+       sources (read-only)              Layer 1 pipeline                        consumers
+  ┌──────────────────────────┐   ┌──────────────────────────────────┐   ┌────────────────────┐
+  │ csv_demo   data/demo/*.csv│──▶│ connector    GET / open() only   │   │                    │
+  │ odoo_mock  mock-source    │──▶│      ▼                           │   │  FastAPI /api/v1   │
+  │ rest_mock  mock-source    │──▶│ raw capture  source_records      │   │  health · sources  │
+  └──────────────────────────┘   │      ▼                           │   │  ingestion · runs  │
+                                  │ normalize    D1 mapping+coercion │   │  entities · metrics│
+                                  │      ▼       UUID5 id, hash      │   │         ▲          │
+                                  │ validate     D2 quality gate     │   └─────────┼──────────┘
+                                  │      ▼       accept | quarantine │             │
+                                  │ persist      upsert on source    │─────────────┘
+                                  │              identity, run stats │   PostgreSQL
+                                  └──────────────────────────────────┘   7 canonical + 5 operational
+```
+
+Every stage is a separate module, so a source, a mapping or a rule can change without touching
+the others:
+
+| Stage | Module | Contract |
+|---|---|---|
+| Connect | `app/connectors/` | One `SourceConnector` protocol; `capabilities()`, `list_entities()`, `get_entity()`, `health_check()`. No write method exists |
+| Capture | `app/persistence/repositories/raw.py` | Append-only `source_records`: the unmodified payload plus run and source identity |
+| Normalize | `app/normalization/` | `config/mappings/*.yaml` drive field mapping, type coercion, the UUID5 canonical id and the record hash |
+| Validate | `app/validation/` | Pydantic canonical schemas plus `config/validation/quality_gate.yaml`: each record is accepted or quarantined with structured findings |
+| Persist | `app/persistence/` | Upsert on `(source_system, source_entity, source_id)`; `ingestion_runs`, `ingestion_errors`, `ingestion_cursors` |
+| Orchestrate | `app/ingestion/orchestrator.py` | One transaction per fetched page; run status, counts and checkpoints (see [Ingestion Orchestration](#ingestion-orchestration-e1)) |
+| Serve | `app/api/v1/` | Read-only routes plus the one write, `POST /ingestion/runs` (see [API Usage Examples](#api-usage-examples)) |
+| Observe | `app/core/logging.py`, `app/observability/` | Structured events keyed by run id, in-process counters, `GET /metrics/ingestion` |
+| Guard | `app/core/security.py` | The read-only same-origin HTTP client and the import-file checks every connector goes through |
+
+**Repository layout**
+
+```
+app/           main.py, api/v1, connectors, schemas (source + canonical),
+               normalization, validation, ingestion, persistence (models +
+               repositories), observability, core (config, logging, security)
+config/        connectors/  one YAML per source
+               mappings/    per-source field maps + the shared normalization vocabulary
+               validation/  quality_gate.yaml
+data/          demo/        the committed deterministic dataset
+               fixtures/    csv_demo_bad, the deliberately malformed fixture
+               raw/, quarantine/  reserved (empty)
+docker/        mock_source.py and its Dockerfile — the C3 deterministic source server
+migrations/    Alembic environment and the committed revisions
+scripts/       seed_demo.py, ingest_demo.py, secret_scan.py, verify_layer1.py
+tests/         unit/, contract/, integration/, e2e/ and the shared PostgreSQL harness
+```
+
+Three services run the system: `postgres`, `api` and `mock-source`
+(see [Running with Docker Compose](#running-with-docker-compose)).
 
 ---
 
@@ -471,6 +526,16 @@ make seed                  # regenerate data/demo and the bad fixture
 make seed ARGS="--check"   # exit 1 if a committed file differs; writes nothing
 ```
 
+Options (pass through `ARGS="..."` with make):
+
+| Option | Purpose |
+|---|---|
+| `--check` | Report stale files and exit `1` instead of writing |
+| `--demo-dir DIR` | Where the demo dataset is written (default `data/demo`) |
+| `--bad-fixture-dir DIR` | Where the malformed fixture is written (default `data/fixtures/csv_demo_bad`) |
+
+Exit status: `0` files written or already up to date, `1` `--check` found stale files.
+
 The script only writes files. Load them with `make ingest-demo`: ingestion is the only path
 into PostgreSQL.
 
@@ -610,7 +675,32 @@ docker compose down -v
 
 ## Running Locally (without Docker)
 
-<!-- To be completed in Task I2 -->
+Everything except PostgreSQL runs directly from a virtualenv. Every `make` target that runs
+Python runs it as `.venv/bin/...`, so `make install` comes first.
+
+```bash
+make install                         # python3 -m venv .venv + pip install -e ".[dev]"
+docker compose up -d postgres        # or point .env at any reachable PostgreSQL 16
+cp .env.example .env                 # defaults already match the compose postgres
+make migrate                         # empty database -> current schema
+make ingest-demo                     # load data/demo through the csv_demo connector
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+The API is then on `http://localhost:8000` with its docs at `/docs`. The demo dataset is
+committed, so `make seed` is only needed after changing the generator.
+
+The `odoo_mock` and `rest_mock` sources read the C3 mock source, whose committed `base_url` is
+`http://mock-source:8080` — a name that only resolves inside the compose network. From the host,
+start the container and override the URL:
+
+```bash
+docker compose up -d mock-source
+make ingest-demo ARGS="--source rest_mock --base-url http://localhost:8080"
+```
+
+The API never accepts a base URL or a data directory from a request, so an API process outside
+Docker needs the committed configuration to be reachable as written.
 
 ---
 
@@ -1020,6 +1110,7 @@ client-supplied `X-Request-ID` of 1–64 characters `[A-Za-z0-9._-]` is reused):
 |---|---|---|
 | `INVALID_REQUEST` | 422 | Parameter or body validation failed (`details` lists location, message and type) |
 | `NOT_FOUND` / `METHOD_NOT_ALLOWED` | 404 / 405 | Unknown route or method |
+| `HTTP_ERROR` | any other | The fallback code for any other HTTP failure the framework raises |
 | `SOURCE_NOT_FOUND` | 404 (path) · 422 (`POST` body) | The source is not configured |
 | `SOURCE_MISCONFIGURED` | 500 | The source's connector configuration is invalid |
 | `RUN_NOT_FOUND` | 404 | The ingestion run does not exist |
@@ -1068,15 +1159,15 @@ Run everything:
 make test
 ```
 
-`make test` runs `pytest` over `tests/`, which is 3973 tests in four layers
+`make test` runs `pytest` over `tests/`, which is 4139 tests in four layers
 (spec Section 15). The layers differ in what they need, so select them by path:
 
 | Layer | Command | Tests | Needs |
 |---|---|---|---|
-| Unit | `pytest tests/unit` | 3235 | nothing |
+| Unit | `pytest tests/unit` | 3381 | nothing |
 | Connector contract | `pytest tests/contract` | 185 | nothing |
 | Database integration | `pytest tests/integration` | 493 | PostgreSQL |
-| End-to-end | `pytest tests/e2e` | 60 | PostgreSQL |
+| End-to-end | `pytest tests/e2e` | 80 | PostgreSQL |
 
 The unit and contract layers run with no database at all: the contract suite
 starts the mock-source in-process and reads the committed CSVs directly, so
@@ -1098,14 +1189,19 @@ prefer the path for that layer.
 | Unit | Field mapping, type coercion, identifier generation, record hashing, validation rules, configuration loading, pagination helpers, and the fail-loud guards behind each |
 | Connector contract | One suite run against all three real connectors over the same demo dataset: shared interface, agreement between `capabilities()` and `list_entities()`, deterministic pagination, `get_entity` round-trips, a shared failure vocabulary, and read-only behaviour proved by method names, static inspection and the live mock-source's request log |
 | Database integration | Migrations (single head, empty database to head, model/schema parity, reversible and repeatable), constraints (source identity uniqueness, provenance NOT NULL, foreign keys and their delete rules), upsert by source identity, and run tracking |
-| End-to-end | Demo source to ingestion to PostgreSQL to API query, entirely over HTTP; repeated ingestion without duplicate canonical identities; and failure recovery for malformed rows, connector and network failures, database failures and partial batches |
+| End-to-end | Demo source to ingestion to PostgreSQL to API query, entirely over HTTP; repeated ingestion without duplicate canonical identities; failure recovery for malformed rows, connector and network failures, database failures and partial batches; and the acceptance scenario of [`make verify-layer1`](#layer-1-acceptance-checklist) |
 
 ### Related checks
 
 ```bash
-make lint          # ruff over app/ tests/, mypy over app/
+make lint           # ruff over app/ tests/, mypy over app/
 make secret-scan    # scan tracked files for committed secrets
+make verify-layer1  # the acceptance scenario against a running stack
 ```
+
+`make lint` exits non-zero: it reports the project's known lint and type debt rather than
+suppressing it (see [Known Limitations](#known-limitations)). `make secret-scan` and
+`make verify-layer1` exit `0` when they pass.
 
 Line coverage of `app/` is 100%:
 
@@ -1117,19 +1213,175 @@ pytest --cov=app --cov-report=term-missing
 
 ## Layer 1 Acceptance Checklist
 
-<!-- To be completed in Task I1 -->
+The full acceptance scenario of the build prompt (Section 20, steps A–O) is a command:
+
+```bash
+make docker-up          # the scenario needs a running stack
+make verify-layer1
+```
+
+`make verify-layer1` runs `python scripts/verify_layer1.py`, which drives the running stack over
+HTTP the way a reviewer would: it reads readiness, source health, canonical records, runs and
+errors through the published API, checks the committed CSVs against the deterministic generator,
+and starts its ingestion runs with `POST /ingestion/runs`. Only the malformed fixture (steps K–L)
+goes in through `run_ingestion()`, because the API deliberately refuses a data directory from a
+request; it is then read back through the API, which also proves the command and the API are on
+one database. Options (pass through `ARGS="..."` with make):
+
+| Option | Purpose |
+|---|---|
+| `--base-url URL` | The running API (default `http://localhost:8000`) |
+| `--timeout SECONDS` | Per-request timeout (default 180) |
+| `--page-size N` | Ingestion page size (default 100) |
+| `--with-tests` | Also run the whole test suite (step N) |
+
+Exit status: `0` every executed check passed, `1` a check failed, `2` the scenario could not run
+(unreachable API, invalid arguments or logging settings). The report goes to stdout; the log
+events of the malformed-fixture run go to stderr in the usual `LOG_FORMAT`. Run it on the host,
+not inside the API container: the container image deliberately excludes `data/fixtures/`.
+
+The command writes only through ingestion, so repeating it is safe — a second run is a `NOOP`.
+On a clean database it reports:
+
+```
+verify-layer1: A-C  stack_ready       PASS      ai-ceo-layer1 0.1.0 ready, database ok, all 7 canonical tables queryable, database empty
+verify-layer1: D    demo_dataset      PASS      14 committed CSV files regenerate byte-identically; demo dataset holds customers 50, deals 44, documents 12, employees 24, organizations 1, projects 22, support_tickets 80
+verify-layer1: E-F  ingestion         PASS      run f245b8f6 SUCCESS: fetched 220 = 220 inserted + 0 updated + 0 unchanged + 0 rejected + 0 failed, 220 raw records persisted over 5 entity types
+verify-layer1: G-H  api_query         PASS      full provenance and consistent pagination for customers 50, deals 44, support_tickets 80
+verify-layer1: I-J  idempotency       PASS      second run 415bf0bc NOOP inserted 0 and updated 0, canonical counts unchanged, 220 records across 7 entity types with 220 distinct source identities
+verify-layer1: K-L  validation        PASS      run 38707968 PARTIAL_SUCCESS: 3 records quarantined with 6 structured errors over 3 source ids, 4 valid fixture records still queryable, no source values disclosed
+verify-layer1: M    connector_health  PASS      3 configured sources healthy and read-only: csv_demo, odoo_mock, rest_mock
+verify-layer1: A-M  read_only         PASS      14 source files byte-identical (sha256) after the scenario
+verify-layer1: N    test_suite        SKIPPED   not run; pass --with-tests, or run make test separately
+verify-layer1: O    clean_rebuild     OPERATOR  operator step: make docker-down && make docker-build && make docker-up, then run this script again; the dataset, canonical ids and record hashes are deterministic, so the report must be identical
+verify-layer1: 8 passed, 0 failed, 1 skipped, 1 operator
+```
+
+Run ids differ per run; every count above is reproducible. On a database that already holds the
+dataset, step A–C reports how many records it found and steps E–F report `NOOP` with the same
+220 records as `unchanged`.
+
+### What each acceptance threshold means and how it is checked
+
+| Threshold | Pass condition | Checked by |
+|---|---|---|
+| Build | Clean install/build succeeds | `make install`; `make docker-build` |
+| Startup | All required services become healthy | `stack_ready` (API + PostgreSQL) and `connector_health` (all three sources); `docker compose ps` shows three healthy containers |
+| Migration | Empty PostgreSQL reaches the expected schema | `stack_ready` requires all seven canonical tables to answer; `tests/integration/test_h3_migrations.py` migrates a private empty database to head and compares it to the models column by column |
+| Ingestion | The demo dataset reaches the canonical tables with no manual DB edits | `ingestion`: counts balance and every entity's fetched count equals its committed CSV row count |
+| Idempotency | No duplicate source identities after repeated ingestion | `idempotency`: the identical run again inserts and updates nothing, the counts do not move, and all seven entity types are swept for duplicate `(source_system, source_entity, source_id)` |
+| Traceability | Every accepted record has provenance | `api_query`: every returned record carries `source_system`, `source_entity`, `source_id`, `ingested_at`, `ingestion_run_id` and `record_hash` |
+| Validation | The bad fixture produces structured errors and quarantine | `validation`: `PARTIAL_SUCCESS`, structured errors readable at `GET /ingestion/runs/{id}/errors`, and every non-rejected fixture row still queryable |
+| API | Canonical records are queryable with pagination | `api_query`: `limit`/`offset` are echoed, `total` is stable across pages and pages do not overlap |
+| Safety | No source write operations are executed | `read_only`: all 14 committed source files are byte-identical (SHA-256) after the scenario. Structurally: no connector exposes a write method, no connector module names a mutating HTTP verb, and the live mock source records only `GET` (`tests/contract/`) |
+| Tests | All required automated tests pass | `make test` — 4139 tests in four layers; or `make verify-layer1 ARGS="--with-tests"` |
+| Reproducibility | A clean rebuild reproduces the same demo behaviour | Step O: `make docker-down && make docker-build && make docker-up`, then run the command again. The dataset regenerates byte-identically, canonical ids are UUID5 of the source identity, and record hashes cover normalized business fields only |
+| Documentation | The README enables a new developer to run Layer 1 | [Prerequisites](#prerequisites) → [Environment Setup](#environment-setup) → [Running with Docker Compose](#running-with-docker-compose) or [Running Locally](#running-locally-without-docker) → [Ingestion Commands](#ingestion-commands) → [API Usage Examples](#api-usage-examples) → [Test Commands](#test-commands) |
+
+Steps N and O are the two the command does not perform for you: N needs its own database and runs
+only with `--with-tests`, and a script cannot tear down and rebuild the stack it is talking to.
 
 ---
 
 ## Troubleshooting
 
-<!-- To be completed in Task I2 -->
+### Commands
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `make: .venv/bin/pytest: No such file or directory` (or `.venv/bin/python`) | Every target runs the project virtualenv, which is not committed | `make install` |
+| `verify_layer1: the Layer 1 API at http://localhost:8000 could not be reached (ConnectError)` | The stack is not running, or the API is on another port | `make docker-up`; otherwise `make verify-layer1 ARGS="--base-url http://host:port"` |
+| `seed_demo: stale files: data/demo/...` | The committed dataset no longer matches the generator | `make seed` to rewrite it, then `make docker-build` — both images bake in `data/demo` |
+| `ingest_demo: ConnectorConfigurationError: ...` and exit `2` | A bad `--source`, `--data-directory` or `--base-url`; no run was created | Correct the option. `--base-url` applies to the HTTP sources only, `--data-directory` to `csv_demo` only |
+| `verify_layer1: invalid logging settings: APP_LOG_LEVEL must be one of ...` | `APP_LOG_LEVEL` or `LOG_FORMAT` is not a supported value | `APP_LOG_LEVEL` is a standard level name; `LOG_FORMAT` is `json` or `text` |
+
+### The stack
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `{"detail":"Not Found"}` from a documented route, or a `/api/v1/health` body with no `checks` | The `api` container is running an image built before that route existed | `make docker-build && make docker-up` |
+| `GET /api/v1/health` → `503` with `"database": "unavailable"` | PostgreSQL is not reachable from the API | `docker compose ps` — wait for `ai-ceo-postgres` to be healthy; check `DATABASE_URL`/`POSTGRES_*` |
+| `relation "customers" does not exist` | The database was never migrated — the API container does not migrate on startup | `make migrate`, or `docker compose exec api alembic upgrade head` |
+| Compose fails to start a service with a port error | `5432`, `8000` or `8080` is already bound on the host | Stop the other process, or set `POSTGRES_PORT`/`APP_PORT` in `.env` |
+| The database is empty again after a restart | `docker compose down -v` removed the `pgdata` volume | Use `make docker-down` (no `-v`); restore with `make migrate && make ingest-demo` |
+
+### Ingestion and sources
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| A run of `odoo_mock` or `rest_mock` is `FAILED` with `error_summary: "connector health check failed; N entities skipped"` when started from the host | The committed `base_url` is `http://mock-source:8080`, which only resolves inside the compose network | `make ingest-demo ARGS="--source rest_mock --base-url http://localhost:8080"`. Through the API this does not arise: the API resolves the name inside the network |
+| `POST /ingestion/runs` → `422 SOURCE_NOT_FOUND` | The `source` is not in `config/connectors/` | Use one of the names in `details.available_sources` |
+| `POST /ingestion/runs` → `422 UNSUPPORTED_OPTION` for `dry_run` | Every Layer 1 run persists its results | Drop the option |
+| `422 INVALID_REQUEST` with a `loc` of `["query","limit"]` | `limit` is outside 1–500 (`offset` outside 0–2147483647) | Use a page inside the documented bounds |
+| A run is `PARTIAL_SUCCESS` and you expected `SUCCESS` | Records were rejected, or an entity or batch failed | `GET /api/v1/ingestion/runs/{run_id}/errors` — each row names the code, field and source id |
+| A second run reports `NOOP` and inserts nothing | Ingestion reconciles on source identity; nothing changed | This is the expected idempotent result, not a failure |
+| `deals.customer_id` is `NULL` while `customer_source_id` is set | The referenced customer is not in this source, so the reference stayed unresolved (an `UNRESOLVED_REFERENCE` warning) | Ingest the parent entity first, or accept it — the source key is preserved |
+| `employees.organization_id` is always `NULL` | Known gap: the canonical Employee contract carries no organization source key | See [Known Limitations](#known-limitations) |
+
+### Tests
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `IntegrityError: duplicate key value violates unique constraint "uq_customers_source_identity"` during a test run | Two pytest sessions are sharing `<database>_test` | Never run two sessions with integration or end-to-end tests at once |
+| `tests/integration` or `tests/e2e` fail to connect at session start | No reachable PostgreSQL | `make docker-up`. `pytest tests/unit tests/contract` needs no database at all |
+| A test run drops and recreates a database | Expected: the harness recreates `<database>_test` once per session, and the H3 migration tests use a private `<database>_migrations_test` | The harness refuses any database name that does not end in `_test` |
 
 ---
 
 ## Known Limitations
 
-This is a prototype. See the Layer 1 Master Build Prompt (CONTEXT/Layer1_Prompt/) for the full scope definition.
+**Layer 1 is a prototype**, built to demonstrate the connector subsystem end to end on one
+machine. It is not production software, and the list below is deliberate scope, not a backlog of
+defects. The per-area sections carry the detail: [CSV connector](#current-limitations),
+[dataset](#dataset-limitations), [security](#security-limitations) and [API](#api-limitations).
+
+**Scope**
+
+- Layer 1 stops at the canonical relational contract. No knowledge graph, RAG, forecasting,
+  multi-agent or human-action layer exists, and none is designed for here.
+- No LLM is used anywhere. Every transformation is deterministic, configuration-driven code.
+
+**Sources**
+
+- The three connectors read local sources: committed CSV files and the C3 mock source. No live
+  Odoo or third-party REST system is contacted, and no credential is exercised end to end. The
+  Odoo and REST adapters implement the real connector contract against a deterministic local
+  server, and the boundary is explicit — `odoo_mock` and `rest_mock` are named as mocks in their
+  configuration, their source system and the API.
+- Full sync only. No connector supports incremental sync, so every run re-reads the whole source;
+  `ingestion_cursors` records progress but no connector consumes a cursor across runs.
+- No deletes and no cross-source merging. A record removed at the source stays in the canonical
+  tables, and the same real-world entity ingested from two sources remains two canonical records.
+- CSV only for files: no Excel, and each fetch re-reads the file.
+
+**Data and schema**
+
+- The demo dataset is synthetic and small: 233 rows in all, of which the acceptance scenario
+  ingests the 220 belonging to its five entity types. It is sized to be readable, not to show
+  scale.
+- The canonical vocabulary is narrow by design; richer source values are rejected until the D1
+  configuration is extended.
+- `employees.organization_id` stays `NULL`: the canonical Employee contract carries no
+  organization source key (an open B1/B2 gap recorded in [Dataset limitations](#dataset-limitations)).
+
+**Operations**
+
+- No authentication or authorization. Anyone who can reach the API can start a run, so deploy it
+  only on a trusted network.
+- Runs are synchronous: `POST /ingestion/runs` holds the connection open for the whole run, with
+  no cancellation and no server-side timeout. A run interrupted by a process crash stays
+  `RUNNING`.
+- Single process, single machine. Counters are per API worker and reset on restart, logs go to
+  stderr with no shipping, and there is no Prometheus exposition, no CI pipeline and no
+  horizontal scaling.
+- Both Docker images bake in `data/demo`, so a regenerated dataset needs `make docker-build`.
+- `PyYAML` is imported directly but reaches the environment through `uvicorn[standard]` rather
+  than being declared in `pyproject.toml`.
+- Known lint and type debt, deliberately left visible rather than silenced: with ruff 0.16.7 and
+  mypy 2.3.1, `ruff check app/ tests/ scripts/` reports 69 findings and `mypy app/` reports 9
+  errors. All are pre-existing and none changes ingestion behaviour.
+
+See the Layer 1 Master Build Prompt (`CONTEXT/Layer1_Prompt/`) for the full scope definition.
 
 ---
 

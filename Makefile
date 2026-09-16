@@ -38,16 +38,16 @@ install:
 # Run database migrations.
 migrate:
 	@echo "[migrate] Running Alembic migrations..."
-	alembic upgrade head
+	.venv/bin/alembic upgrade head
 	@echo "[migrate] Done."
 
 # Show current migration revision and history.
 migration-status:
 	@echo "[migration-status] Current revision:"
-	@alembic current
+	@.venv/bin/alembic current
 	@echo ""
 	@echo "[migration-status] Migration history:"
-	@alembic history --verbose
+	@.venv/bin/alembic history --verbose
 
 # Regenerate the deterministic demo CSV dataset (byte-identical on every run).
 # It writes files only; load them with make ingest-demo. ARGS="--check" verifies.
