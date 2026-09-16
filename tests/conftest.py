@@ -1,14 +1,16 @@
 """
-Isolated PostgreSQL harness for E1 integration tests.
+Isolated PostgreSQL harness shared by the integration and end-to-end suites.
 
-E1 tests need real commits and rollbacks, so they cannot share the
+These tests need real commits and rollbacks, so they cannot share the
 development database or the rollback-per-test pattern of the B1 tests.
 Once per test session the harness recreates <database>_test on the
 configured PostgreSQL server, migrates it with the committed Alembic
 migrations (so every session proves an empty database reaches head), and
 truncates every table before each test.
 
-The guard refuses any database name that does not end in "_test".
+It lives at the tests/ root so tests/integration and tests/e2e run against
+the same database harness; the guard refuses any database name that does
+not end in "_test".
 """
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ import app.persistence.models  # noqa: F401
 from app.core.config import get_settings
 from app.core.database import Base
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[1]
 _TEST_DATABASE = re.compile(r"[a-z][a-z0-9_]*_test")
 
 

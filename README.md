@@ -1062,7 +1062,56 @@ returns `500 INTERNAL_ERROR` after E1 has marked the run `FAILED`.
 
 ## Test Commands
 
-<!-- To be completed in Task H1–H5 and I2 -->
+Run everything:
+
+```bash
+make test
+```
+
+`make test` runs `pytest` over `tests/`, which is 3973 tests in four layers
+(spec Section 15). The layers differ in what they need, so select them by path:
+
+| Layer | Command | Tests | Needs |
+|---|---|---|---|
+| Unit | `pytest tests/unit` | 3235 | nothing |
+| Connector contract | `pytest tests/contract` | 185 | nothing |
+| Database integration | `pytest tests/integration` | 493 | PostgreSQL |
+| End-to-end | `pytest tests/e2e` | 60 | PostgreSQL |
+
+The unit and contract layers run with no database at all: the contract suite
+starts the mock-source in-process and reads the committed CSVs directly, so
+`pytest tests/unit tests/contract` passes even with `DATABASE_URL` pointing
+nowhere. The integration and end-to-end layers need a reachable PostgreSQL
+(`make docker-up` is enough); they recreate `<database>_test` once per session,
+migrate it from empty with the committed Alembic migrations, and truncate every
+table between tests. Never run two such sessions concurrently — they share that
+database.
+
+The `contract`, `integration` and `e2e` pytest markers select the same sets as
+the corresponding paths. The `unit` marker is applied only to a few modules, so
+prefer the path for that layer.
+
+### What each layer covers
+
+| Layer | Coverage |
+|---|---|
+| Unit | Field mapping, type coercion, identifier generation, record hashing, validation rules, configuration loading, pagination helpers, and the fail-loud guards behind each |
+| Connector contract | One suite run against all three real connectors over the same demo dataset: shared interface, agreement between `capabilities()` and `list_entities()`, deterministic pagination, `get_entity` round-trips, a shared failure vocabulary, and read-only behaviour proved by method names, static inspection and the live mock-source's request log |
+| Database integration | Migrations (single head, empty database to head, model/schema parity, reversible and repeatable), constraints (source identity uniqueness, provenance NOT NULL, foreign keys and their delete rules), upsert by source identity, and run tracking |
+| End-to-end | Demo source to ingestion to PostgreSQL to API query, entirely over HTTP; repeated ingestion without duplicate canonical identities; and failure recovery for malformed rows, connector and network failures, database failures and partial batches |
+
+### Related checks
+
+```bash
+make lint          # ruff over app/ tests/, mypy over app/
+make secret-scan    # scan tracked files for committed secrets
+```
+
+Line coverage of `app/` is 100%:
+
+```bash
+pytest --cov=app --cov-report=term-missing
+```
 
 ---
 
