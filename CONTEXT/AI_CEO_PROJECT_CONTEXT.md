@@ -1,6 +1,6 @@
 # AI CEO — Project Context Document
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
-**Last updated: 2026-09-15 | Maintained by: Yuvraj Gaykhe**
+**Last updated: 2026-09-16 | Maintained by: Yuvraj Gaykhe**
 
 > **Purpose**: This file is the single source of truth for all confirmed project understanding, design decisions, and task state. Read this file at the start of any new session before asking questions or writing code.
 
@@ -291,18 +291,18 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 | F — API | F1 | FastAPI routes — health, sources, ingestion | ✅ Complete — pushed (17e906e..1708b49) |
 | F — API | F2 | FastAPI routes — canonical entities + metrics | ✅ Complete — pushed (2be74dd, 53693fe) |
 | G — Observability | G1 | Structured logging + ingestion metrics counters | ✅ Complete — pushed (4cb6631..1934ea6) |
-| G — Observability | G2 | Secret hygiene audit + security constraints | ✅ Complete locally — not pushed (f8b79b7..e9e08bf); see Section 14 |
-| H — Tests | H1 | Unit tests | ⏳ Pending approval |
-| H — Tests | H2 | Connector contract tests | ⏳ Pending approval |
-| H — Tests | H3 | Database integration tests | ⏳ Pending approval |
-| H — Tests | H4 | API tests | ⏳ Pending approval |
-| H — Tests | H5 | E2E + idempotency + failure recovery tests | ⏳ Pending approval |
+| G — Observability | G2 | Secret hygiene audit + security constraints | ✅ Complete — pushed (f8b79b7..4461ab9); see Section 14 |
+| H — Tests | H1 | Unit tests | ✅ Complete locally — not pushed (193b42b); see Section 15 |
+| H — Tests | H2 | Connector contract tests | ✅ Complete locally — not pushed (def4cd8); see Section 15 |
+| H — Tests | H3 | Database integration tests | ✅ Complete locally — not pushed (78ce177); see Section 15 |
+| H — Tests | H4 | API tests | ✅ Complete locally — not pushed (f0578e9); see Section 15 |
+| H — Tests | H5 | E2E + idempotency + failure recovery tests | ✅ Complete locally — not pushed (4de3436); see Section 15 |
 | I — Verification | I1 | Full acceptance scenario (spec Section 20, steps A–O) | ⏳ Pending approval |
 | I — Verification | I2 | README completion | ⏳ Pending approval |
 
 **Total: 26 tasks across 9 phases.**
 
-Release state (2026-09-15): `origin/main` is `1934ea6` (A1–G1, plus the separately approved Docker packaging commit `84cb36c`). G2 is committed locally only and awaits review before any push. H1–I2 have not started.
+Release state (2026-09-16): `origin/main` is `4461ab9` (A1–G2). H1–H5 are committed locally only (`193b42b..4de3436`) and await review before any push. I1–I2 have not started.
 
 ---
 
@@ -341,3 +341,60 @@ Release state (2026-09-15): `origin/main` is `1934ea6` (A1–G1, plus the separa
 - CSV health checks and entity discovery only check that files exist; the containment and size checks run when files are read.
 - The secret scan is heuristic: tracked text files only (not git history or PDF/PPTX); generic rules skip values under 8 characters or marked as placeholders, and may report a long non-secret value assigned to a secret-named variable.
 - Canonical business fields are returned as ingested; a credential stored in a source business field is data and is exposed by the entity API.
+
+---
+
+## 15. Phase Record — H (Tests)
+
+**Scope source**: spec Section 15 (Testing Requirements), whose minimum-coverage
+table names the layers H1–H5 implement. Section 20's acceptance scenario is I1's
+scope and was not executed here; H covers the automated test layers only.
+
+**Out of scope, unchanged**: D1/D2 semantics, E1 persistence and status
+semantics, F1/F2 contracts, G1 metric and logging semantics, G2 security
+behaviour, and all Docker files. No production behaviour was changed in H.
+
+| Task | Commit | What it adds | Tests | Mutation |
+|---|---|---|---|---|
+| H1 | `193b42b` | Unit coverage of the normalization loader, validation classifier, connector page contract, pagination helper and repository guards the D1/D2/E1 suites cannot reach | 99 | 33/33 killed (1 equivalent excluded) |
+| H2 | `def4cd8` | One contract suite run against all three real connectors over the same demo dataset, plus their configuration and failure paths | 185 | 26/26 killed |
+| H3 | `78ce177` | Migration pipeline and schema parity on a private database; constraints, FK delete rules, upsert identity and run tracking | 102 | 12/12 killed |
+| H4 | `f0578e9` | Cross-route API contract discovered from the OpenAPI document: correlation, envelope, read-only verbs, pagination, disclosure | 65 | 16/16 killed |
+| H5 | `4de3436` | End-to-end over HTTP, idempotency over the API's own view, and failure recovery for malformed rows, network, database and partial-batch failures | 60 | 6/6 killed |
+
+**Design decisions**
+- Test layers are selected by path, not by marker: the `unit` marker predates H
+  and covers only a few modules. `contract`, `integration` and `e2e` are applied
+  consistently by the new suites.
+- The connector contract suite builds the three real connectors over the same
+  committed CSVs (served directly and through the in-process C3 mock-source), so
+  interface drift between connectors is detectable. Read-only behaviour is proved
+  three ways: method names, static inspection, and the mock-source request log.
+- The migration suite owns a private `<database>_migrations_test` so it can build
+  and drop the schema repeatedly without disturbing the shared E1 database.
+- The API suite discovers routes from the application's own OpenAPI document, so
+  a route added later is covered without editing the suite.
+- The end-to-end suites inject the connector provider, because the API
+  deliberately refuses a data directory or base URL from a request. That keeps
+  the API contract intact while still allowing the bad fixture and injected
+  failures to be driven through HTTP.
+- The only integration change to released code was moving the PostgreSQL harness
+  from `tests/integration/conftest.py` to `tests/conftest.py` so the end-to-end
+  suite shares it. Its behaviour is unchanged and the integration suite still
+  passes unmodified.
+
+**Verification at `4de3436`**: full suite 3973 passed; `app/` line coverage 100%
+(0 uncovered lines, up from 98% / 87 uncovered at `4461ab9`); ruff 69 findings
+(baseline 69); mypy 9 errors (baseline 9); secret scan 0 findings over 220
+tracked text files.
+
+**Known limitations**
+- Mutation testing uses an ad-hoc textual harness, not a mutation framework, so
+  the mutant set is chosen rather than exhaustive.
+- One equivalent mutant is excluded and documented: removing the type check in
+  `_optional_decimal` is unobservable, because `Decimal(str(value))` raises
+  `InvalidOperation` with the identical message for every YAML-reachable value
+  the check rejects.
+- The `unit` pytest marker remains inconsistent across the pre-H unit suite;
+  retrofitting it was out of scope for H.
+- Coverage is line coverage. Branch coverage was not measured.
