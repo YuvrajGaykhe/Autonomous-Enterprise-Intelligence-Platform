@@ -10,10 +10,9 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.config import get_settings
 from app.core.database import Base
 import app.persistence.models  # noqa: F401
 from app.persistence.models import (
@@ -32,13 +31,17 @@ from app.persistence.models import (
 )
 
 
-@pytest.fixture(scope="module")
-def engine():
-    """Create a test engine connected to the Docker PostgreSQL."""
-    settings = get_settings()
-    eng = create_engine(settings.effective_database_url, echo=False)
-    yield eng
-    eng.dispose()
+@pytest.fixture
+def engine(e1_engine, e1_sessions):
+    """The migrated test database, with every table truncated first.
+
+    These tests write the demo dataset's own source identities (CUST-001,
+    EMP-001, ...), so they cannot share a database with anything that already
+    holds them. e1_engine is the isolated <database>_test harness in
+    tests/conftest.py; requesting e1_sessions truncates it before each test,
+    which is what keeps those identities free.
+    """
+    return e1_engine
 
 
 @pytest.fixture(scope="function")

@@ -1,7 +1,6 @@
 # =============================================================================
 # AI CEO — Layer 1 Makefile
 # All commands are documented in README.md.
-# Targets marked [STUB] will be implemented in their respective tasks.
 # =============================================================================
 
 .PHONY: help install migrate migration-status seed ingest-demo test lint format \
@@ -79,10 +78,18 @@ format:
 	.venv/bin/black app/ tests/
 	.venv/bin/ruff check --fix app/ tests/
 
-# Run the full Layer 1 acceptance scenario. [STUB — implemented in Task I1]
+# Scan every tracked file for committed secrets (G2). Declared and documented
+# since G2, but never given a recipe, so it silently did nothing.
+secret-scan:
+	@echo "[secret-scan] Scanning tracked files..."
+	.venv/bin/python scripts/secret_scan.py
+
+# Run the full Layer 1 acceptance scenario (spec Section 20) against a running
+# stack. Needs make docker-up first. Pass options through ARGS, e.g.
+# make verify-layer1 ARGS="--with-tests".
 verify-layer1:
-	@echo "[verify-layer1] Running Layer 1 acceptance scenario... [STUB: Task I1]"
-	@echo "  Run: python scripts/verify_layer1.py"
+	@echo "[verify-layer1] Running Layer 1 acceptance scenario..."
+	.venv/bin/python scripts/verify_layer1.py $(ARGS)
 
 # Start all Docker Compose services.
 docker-up:

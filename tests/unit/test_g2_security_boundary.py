@@ -2,10 +2,11 @@
 G2 static security boundaries (spec Section 14).
 
 Repository-wide structural guarantees that complement the behavioural tests:
-no code that executes or unsafely deserializes content, one place that builds
-HTTP clients, connectors that only GET, logging only through log_event with no
-credential-named fields or exception text, no textual SQL, and an API contract
-and settings model that expose no credential-shaped fields.
+no code that executes or unsafely deserializes content, a named and justified
+set of modules that may build an HTTP client or run a subprocess, connectors
+that only GET, logging only through log_event with no credential-named fields
+or exception text, no textual SQL, and an API contract and settings model that
+expose no credential-shaped fields.
 """
 
 from __future__ import annotations
@@ -24,6 +25,18 @@ CODE_DIRS = ("app", "scripts", "docker", "migrations")
 SECURITY_MODULE = "app/core/security.py"
 LOGGING_MODULE = "app/core/logging.py"
 SCANNER_MODULE = "scripts/secret_scan.py"
+ACCEPTANCE_MODULE = "scripts/verify_layer1.py"
+#: Modules allowed to run a subprocess. Both build a fixed argument list and
+#: never use a shell: the scanner runs "git ls-files", the acceptance command
+#: runs the project's own pytest for spec Section 20 step N.
+SUBPROCESS_MODULES = frozenset({SCANNER_MODULE, ACCEPTANCE_MODULE})
+#: Modules allowed to build an HTTP client. app/core/security.py builds the
+#: read-only, same-origin client every source connector must use. The
+#: acceptance command is not a source connector: it drives Layer 1's own API,
+#: where the documented way to start an ingestion run is a POST, so the
+#: read-only client cannot serve it. tests/unit/test_i1_verify_units.py pins
+#: the only non-GET request it is allowed to make.
+HTTP_CLIENT_MODULES = frozenset({SECURITY_MODULE, ACCEPTANCE_MODULE})
 SENSITIVE_NAME = re.compile(
     r"(?i)(password|passwd|secret|token|api_?key|authorization|credential|cookie|base_url|"
     r"database_url|dsn|header|env_var)")
@@ -51,8 +64,18 @@ def _dotted(node: ast.AST) -> str:
 
 def test_the_scanned_code_directories_exist():
     assert {name for name, _ in _trees(*CODE_DIRS)} >= {
-        SECURITY_MODULE, LOGGING_MODULE, SCANNER_MODULE, "app/connectors/rest.py",
-        "docker/mock_source.py", "migrations/env.py"}
+        SECURITY_MODULE, LOGGING_MODULE, SCANNER_MODULE, ACCEPTANCE_MODULE,
+        "app/connectors/rest.py", "docker/mock_source.py", "migrations/env.py"}
+
+
+def test_no_module_is_exempted_from_a_boundary_it_does_not_need():
+    """An exemption that stops being used must be removed, not left standing."""
+    sources = {name: (REPO / name).read_text(encoding="utf-8")
+               for name in SUBPROCESS_MODULES | HTTP_CLIENT_MODULES}
+    for name in SUBPROCESS_MODULES:
+        assert "import subprocess" in sources[name], f"{name} no longer needs its exemption"
+    for name in HTTP_CLIENT_MODULES:
+        assert "httpx.Client(" in sources[name], f"{name} no longer needs its exemption"
 
 
 def test_no_code_executes_or_unsafely_deserializes_content():
@@ -72,14 +95,14 @@ def test_no_code_executes_or_unsafely_deserializes_content():
             elif isinstance(node, ast.ImportFrom) and node.module:
                 modules = [node.module.split(".")[0]]
             for module in modules:
-                if module == "subprocess" and name == SCANNER_MODULE:
-                    continue  # runs "git ls-files" with a fixed argument list, no shell
+                if module == "subprocess" and name in SUBPROCESS_MODULES:
+                    continue  # fixed argument lists, no shell; see SUBPROCESS_MODULES
                 assert module not in forbidden_modules, f"{name}: import {module}"
 
 
-def test_only_the_security_module_builds_http_clients():
+def test_only_the_named_modules_build_http_clients():
     for name, tree in _trees("app", "scripts"):
-        if name == SECURITY_MODULE:
+        if name in HTTP_CLIENT_MODULES:
             continue
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
