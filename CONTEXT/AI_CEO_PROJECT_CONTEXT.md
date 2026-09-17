@@ -292,17 +292,17 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 | F — API | F2 | FastAPI routes — canonical entities + metrics | ✅ Complete — pushed (2be74dd, 53693fe) |
 | G — Observability | G1 | Structured logging + ingestion metrics counters | ✅ Complete — pushed (4cb6631..1934ea6) |
 | G — Observability | G2 | Secret hygiene audit + security constraints | ✅ Complete — pushed (f8b79b7..4461ab9); see Section 14 |
-| H — Tests | H1 | Unit tests | ✅ Complete locally — not pushed (193b42b); see Section 15 |
-| H — Tests | H2 | Connector contract tests | ✅ Complete locally — not pushed (def4cd8); see Section 15 |
-| H — Tests | H3 | Database integration tests | ✅ Complete locally — not pushed (78ce177); see Section 15 |
-| H — Tests | H4 | API tests | ✅ Complete locally — not pushed (f0578e9); see Section 15 |
-| H — Tests | H5 | E2E + idempotency + failure recovery tests | ✅ Complete locally — not pushed (4de3436); see Section 15 |
-| I — Verification | I1 | Full acceptance scenario (spec Section 20, steps A–O) | ⏳ Pending approval |
-| I — Verification | I2 | README completion | ⏳ Pending approval |
+| H — Tests | H1 | Unit tests | ✅ Complete — pushed (193b42b); see Section 15 |
+| H — Tests | H2 | Connector contract tests | ✅ Complete — pushed (def4cd8); see Section 15 |
+| H — Tests | H3 | Database integration tests | ✅ Complete — pushed (78ce177); see Section 15 |
+| H — Tests | H4 | API tests | ✅ Complete — pushed (f0578e9); see Section 15 |
+| H — Tests | H5 | E2E + idempotency + failure recovery tests | ✅ Complete — pushed (4de3436); see Section 15 |
+| I — Verification | I1 | Full acceptance scenario (spec Section 20, steps A–O) | ✅ Complete locally — not pushed (99f4f75); see Section 16 |
+| I — Verification | I2 | README completion | ✅ Complete locally — not pushed (fff40f6); see Section 16 |
 
-**Total: 26 tasks across 9 phases.**
+**Total: 26 tasks across 9 phases. All 26 are complete; the task map defines no task after I2.**
 
-Release state (2026-09-16): `origin/main` is `4461ab9` (A1–G2). H1–H5 are committed locally only (`193b42b..4de3436`) and await review before any push. I1–I2 have not started.
+Release state (2026-09-17): `origin/main` is `a3f5eba` (A1–H, pushed as a fast-forward from `4461ab9` on 2026-09-16 after a green release audit). I1–I2 are committed locally only (`99f4f75..fff40f6`) and await review before any push.
 
 ---
 
@@ -398,3 +398,89 @@ tracked text files.
 - The `unit` pytest marker remains inconsistent across the pre-H unit suite;
   retrofitting it was out of scope for H.
 - Coverage is line coverage. Branch coverage was not measured.
+
+---
+
+## 16. Phase Record — I (Layer 1 Acceptance & Documentation)
+
+**Scope source**: spec Section 20 (the full-performance acceptance test, steps
+A–O and its twelve acceptance thresholds), Section 11, which reserves
+`scripts/verify_layer1.py`, and Section 17, which lists the required command
+surface and what the README must contain. Section 21's "Claiming production
+readiness → call it a prototype and document limitations" governs the
+limitations section.
+
+**Out of scope, unchanged**: D1/D2 semantics, E1 persistence and status
+semantics, F1/F2 contracts, G1 metric and logging semantics, G2 security
+behaviour, H's test layers, and all Docker files. **I changed no production
+code**: nothing under `app/`, `config/`, `migrations/` or `data/` differs
+between `a3f5eba` and `fff40f6`.
+
+| Task | Commit | What it adds | Tests | Mutation |
+|---|---|---|---|---|
+| I1 | `99f4f75` | `scripts/verify_layer1.py` and a real `make verify-layer1`: the Section 20 scenario as ten named checks, each with a pass condition and a line of observed evidence | 135 | 49/49 killed (6 first-run survivors were real test gaps, fixed) |
+| I2 | `fff40f6` | README Architecture, Running Locally, Acceptance Checklist, Troubleshooting and Known Limitations, plus tests that validate every README claim against the code | 30 | 18/18 killed (2 first-run survivors were weak assertions, strengthened) |
+
+**Design decisions**
+- The acceptance command drives a **running stack over HTTP**, so its report
+  describes the deployed system rather than re-testing the code in process.
+  Readiness, source health, canonical records, runs and errors are read through
+  the published API; ingestion is started with `POST /ingestion/runs`.
+- The one crossing is steps K–L. The API deliberately refuses a data directory
+  from a request (a G2 property), so the malformed fixture goes through the same
+  `run_ingestion()` entry point the API and `scripts/ingest_demo.py` use, and is
+  then read back through the API — which doubles as a check that the command and
+  the API are on one database.
+- The command **observes; it does not re-implement**. Migration proof stays in
+  H3, connector read-only proof in H2, route contracts in H4, failure recovery
+  in H5. That is why no production code changed: every behaviour the scenario
+  asserts already existed and was reachable through an existing interface.
+- Steps N and O are reported as operator steps rather than faked. N (the full
+  suite) runs only with `--with-tests`, because it needs its own database; O (a
+  clean rebuild) cannot be done by a script talking to the stack it would tear
+  down.
+- The command writes only through ingestion, so repeating it is a `NOOP`. It
+  never deletes or edits rows.
+- README claims are **tested, not asserted**: `tests/unit/test_i2_readme.py`
+  recomputes every count the README quotes (tests per layer, dataset rows, ruff
+  findings, mypy errors) and checks every make target, script, route, error
+  code, option table, query parameter and internal link against the code.
+- Two named, justified G2 boundary exemptions were added for the acceptance
+  script — it builds an `httpx.Client` for Layer 1's *own* API (where starting a
+  run is a POST, so the read-only client cannot serve it) and runs `pytest` in a
+  subprocess for step N. The rule was not weakened for any other module, a test
+  requires an exemption that is no longer needed to be removed, and another pins
+  that the only non-GET request the scenario makes is `POST /ingestion/runs`.
+- Three pre-existing defects were fixed because the scenario depends on them:
+  `make secret-scan` was declared and documented since G2 but had no recipe, so
+  it silently did nothing; `make migrate` and `make migration-status` called a
+  bare `alembic`, failing without an activated virtualenv while every other
+  target used `.venv/bin`; and `tests/integration/test_b1_database.py` opened
+  the configured development database, so it failed as soon as step E had
+  ingested the demo dataset into it — precisely the state step N runs in. Each
+  is now pinned by a test.
+
+**Verification at `fff40f6`**: full suite 4139 passed (I tests 165: I1 135, I2
+30); `app/` line coverage 100% (4460 statements, 0 uncovered); I mutation audit
+67 mutants, 67 killed; ruff 69 findings (baseline 69); mypy 9 errors (baseline
+9); secret scan 0 findings over 224 tracked text files; `make verify-layer1`
+exits 0 (8 passed, 0 failed, 1 skipped, 1 operator). Determinism and idempotency
+were verified against the running stack: a clean rebuild with an empty database
+reproduced the same report, the evidence that does not depend on run history is
+byte-identical across runs, canonical ids are stable, a repeated run inserts and
+updates nothing, and all seven canonical entity types hold one row per source
+identity. The D1–D2, E1–E2, F1–F2, G1–G2 and H1–H5 regression groups all pass.
+
+**Known limitations**
+- The acceptance command needs a running stack **and** a reachable
+  `DATABASE_URL`, and must be run on the host: the API image deliberately
+  excludes `data/fixtures/`, which steps K–L read.
+- Steps N and O are not performed by the command, by design; the report names
+  them as operator steps rather than counting them as passed.
+- `tests/unit/test_i2_readme.py` recomputes the counts the README quotes, so
+  adding any test fails that check until the README's per-layer table and totals
+  are updated. This is deliberate — it is what stops the README drifting — but
+  it makes the README part of the cost of adding a test.
+- Mutation testing still uses the ad-hoc textual harness described in Section
+  15, so the mutant set is chosen rather than exhaustive.
+- Coverage is line coverage; branch coverage was not measured.
