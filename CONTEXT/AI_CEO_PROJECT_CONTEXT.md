@@ -39,7 +39,12 @@ Multi-Agent AI (14 specialized agents + CEO Agent)   ← Layer 3/4 (future)
 Human Sign-off + Action   ← Layer 5 (future)
 ```
 
-**IMPORTANT**: Do not implement or design Layers 2–5 during Layer 1 work. Layer 2 begins only after Layer 1 passes its full acceptance criteria.
+**IMPORTANT**: Layer 1 is complete and **frozen**. Everything after Layer 1 is built as
+end-to-end **vertical slices** rather than as horizontal layer phases — see
+`CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` for the rationale, the data-feasibility verdict and
+the full slice roadmap, and `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` for the first slice. The
+five-stage diagram above remains the destination; slices are how it is reached. Nothing in
+those two documents is implemented.
 
 ---
 
@@ -127,6 +132,13 @@ All items below were explicitly confirmed during the interview. Do not reverse w
 | Timeline | Correctness first, no hard deadline |
 | Layer sequencing | Full Layer 1 acceptance before any Layer 2 work begins |
 | Build approval | Task-level approval required before each individual task |
+| Post-Layer-1 sequencing | End-to-end vertical slices, not horizontal layer phases (confirmed 2026-09-18) |
+| Graph substrate | PostgreSQL relationship service behind a substrate-agnostic interface; Neo4j only when a slice needs path queries (confirmed 2026-09-18) |
+| Document → customer linkage | Derived in Layer 2 with a recorded basis; Layer 1 contract untouched (confirmed 2026-09-18) |
+| ML data strategy | Layer 1 frozen; a separate versioned Layer 2 `analytics` projection carries longitudinal/synthetic data with per-row lineage (confirmed 2026-09-18) |
+| Language-model runtime | Templated generation first; every call behind a `LanguageModel` interface with a deterministic fake default and a committed response cache; provider deferred (confirmed 2026-09-18) |
+| `as_of` evaluation | Every intelligence module takes an explicit `as_of`; `now()` is forbidden (confirmed 2026-09-18) |
+| Risk representation | Ordinal band from a versioned decision table; money is never an input to the band (confirmed 2026-09-18) |
 
 ---
 
@@ -302,7 +314,10 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 
 **Total: 26 tasks across 9 phases. All 26 are complete; the task map defines no task after I2.**
 
-Release state (2026-09-17): `origin/main` is `a3f5eba` (A1–H, pushed as a fast-forward from `4461ab9` on 2026-09-16 after a green release audit). I1–I2 are committed locally only (`99f4f75..fff40f6`) and await review before any push.
+Release state (2026-09-18): `origin/main` is `945e0bb` and the working tree is level with it.
+All of A1–I2 is pushed, including the I-phase commits (`99f4f75..945e0bb`). The Layer 1 task map
+is closed; the next unit of work is **VS-01**, specified in
+`CONTEXT/VS01_IMPLEMENTATION_PLAN.md` and not yet started.
 
 ---
 
@@ -484,3 +499,71 @@ identity. The D1–D2, E1–E2, F1–F2, G1–G2 and H1–H5 regression groups a
 - Mutation testing still uses the ad-hoc textual harness described in Section
   15, so the mutant set is chosen rather than exhaustive.
 - Coverage is line coverage; branch coverage was not measured.
+
+---
+
+## 17. Post-Layer-1 Strategy (PLANNED — nothing implemented)
+
+**Decided 2026-09-18** after a repository and dataset audit, a strategy grilling and a second
+grilling of VS-01. The full reasoning lives in the two companion documents; this section records
+only the state and the bindings that apply to all future work.
+
+| Document | Contents | Status |
+|---|---|---|
+| `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` | Vertical-slice rationale; measured Layer 1 capability; data-feasibility verdict; graph / RAG / ML / agent / governance strategy; VS-01–VS-08 roadmap; deferred-infrastructure triggers; future data requirements; grilling record | PLANNED / PROPOSED |
+| `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | VS-01 full specification (A1–A32) and milestones M0–M9 | PLANNED |
+
+### 17.1 Slice sequence
+
+VS-01 Customer Risk & Executive Escalation (**next**) → VS-02 Revenue & Pipeline Intelligence
+(introduces FX normalization) → VS-03 Executive Account 360 → VS-04 Cross-Functional CEO
+Decision → VS-05 Enterprise Copilot. Then, **FUTURE / CONDITIONAL**: VS-06 Longitudinal
+Analytical Projection → VS-07 Churn Modelling → VS-08 Revenue Forecasting.
+
+### 17.2 Measured facts that bind every future slice
+
+Established by reading the code and data on 2026-09-18, not by reading earlier documents:
+
+- **Only three canonical FKs exist** (`deals`, `projects`, `support_tickets` → `customers`).
+  Owner, assignee and manager relationships are `source_id` strings joined within one source
+  system. `documents` carries **no** customer reference at all.
+- **No cross-source entity resolution.** All intelligence must be scoped to one declared
+  `source_system`, or the same customer is counted once per connector.
+- **The dataset clock is frozen at 2026-08-27.** A 14-day window measured from a `now()` of
+  2026-09-18 contains zero tickets. Hence the `as_of` rule in Section 5.
+- **Exactly one customer (CUST-007) satisfies DOC-003's documented escalation rule** — three or
+  more tickets in any 14-day window. This is the foundation of the VS-01 demo, and it is a
+  document-grounded policy rule rather than an invented threshold.
+- **Risk and money must stay on separate axes.** CUST-007 is first on support pressure but
+  roughly twelfth on weighted exposure (DEAL-001 is USD 5,361 against a portfolio median of
+  ~327,750). A blended score would surface the wrong customer.
+- **Mixed currency with no FX table** (INR 30 / USD 13 / EUR 1). No cross-currency aggregate may
+  be produced until VS-02 delivers the rate set.
+- **Churn and forecasting are not defensible on the current data.** All 4 inactive customers have
+  zero tickets and zero deals; there is no `lost` deal stage, so no negative class; 14 `won`
+  deals over 8 distinct months is not a series. Hence the VS-06 analytical projection.
+
+### 17.3 Bindings that carry across all slices
+
+1. Layer 1 stays frozen. Its D1 vocabulary is never widened to satisfy an analytical need.
+2. No module in an intelligence, analyst or decision package may call `now()`.
+3. No slice from VS-01 to VS-05 contains an **executor**. Nothing can send, write or call out.
+   Enforced by a static boundary test in the G2 style.
+4. Approval binds to a brief's **content hash**, and decision rows are append-only.
+5. Authentication is a hard prerequisite before any executor is ever built. Until then an
+   approver identity is *asserted*, not verified, and must be documented as such.
+6. Every asserted fact in generated output carries a resolvable citation to a canonical
+   record+field or a document id+span.
+7. No churn probability or forecast may ever be attached to a demo customer by name.
+8. No datastore is introduced without a slice whose question requires it.
+
+### 17.4 Open decisions
+
+1. **Proposal §9 reconciliation.** The proposal commits to a churn model and a revenue forecast
+   validated against a held-out baseline. The VS-06 → VS-07/VS-08 route can satisfy that
+   honestly, but only on synthetic data with the framing in strategy §6.6. Whether that framing
+   is acceptable is a decision for the project guide and should be raised early.
+2. **Frontend scope.** The proposal promises a React copilot interface; no slice before VS-05
+   has been shown to need a UI beyond OpenAPI.
+3. **Language-model provider** for VS-04/VS-05 — deferred by design.
+4. **Authentication timing** — not needed for VS-01–VS-05, required before any executor.
