@@ -501,11 +501,22 @@ table.
 
 ### 8.2 Conflict handling
 
-VS-01 has no conflicts *by construction*, because the two analysts own disjoint claim types and
-the reconciler's combination rule is explicit. Manufacturing disagreement to justify a
-reconciler would be dishonest. Genuine conflict arrives in VS-04, where Sales and Support reach
-opposite conclusions about the same account, and the reconciler gains a documented conflict
-policy at that point — earning its existence.
+**Revised 2026-09-18 after the VS-01 grilling.** v1 of the VS-01 plan deferred conflict to
+VS-04, on the grounds that manufacturing disagreement would be dishonest. That was wrong: a
+genuine conflict is already present in the committed data. Sales reads DEAL-001 as a
+90%-probability negotiation to accelerate; Support reads an active DOC-003 escalation with three
+open high-priority tickets past their SLA resolution target and wants deal pressure paused; and
+DOC-009 records the customer tying the deal decision to those tickets being resolved. Two
+incompatible actions on one object.
+
+So **VS-01 owns conflict reconciliation**: a versioned conflict policy that detects incompatible
+proposed actions over the same object, resolves them by a stated rule citing the documents that
+justify it, and **preserves the losing position as recorded dissent** rather than averaging it
+away. Without this the slice is a report with citations, not a proof of the platform's thesis.
+
+VS-04 then *extends* a mechanism that already exists — more functions, three-way and cyclic
+conflicts, and model-generated narrative over an already-decided outcome — rather than
+inventing it from nothing.
 
 ### 8.3 Actions come from a closed catalogue
 
@@ -606,12 +617,12 @@ Layer 1 (IMPLEMENTED)
 | **Persona** | CEO / executive sponsor; secondarily the account owner (EMP-007) and Head of Customer Support (EMP-004) |
 | **Trigger** | Explicit API call or CLI command with an `as_of` date. No scheduler |
 | **Data sources** | Layer 1 canonical tables only, scoped to one `source_system` |
-| **New capability** | Relationship model with per-edge provenance; deterministic signal engine; derived document links; three analyst modules; brief; approval record |
+| **New capability** | Relationship model with per-edge provenance; deterministic signal engine; derived document links; two scope-isolated analysts emitting positions; **conflict detection and reconciliation with recorded dissent**; content-hash-bound approval record |
 | **ML** | None |
 | **Graph** | Postgres-backed relationship service. No Neo4j |
 | **Retrieval** | Deterministic selection. No embeddings |
 | **Human boundary** | Brief is `DRAFT`; approval/rejection recorded against a content hash; no executor exists |
-| **Acceptance** | At the pinned `as_of`, CUST-007 is the only `CRITICAL` customer and the only one executive-worthy; its brief cites 5 tickets in 9 days, 4 open, 4 high, DEAL-001 in negotiation, DOC-003's escalation rule and DOC-006's renewal terms; every citation resolves; removing DOC-005 changes nothing; a healthy customer yields `NONE`; ranking is invariant to deal amounts; the brief hash is stable across runs |
+| **Acceptance** | At the pinned `as_of`, CUST-007 is the only `CRITICAL` customer and the only one executive-worthy; its brief cites 5 tickets in 9 days, 4 open, **3 open high-priority** (4 high in total), DEAL-001 in negotiation, DOC-003's escalation rule and DOC-006's renewal terms; the Sales/Support conflict is detected, resolved by a named policy and the losing position recorded as dissent; every citation resolves; removing DOC-005 changes nothing; a healthy customer yields `NONE`; ranking is invariant to deal amounts; the payload hash is stable across runs |
 | **Out of scope** | Churn probability, forecasting, Neo4j, embeddings, LLM, multi-source aggregation, cross-currency totals, scheduling, notification, authentication, UI beyond OpenAPI |
 
 ### 10.2 VS-02 — Revenue & Pipeline Intelligence · PROPOSED
@@ -647,10 +658,10 @@ Layer 1 (IMPLEMENTED)
 |---|---|
 | **Objective** | Reconcile genuinely conflicting functional conclusions about one business situation into one recommendation with the disagreement preserved |
 | **Executive question** | "What should the organization do when functions disagree about the same situation?" |
-| **The real conflict in the data** | Sales' view of CUST-007: DEAL-001 is in negotiation at 90% probability — push to close. Support's view: 4 open high-priority tickets breaching SLA targets, and DOC-009 records that *the customer tied the deal decision to resolving them*. These conclusions genuinely oppose each other, and the dataset supports both |
-| **New capability** | A documented conflict policy: how opposing claims are detected, ranked and reconciled; dissent is **preserved in the output**, never averaged away. First genuine language-model use, for narrative synthesis over already-decided facts |
+| **Relationship to VS-01** | VS-01 already owns two-function conflict detection, a versioned conflict policy and recorded dissent. VS-04 **extends** that mechanism rather than introducing it |
+| **New capability** | Three or more functions; three-way and cyclic conflicts, which a pairwise policy cannot resolve; precedence between competing policy entries; and the first genuine language-model use — narrative synthesis over facts and an action already decided deterministically |
 | **Agent boundary** | Functional analysts still may not see each other's data; only the reconciler sees both. The LLM never selects the action — it renders an explanation of an action chosen deterministically |
-| **Acceptance** | The brief states both positions with citations; the reconciliation rule that resolved them is named; a reviewer can reconstruct the decision without the model; removing the LLM degrades prose only, never facts or the chosen action |
+| **Acceptance** | A three-way conflict is resolved and every position is stated with citations; the reconciliation rule that resolved it is named; a reviewer can reconstruct the decision without the model; removing the LLM degrades prose only, never facts or the chosen action |
 | **Out of scope** | Fourteen agents; autonomous execution; letting the model choose the recommendation |
 
 ### 10.5 VS-05 — Enterprise Copilot · PROPOSED
