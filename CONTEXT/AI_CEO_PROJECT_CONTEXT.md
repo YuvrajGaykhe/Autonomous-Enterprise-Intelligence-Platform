@@ -139,6 +139,12 @@ All items below were explicitly confirmed during the interview. Do not reverse w
 | Language-model runtime | Templated generation first; every call behind a `LanguageModel` interface with a deterministic fake default and a committed response cache; provider deferred (confirmed 2026-09-18) |
 | `as_of` evaluation | Every intelligence module takes an explicit `as_of`; `now()` is forbidden (confirmed 2026-09-18) |
 | Risk representation | Ordinal band from a versioned decision table; money is never an input to the band (confirmed 2026-09-18) |
+| Conflict reconciliation | Owned by **VS-01**, not deferred to VS-04: the data already contains a genuine Sales/Support conflict over DEAL-001 (confirmed 2026-09-18, v2) |
+| Recorded dissent | A losing functional position is preserved in the brief with its citations, never averaged away or deleted (confirmed 2026-09-18, v2) |
+| Analyst isolation | Analysts receive pre-built typed context objects and **never a database session**, so scope is enforced by construction (confirmed 2026-09-18, v2) |
+| Assessment identity | Includes a `layer1_fingerprint` over the scoped canonical `record_hash` values and counts, so a re-run after new ingestion cannot return stale intelligence (confirmed 2026-09-18, v2) |
+| Approval binding | Binds to the decision **payload** hash, excluding timestamps and template version, so a template edit cannot invalidate prior approvals (confirmed 2026-09-18, v2) |
+| Executive-worthiness | Gated only on canonical-FK commercial linkage; derived document links are evidence, never a gate (confirmed 2026-09-18, v2) |
 
 ---
 
@@ -504,14 +510,15 @@ identity. The D1–D2, E1–E2, F1–F2, G1–G2 and H1–H5 regression groups a
 
 ## 17. Post-Layer-1 Strategy (PLANNED — nothing implemented)
 
-**Decided 2026-09-18** after a repository and dataset audit, a strategy grilling and a second
-grilling of VS-01. The full reasoning lives in the two companion documents; this section records
-only the state and the bindings that apply to all future work.
+**Decided 2026-09-18** after a repository and dataset audit, a strategy grilling, a second
+grilling of VS-01, and a third adversarial review that rebuilt the VS-01 plan as v2. The full
+reasoning lives in the two companion documents; this section records only the state and the
+bindings that apply to all future work.
 
 | Document | Contents | Status |
 |---|---|---|
 | `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` | Vertical-slice rationale; measured Layer 1 capability; data-feasibility verdict; graph / RAG / ML / agent / governance strategy; VS-01–VS-08 roadmap; deferred-infrastructure triggers; future data requirements; grilling record | PLANNED / PROPOSED |
-| `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | VS-01 full specification (A1–A32) and milestones M0–M9 | PLANNED |
+| `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | **v2.** Section 0 records the sixteen defects the adversarial review found; specification A1–A31; milestones M1–M9 with objective, before/change/after, tests, acceptance and non-goals | PLANNED |
 
 ### 17.1 Slice sequence
 
@@ -519,6 +526,10 @@ VS-01 Customer Risk & Executive Escalation (**next**) → VS-02 Revenue & Pipeli
 (introduces FX normalization) → VS-03 Executive Account 360 → VS-04 Cross-Functional CEO
 Decision → VS-05 Enterprise Copilot. Then, **FUTURE / CONDITIONAL**: VS-06 Longitudinal
 Analytical Projection → VS-07 Churn Modelling → VS-08 Revenue Forecasting.
+
+VS-01 owns **conflict detection, a versioned conflict policy and recorded dissent**. VS-04
+therefore extends an existing mechanism (three or more functions, cyclic conflicts, model-
+generated narrative over an already-decided action) rather than inventing it.
 
 ### 17.2 Measured facts that bind every future slice
 
@@ -567,3 +578,30 @@ Established by reading the code and data on 2026-09-18, not by reading earlier d
    has been shown to need a UI beyond OpenAPI.
 3. **Language-model provider** for VS-04/VS-05 — deferred by design.
 4. **Authentication timing** — not needed for VS-01–VS-05, required before any executor.
+
+### 17.5 VS-01 v2 — what the adversarial review changed
+
+v1 of the VS-01 plan was attacked deliberately; sixteen defects were found and the plan was
+rebuilt. The full list is Section 0 of `CONTEXT/VS01_IMPLEMENTATION_PLAN.md`. The six that
+changed the design:
+
+| Defect | Why it mattered | Resolution |
+|---|---|---|
+| **VS-01 did not prove the concept.** Two analysts that never disagree produce a report, not a reconciliation | The platform's thesis is that fragmented functional signals are reconciled into one executive decision. Nothing was being reconciled | Conflict reconciliation moved into VS-01. Sales reads DEAL-001 as a 90% negotiation to accelerate; Support reads an active DOC-003 escalation with three open high-priority tickets past SLA target and wants deal pressure paused; DOC-009 records the customer tying the deal to those tickets. Two incompatible actions on one object |
+| `open_high_priority_count` stated as **4**; it is **3** | TKT-073 is high priority but resolved. The dataset has 4 high-priority tickets and 4 open tickets — different sets of 4 | Split into `open_high_priority_count` (3) and `high_priority_total` (4), each pinned by a test |
+| The `as_of` default contradicted the asserted values | Default resolves to `max(created_at)` = 2026-08-27, but every value was computed at 2026-09-18, where the SLA-breach ranking inverts (CUST-009 has 4, CUST-007 has 3) | Acceptance pins `ACCEPTANCE_AS_OF = 2026-09-18`; the `max(created_at)` fallback is for ad-hoc use only |
+| Idempotency was silently wrong | Keyed on `(customer_id, as_of, rules_version)`, a re-run after new ingestion would hit the unique constraint and serve **stale intelligence with no error** | `layer1_fingerprint` is part of the assessment row and its uniqueness; a fingerprint-sensitivity test pins it |
+| Approval bound to the rendered brief | One whitespace change in a template would invalidate every prior approval | Approval binds to the decision **payload** hash; prose is a view |
+| Analyst scope isolation was advisory | Analysts were to receive a SQLAlchemy `Session`, and anything holding a session can read any table | Analysts receive typed context objects and no session; a context-purity test replaces a convention |
+
+**Milestone consequence:** M6 (conflict detection and reconciliation) is the milestone that must
+not be cut. Without it VS-01 is a report with citations; with it, it is a proof of the
+platform's thesis and the mechanism VS-04 extends.
+
+**Foundations VS-01 establishes**, each with the slice that first consumes it: `Scope`
+(`as_of`, `source_system`, `layer1_fingerprint`) — every slice; relationship model with
+per-edge basis — VS-02/03/04/05; evidence and citation contract — every slice;
+`AnalystContext` → `Position` — VS-04/05; `ConflictPolicy` + reconciler — VS-04;
+`ActionCatalogue` — VS-03/04; payload-bound `DecisionRecord` — VS-03/04; `MoneyValue`
+(currency-qualified, never summed) — VS-02, where FX plugs in without touching a VS-01 call
+site.
