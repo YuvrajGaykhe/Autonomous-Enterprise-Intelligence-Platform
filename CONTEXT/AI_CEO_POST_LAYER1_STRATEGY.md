@@ -215,11 +215,16 @@ unfalsifiable and indefensible under questioning.
 This is a measured finding, not a stylistic preference.
 
 On support pressure, CUST-007 is unambiguously first: 4 open tickets, 4 high priority, 4 in the
-last 30 days; the next-worst customer has 2 open. On weighted commercial exposure it is roughly
-twelfth: DEAL-001 is USD 5,361 against a portfolio median of ~327,750, while CUST-031 carries
-~1.77M of exposure with a single open ticket.
+last 30 days; the next-worst customer has 2 open. On commercial exposure it is near the bottom:
+**22nd of the 23 customers holding active deals** by weighted exposure. Restricted to one
+currency so the comparison is honest, DEAL-001 is 12th of the 13 USD deals by amount, and
+CUST-007's USD weighted exposure (4,825.30) is exactly the median of the 7 USD customers. A
+cross-currency portfolio ranking is **not computable** until §6.3 delivers the FX rate set — the
+"median 327,750" in §2.6 is a mixed-currency figure and must never be compared against a USD
+amount. Meanwhile CUST-015 (Unity Pharma) carries ~8.96M of weighted exposure and CUST-031
+(Vertex Foods) ~1.77M with a single open ticket.
 
-A single blended score would therefore demote Meridian and surface Vertex Foods — and it would
+A single blended score would therefore demote Meridian and surface Unity Pharma — and it would
 be *correct* to do so given a badly specified objective. The design consequence:
 
 - **Risk band** is computed from relationship-health signals only. Money is not an input.
@@ -437,7 +442,7 @@ a link table**, leaving Layer 1 untouched. Two bases, with different standing:
 | Basis | Rule | Standing | Measured result |
 |---|---|---|---|
 | `DERIVED_TEXT_MATCH` (id token) | The canonical `source_id` token appears in title or body | High precision; may derive signals | DOC-005, DOC-006, DOC-009 each contain `CUST-007` |
-| `DERIVED_TEXT_MATCH` (exact name) | The customer's **full** name matches exactly | High precision | Substring matching is explicitly forbidden: "Westbrook Textiles" and "Northstar Textiles" exist alongside "Meridian Textiles" |
+| `DERIVED_TEXT_MATCH` (exact name) | The customer's **full** name matches exactly | High precision | Substring matching is explicitly forbidden: "Westbrook Textiles", "Northstar Textiles" and "Evergrid Textiles" (CUST-039) exist alongside "Meridian Textiles" |
 | `DERIVED_TOPIC_MATCH` | Document topic overlaps the customer's ticket categories | Supporting evidence only — may **never** derive a signal | DOC-010 (nightly-sync postmortem) is the root-cause evidence for TKT-075 but never names Meridian |
 
 Every link records its basis, the matched token and its character offset, so a reviewer can
@@ -553,9 +558,12 @@ rejected recommendation cannot accidentally execute because nothing can execute.
 
 ### 9.2 Approval binds to content, not to an identifier
 
-A decision record stores `(brief_id, brief_content_hash, actor, decision, decided_at, note)`.
-Because approval binds to the **content hash**, regenerating a brief with different facts
-invalidates any prior approval — it cannot be inherited by a changed recommendation. Decisions
+A decision record stores `(brief_id, payload_hash, actor, decision, decided_at, note)`. Approval
+binds to the hash of the **decision payload** — the facts, positions, conflict, resolution and
+citations — and explicitly **not** to the rendered narrative, which is a view: excluding
+timestamps and `template_version` means a template edit cannot invalidate a prior approval, while
+regenerating a brief with different facts still invalidates it, because it cannot be inherited by
+a changed recommendation. See `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` §A17. Decisions
 are append-only; a decision is never mutated, only superseded by a new row that names its
 predecessor.
 

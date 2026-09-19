@@ -90,7 +90,55 @@ Head of Customer Support EMP-004 Karan Kapoor (owns the breaches).
 | **Executive-worthy** | Band ≥ `ELEVATED` **and** a `CANONICAL_FK`-backed commercial linkage (active deal or active project) |
 | **`as_of`** | The evaluation date. Acceptance pins `2026-09-18`. Ad-hoc fallback: `max(support_tickets.created_at)` in scope. **`now()` is forbidden** |
 | **Scope** | One `source_system` (default `csv_demo`) plus `as_of` plus `layer1_fingerprint` |
-| **`layer1_fingerprint`** | SHA-256 over the scoped canonical `record_hash` values and per-entity counts. Identifies the Layer 1 snapshot an assessment was computed from |
+| **`layer1_fingerprint`** | SHA-256 over the scoped canonical `(source_id, record_hash)` pairs and per-entity counts, each entity's list ordered by `source_id`. Identifies the Layer 1 snapshot an assessment was computed from. Composition, exclusions and rationale: §A5.1 |
+
+#### A5.1 `layer1_fingerprint` — composition (decided at M0 closure, 2026-09-19)
+
+**Composition.** SHA-256 over the UTF-8 JSON serialisation of
+
+```
+{entity_type: {"count": n, "records": [[source_id, record_hash], ...]}}
+```
+
+for the seven canonical entity types within the scope, serialised with the same discipline as
+Layer 1's `record_hash` (`sort_keys=True`, `separators=(",", ":")`).
+
+**Ordering rule.** Each `records` list is read with an explicit `ORDER BY source_id`. PostgreSQL
+guarantees no row order without one, and a fingerprint computed over unordered rows is not
+reproducible.
+
+**Excluded fields.** `ingested_at`, `ingestion_run_id` and `source_updated_at` are deliberately
+**not** read. They change on every ingestion, so including them would make an unchanged
+re-ingestion mint a new fingerprint — destroying the very idempotency the fingerprint exists to
+protect.
+
+**What it detects.** Measured against the clean 233-row demo database:
+
+| Change | Detected |
+|---|---|
+| Business-content change (a `record_hash` differs) | yes |
+| `source_id` rename that reorders the sequence | yes |
+| `source_id` rename that **preserves** ordinal position (`CUST-007` → `CUST-007Z`) | yes |
+| `source_id` addition | yes |
+| `source_id` removal | yes |
+
+**Why `source_id` must be included.** Layer 1's `record_hash` covers business fields only and
+**excludes all provenance, including `source_id`** (`app/normalization/contract.py`). A
+composition over `record_hash` values and counts alone is therefore blind to every `source_id`
+rename — yet `source_id` is the join key for every `SOURCE_KEY_JOIN` edge, the input to
+`canonical_id`, what E1 resolves the three customer FKs against, and the token quoted in
+`ID_TOKEN` document links and brief citations. A rename re-keys rows, re-resolves FKs and
+invalidates citations while leaving every `record_hash` untouched.
+
+**Layer 1 stays frozen.** This is a **Layer 2 composition over two frozen Layer 1 columns**. It
+requires no change to `record_hash`, no change to any Layer 1 module, no migration and no D1
+vocabulary change.
+
+**Determinism requirement.** The fingerprint must be byte-identical across independent clean
+rebuilds of the database. Verified at M0 closure: two independently built databases (different
+run ids, different `ingested_at` values) both yielded
+`1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00` for
+`source_system='csv_demo'` over the committed demo dataset.
 
 ### A6. End-to-end workflow
 
@@ -184,7 +232,15 @@ Nodes: `Customer`, `SupportTicket`, `Deal`, `Project`, `Employee`, `Document`.
 | `TOPIC` | Document topic overlaps the dominant ticket category | **No** | DOC-010 (supporting only) |
 
 Substring matching is **forbidden** and pinned by a test: the dataset holds "Meridian Textiles",
-"Westbrook Textiles" and "Northstar Textiles".
+"Westbrook Textiles", "Northstar Textiles" and "Evergrid Textiles" (CUST-039).
+
+**In VS-01 no signal is derived from any document link.** Every signal S1–S15 is computed
+deterministically from canonical `support_tickets`, `deals` and `projects` rows; S14
+(`contract_documents`) is evidence only. The "may derive signals" column above is a property
+reserved for later slices. This matters because DOC-005 is an `ID_TOKEN` match for CUST-007 and
+states the escalation conclusion in prose, so §A25 test 4 must keep asserting exact equality of
+**every signal value** — that test is what stops a later slice from quietly making the conclusion
+document-derived.
 
 ### A12. Money
 
@@ -322,7 +378,7 @@ text, customer email or monetary value in any log line.
 
 ### A23. Failure modes
 
-Ticketless customer → band `NONE`, not an error (15 such customers, plus the 4 inactive ones).
+Ticketless customer → band `NONE`, not an error (15 such customers — 11 active, plus all 4 inactive ones, which are a subset).
 NULL `customer_id` FK → excluded from signals **and** reported as a `data_quality` note, never
 silently dropped. Empty database → empty result. `as_of` before all data → all `NONE`, scope
 reported empty. `as_of` in the future → permitted, recency decays. Invalid rules or policy config
@@ -360,13 +416,14 @@ constraint makes the second a read.
 4. **DOC-005 leave-out.** With DOC-005 removed, band, every signal, the escalation state and the resolution are byte-identical. Runs **in-process against a dedicated test database**, not the deployed stack.
 5. **Amount invariance.** Multiply every deal amount by 1000 — the ranking does not change.
 6. **Chronic backlog.** CUST-048 and CUST-009 do not outrank CUST-007; their stale tickets appear as backlog observations, not escalation drivers.
-7. **Substring safety.** Westbrook and Northstar Textiles acquire no Meridian link.
+7. **Substring safety.** Westbrook, Northstar and Evergrid Textiles acquire no Meridian link.
 8. **Citation resolution.** Every citation in every assessment and every generated brief resolves.
 9. **Scope leakage.** No brief contains another customer's `source_id`, name or email.
-10. **Negative cases.** The 4 inactive and 15 ticketless customers yield `NONE`, not worthy.
+10. **Negative cases.** The 15 ticketless customers, which include all 4 inactive ones, yield `NONE`, not worthy.
 11. **Rule liveness.** Escalation threshold 3 → 6 makes CUST-007 non-escalated.
 12. **Determinism.** Two runs in separate processes give identical `payload_hash`; re-run inserts nothing.
-13. **Fingerprint sensitivity.** Ingesting one extra ticket changes the fingerprint and produces a **new** assessment rather than returning the stale one.
+13. **Fingerprint sensitivity — content and count.** Ingesting one extra ticket changes the fingerprint and produces a **new** assessment rather than returning the stale one.
+13b. **Fingerprint sensitivity — identity.** Re-ingest one record under a changed `source_id` whose sort position is unchanged (e.g. `CUST-007` → `CUST-007Z`) with byte-identical business content. The fingerprint **must** change. Test 13 alone cannot catch this, because `record_hash` excludes `source_id` (§A5.1).
 14. **Multi-currency.** A customer with USD and INR deals renders both, and any attempt to sum them raises.
 
 Mutation testing uses the project's existing ad-hoc textual harness over the signal engine, the
@@ -381,7 +438,8 @@ instruction-like text, asserted to be quoted and never interpreted.
 
 ### A27. Acceptance criteria (binary)
 
-1. `make verify-vs01` exits 0 against a running stack with the demo dataset ingested at `ACCEPTANCE_AS_OF = 2026-09-18`.
+1. `make verify-vs01` exits 0 against a running stack whose database was built by the **clean full-dataset path** (§A28): all 233 canonical rows across all 7 entity types, evaluated at `ACCEPTANCE_AS_OF = 2026-09-18`.
+1b. The computed `layer1_fingerprint` equals the value pinned in `config/intelligence/risk_rules.yaml`. A mismatch fails the run with a named message rather than producing an assessment. This is what stops a `make verify-layer1` residue — which ingests only 5 of 7 entity types and injects malformed-fixture rows into the `csv_demo` scope — from silently yielding a citation-free brief.
 2. Exactly one customer is `CRITICAL` and executive-worthy: CUST-007.
 3. Its brief cites, each resolvably: 5 tickets in a 9-day span; 4 open; **3 open high-priority**; 4 high-priority in total; 3 open high-priority SLA breaches; dominant category `performance`; DEAL-001 `negotiation` at 90% for **USD** 5,361.44; DOC-003's escalation rule; DOC-006's 36-month term and 90-day notice; DOC-009's linkage of the deal to ticket resolution.
 4. The brief states that CUST-007 has no active project.
@@ -393,6 +451,15 @@ instruction-like text, asserted to be quoted and never interpreted.
 10. Regression: full Layer 1 suite passes unchanged; `app/` coverage stays 100%; ruff 69; mypy 9; secret scan 0.
 
 ### A28. Demo (~5 minutes, no network, no key, no model)
+
+> **Evaluation-state prerequisite.** The database must come from the clean full-dataset path:
+> an empty database → `make migrate` → `make ingest-demo` with **no `--entities` filter** →
+> 233 rows over 7 entity types, 0 rejected, `SUCCESS`; a repeat run is `NOOP`.
+> **Do not use `make verify-layer1` to prepare a VS-01 evaluation database**: by design it
+> ingests only the five entity types of spec Section 20 step E (no `organizations`, no
+> `documents`) and then ingests the malformed fixture through the `csv_demo` connector, so its
+> residue has no documents and four extra rows inside the default scope. It remains the correct,
+> unchanged **Layer 1** acceptance command.
 
 `make docker-up && make migrate && make ingest-demo` → `POST /risk/assessments {"as_of":"2026-09-18"}` →
 `GET /risk/assessments?executive_worthy=true` (one row) → `GET /risk/briefs/{id}` (read the
@@ -436,7 +503,9 @@ semantics, E1 persistence and status semantics, F1/F2 route contracts, G1 loggin
 semantics, G2 security behaviour, the H test layers, the I acceptance command, and `data/demo/`.
 
 M0 remains a pre-flight step, not a milestone: record the baselines (suite count, coverage, ruff,
-mypy, secret scan, `make verify-layer1`) and resolve the stray `README.md` working-tree edit.
+mypy, secret scan) and establish the clean evaluation database via §A28's prerequisite —
+an empty database, `make migrate`, then `make ingest-demo` with no `--entities` filter.
+**Completed 2026-09-19**; see `CONTEXT/M0_BASELINE_REPORT.md` and `CONTEXT/M0_CLOSURE_REPORT.md`.
 
 ---
 
@@ -451,22 +520,28 @@ no later milestone can violate them by accident.
 - `app/intelligence/contract.py` — `RiskBand`, `EdgeBasis`, `LinkBasis`, `Function`, `Stance`,
   `ActionId`, `SignalSet`, `Citation`, `Evidence`, `Position`, `ConflictResolution`.
 - `app/intelligence/scope.py` — `Scope(as_of, source_system, layer1_fingerprint)` and
-  `resolve_scope()`, which records which path produced `as_of` and computes the fingerprint over
-  the scoped canonical `record_hash` values and counts.
+  `resolve_scope()`, which records which path produced `as_of` and computes the fingerprint
+  exactly as §A5.1 defines it: over the scoped canonical `(source_id, record_hash)` pairs and
+  per-entity counts, each list read with an explicit `ORDER BY source_id`, excluding
+  `ingested_at`, `ingestion_run_id` and `source_updated_at`.
 - `app/intelligence/money.py` — `MoneyValue`, whose `__add__` raises across currencies.
 - `app/intelligence/timeutil.py` — UTC bucketing and business-day arithmetic.
 - `config/intelligence/risk_rules.yaml` — skeleton with `rules_version` and `ACCEPTANCE_AS_OF`.
 
 **Tests.** `as_of` resolution order and the empty-database fallback; fingerprint changes when a
-record changes and is stable when nothing changes; `MoneyValue` addition raises across
-currencies; business-day arithmetic across weekends; UTC bucketing at a 23:30 UTC timestamp;
+record's business content changes, changes when a `source_id` is renamed **without** changing its
+sort position, changes on a `source_id` addition or removal, and is stable when nothing changes;
+`MoneyValue` addition raises across currencies; business-day arithmetic across weekends; UTC bucketing at a 23:30 UTC timestamp;
 **boundary test** that no module under `app/intelligence/` references `datetime.now`,
 `date.today` or `utcnow`.
 
 **After.** `as_of`, money and evidence exist as types, and `now()` is mechanically impossible.
 
 **Acceptance.** Scope resolves against the demo database; the boundary test fails if `now()` is
-introduced; the fingerprint is stable across two processes.
+introduced; the fingerprint is stable across two processes and byte-identical across two
+independent clean rebuilds. For the committed demo dataset at `source_system='csv_demo'` it is
+`1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00`, which M1 pins in
+`config/intelligence/risk_rules.yaml` (§A27.1b).
 
 **Rollback.** Delete the package — nothing depends on it yet.
 
@@ -487,7 +562,7 @@ the session, matching the existing repository convention.
 
 **Tests.** Each edge type resolves on the demo dataset; a `SOURCE_KEY_JOIN` never crosses
 `source_system`; a NULL FK yields no edge rather than an error;
-`escalation_path(CUST-007)` returns EMP-007 → EMP-002 plus EMP-018/020/021 → EMP-004;
+`escalation_path(CUST-007)` returns EMP-007 → EMP-002 plus **all four** open-ticket assignees EMP-017/018/020/021 → EMP-004 (§A9 says *each open ticket's* assignee, so EMP-017 is included for the open `medium` billing ticket TKT-079; it must not be filtered to high priority);
 `neighbourhood(CUST-007)` returns 5 tickets, 1 deal, **0 projects**; a test asserts **no public
 `traverse()`** exists.
 

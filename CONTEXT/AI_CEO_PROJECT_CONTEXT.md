@@ -1,6 +1,6 @@
 # AI CEO — Project Context Document
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
-**Last updated: 2026-09-16 | Maintained by: Yuvraj Gaykhe**
+**Last updated: 2026-09-19 | Maintained by: Yuvraj Gaykhe**
 
 > **Purpose**: This file is the single source of truth for all confirmed project understanding, design decisions, and task state. Read this file at the start of any new session before asking questions or writing code.
 
@@ -293,7 +293,7 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 |---|---|---|---|
 | A — Foundation | A1 | Repository scaffolding | ✅ Complete — pushed (314c19b) |
 | A — Foundation | A2 | Docker Compose + service definitions | ✅ Complete — pushed (52124bf) |
-| A — Foundation | A3 | Alembic setup + all 11 migrations | ✅ Complete — pushed (4d7e524) |
+| A — Foundation | A3 | Alembic setup + baseline migration (`0001`; the 12 tables arrive in B1's `8bfd73b6af60`) | ✅ Complete — pushed (4d7e524) |
 | B — Core Contracts | B1 | SQLAlchemy ORM models | ✅ Complete — pushed (55f423d) |
 | B — Core Contracts | B2 | Pydantic canonical schemas | ✅ Complete — pushed (09a42bc, 123a89b) |
 | B — Core Contracts | B3 | Pydantic source schemas | ✅ Complete — pushed (e66589c) |
@@ -315,15 +315,19 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 | H — Tests | H3 | Database integration tests | ✅ Complete — pushed (78ce177); see Section 15 |
 | H — Tests | H4 | API tests | ✅ Complete — pushed (f0578e9); see Section 15 |
 | H — Tests | H5 | E2E + idempotency + failure recovery tests | ✅ Complete — pushed (4de3436); see Section 15 |
-| I — Verification | I1 | Full acceptance scenario (spec Section 20, steps A–O) | ✅ Complete locally — not pushed (99f4f75); see Section 16 |
-| I — Verification | I2 | README completion | ✅ Complete locally — not pushed (fff40f6); see Section 16 |
+| I — Verification | I1 | Full acceptance scenario (spec Section 20, steps A–O) | ✅ Complete — pushed (99f4f75); see Section 16 |
+| I — Verification | I2 | README completion | ✅ Complete — pushed (fff40f6); see Section 16 |
 
 **Total: 26 tasks across 9 phases. All 26 are complete; the task map defines no task after I2.**
 
-Release state (2026-09-18): `origin/main` is `945e0bb` and the working tree is level with it.
-All of A1–I2 is pushed, including the I-phase commits (`99f4f75..945e0bb`). The Layer 1 task map
-is closed; the next unit of work is **VS-01**, specified in
-`CONTEXT/VS01_IMPLEMENTATION_PLAN.md` and not yet started.
+Release state: `origin/main` is `945e0bb`. All of A1–I2 is pushed, including the I-phase commits
+(`99f4f75..945e0bb`). The Layer 1 task map is closed. Local `main` carries documentation-only
+commits ahead of it (the post-Layer-1 strategy, the VS-01 v2 plan, and the M0 baseline and
+closure), none of which touch code.
+
+**M0 (Layer 2 pre-flight) completed 2026-09-19** — see Section 18. The next unit of work is
+**VS-01 milestone M1**, specified in `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` Part B and not yet
+started.
 
 ---
 
@@ -519,6 +523,8 @@ bindings that apply to all future work.
 |---|---|---|
 | `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` | Vertical-slice rationale; measured Layer 1 capability; data-feasibility verdict; graph / RAG / ML / agent / governance strategy; VS-01–VS-08 roadmap; deferred-infrastructure triggers; future data requirements; grilling record | PLANNED / PROPOSED |
 | `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | **v2.** Section 0 records the sixteen defects the adversarial review found; specification A1–A31; milestones M1–M9 with objective, before/change/after, tests, acceptance and non-goals | PLANNED |
+| `CONTEXT/M0_BASELINE_REPORT.md` | The measured Layer 2 pre-flight baseline and findings F1–F8 | COMPLETE — see Section 18 |
+| `CONTEXT/M0_CLOSURE_REPORT.md` | F1 root cause, the F2 fingerprint decision, F3–F9 verification, corrections and M1 entry conditions | COMPLETE — see Section 18 |
 
 ### 17.1 Slice sequence
 
@@ -535,7 +541,8 @@ generated narrative over an already-decided action) rather than inventing it.
 
 Established by reading the code and data on 2026-09-18, not by reading earlier documents:
 
-- **Only three canonical FKs exist** (`deals`, `projects`, `support_tickets` → `customers`).
+- **Only three canonical FKs to `customers` exist** (`deals`, `projects`, `support_tickets`).
+  The only other canonical entity→entity FK is `employees.organization_id → organizations.id`.
   Owner, assignee and manager relationships are `source_id` strings joined within one source
   system. `documents` carries **no** customer reference at all.
 - **No cross-source entity resolution.** All intelligence must be scoped to one declared
@@ -546,8 +553,10 @@ Established by reading the code and data on 2026-09-18, not by reading earlier d
   more tickets in any 14-day window. This is the foundation of the VS-01 demo, and it is a
   document-grounded policy rule rather than an invented threshold.
 - **Risk and money must stay on separate axes.** CUST-007 is first on support pressure but
-  roughly twelfth on weighted exposure (DEAL-001 is USD 5,361 against a portfolio median of
-  ~327,750). A blended score would surface the wrong customer.
+  **22nd of the 23 customers holding active deals** on weighted exposure; within USD alone its
+  weighted exposure is exactly the median of 7 USD customers. No cross-currency ranking is
+  computable until VS-02 delivers FX, so the two must never be compared as one number. A blended
+  score would surface the wrong customer.
 - **Mixed currency with no FX table** (INR 30 / USD 13 / EUR 1). No cross-currency aggregate may
   be produced until VS-02 delivers the rate set.
 - **Churn and forecasting are not defensible on the current data.** All 4 inactive customers have
@@ -589,7 +598,7 @@ changed the design:
 |---|---|---|
 | **VS-01 did not prove the concept.** Two analysts that never disagree produce a report, not a reconciliation | The platform's thesis is that fragmented functional signals are reconciled into one executive decision. Nothing was being reconciled | Conflict reconciliation moved into VS-01. Sales reads DEAL-001 as a 90% negotiation to accelerate; Support reads an active DOC-003 escalation with three open high-priority tickets past SLA target and wants deal pressure paused; DOC-009 records the customer tying the deal to those tickets. Two incompatible actions on one object |
 | `open_high_priority_count` stated as **4**; it is **3** | TKT-073 is high priority but resolved. The dataset has 4 high-priority tickets and 4 open tickets — different sets of 4 | Split into `open_high_priority_count` (3) and `high_priority_total` (4), each pinned by a test |
-| The `as_of` default contradicted the asserted values | Default resolves to `max(created_at)` = 2026-08-27, but every value was computed at 2026-09-18, where the SLA-breach ranking inverts (CUST-009 has 4, CUST-007 has 3) | Acceptance pins `ACCEPTANCE_AS_OF = 2026-09-18`; the `max(created_at)` fallback is for ad-hoc use only |
+| The `as_of` default contradicted the asserted values | Default resolves to `max(created_at)` = 2026-08-27, but every value was computed at 2026-09-18. **At the 2026-08-27 default** the SLA-breach ranking differs (CUST-009 has 4, CUST-007 has 3); at 2026-09-18 CUST-007 leads with 5 | Acceptance pins `ACCEPTANCE_AS_OF = 2026-09-18`; the `max(created_at)` fallback is for ad-hoc use only |
 | Idempotency was silently wrong | Keyed on `(customer_id, as_of, rules_version)`, a re-run after new ingestion would hit the unique constraint and serve **stale intelligence with no error** | `layer1_fingerprint` is part of the assessment row and its uniqueness; a fingerprint-sensitivity test pins it |
 | Approval bound to the rendered brief | One whitespace change in a template would invalidate every prior approval | Approval binds to the decision **payload** hash; prose is a view |
 | Analyst scope isolation was advisory | Analysts were to receive a SQLAlchemy `Session`, and anything holding a session can read any table | Analysts receive typed context objects and no session; a context-purity test replaces a convention |
@@ -605,3 +614,95 @@ per-edge basis — VS-02/03/04/05; evidence and citation contract — every slic
 `ActionCatalogue` — VS-03/04; payload-bound `DecisionRecord` — VS-03/04; `MoneyValue`
 (currency-qualified, never summed) — VS-02, where FX plugs in without touching a VS-01 call
 site.
+
+---
+
+## 18. Phase Record — M0 (Layer 2 pre-flight baseline and closure)
+
+**Decided 2026-09-19.** M0 is a pre-flight phase, not a milestone: it establishes a
+scientifically reproducible starting line for Layer 2 and resolves everything that would
+otherwise be encoded wrongly in VS-01 code. **No production code, test, migration, schema,
+config, dataset or Docker file was changed in M0.**
+
+| Document | Contents |
+|---|---|
+| `CONTEXT/M0_BASELINE_REPORT.md` | The measured baseline: Git, Layer 1 contracts, dataset, vocabulary, schema, API, tests, quality, security, deployment, VS-01 readiness, frozen invariants, findings F1–F8 |
+| `CONTEXT/M0_CLOSURE_REPORT.md` | F1 root cause and options; the F2 fingerprint decision; F3–F9 verification; the exact corrections; grilling record; M1 entry conditions |
+
+**Baseline confirmed** (all matching the `fff40f6` Layer 1 record): 4139 tests passed, `app/`
+line coverage 100% over 4460 statements, ruff 69, mypy 9, secret scan 0 findings, Alembic head
+`8bfd73b6af60`, 22 API operations, 233 canonical dataset rows. Every VS-01 signal value S1–S15
+at `as_of` 2026-09-18 was independently recomputed from `data/demo/` and verified correct.
+
+### 18.1 F1 — the development database lifecycle · CLOSED
+
+The development database was found holding 220 rows over five entity types, with zero
+`organizations` and zero `documents`, plus four malformed-fixture rows inside the `csv_demo`
+scope. **This was not a defect.** It is the residue of `make verify-layer1`, which by
+specification (Section 20 step E) ingests only `customers`, `employees`, `deals`, `projects` and
+`support_tickets`, and then ingests the malformed fixture through the `csv_demo` connector so
+that step L can read the surviving rows back through the public API.
+
+**Resolution — A + D, adopted.** Layer 1 stays frozen; no new `source_system` is introduced.
+
+1. **The clean Layer 2 starting state comes from the full seven-entity path**: empty database →
+   `make migrate` → `make ingest-demo` with **no `--entities` filter** → 233 rows across 7 entity
+   types, 0 rejected, `SUCCESS`; a repeat run is `NOOP`.
+2. **The pinned `layer1_fingerprint` is the guard.** VS-01 compares the computed fingerprint
+   against the pinned value and refuses to assess on a mismatch, so a `verify-layer1` residue
+   fails loudly instead of silently producing a citation-free brief.
+
+`make verify-layer1` remains the correct, unchanged **Layer 1** acceptance command. It must not
+be used to prepare a VS-01 evaluation database.
+
+**Rejected:** isolating the fixture under a `csv_demo_bad` source system. It would widen the D1
+`source_systems` vocabulary — which binding 1 of §17.3 forbids — and would require rewriting the
+I1 acceptance tests.
+
+### 18.2 F2 — `layer1_fingerprint` composition (v2) · CLOSED
+
+Layer 1's `record_hash` covers business fields only and **excludes all provenance, including
+`source_id`**. A fingerprint over `record_hash` values and counts alone is therefore blind to
+every `source_id` rename — measured, not assumed — while `source_id` is the join key for every
+`SOURCE_KEY_JOIN` edge, the input to `canonical_id`, what E1 resolves the customer FKs against,
+and the token quoted in `ID_TOKEN` links and citations.
+
+**Adopted: fingerprint v2**, specified in full at `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` §A5.1.
+
+- **Composition:** SHA-256 over `{entity_type: {"count": n, "records": [[source_id, record_hash], ...]}}`
+  for the seven canonical entity types in scope, serialised with `record_hash`'s own discipline
+  (`sort_keys=True`, `separators=(",", ":")`, UTF-8).
+- **Ordering:** each list read with an explicit `ORDER BY source_id`.
+- **Excluded:** `ingested_at`, `ingestion_run_id`, `source_updated_at` — they change on every
+  ingestion, and including them would defeat the idempotency the fingerprint protects.
+- **Detects:** business-content changes, `source_id` renames (including order-preserving ones),
+  and `source_id` additions or removals.
+- **Layer 1 untouched:** this is a Layer 2 composition over two frozen Layer 1 columns. No change
+  to `record_hash`, no Layer 1 module, no migration, no vocabulary change.
+- **Determinism:** byte-identical across independent clean rebuilds. For the committed demo
+  dataset at `source_system='csv_demo'` the value is
+  `1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00`.
+
+### 18.3 F3–F9 — corrections applied
+
+| # | Correction | Affected a named test? |
+|---|---|---|
+| F3 | Weighted exposure restated currency-qualified: CUST-007 is **22nd of 23** on weighted exposure, not "roughly twelfth"; the ~327,750 median is mixed-currency and must not be compared with a USD amount | no |
+| F4 | The SLA-breach ranking "CUST-009 has 4, CUST-007 has 3" belongs to **2026-08-27**, the `max(created_at)` default — not to the pinned 2026-09-18, where CUST-007 leads with 5 | no |
+| F5 | "Evergrid Textiles" (CUST-039) added wherever the substring trap is enumerated — the dataset holds **four** "Textiles" customers, not three | yes — §A25 test 7 |
+| F6 | Ticketless customers are **15 in total**, of which the 4 inactive ones are a subset (11 active + 4 inactive), not 15 + 4 | yes — §A25 test 10 |
+| F7 | Stated explicitly that **no VS-01 signal is derived from any document link**; all signals come deterministically from canonical rows, and §A25 test 4 must keep asserting exact equality of every signal value | no |
+| F8 | Stale metadata corrected: this document's date; A3's "11 migrations"; "only three canonical FKs" (three *to customers*; `employees.organization_id` is a fourth); I1/I2 push status; `brief_content_hash` → `payload_hash`; and the plan's own M0 instruction, which told the reader to run `make verify-layer1` — the very cause of F1 | no |
+| F9 | `escalation_path(CUST-007)` returns **all four** open-ticket assignees EMP-017/018/020/021 → EMP-004. EMP-017 owns the open `medium` billing ticket TKT-079 and must not be filtered out; §A9 says *each open ticket's* assignee | yes — M2 |
+
+### 18.4 M1 entry conditions — satisfied
+
+| Condition | Evidence |
+|---|---|
+| E1 — development database rebuilt via the full seven-entity path | 233 rows across 7 entity types, 0 rejected, `SUCCESS`; repeat run `NOOP` with 233 unchanged; 0 fixture rows; 0 ingestion errors; single `source_system` `csv_demo` |
+| E2 — fingerprint composition decided and recorded | §18.2 above and `VS01_IMPLEMENTATION_PLAN.md` §A5.1, §A25 test 13b, M1 |
+| E3 — all documentation and specification corrections applied | §18.3 above; the six test-bearing corrections are in §A11, §A23, §A25 tests 7/10/13b, §A27.1–1b, §A28, M1 and M2 |
+| Layer 1 freeze re-verified | `data/demo/` fingerprint, `normalization.yaml`, Alembic head `8bfd73b6af60` and the canonical UUID5 namespace all unchanged; nothing under `app/`, `tests/`, `migrations/`, `config/`, `data/` or the Docker files was modified |
+
+**M1 may begin.** It is the first milestone of `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` Part B and
+creates only `app/intelligence/` foundations — no signals, no persistence, no API.
