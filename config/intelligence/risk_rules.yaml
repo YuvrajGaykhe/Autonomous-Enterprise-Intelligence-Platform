@@ -1,0 +1,41 @@
+# =============================================================================
+# Layer 2 risk-rule configuration (VS-01).
+#
+# Loaded and validated by app/intelligence/config.py. Layer 1 owns the
+# canonical contract in config/mappings/ and the quality gate in
+# config/validation/; this file owns Layer 2 policy only and changes neither.
+#
+# M1 populates the foundation: the rules version every assessment identity
+# is bound to, the pinned evaluation date, and the Layer 1 snapshot each
+# source system must present. The band decision table arrives with M3.
+# =============================================================================
+
+version: 1
+
+# Bumped whenever a rule that can change a band or an action changes. It is
+# part of an assessment's identity, so a rule change yields a new assessment
+# rather than silently overwriting the old conclusion.
+rules_version: 1
+
+# Plan A27: the acceptance scenario is evaluated at a fixed date. now() is
+# forbidden everywhere in Layer 2, so every asserted value stays reproducible.
+# The ad-hoc fallback, max(support_tickets.created_at), resolves to
+# 2026-08-27 on the committed dataset and is never what acceptance uses.
+acceptance_as_of: 2026-09-18
+
+# The Layer 1 snapshot each source system is expected to present, as defined
+# in plan A5.1: SHA-256 over {entity_type: {count, [[source_id, record_hash]]}}
+# for the seven canonical entity types in scope, each list ordered by
+# source_id, excluding ingested_at, ingestion_run_id and source_updated_at.
+#
+# The csv_demo value is the committed demo dataset built by the clean
+# full-dataset path (plan A28): an empty database, `make migrate`, then
+# `make ingest-demo` with no --entities filter, giving 233 canonical rows
+# over 7 entity types with 0 rejected.
+#
+# A mismatch is refused rather than assessed. `make verify-layer1` is NOT a
+# valid way to prepare this database: it ingests five of seven entity types
+# and then injects malformed fixture rows into the csv_demo scope, which
+# yields a different fingerprint.
+layer1_fingerprints:
+  csv_demo: "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
