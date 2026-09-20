@@ -94,6 +94,10 @@ These are **not** FKs. They are `source_id` strings that must be joined inside o
 | Employee → manager Employee | `employees.manager_source_id` |
 | Document → owner Employee | `documents.owner_source_id` |
 
+**Six exist; VS-01 models five.** `Project → owner Employee` is the one left out, because no VS-01
+query needs a project's owner (plan §A9). The carrier field is present and the edge is a one-line
+addition whenever a slice acquires a consumer for it.
+
 ### 2.3 Relationships that do not exist in any form
 
 | Relationship | Consequence |
@@ -259,7 +263,8 @@ needs it.**
 
 ### 5.1 Why not Neo4j in VS-01
 
-Every question VS-01 asks is answered by three foreign keys and six source-key joins. A second
+Every question VS-01 asks is answered by three foreign keys and source-key joins over the six
+carrier fields of §2.2, five of which VS-01 actually models. A second
 datastore would add a synchronisation path from Postgres, its own consistency and failure
 modes, a second test harness, and the risk of two divergent answers to the same question —
 buying nothing, because there is no multi-hop traversal in the slice.
@@ -816,8 +821,8 @@ payments, activities, headcount and capacity records. Not in scope for this proj
 
 | Proposed | Changed to | Reason |
 |---|---|---|
-| Neo4j knowledge graph in Layer 2 | Postgres relationship service behind a substrate-agnostic interface | VS-01's queries are 3 FKs and 6 source-key joins; a second store buys nothing |
-| `Customer --HAS_DOCUMENT--> Document` edge | Derived link table with recorded basis and confidence | No such relationship exists in Layer 1 (§2.3) |
+| Neo4j knowledge graph in Layer 2 | Postgres relationship service behind a substrate-agnostic interface | VS-01's queries are 3 FKs and 5 modelled source-key joins (§2.2); a second store buys nothing |
+| `Customer --HAS_DOCUMENT--> Document` edge | Derived link table with recorded basis and confidence, read through the evidence interface — **not** through the relationship API (plan §A9, §A11) | No such relationship exists in Layer 1 (§2.3) |
 | Blended numeric risk score | Ordinal band from a versioned decision table, with impact as a separate axis | A blended score demotes Meridian to ~12th and promotes a customer with one open ticket (§4.3) |
 | Risk signals evaluated against `now()` | Explicit `as_of` with a dataset-derived default | At `now()` = 2026-09-18, a 14-day window contains **zero** tickets (§2.7) |
 | "Customer Risk Agent", "Sales Context Agent" as LLM agents | Deterministic analyst modules with enforced scopes and agent contracts | Calling a rule engine an agent is dishonest; the scope boundary is the part worth building |

@@ -492,10 +492,11 @@ Each design decision in the strategy and VS-01 v2 plan, checked against the repo
 PostgreSQL carries all three customer FKs needed by `neighbourhood()`, each with a supporting
 index (`ix_deals_customer_id`, `ix_projects_customer_id`, `ix_support_tickets_customer_id`).
 `escalation_path()` is at most two source-key hops (`customers.owner_source_id` →
-`employees.manager_source_id`), which SQL handles directly. **No query in VS-01's four public
-queries requires variable-length traversal, so Neo4j is correctly deferred.** No graph dependency
-is declared in `pyproject.toml`. Placing the relationship layer behind a substrate-agnostic
-interface is compatible with the current code — nothing in `app/` presumes a graph store.
+`employees.manager_source_id`), which SQL handles directly. **No query in VS-01's public
+relationship queries requires variable-length traversal, so Neo4j is correctly deferred.** No
+graph dependency is declared in `pyproject.toml`. Placing the relationship layer behind a
+substrate-agnostic interface is compatible with the current code — nothing in `app/` presumes
+a graph store.
 
 ### 12.2 Documents — ✅ correct and untouched
 

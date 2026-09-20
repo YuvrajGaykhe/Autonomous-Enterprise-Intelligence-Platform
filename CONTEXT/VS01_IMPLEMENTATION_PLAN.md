@@ -1,6 +1,6 @@
 # VS-01 — Customer Risk & Executive Escalation: Implementation Plan (v2)
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
-**v1 2026-09-18 · v2 2026-09-18 after adversarial review**
+**v1 2026-09-18 · v2 2026-09-18 after adversarial review · v2.1 2026-09-20, M2/M4 boundary**
 **Status: PLANNED. Nothing in this document is implemented. Do not begin until approved.**
 
 > Strategy context: `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md`
@@ -30,11 +30,31 @@ the reasoning is not lost.
 | 9 | **Derived links had no recomputation trigger.** Documents change; `computed_at` alone leaves links stale | **Medium** | Links are derived inside the assessment run and stamped with `linker_version` + `layer1_fingerprint` (§A18) |
 | 10 | **"No outbound import" boundary test was overstated.** The API package already imports HTTP machinery, and the acceptance script needs a client — exactly the situation I1 solved with named exemptions | **Medium** | The test walks the **transitive** import graph of the intelligence/analyst/decision packages and uses the I1 named-exemption mechanism, with each exemption justified and removable (§A22) |
 | 11 | Briefs were to be generated for all 50 customers | Low | Assessments for all 50; briefs only for band ≥ `WATCH`. Citation resolution is tested on both |
-| 12 | Risk of a speculative generic graph API | Medium | The relationship model exposes exactly the four queries of §A9. **No generic `traverse()` in VS-01** |
+| 12 | Risk of a speculative generic graph API | Medium | The relationship model exposes exactly the queries of §A9 — **three** after the v2.1 correction below. **No generic `traverse()` in VS-01** |
 | 13 | `POST /risk/assessments` re-run semantics undefined | Low | Re-run with an identical fingerprint returns `200` with the existing assessment; a new fingerprint creates a new one (`201`) |
 | 14 | Money had no type | Medium | `MoneyValue(amount, currency)` — never summed across currencies. This is the seam VS-02's FX plugs into (§A12) |
 | 15 | Acceptance needed a modified corpus for the DOC-005 test, on a stack whose image excludes fixtures | Medium | The leave-one-out test runs in-process against a dedicated test database, not through the deployed stack (§A25) |
 | 16 | Multi-currency edge cases untested (one EUR deal exists; some customers hold two currencies) | Low | Named fixtures (§A26) |
+
+---
+
+## 0.1 What v2.1 changed, and why — the M2/M4 boundary
+
+Found while grilling M2 before implementation, on 2026-09-20. Nothing outside these three
+documentation points changed, and no code was written.
+
+| # | Contradiction in v2 | Severity | Resolution in v2.1 |
+|---|---|---|---|
+| 17 | **M2 was specified to build two incompatible things.** Its *Change* bullet said `queries.py` implements "the four queries of §A9", and §A9's third query is `documents_for(customer)` → *derived links with basis, matched token and offsets*. Its *Non-goals* line said "Derived document links (M4)". M2 could not both implement all four §A9 queries and exclude derived document links | **High** | `documents_for()` is **not** a relationship query. It is an M4 evidence interface exported from `app/evidence/`, and §A9 now lists **three** public relationship queries. Seven independent signals in v2 already pointed this way: M4 builds the linker, the link table and the first additive migration; M4's named tests *are* the document-link tests; M4's *Before* reads "Documents are unreachable from a customer", which is false if M2 linked them; M2's test list contains no document assertion; M1's `DerivedLink` requires a `linker_version` that does not exist until M4; and the dependency order says M4 may start once **M1** is done, not M2 |
+| 18 | **Source-key joins counted five in §A9 and six in the strategy** (§2.2, §5.1). `project_owned_by` (`projects.owner_source_id`) was the missing one | Low | Both documents now say the same thing: **six exist in Layer 1, five are modelled in VS-01.** `project_owned_by` is not modelled because no §A9 query needs a project's owner |
+
+**Why the boundary is cleaner this way.** Derived links and canonical edges are different kinds of
+knowledge — one is a provenance-backed fact, the other an inference carrying a `linker_version`,
+a matched token and the evidence a reviewer checks it against. Keeping them behind separate
+interfaces, with `app/evidence` reading `app/relationships` and never the reverse, turns §A11's
+central rule — *no VS-01 signal is derived from any document link* — into a structural property
+of the import graph rather than a rule a reviewer must remember. It also preserves M2's stated
+rollback property: M4 adds a package instead of reopening M2's.
 
 ---
 
@@ -188,19 +208,41 @@ through the existing repository layer. **VS-01 requires no Layer 1 contract exte
 
 Nodes: `Customer`, `SupportTicket`, `Deal`, `Project`, `Employee`, `Document`.
 
-| Edge | Basis |
-|---|---|
-| `customer_has_ticket` / `customer_has_deal` / `customer_has_project` | `CANONICAL_FK` |
-| `customer_owned_by`, `ticket_assigned_to`, `deal_owned_by`, `employee_reports_to`, `document_owned_by` | `SOURCE_KEY_JOIN` (within one source system) |
-| `document_mentions_customer` | `DERIVED_TEXT_MATCH` (id token or exact full name) |
-| `document_relates_to_topic` | `DERIVED_TOPIC_MATCH` — supporting evidence only |
+| Edge | Basis | Produced by |
+|---|---|---|
+| `customer_has_ticket` / `customer_has_deal` / `customer_has_project` | `CANONICAL_FK` | M2 |
+| `customer_owned_by`, `ticket_assigned_to`, `deal_owned_by`, `employee_reports_to`, `document_owned_by` | `SOURCE_KEY_JOIN` (within one source system) | M2 |
+| `document_mentions_customer` | `DERIVED_TEXT_MATCH` (id token or exact full name) | **M4** |
+| `document_relates_to_topic` | `DERIVED_TOPIC_MATCH` — supporting evidence only | **M4** |
 
-**Exactly four public queries. No generic traversal API in VS-01.**
+The first two rows are the **relationship model** (M2). The last two are **derived links** (M4)
+and are reached through the evidence interface below, never through the relationship API. The
+`EdgeBasis` vocabulary that names all four is M1's and is not redeclared.
+
+**Source-key joins: six exist in Layer 1, five are modelled in VS-01.** Strategy §2.2 inventories
+six source-key relationships; row two models five of them. `project_owned_by`
+(`projects.owner_source_id`) is deliberately **not** modelled: no query below needs a project's
+owner, and an edge no query asks for is an edge built on speculation — the failure mode §4 of the
+strategy gives as the reason for building slices instead of a horizontal graph. VS-02 adds it when
+pipeline ownership acquires a consumer.
+
+**Exactly three public relationship queries. No generic traversal API in VS-01.**
 
 1. `neighbourhood(customer)` → tickets, deals, projects, account owner
 2. `escalation_path(customer)` → account owner → manager, plus each open ticket's assignee → manager
-3. `documents_for(customer)` → derived links with basis, matched token and offsets
-4. `policy_documents()` → `document_type = 'policy'`
+3. `policy_documents()` → `document_type = 'policy'`
+
+**Derived document links are not a fourth relationship query.** `documents_for(customer)` →
+derived links with basis, matched token and offsets — is an **M4 evidence interface** exported
+from `app/evidence/`, outside the M2 relationship API (§A11).
+
+The dependency runs one way: `app/evidence` reads `app/relationships`, never the reverse. That
+is what makes §A11's rule — *no VS-01 signal is derived from any document link* — **structural
+rather than advisory**. The M3 signal engine is built against the relationship API, so it cannot
+reach a derived link at all; enforcement does not rest on a reviewer remembering the rule. It
+also keeps the two kinds of knowledge from being confused at the call site: a `CANONICAL_FK`
+edge is a provenance-backed fact, whereas a `DERIVED_TEXT_MATCH` link is an inference carrying
+`linker_version`, its matched token and the evidence a reviewer checks it against.
 
 ### A10. Signals (deterministic, computed at `as_of`)
 
@@ -225,6 +267,10 @@ Nodes: `Customer`, `SupportTicket`, `Deal`, `Project`, `Employee`, `Document`.
 
 ### A11. Derived document links
 
+**Owned by M4, not M2.** These links are produced by `app/evidence/linker.py` and read through
+`documents_for(customer)`, which `app/evidence/` exports. They are not edges of the M2
+relationship API (§A9), and Layer 1's `documents` table gains no customer reference to hold them.
+
 | Basis | Rule | May derive signals? | CUST-007 |
 |---|---|---|---|
 | `ID_TOKEN` | Canonical `source_id` appears as a whole token in title or body | Yes | DOC-005, DOC-006, DOC-009 |
@@ -241,6 +287,11 @@ reserved for later slices. This matters because DOC-005 is an `ID_TOKEN` match f
 states the escalation conclusion in prose, so §A25 test 4 must keep asserting exact equality of
 **every signal value** — that test is what stops a later slice from quietly making the conclusion
 document-derived.
+
+The same reasoning fixes the boundary in §A9: because `documents_for()` sits outside the
+relationship API that M3 is built against, "no signal is derived from a document link" is enforced
+by what the signal engine can import, not only by §A25 test 4. The test remains the second line of
+defence, not the first.
 
 ### A12. Money
 
@@ -373,7 +424,7 @@ text, customer email or monetary value in any log line.
 | Document text as instruction | Rendered only as quoted, length-capped, escaped evidence with id and span. The linker never treats body text as configuration |
 | Customer-scope leakage | A brief for X contains no other customer's identifiers — tested |
 | Analyst scope | Enforced by construction (§A14), not by convention |
-| No executor | Static test over the **transitive** import graph of `app/intelligence`, `app/relationships`, `app/analysts`, `app/decisions`: no outbound HTTP/SMTP/source-write path. Named exemptions use the I1 mechanism, each justified, and a test removes an exemption that is no longer needed |
+| No executor | Static test over the **transitive** import graph of `app/intelligence`, `app/relationships`, `app/evidence`, `app/analysts`, `app/decisions`: no outbound HTTP/SMTP/source-write path. The same test pins the §A9 dependency direction — `app/relationships` must not import `app/evidence`. Named exemptions use the I1 mechanism, each justified, and a test removes an exemption that is no longer needed |
 | Approver identity | Recorded but **asserted, not verified** — there is no authentication. A documented prerequisite for any future executor |
 
 ### A23. Failure modes
@@ -554,11 +605,15 @@ independent clean rebuilds. For the committed demo dataset at `source_system='cs
 **Objective.** One uniform way to ask what a customer is connected to, where every edge states
 *how it is known*.
 
-**Before.** Relationships exist as three FKs and six loose `source_id` strings.
+**Before.** Relationships exist as three FKs and six loose `source_id` strings, five of which
+VS-01 models (§A9).
 
 **Change.** `app/relationships/edges.py` (edge types and basis), `app/relationships/queries.py`
-(the four queries of §A9), `app/relationships/model.py` (assembly). Read-only; the caller owns
-the session, matching the existing repository convention.
+(the **three** relationship queries of §A9 — `neighbourhood`, `escalation_path`,
+`policy_documents`), `app/relationships/model.py` (assembly). Read-only; the caller owns
+the session, matching the existing repository convention. The package produces `CANONICAL_FK` and
+`SOURCE_KEY_JOIN` edges only; it constructs no `DerivedLink` and imports nothing from
+`app/evidence/`.
 
 **Tests.** Each edge type resolves on the demo dataset; a `SOURCE_KEY_JOIN` never crosses
 `source_system`; a NULL FK yields no edge rather than an error;
@@ -569,10 +624,11 @@ the session, matching the existing repository convention.
 **After.** Every later milestone reads relationships through one interface instead of ad-hoc
 joins.
 
-**Acceptance.** The four queries return the measured neighbourhoods; every returned edge carries
+**Acceptance.** The three queries return the measured neighbourhoods; every returned edge carries
 a basis.
 
-**Non-goals.** Derived document links (M4); any graph database; generic traversal.
+**Non-goals.** Derived document links and `documents_for()` — both M4 (§A9, §A11); any graph
+database; generic traversal; `project_owned_by` (§A9).
 
 ---
 
@@ -611,12 +667,21 @@ touching Layer 1.
 **Before.** Documents are unreachable from a customer.
 
 **Change.** `app/evidence/linker.py` (`ID_TOKEN`, `EXACT_NAME`, `TOPIC`),
-`app/evidence/citations.py` (build and resolve), `app/persistence/models/document_customer_link.py`,
+`app/evidence/documents.py` exporting **`documents_for(customer)`** — the evidence interface
+§A9 keeps out of the M2 relationship API — `app/evidence/citations.py` (build and resolve),
+`app/persistence/models/document_customer_link.py`,
 its repository, and the **first additive Alembic revision** (`document_customer_links`) branching
 from `8bfd73b6af60`. Links are derived inside an assessment run and stamped with `linker_version`
 and `layer1_fingerprint`.
 
-**Tests.** Id-token matching finds DOC-005/006/009 for CUST-007; exact-name finds DOC-006/009;
+`app/evidence/` may read `app/relationships/`; the reverse import is forbidden and §A22's boundary
+test pins the direction. M4 therefore **adds a package** rather than reopening M2's, and M2's
+"rollback = delete the package" property survives M4.
+
+**Tests.** `documents_for(CUST-007)` returns exactly the links below and nothing else — DOC-010
+carries neither the `CUST-007` token nor the name, so it is reachable only as a `TOPIC` link and
+never as a customer association; id-token matching finds DOC-005/006/009 for CUST-007;
+exact-name finds DOC-006/009;
 substring safety across the three "… Textiles" customers; NULL `body_text` skipped; spans resolve
 to the exact quoted text; record citations resolve to a real field; an adversarial document is
 quoted, never interpreted; downgrade drops only the new table.
@@ -625,7 +690,8 @@ quoted, never interpreted; downgrade drops only the new table.
 
 **Acceptance.** Links reproduce the measured expectation; every citation resolves.
 
-**Non-goals.** Embeddings; letting `TOPIC` links derive signals.
+**Non-goals.** Embeddings; letting `TOPIC` links derive signals; exposing `documents_for()` through
+`app/relationships/` (§A9); adding any customer reference to Layer 1's `documents` table.
 
 ---
 
@@ -770,5 +836,7 @@ exists.
 
 `M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8 → M9`
 
-M2 and M3 may overlap; M4 may start once M1 is done. Every other edge is a hard dependency.
+M2 and M3 may overlap; M4 may start once M1 is done — it adds `app/evidence/` rather than
+reopening `app/relationships/`, which is why it does not depend on M2 (§A9, §0.1 defect 17).
+Every other edge is a hard dependency.
 M6 is the milestone that must not be cut — without it the slice is a report, not a proof.
