@@ -103,12 +103,22 @@ These are **not** FKs. They are `source_id` strings that must be joined inside o
 
 These six are the **unresolved source-key joins**: the nine `*_source_id` carrier fields on
 canonical models, minus the three `customer_source_id` columns that `RESOLUTION_RULES` consumes
-into the FKs of §2.1. **VS-01 models five of them** — `Project → owner Employee` is left out
-because no VS-01 query needs a project's owner. The carrier field is present and the edge is a
-one-line addition whenever a slice acquires a consumer for it.
+into the FKs of §2.1. **VS-01 models four of them.** Two are deliberately left out:
+
+- `Project → owner Employee` — no VS-01 query needs a project's owner.
+- `Document → owner Employee` — no VS-01 query needs a document's owner, **and** exposing it
+  would create a Document → Employee → Customer path that treats stewardship as evidence. An
+  employee owns many documents and many customers and the sets are unrelated: EMP-007 owns both
+  Meridian's and Deltaforge's contracts while being the account owner of 16 customers. Employee
+  ownership of a document is **not** evidence that it belongs to, concerns or supports a
+  customer. Deriving Document → Customer is VS-01 M4's sole responsibility, via linking that
+  cites the text (plan §A9, §A9.2).
+
+Both carrier fields remain in Layer 1 and either edge is a one-line addition once a slice
+acquires a consumer.
 
 Plan §A9.1 fixes the counting convention and is the single source of truth for these numbers.
-Quote them qualified — "six unresolved source-key joins", "five modelled by VS-01" — never bare.
+Quote them qualified — "six unresolved source-key joins", "four modelled by VS-01" — never bare.
 
 ### 2.3 Relationships that do not exist in any form
 
@@ -276,7 +286,7 @@ needs it.**
 ### 5.1 Why not Neo4j in VS-01
 
 Every question VS-01 asks is answered by the **three resolved canonical FKs** of §2.1 and
-**five of the six unresolved source-key joins** of §2.2 (plan §A9.1). A second
+**four of the six unresolved source-key joins** of §2.2 (plan §A9.1). A second
 datastore would add a synchronisation path from Postgres, its own consistency and failure
 modes, a second test harness, and the risk of two divergent answers to the same question —
 buying nothing, because there is no multi-hop traversal in the slice.
@@ -833,7 +843,7 @@ payments, activities, headcount and capacity records. Not in scope for this proj
 
 | Proposed | Changed to | Reason |
 |---|---|---|
-| Neo4j knowledge graph in Layer 2 | Postgres relationship service behind a substrate-agnostic interface | VS-01's queries are 3 resolved canonical FKs and 5 of the 6 unresolved source-key joins (§2.1, §2.2, plan §A9.1); a second store buys nothing |
+| Neo4j knowledge graph in Layer 2 | Postgres relationship service behind a substrate-agnostic interface | VS-01's queries are 3 resolved canonical FKs and 4 of the 6 unresolved source-key joins (§2.1, §2.2, plan §A9.1); a second store buys nothing |
 | `Customer --HAS_DOCUMENT--> Document` edge | Derived link table with recorded basis and confidence, read through the evidence interface — **not** through the relationship API (plan §A9, §A11) | No such relationship exists in Layer 1 (§2.3) |
 | Blended numeric risk score | Ordinal band from a versioned decision table, with impact as a separate axis | A blended score demotes Meridian to ~12th and promotes a customer with one open ticket (§4.3) |
 | Risk signals evaluated against `now()` | Explicit `as_of` with a dataset-derived default | At `now()` = 2026-09-18, a 14-day window contains **zero** tickets (§2.7) |

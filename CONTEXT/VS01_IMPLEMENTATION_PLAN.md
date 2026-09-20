@@ -1,7 +1,19 @@
 # VS-01 — Customer Risk & Executive Escalation: Implementation Plan (v2)
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
 **v1 2026-09-18 · v2 2026-09-18 after adversarial review · v2.1 2026-09-20, M2/M4 boundary**
-**Status: PLANNED. Nothing in this document is implemented. Do not begin until approved.**
+
+**Status as of 2026-09-20 — per milestone, not per document:**
+
+| Milestone | Status | Evidence |
+|---|---|---|
+| **M0** — pre-flight baseline | **COMPLETE** | `CONTEXT/M0_BASELINE_REPORT.md`, `CONTEXT/M0_CLOSURE_REPORT.md`; commit `73f4007` |
+| **M1** — foundations and contracts | **COMPLETE** | `app/intelligence/`, `config/intelligence/risk_rules.yaml`; commit `29776e0`; fingerprint pinned `1d891b0b…` |
+| **M2** — relationship model | **SPECIFIED, NOT STARTED** | No `app/relationships/` exists. Specification reconciled by v2.1 (§0.1) |
+| **M3–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them |
+
+Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
+complete only when Part B says so above and a commit is named. Do not begin a milestone until the
+previous one is complete and approved.
 
 > Strategy context: `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md`
 > Layer 1 state: `CONTEXT/AI_CEO_PROJECT_CONTEXT.md`
@@ -51,6 +63,8 @@ convention. Documentation only; no code was written, and M2 has not started.
 | 19 | **The M2/M4 boundary was stated but not testable.** Prose alone cannot fail a build, and defect 17 shows prose alone did not even stay self-consistent | Medium | **§A9.2** states the boundary as rules, and M2 gains **invariants B1–B9**, led by *M2 emits zero document→customer edges*, asserted over every customer rather than CUST-007 alone. §A11 gains M4's mirror invariant, so the boundary is falsifiable from both sides |
 | 20 | **`employees.organization_id` was counted as a canonical FK** in strategy §2.1's "exactly three", while being a fourth column that is never populated | Low | Strategy §2.1 and §A9.1 now separate **resolved** FKs (3) from **declared-but-unresolvable** ones (1, always NULL — measured 0/24). It is a column, not an edge |
 | 21 | **A customer–document association was reachable without any derived link.** `document_owned_by` composed with `customer_owned_by` yields Document → Employee → Customer using only edges M2 may emit. B1 cannot see it, because the composition never forms a single Document–Customer edge | **High** | Named as the *ownership-composition hazard* in §A9.2 with measured evidence — EMP-007 owns Deltaforge's MSA *and* is Meridian's account owner — and forbidden by new invariant **B9**. Shared ownership is not evidence of a relationship |
+| 22 | **Defect 21 was closed by a test where it could be closed by construction.** Keeping `document_owned_by` while forbidding its composition left the dangerous first hop in the model, defended only by an invariant someone could later weaken | **High** | **`document_owned_by` is removed from M2's edge inventory** (§A9): it has no VS-01 consumer, and exposing it is unacceptable evidence semantics. M2 now emits no `Document` edge at all, so the composition has no first hop. §A9.1 row 6 falls 5 → 4; rows 1–5 are unchanged, because Layer 1 still holds the relationship. B9 is retained as defence in depth with a negative control, and M4 becomes the sole mechanism for any Document → Customer association |
+| 23 | **The document header claimed nothing was implemented**, while M0 and M1 were complete and committed | Medium | Replaced with a per-milestone status table naming the commit for each completed milestone. A9–A31 are restated as specification, not a build record |
 
 **The trap that made this worth writing down.** `policy_documents()` means M2 legitimately reads
 the `documents` table. An implementer who notices that can reason "M2 already touches documents,
@@ -221,7 +235,7 @@ Nodes: `Customer`, `SupportTicket`, `Deal`, `Project`, `Employee`, `Document`.
 | Edge | Basis | Produced by |
 |---|---|---|
 | `customer_has_ticket` / `customer_has_deal` / `customer_has_project` | `CANONICAL_FK` | M2 |
-| `customer_owned_by`, `ticket_assigned_to`, `deal_owned_by`, `employee_reports_to`, `document_owned_by` | `SOURCE_KEY_JOIN` (within one source system) | M2 |
+| `customer_owned_by`, `ticket_assigned_to`, `employee_reports_to`, `deal_owned_by` | `SOURCE_KEY_JOIN` (within one source system) | M2 |
 | `document_mentions_customer` | `DERIVED_TEXT_MATCH` (id token or exact full name) | **M4** |
 | `document_relates_to_topic` | `DERIVED_TOPIC_MATCH` — supporting evidence only | **M4** |
 
@@ -229,10 +243,43 @@ The first two rows are the **relationship model** (M2). The last two are **deriv
 and are reached through the evidence interface below, never through the relationship API. The
 `EdgeBasis` vocabulary that names all four is M1's and is not redeclared.
 
+**`document_owned_by` is deliberately absent, and its absence is load-bearing.**
+
+*The Layer 1 relationship is real.* `documents.owner_source_id` is a populated carrier field
+(§A9.1 row 4): every document in the corpus names an owning employee — DOC-003 is owned by
+EMP-004, DOC-006 and DOC-007 by EMP-007. Layer 1 records **who authored or stewards a document**,
+which is a genuine fact and stays available to any later slice that needs it.
+
+*VS-01 M2 does not expose it* for two independent reasons, either of which alone is sufficient:
+
+1. **No consumer.** None of the three queries below asks for a document's owner — the same test
+   that excludes `project_owned_by`.
+2. **Unacceptable evidence semantics.** Exposing it creates a Document → Employee → Customer
+   path that needs **no text matching at all**, composed entirely from edges M2 would be allowed
+   to emit (§A9.2).
+
+*Why ownership can never be customer–document evidence.* An employee owns many documents and
+many customers, and the two sets are unrelated. EMP-007 owns DOC-006 (*Meridian Textiles* MSA),
+**DOC-007 (*Deltaforge Analytics* MSA)** and DOC-009, and is simultaneously the account owner of
+**16** customers — including CUST-007 Meridian Textiles, CUST-021 Deltaforge Analytics, CUST-002
+Northstar Textiles and CUST-038 Meridian Foods. Treating ownership as evidence would place
+**Deltaforge's signed contract inside Meridian's executive brief**, and Meridian's MSA inside
+fifteen other customers' briefs. The stewardship fact says nothing about which customer a
+document concerns.
+
+> **Rule.** Employee ownership of a document is **not** evidence that the document belongs to,
+> concerns, or supports a customer. **M4's derived linking is the sole mechanism for deriving any
+> Document → Customer relationship in VS-01**, because only it cites the text that asserts the
+> relationship.
+
+Removing the edge makes this true **by construction** rather than by test: M2 emits no document
+edge of any kind, so no composition into a customer exists to be forbidden. Invariant B9 is
+retained as defence in depth against the same mistake being reintroduced (§A9.2).
+
 #### A9.1 Counting convention — what "3 FKs and N source-key joins" means
 
 Earlier drafts said "five" in one place and "six" in another because they were counting different
-things and neither said which. **Seven** quantities exist — five facts about Layer 1, then two
+things and neither said which. **Eight** quantities exist — five facts about Layer 1, then three
 about VS-01's scope. They are **not** interchangeable, and every document must name which one it
 means. The first five are read off the frozen Layer 1 code, not estimated.
 
@@ -244,23 +291,47 @@ means. The first five are read off the frozen Layer 1 code, not estimated.
 | 4 | **Source-key carrier fields** | **9** | Every `*_source_id` column on a canonical model |
 | 5 | **Unresolved source-key joins** | **6** | The **9** carrier fields of row 4 minus the **3** consumed by FK resolution (the `customer_source_id` columns): 9 − 3 = 6. These are strategy §2.2's six, joined by a consumer at query time within one `source_system` |
 
-Two further numbers are **scope**, not inventory, and must never be quoted as if they were facts
-about Layer 1:
+Rows 1–5 are **facts about Layer 1**. They do not move when VS-01 changes its mind: removing an
+edge from M2's surface changes what VS-01 *models*, never what Layer 1 *holds*. The next three
+numbers are **VS-01 scope** and must never be quoted as if they were Layer 1 facts:
 
 | # | Quantity | Count | Definition |
 |---|---|---|---|
-| 6 | **Source-key edges modelled by VS-01** | **5** | Row two of the edge table: the **6** of row 5 minus `project_owned_by` |
-| 7 | **Public relationship queries** | **3** | §A9's numbered list below |
+| 6 | **Source-key edge types modelled by M2** | **4** | Row two of the edge table: the **6** of row 5 minus `project_owned_by` and `document_owned_by`, neither of which any query consumes |
+| 7 | **Source-key edge types a query returns** | **3** | `customer_owned_by` (neighbourhood, escalation_path), `ticket_assigned_to` and `employee_reports_to` (escalation_path). See the note on row 6 vs row 7 below |
+| 8 | **Public relationship queries** | **3** | §A9's numbered list below |
 
 So the honest full sentence, which every document now uses, is: *VS-01 answers its questions with
-**3 resolved canonical FKs** and **5 of the 6 unresolved source-key joins**, through **3 public
-queries**.* A bare "six source-key joins" means row 5 — Layer 1's inventory — and a bare
-"five" means row 6 — VS-01's modelled subset. Neither is wrong; an unqualified number is.
+**3 resolved canonical FKs** and **4 of the 6 unresolved source-key joins**, through **3 public
+queries**.* A bare "six source-key joins" means row 5 — Layer 1's inventory — and a bare "four"
+means row 6 — VS-01's modelled subset. Neither is wrong; an unqualified number is.
 
-**Why `project_owned_by` is the one left out.** No query below needs a project's owner, and an
-edge no query asks for is an edge built on speculation — the failure mode strategy §4 gives as the
-reason for building vertical slices instead of a horizontal graph. The carrier field exists and
-the edge is a one-line addition whenever a slice acquires a consumer; VS-02 is the expected one.
+**What the `document_owned_by` removal did and did not change.** It changed **row 6 only**, 5 → 4.
+Rows 1–5 are unchanged, because `documents.owner_source_id` still exists and Layer 1 still holds
+six unresolved source-key joins. Row 8 is unchanged: no query was added or removed. The removal is
+therefore a narrowing of **M2's exposed surface**, not a change to the relationship inventory, and
+any document claiming Layer 1 "has five source-key joins" is wrong regardless of VS-01's scope.
+
+**Rows 6 and 7 differ by one, and the difference is `deal_owned_by`.** It is modelled but no
+query returns it: §A9's `neighbourhood` returns the **account** owner (`customer_owned_by`), not
+the deal's, and §A14's `CommercialAnalyst` context carries deals without naming their owner. It is
+retained because it is a commercial-ownership fact VS-02 is expected to consume, and because —
+unlike `document_owned_by` — a deal already carries a **resolved canonical FK** to its customer,
+so no one needs the ownership path to associate the two. **It is nonetheless the one remaining
+edge with no VS-01 consumer, and §A9.2 records the open question about it.**
+
+**Why `project_owned_by` and `document_owned_by` are the ones left out.** No query needs a
+project's or a document's owner, and an edge no query asks for is an edge built on speculation —
+the failure mode strategy §4 gives as the reason for building vertical slices instead of a
+horizontal graph. `document_owned_by` additionally fails on evidence semantics (§A9). Both carrier
+fields exist and either edge is a one-line addition once a slice acquires a consumer.
+
+**`Document` is an isolated node in M2.** After the removal above, no M2 edge has a `Document` as
+either source or target. `Document` remains in the node list because `policy_documents()` returns
+document **nodes**, but in M2's graph it has degree zero: there is no path of any length from a
+`Document` to a `Customer`, so no composition, join or traversal can manufacture one. Question A
+of the §A9.2 review — *can I derive Document → Customer from any M2 edge?* — is answered **no by
+construction**, not by policy. M4 connects the node.
 
 **Exactly three public relationship queries. No generic traversal API in VS-01.**
 
@@ -288,8 +359,8 @@ implementer reading only this section must not be able to arrive at document lin
 **M2 owns**
 
 - `app/relationships/{edges,queries,model}.py`, read-only, caller-owned session
-- edges over the **3 resolved canonical FKs** and the **5 modelled source-key joins** (§A9.1),
-  carrying exactly two bases: `CANONICAL_FK` and `SOURCE_KEY_JOIN`
+- edges over the **3 resolved canonical FKs** and the **4 modelled source-key joins** (§A9.1
+  row 6), carrying exactly two bases: `CANONICAL_FK` and `SOURCE_KEY_JOIN`
 - the three public queries, each with an explicit deterministic ordering
 
 **M2 must not**
@@ -300,6 +371,9 @@ implementer reading only this section must not be able to arrive at document lin
 - create, migrate or write any table — M2 adds **no** persistence and **no** Alembic revision
 - import `app/evidence/`, or read `documents.body_text` for matching purposes
 - expose `documents_for()` under any name
+- **emit any edge whose source or target is a `Document`, other than the document *nodes*
+  `policy_documents()` returns.** `document_owned_by` is excluded from the model (§A9), so M2
+  has no document edge to compose from
 
 **The `policy_documents()` trap.** M2 touches the `documents` table, through
 `policy_documents()`. That is deliberate — M3's band rules cite DOC-003, and M3 precedes M4 — and
@@ -309,27 +383,40 @@ Touching a table is not the same as relating it to a customer; invariants B1 and
 difference. This is the single most likely route by which an implementer would talk themselves
 into document linking inside M2, which is why it is named here rather than left implicit.
 
-**The ownership-composition hazard — the one B1 does not catch.** M2 legitimately emits
-`document_owned_by` (Document → **Employee**) and `customer_owned_by` (Customer → **Employee**).
-Composing them gives a Document → Employee → Customer path that requires **no text matching at
-all** and uses only edges M2 is allowed to produce. It is not a derived link, so §A11 does not
-govern it, and it is never a single Document–Customer edge, so **invariant B1 passes while the
-hazard is live**.
+**The ownership-composition hazard — closed by construction, then guarded anyway.** An earlier
+draft modelled `document_owned_by` (Document → **Employee**) alongside `customer_owned_by`
+(Customer → **Employee**). Composing them yields a Document → Employee → Customer path needing
+**no text matching at all**, built only from edges M2 was allowed to emit. It is not a derived
+link, so §A11 did not govern it; it is never a single Document–Customer edge, so **invariant B1
+could not see it**. Measured consequence on the demo dataset: **Deltaforge's MSA (DOC-007) inside
+Meridian's brief**, and Meridian's MSA inside fifteen other customers' — a breach of §A22's
+customer-scope-leakage control, and worse than the substring trap §A11 guards, because no fuzzy
+matching is involved.
 
-It is not hypothetical. Measured on the demo dataset: EMP-007 owns DOC-006 (*Meridian Textiles*
-MSA), **DOC-007 (*Deltaforge Analytics* MSA)** and DOC-009, and is also the account owner of 16
-customers — among them CUST-007 Meridian Textiles, CUST-021 Deltaforge Analytics, CUST-002
-Northstar Textiles and CUST-038 Meridian Foods. The composition would therefore attach
-**another customer's signed contract to Meridian's brief**, and attach Meridian's MSA to fifteen
-unrelated customers, including the two substring-trap neighbours. That breaches §A22's
-customer-scope-leakage control and is worse than the substring trap §A11 already guards, because
-no fuzzy matching is involved — it is pure FK composition.
+`document_owned_by` was therefore **removed from the model** (§A9). The hazard is now closed
+structurally: M2 emits no document edge, so the composition has no first hop and cannot be
+written, correctly or otherwise.
 
-**Rule.** Shared ownership is **not** evidence of a customer–document relationship. An employee
-owns many customers and many documents; the two sets are unrelated. No VS-01 query may compose an
-ownership edge with another ownership edge to reach a customer, and invariant **B9** asserts it.
-The only defensible customer–document association in VS-01 is M4's derived link, which cites the
-text that asserts it.
+**Rule (retained, and broader than the removed edge).** Shared ownership is **not** evidence of a
+relationship between the owned things. An employee owns many customers, many deals and many
+documents; those sets are unrelated. No M2 query may compose an ownership edge with another
+ownership edge to reach a customer. **M4's derived link, which cites the text asserting the
+relationship, is the sole mechanism for any Document → Customer association in VS-01.**
+
+Invariant **B9** is kept as **defence in depth**. It no longer compensates for an intentionally
+exposed edge — there is none — so its job is to fail the build if a future change reintroduces a
+document edge or composes ownership into a customer. An invariant that only holds because the
+dangerous edge is currently absent is exactly the one worth keeping when someone later adds it
+back for a plausible-sounding reason.
+
+**Open question — `deal_owned_by` (§A9.1, rows 6 vs 7).** It is the one modelled edge no VS-01
+query returns. It is kept because VS-02 is expected to consume it and because a deal already
+carries a resolved canonical FK to its customer, so the ownership path is never needed to relate
+the two — but the same "no consumer" argument that removed `document_owned_by` applies to it, and
+the 100%-coverage gate means an implementer must find a way to exercise it. Either identify its
+VS-01 consumer before M2 begins, or drop it to **3** modelled source-key joins and let VS-02 add
+it back. **This is the only open scope question in M2 and it is safe either way**, because the
+retained B9 rule forbids composing it into a customer regardless.
 
 **"Traversal" — a word to avoid.** The relationship model *traverses* in the ordinary sense: it
 follows FKs and joins source keys. It does **not** offer a generic, caller-directed traversal —
@@ -370,8 +457,17 @@ Layer 1's `documents` table gains no customer reference to hold them.
 
 **Mirror invariant (M4).** Where M2's B6 asserts `documents_for` does **not** exist in
 `app/relationships/`, M4 asserts it **does** exist in `app/evidence/` and that
-`app/relationships/` still does not export it. The two tests together make the boundary
-falsifiable from both sides, so neither package can quietly absorb the other's responsibility.
+`app/relationships/` still does not export it. M4 additionally re-runs M2's **B9(a)**: after
+`app/evidence/` exists, `app/relationships/` must *still* model no `Document` edge — so M4 cannot
+satisfy its own linking requirement by quietly adding one to M2's package. The tests together
+make the boundary falsifiable from both sides, so neither package can absorb the other's
+responsibility.
+
+**Sole ownership, stated without qualification.** With `document_owned_by` removed from M2 (§A9),
+M4's derived link is **the only** mechanism in VS-01 by which a `Document` and a `Customer` are
+ever related — there is no canonical FK, no source key, no composable ownership path, and no
+other query. Every customer–document association in a brief therefore carries a basis, a matched
+token and a citation into the text, or it does not exist.
 
 | Basis | Rule | May derive signals? | CUST-007 |
 |---|---|---|---|
@@ -626,7 +722,9 @@ Single source system; no cross-source entity resolution; document links derived,
 provenance-backed; `TOPIC` links are supporting only; no FX, so no cross-currency total;
 business days have no holiday calendar; the band is a policy artefact, not a probability;
 approver identity is asserted, not authenticated; the dataset is synthetic, 233 rows;
-`employees.organization_id` remains NULL.
+`employees.organization_id` remains NULL; **document stewardship is not modelled** —
+`documents.owner_source_id` exists in Layer 1 but VS-01 exposes no `document_owned_by` edge
+(§A9), so "which employee owns this document" is not answerable through the relationship model.
 
 ### A30. Reusable foundations this slice establishes
 
@@ -708,14 +806,16 @@ independent clean rebuilds. For the committed demo dataset at `source_system='cs
 *how it is known*.
 
 **Before.** Relationships exist as **3 resolved canonical FKs** and **6 unresolved source-key
-joins**, of which VS-01 models 5 (§A9.1 fixes the counting convention).
+joins**, of which VS-01 models 4 (§A9.1 fixes the counting convention). Documents are related to
+employees in Layer 1 and to **no customer at all**, in any form.
 
 **Change.** `app/relationships/edges.py` (edge types and basis), `app/relationships/queries.py`
 (the **three** relationship queries of §A9 — `neighbourhood`, `escalation_path`,
 `policy_documents`), `app/relationships/model.py` (assembly). Read-only; the caller owns
 the session, matching the existing repository convention. The package produces `CANONICAL_FK` and
-`SOURCE_KEY_JOIN` edges only; it constructs no `DerivedLink` and imports nothing from
-`app/evidence/`.
+`SOURCE_KEY_JOIN` edges only; it constructs no `DerivedLink`, imports nothing from
+`app/evidence/`, and **models no edge touching a `Document`** — `document_owned_by` is excluded
+(§A9), so the package has no document edge from which a customer association could be composed.
 
 **Tests — behaviour.** Each edge type resolves on the demo dataset; a `SOURCE_KEY_JOIN` never
 crosses `source_system`; a NULL FK yields no edge rather than an error;
@@ -738,14 +838,16 @@ association by another route, so they are written **before** the queries and nev
 | B7 | **Determinism and row-order independence.** | Every query is run twice in one session and once after `VACUUM`/reinsertion in a different physical order; results are compared for exact ordered equality. Each query carries an explicit `ORDER BY` over source identity, as §A5.1 requires of the fingerprint |
 | B8 | **Layer 1 is untouched.** | The M1 fingerprint recomputes to the pinned `1d891b0b…` after the M2 suite runs, and no `app/relationships/` module calls a session write method (the M1 `FORBIDDEN_WRITES` scan, extended to this package) |
 
-| B9 | **No ownership composition reaches a customer.** | `neighbourhood(CUST-007)` returns **no documents at all**. `document_owned_by` and `customer_owned_by` are never joined: a test composes them by hand, shows the join would attach DOC-007 (Deltaforge's MSA) to CUST-007, and asserts no M2 query produces that pairing. Covers the §A9.2 hazard that B1 structurally cannot |
+| B9 | **No document edge exists, and no ownership composition reaches a customer.** | Two parts, both defence in depth (§A9.2). **(a)** The edge vocabulary in `edges.py` contains no edge whose source or target is a `Document`; `document_owned_by` is absent by name, and no query returns a `Document` except as a bare node from `policy_documents()`. **(b)** The *would-be* composition is written out in the test as a negative control — join `documents.owner_source_id` to `customers.owner_source_id` directly in SQL, assert it yields the DOC-007 → CUST-007 pairing, then assert **no M2 query produces that pairing**. The control is what stops the test passing vacuously if the join silently stops returning rows |
 
 B1 is the load-bearing one: it is the executable form of *"M2 should explicitly be unable to
 produce a document→customer edge."* B3, B4 and B6 make that structural rather than incidental —
 B1 alone would still pass if someone wrote a linker that happened to return nothing on this
 dataset. **B9 covers the blind spot B1 has by construction**: a two-hop ownership composition
 never forms a Document–Customer edge, so B1 cannot see it, yet it produces exactly the false
-association the boundary exists to prevent.
+association the boundary exists to prevent. Since `document_owned_by` was removed from the model
+(§A9), B9(a) is what keeps it removed, and B9(b) documents — in executable form — the specific
+false association that removal prevents.
 
 **After.** Every later milestone reads relationships through one interface instead of ad-hoc
 joins.
@@ -753,8 +855,9 @@ joins.
 **Acceptance.** The three queries return the measured neighbourhoods; every returned edge carries
 a basis; **B1–B9 all pass**. M2 is not complete while any boundary invariant is unasserted.
 
-**Non-goals.** Derived document links and `documents_for()` — both M4 (§A9, §A11); any graph
-database; generic traversal; `project_owned_by` (§A9).
+**Non-goals.** Derived document links and `documents_for()` — both M4 (§A9, §A11); **any
+Document edge, including `document_owned_by`** (§A9); any graph database; generic traversal;
+`project_owned_by` (§A9).
 
 ---
 
