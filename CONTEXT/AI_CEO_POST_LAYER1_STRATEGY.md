@@ -103,9 +103,23 @@ These are **not** FKs. They are `source_id` strings that must be joined inside o
 
 These six are the **unresolved source-key joins**: the nine `*_source_id` carrier fields on
 canonical models, minus the three `customer_source_id` columns that `RESOLUTION_RULES` consumes
-into the FKs of §2.1. **VS-01 models four of them.** Two are deliberately left out:
+into the FKs of §2.1. **VS-01 models four of them, and its queries consume only three.**
+Membership is decided by whether a **named** slice needs the fact, not by whether a VS-01 query
+consumes it (plan §A9.1).
 
-- `Project → owner Employee` — no VS-01 query needs a project's owner.
+One is modelled without a VS-01 consumer:
+
+- `Deal → owner Employee` — **modelled as reusable substrate, consumed by no VS-01 query.** Deal
+  ownership is named by VS-02's per-owner pipeline aggregation (§10.2) and by VS-03's people map
+  (§10.3). Its presence in the model does **not** make it analytically meaningful to VS-01, and
+  **no VS-01 consumer may be invented for it** — plan invariant B10 proves the edge directly
+  instead. Decided 2026-09-20 (plan §A9.1, §A9.2).
+
+Two are deliberately left out:
+
+- `Project → owner Employee` — no VS-01 query needs a project's owner, and no planned slice names
+  it either: §10.3's people map lists the account owner, ticket assignees and the deal owner, and
+  omits it.
 - `Document → owner Employee` — no VS-01 query needs a document's owner, **and** exposing it
   would create a Document → Employee → Customer path that treats stewardship as evidence. An
   employee owns many documents and many customers and the sets are unrelated: EMP-007 owns both
@@ -118,7 +132,8 @@ Both carrier fields remain in Layer 1 and either edge is a one-line addition onc
 acquires a consumer.
 
 Plan §A9.1 fixes the counting convention and is the single source of truth for these numbers.
-Quote them qualified — "six unresolved source-key joins", "four modelled by VS-01" — never bare.
+Quote them qualified — "six unresolved source-key joins", "four modelled by VS-01", "three
+returned by a VS-01 query" — never bare.
 
 ### 2.3 Relationships that do not exist in any form
 
@@ -286,7 +301,8 @@ needs it.**
 ### 5.1 Why not Neo4j in VS-01
 
 Every question VS-01 asks is answered by the **three resolved canonical FKs** of §2.1 and
-**four of the six unresolved source-key joins** of §2.2 (plan §A9.1). A second
+**three of the six unresolved source-key joins** of §2.2; the model carries a fourth,
+`deal_owned_by`, as substrate no VS-01 query consumes (plan §A9.1). A second
 datastore would add a synchronisation path from Postgres, its own consistency and failure
 modes, a second test harness, and the risk of two divergent answers to the same question —
 buying nothing, because there is no multi-hop traversal in the slice.
@@ -843,7 +859,7 @@ payments, activities, headcount and capacity records. Not in scope for this proj
 
 | Proposed | Changed to | Reason |
 |---|---|---|
-| Neo4j knowledge graph in Layer 2 | Postgres relationship service behind a substrate-agnostic interface | VS-01's queries are 3 resolved canonical FKs and 4 of the 6 unresolved source-key joins (§2.1, §2.2, plan §A9.1); a second store buys nothing |
+| Neo4j knowledge graph in Layer 2 | Postgres relationship service behind a substrate-agnostic interface | VS-01 models 3 resolved canonical FKs and 4 of the 6 unresolved source-key joins, and its queries traverse only 3 of the latter (§2.1, §2.2, plan §A9.1); a second store buys nothing |
 | `Customer --HAS_DOCUMENT--> Document` edge | Derived link table with recorded basis and confidence, read through the evidence interface — **not** through the relationship API (plan §A9, §A11) | No such relationship exists in Layer 1 (§2.3) |
 | Blended numeric risk score | Ordinal band from a versioned decision table, with impact as a separate axis | A blended score demotes Meridian to ~12th and promotes a customer with one open ticket (§4.3) |
 | Risk signals evaluated against `now()` | Explicit `as_of` with a dataset-derived default | At `now()` = 2026-09-18, a 14-day window contains **zero** tickets (§2.7) |
