@@ -9,8 +9,8 @@ v2.2 2026-09-20, `deal_owned_by` scope decision**
 |---|---|---|
 | **M0** — pre-flight baseline | **COMPLETE** | `CONTEXT/M0_BASELINE_REPORT.md`, `CONTEXT/M0_CLOSURE_REPORT.md`; commit `73f4007` |
 | **M1** — foundations and contracts | **COMPLETE** | `app/intelligence/`, `config/intelligence/risk_rules.yaml`; commit `29776e0`; fingerprint pinned `1d891b0b…` |
-| **M2** — relationship model | **SPECIFIED, NOT STARTED** | No `app/relationships/` exists. Specification reconciled by v2.1 and closed by v2.2 (§0.1); **no open scope question remains** |
-| **M3–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them |
+| **M2** — relationship model | **COMPLETE** | `app/relationships/` — 7 edge types, 3 queries, no persistence; `tests/unit/test_m2_boundary.py` and `tests/integration/test_m2_relationships.py`; B1–B10 all asserted |
+| **M3–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. `app/evidence/` (M4) does not exist |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -291,7 +291,7 @@ means. The first five are read off the frozen Layer 1 code, not estimated.
 | # | Quantity | Count | Definition and source of truth |
 |---|---|---|---|
 | 1 | **Canonical FK columns** (entity → entity) | **4** | `ForeignKey(...)` on a canonical model, excluding provenance FKs: `deals.customer_id`, `projects.customer_id`, `support_tickets.customer_id`, `employees.organization_id` |
-| 2 | **Resolved canonical FKs** | **3** | Entries in `RESOLUTION_RULES` (`app/ingestion/reconciliation.py`) with a non-null `source_key_field` — the three `customer_source_id` rules. These are the only `CANONICAL_FK` edges VS-01 can emit |
+| 2 | **Resolved canonical FKs** | **3** | Entries in `REFERENCE_RULES` (`app/ingestion/reconciliation.py`) with a non-null `source_key_field` — the three `customer_source_id` rules. These are the only `CANONICAL_FK` edges VS-01 can emit |
 | 3 | **Declared-but-unresolvable FKs** | **1** | `employees.organization_id`: its rule carries `source_key_field=None`, so it is never populated. Measured: 24 employees, **0** non-null. A B1/B2 contract gap (§A29), not an edge |
 | 4 | **Source-key carrier fields** | **9** | Every `*_source_id` column on a canonical model |
 | 5 | **Unresolved source-key joins** | **6** | The **9** carrier fields of row 4 minus the **3** consumed by FK resolution (the `customer_source_id` columns): 9 − 3 = 6. These are strategy §2.2's six, joined by a consumer at query time within one `source_system` |

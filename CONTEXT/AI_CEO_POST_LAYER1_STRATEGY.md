@@ -73,7 +73,7 @@ documents. Downstream design must be built on these facts.
 ### 2.1 Canonical relationships that exist
 
 `app/ingestion/reconciliation.py` defines **exactly three resolved** canonical foreign keys —
-the three whose `RESOLUTION_RULES` entry carries a non-null `source_key_field`:
+the three whose `REFERENCE_RULES` entry carries a non-null `source_key_field`:
 
 | Relationship | Mechanism | Reliability |
 |---|---|---|
@@ -102,7 +102,7 @@ These are **not** FKs. They are `source_id` strings that must be joined inside o
 | Document → owner Employee | `documents.owner_source_id` |
 
 These six are the **unresolved source-key joins**: the nine `*_source_id` carrier fields on
-canonical models, minus the three `customer_source_id` columns that `RESOLUTION_RULES` consumes
+canonical models, minus the three `customer_source_id` columns that `REFERENCE_RULES` consumes
 into the FKs of §2.1. **VS-01 models four of them, and its queries consume only three.**
 Membership is decided by whether a **named** slice needs the fact, not by whether a VS-01 query
 consumes it (plan §A9.1).

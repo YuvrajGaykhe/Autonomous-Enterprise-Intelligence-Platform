@@ -155,8 +155,17 @@ def test_every_read_of_a_canonical_table_is_explicitly_ordered():
     assert source.count(".order_by(") + source.count("func.max(") == selects
 
 
-def test_nothing_outside_the_package_depends_on_it_yet():
-    """M1's rollback is deleting the package, which only holds while nothing imports it."""
+def test_only_the_relationship_model_depends_on_the_foundation():
+    """
+    The planned DAG, asserted from M1's side: app.intelligence is read by
+    app.relationships (M2) and by nothing else yet.
+
+    Before M2 this asserted no importer at all, because M1's rollback was
+    deleting the package. M2 is the first planned consumer (plan A9: the
+    EdgeBasis vocabulary is M1's and is not redeclared), so the assertion
+    names it rather than being relaxed: an importer that is not M2 still
+    fails the build, and so does an M2 module that stops importing M1.
+    """
     importers = []
     for directory in ("app", "scripts", "migrations", "docker"):
         for path in sorted((REPO / directory).rglob("*.py")):
@@ -166,7 +175,8 @@ def test_nothing_outside_the_package_depends_on_it_yet():
             if any(module.startswith("app.intelligence") for module in _imported_modules(tree)):
                 importers.append(path.relative_to(REPO).as_posix())
 
-    assert importers == []
+    assert importers, "the scan found no importer, so it would pass if M1 were unused"
+    assert all(name.startswith("app/relationships/") for name in importers), importers
 
 
 @pytest.mark.parametrize("path", [
