@@ -9,7 +9,7 @@ v2.2 2026-09-20, `deal_owned_by` scope decision**
 |---|---|---|
 | **M0** — pre-flight baseline | **COMPLETE** | `CONTEXT/M0_BASELINE_REPORT.md`, `CONTEXT/M0_CLOSURE_REPORT.md`; commit `73f4007` |
 | **M1** — foundations and contracts | **COMPLETE** | `app/intelligence/`, `config/intelligence/risk_rules.yaml`; commit `29776e0`; fingerprint pinned `1d891b0b…` |
-| **M2** — relationship model | **COMPLETE** | `app/relationships/` — 7 edge types, 3 queries, no persistence; `tests/unit/test_m2_boundary.py` and `tests/integration/test_m2_relationships.py`; B1–B10 all asserted |
+| **M2** — relationship model | **COMPLETE** | `app/relationships/` — 7 edge types, 3 queries, no persistence; `tests/unit/test_m2_boundary.py` and `tests/integration/test_m2_relationships.py`; commit `bc0525d`; B1–B10 all asserted |
 | **M3–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. `app/evidence/` (M4) does not exist |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
