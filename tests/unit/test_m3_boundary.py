@@ -27,9 +27,13 @@ assertion here rather than a paragraph in the plan.
                           parts. M3 imports the three public queries only.
 
 The M4 boundary is asserted from M3's side as well: no M3 module names a
-derived link, a linker version or a matched token, and app/evidence does not
-exist yet. Plan A11's rule - no VS-01 signal is derived from a document link
-- is therefore a property of what the signal engine can import.
+derived link, a linker version or a matched token. The assertion that
+app/evidence does not exist was removed when M4 created it (plan T1); its
+purpose - "M4 has not started, so M3 must not have started it either" -
+expired exactly then, and the two assertions beside it are the whole of M3's
+side of the boundary now. That app/evidence exists is not permission for M3
+to reach it. Plan A11's rule - no VS-01 signal is derived from a document
+link - is therefore a property of what the signal engine can import.
 """
 
 from __future__ import annotations
@@ -200,13 +204,8 @@ def test_only_the_three_customer_carrying_entities_are_inspected_for_data_qualit
 
 
 # ---------------------------------------------------------------------------
-# M4 is unreachable, and absent
+# M4 is unreachable
 # ---------------------------------------------------------------------------
-
-
-def test_app_evidence_does_not_exist():
-    """M4 has not started. M3 must not have started it either."""
-    assert not (REPO / "app" / "evidence").exists()
 
 
 @pytest.mark.parametrize("name", M3_MODULES)

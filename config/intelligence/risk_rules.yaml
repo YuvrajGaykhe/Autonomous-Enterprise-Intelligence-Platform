@@ -17,6 +17,17 @@ version: 1
 # rather than silently overwriting the old conclusion.
 rules_version: 1
 
+# The matching rules M4 derives document links with. A string, not an int
+# like rules_version, because DerivedLink requires a non-empty string and the
+# frozen contract wins over this file's local convention.
+#
+# Bumped whenever a linker change can alter which links are derived, which
+# token is matched, or where a span falls. A refactor that provably cannot
+# change any emitted link does not bump it. A bump APPENDS: rows carrying the
+# previous version are retained and stay attributable to it, and no migration,
+# backfill or rewrite accompanies one.
+linker_version: "1"
+
 # Plan A27: the acceptance scenario is evaluated at a fixed date. now() is
 # forbidden everywhere in Layer 2, so every asserted value stays reproducible.
 # The ad-hoc fallback, max(support_tickets.created_at), resolves to

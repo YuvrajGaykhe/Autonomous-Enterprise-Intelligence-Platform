@@ -51,6 +51,9 @@ M3_MODULES = {
     "app/intelligence/bands.py",
 }
 ALLOWED_LAYER2_IMPORTS = {"app.relationships"}
+#: The Layer 2 packages permitted to import M1's foundation. Extended when a
+#: milestone legitimately becomes a consumer, never relaxed to a substring.
+LAYER2_PACKAGES = ("app/relationships/", "app/evidence/")
 #: Session methods that would write. The package reads; the caller owns the
 #: transaction, matching the repository convention.
 FORBIDDEN_WRITES = {"commit", "rollback", "add", "add_all", "flush", "delete", "merge",
@@ -206,7 +209,7 @@ def test_only_the_relationship_model_depends_on_the_foundation():
                 importers.append(path.relative_to(REPO).as_posix())
 
     assert importers, "the scan found no importer, so it would pass if M1 were unused"
-    assert all(name.startswith("app/relationships/") for name in importers), importers
+    assert all(name.startswith(LAYER2_PACKAGES) for name in importers), importers
 
 
 @pytest.mark.parametrize("path", [

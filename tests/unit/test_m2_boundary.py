@@ -240,19 +240,11 @@ def test_the_transitive_scan_would_catch_a_reintroduced_evidence_import():
 
 
 # --- B6: documents_for does not exist in M2 ---------------------------------
-
-def test_documents_for_does_not_exist_in_the_package():
-    """B6. Deleted when M4 adds it to app/evidence/, where a mirror test asserts it does."""
-    import app.relationships as package
-
-    assert not hasattr(package, "documents_for")
-    assert "documents_for" not in package.__all__
-    for name, tree in _modules():
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-                assert "documents_for" not in node.name, f"{name}: def {node.name}"
-            if isinstance(node, ast.Name):
-                assert node.id != "documents_for", name
+#
+# Moved, not dropped (plan T3). M4 owns documents_for, so the invariant is
+# now two-sided and both halves live together in tests/unit/test_m4_boundary.py:
+# it exists in app/evidence/, and app/relationships/ still does not export it.
+# app/relationships/ itself is untouched and stays byte-identical to bc0525d.
 
 
 def test_no_public_traversal_api_exists():

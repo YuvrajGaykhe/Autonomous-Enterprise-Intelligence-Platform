@@ -4,6 +4,8 @@ Configuration for the Layer 2 risk rules (config/intelligence/risk_rules.yaml).
 The file carries what the foundation needs and what M3 measures with:
 
     rules_version         the version every assessment identity is bound to
+    linker_version        the M4 document-linker version every derived link
+                          is stamped with, as a non-empty string
     acceptance_as_of      the pinned evaluation date (plan A27), so no
                           acceptance run ever depends on a clock
     layer1_fingerprints   the Layer 1 snapshot each source system is
@@ -64,6 +66,7 @@ class RiskRulesConfig:
     """Complete, validated, immutable Layer 2 risk-rule configuration."""
 
     rules_version: int
+    linker_version: str
     acceptance_as_of: date
     layer1_fingerprints: Mapping[str, str]
     lookback_days: int
@@ -97,13 +100,15 @@ def load_risk_rules(path: str | Path) -> RiskRulesConfig:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
         raise IntelligenceConfigError(f"{where}: invalid YAML: {exc}") from exc
-    data = _section(data, where, {"version", "rules_version", "acceptance_as_of",
-                                  "layer1_fingerprints", "lookback_days",
-                                  "sla_resolution_targets", "escalation", "bands"})
+    data = _section(data, where, {"version", "rules_version", "linker_version",
+                                  "acceptance_as_of", "layer1_fingerprints",
+                                  "lookback_days", "sla_resolution_targets",
+                                  "escalation", "bands"})
     if data["version"] != 1:
         raise IntelligenceConfigError(f"{where}: unsupported version {data['version']!r}")
     return RiskRulesConfig(
         rules_version=_positive_int(data["rules_version"], f"{where}: rules_version"),
+        linker_version=_non_empty_text(data["linker_version"], f"{where}: linker_version"),
         acceptance_as_of=_plain_date(data["acceptance_as_of"], f"{where}: acceptance_as_of"),
         layer1_fingerprints=_fingerprints(data["layer1_fingerprints"],
                                           f"{where}: layer1_fingerprints"),
@@ -198,6 +203,20 @@ def _section(data: object, loc: str, expected: set[str]) -> dict[str, object]:
 def _positive_int(value: object, loc: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
         raise IntelligenceConfigError(f"{loc}: expected an integer of at least 1")
+    return value
+
+
+def _non_empty_text(value: object, loc: str) -> str:
+    """
+    A non-empty string.
+
+    Deliberately not modelled on rules_version's positive int: DerivedLink
+    validates linker_version as a non-empty string, so a YAML integer would
+    be refused by the frozen contract at link-construction time rather than
+    here. Refusing it at load is what plan A23 asks for.
+    """
+    if not isinstance(value, str) or not value.strip():
+        raise IntelligenceConfigError(f"{loc}: expected a non-empty string")
     return value
 
 

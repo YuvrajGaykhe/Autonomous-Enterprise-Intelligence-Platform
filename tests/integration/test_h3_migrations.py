@@ -46,7 +46,14 @@ OPERATIONAL_TABLES = (
     "ingestion_runs", "ingestion_errors", "source_records",
     "connector_configs", "ingestion_cursors",
 )
-EXPECTED_TABLES = frozenset(CANONICAL_TABLES + OPERATIONAL_TABLES)
+#: Additive Layer 2 tables (plan A18). The set is EXTENDED as each milestone
+#: adds one, never weakened to a subset check: a table nobody declared here
+#: must still fail the build. Layer 1's own tables, columns, constraints and
+#: indexes are unaltered by any of them.
+LAYER2_TABLES = (
+    "document_customer_links",
+)
+EXPECTED_TABLES = frozenset(CANONICAL_TABLES + OPERATIONAL_TABLES + LAYER2_TABLES)
 
 
 def _alembic_config(url: str) -> Config:

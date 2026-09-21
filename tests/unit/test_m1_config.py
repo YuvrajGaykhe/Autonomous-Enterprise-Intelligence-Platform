@@ -25,11 +25,15 @@ from app.intelligence.errors import IntelligenceConfigError
 CSV_DEMO_FINGERPRINT = "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
 
 #: A complete file. M3 added lookback_days, the DOC-003 targets and window,
-#: and the band table; the loader refuses unknown *and* missing keys, so a
-#: minimal fixture has to carry every section the committed file carries.
+#: and the band table, and M4 added linker_version; the loader refuses
+#: unknown *and* missing keys, so a minimal fixture has to carry every
+#: section the committed file carries. Each milestone that adds a required
+#: key EXTENDS this fixture - the loader's strictness is the thing being
+#: tested, so it is never relaxed to let an incomplete fixture through.
 VALID = {
     "version": 1,
     "rules_version": 1,
+    "linker_version": "1",
     "acceptance_as_of": date(2026, 9, 18),
     "layer1_fingerprints": {"csv_demo": CSV_DEMO_FINGERPRINT},
     "lookback_days": 90,
@@ -141,6 +145,28 @@ def test_an_unknown_key_is_refused_so_a_new_section_arrives_deliberately(tmp_pat
 def test_the_rules_version_must_be_a_positive_integer(tmp_path, rules_version):
     with pytest.raises(IntelligenceConfigError, match="integer of at least 1"):
         load_with(tmp_path, rules_version=rules_version)
+
+
+def test_the_linker_version_loads_as_a_non_empty_string(tmp_path):
+    """
+    Plan §0.3.5. Deliberately a STRING where rules_version is an int:
+    DerivedLink validates linker_version with a non-empty-string rule, and
+    the frozen contract wins over this file's local integer convention.
+    """
+    config = load_with(tmp_path, linker_version="7")
+
+    assert config.linker_version == "7"
+    assert isinstance(config.rules_version, int)
+
+
+@pytest.mark.parametrize("linker_version", ["", "   ", 1, 1.0, True, None, ["1"]])
+def test_the_linker_version_must_be_a_non_empty_string(tmp_path, linker_version):
+    """
+    Refused at load naming the broken key (plan A23), rather than surfacing
+    later as a ContractViolationError when the first link is constructed.
+    """
+    with pytest.raises(IntelligenceConfigError, match="expected a non-empty string"):
+        load_with(tmp_path, linker_version=linker_version)
 
 
 @pytest.mark.parametrize("as_of", ["2026-09-18", 20260918, None])

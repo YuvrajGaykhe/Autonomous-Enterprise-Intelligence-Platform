@@ -1,7 +1,7 @@
 """
 ORM model package for Layer 1.
 
-Importing this module registers all 12 models with Base.metadata,
+Importing this module registers all 13 models with Base.metadata,
 which is required for Alembic autogenerate to detect them.
 
 Canonical entities (7): Organization, Employee, Customer, Deal,
@@ -9,6 +9,9 @@ Canonical entities (7): Organization, Employee, Customer, Deal,
 
 Operational tables (5): IngestionRun, IngestionError, SourceRecord,
                         ConnectorConfig, IngestionCursor
+
+Layer 2 tables (1):     DocumentCustomerLink (VS-01 M4). Additive: it holds
+                        derived links and changes no canonical table.
 """
 
 from app.persistence.models.organization import Organization
@@ -23,6 +26,7 @@ from app.persistence.models.ingestion_error import IngestionError
 from app.persistence.models.source_record import SourceRecord
 from app.persistence.models.connector_config import ConnectorConfig
 from app.persistence.models.ingestion_cursor import IngestionCursor
+from app.persistence.models.document_customer_link import DocumentCustomerLink
 
 __all__ = [
     "Organization",
@@ -37,4 +41,5 @@ __all__ = [
     "SourceRecord",
     "ConnectorConfig",
     "IngestionCursor",
+    "DocumentCustomerLink",
 ]

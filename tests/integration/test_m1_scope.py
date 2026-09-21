@@ -438,12 +438,13 @@ def test_a_caller_may_supply_its_own_rules_configuration(demo):
     Scope resolution reads only the pin, but the type is whole.
 
     M3 added the lookback, DOC-003's targets and window, and the band
-    table, so a hand-built configuration has to carry them. Only the
-    fingerprint pin is what this test is about.
+    table, and M4 added the linker version, so a hand-built configuration
+    has to carry them all. Only the fingerprint pin is what this test is
+    about.
     """
     committed = default_risk_rules()
     config = RiskRulesConfig(
-        rules_version=9, acceptance_as_of=ACCEPTANCE_AS_OF,
+        rules_version=9, linker_version="9", acceptance_as_of=ACCEPTANCE_AS_OF,
         layer1_fingerprints={"csv_demo": PINNED},
         lookback_days=committed.lookback_days,
         sla_resolution_targets=committed.sla_resolution_targets,
