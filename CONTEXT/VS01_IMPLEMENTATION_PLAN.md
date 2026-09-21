@@ -1,16 +1,17 @@
 # VS-01 — Customer Risk & Executive Escalation: Implementation Plan (v2)
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
 **v1 2026-09-18 · v2 2026-09-18 after adversarial review · v2.1 2026-09-20, M2/M4 boundary ·
-v2.2 2026-09-20, `deal_owned_by` scope decision**
+v2.2 2026-09-20, `deal_owned_by` scope decision · v2.3 2026-09-21, M3 closure**
 
-**Status as of 2026-09-20 — per milestone, not per document:**
+**Status as of 2026-09-21 — per milestone, not per document:**
 
 | Milestone | Status | Evidence |
 |---|---|---|
 | **M0** — pre-flight baseline | **COMPLETE** | `CONTEXT/M0_BASELINE_REPORT.md`, `CONTEXT/M0_CLOSURE_REPORT.md`; commit `73f4007` |
 | **M1** — foundations and contracts | **COMPLETE** | `app/intelligence/`, `config/intelligence/risk_rules.yaml`; commit `29776e0`; fingerprint pinned `1d891b0b…` |
 | **M2** — relationship model | **COMPLETE** | `app/relationships/` — 7 edge types, 3 queries, no persistence; `tests/unit/test_m2_boundary.py` and `tests/integration/test_m2_relationships.py`; commit `bc0525d`; B1–B10 all asserted |
-| **M3–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. `app/evidence/` (M4) does not exist |
+| **M3** — signal engine and risk band | **COMPLETE** | `app/intelligence/{windows,signals,bands}.py` and the populated band table in `config/intelligence/risk_rules.yaml`; `tests/unit/test_m3_{windows,bands,boundary}.py` and `tests/integration/test_m3_signals.py`; commit `34486eb`; closure §0.2 |
+| **M4–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. `app/evidence/` (M4) does not exist |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -83,6 +84,143 @@ interfaces, with `app/evidence` reading `app/relationships` and never the revers
 central rule — *no VS-01 signal is derived from any document link* — into a structural property
 of the import graph rather than a rule a reviewer must remember. It also preserves M2's stated
 rollback property: M4 adds a package instead of reopening M2's.
+
+---
+
+## 0.2 What M3 closure recorded, 2026-09-21
+
+Implementation commit **`34486eb`**. Measured at closure: suite **4731** (unit 3834, contract
+185, integration 632, e2e 80), `app/` coverage **100%**, ruff **69**, mypy **9**, secret scan
+**0** over 258 files, Layer 1 fingerprint `1d891b0b…` unchanged, `app/relationships/`
+byte-identical to `bc0525d`. Mutation audit over the signal engine, the windows and the band
+table: **28 of 29 killed** (§0.2.4).
+
+### 0.2.1 The band decision table is authored, not specified
+
+**This is the entry a reader is most likely to get wrong, so it is stated first.** Neither this
+plan nor the strategy ever stated a band threshold. §A5 fixes the four band *names* and says a
+versioned decision table in configuration assigns them; §A10 fixes which seven signals may be
+*inputs*; §A15 and §A27 fix what the *outcome* must be. The rows themselves did not exist
+before M3 and were written by the implementer to reproduce that outcome.
+
+Provenance of every rule and constant M3 introduced. **A** = stated by this plan, **B** = stated
+by the strategy, **C** = forced by a pinned acceptance or example value, **D** = authored
+implementation choice.
+
+| Rule or constant | Class | Evidence |
+|---|---|---|
+| Four band names, ordinal, assigned by a versioned table in configuration | **A** | §A5; strategy §4.2 |
+| Band inputs limited to S1, S2, S3, S4, S5, S6, S8 | **A** | §A10 "band input: yes" |
+| S7, S9, S10, S11–S15 may not be band inputs | **A**, **B** | §A10; strategy §4.3 (money), §4.4 (chronic backlog) |
+| `escalation.window_days: 14`, `ticket_threshold: 3` | **A** | §A5, quoted from DOC-003 |
+| `sla_resolution_targets: {high: 1, medium: 5}` | **A** | §A5, quoted from DOC-003 |
+| `lookback_days: 90` | **B** | strategy §4.4: "constrained to a recency lookback from `as_of` (default 90 days)" |
+| Ordering `band ↓, S8 ↓, S4 ↓, source_id ↑` | **A** | §A15 |
+| Default band `NONE` when no rule is satisfied | **A**, **C** | §A5; §A23 ticketless → `NONE`; §A25 test 10 |
+| `R-CRIT-001` — `S5` **and** `S8 ≥ 2` → `CRITICAL` | **D** | Chosen so CUST-007 is the only `CRITICAL` customer (M3 *Acceptance*, §A25 test 1) **and** so `CRITICAL` requires `S5`, which is what makes §A25 test 11 observable: raising DOC-003's threshold 3 → 6 de-escalates CUST-007 and drops the band |
+| `R-ELEV-001` — `S5` → `ELEVATED` | **D** | Strategy §4.4 names the escalation state the *primary discriminator*; the band it maps to is authored. Keeps a de-escalated CUST-007 at `ELEVATED`, which §A15's conflict policy needs (`support_band_at_least: ELEVATED`) |
+| `R-ELEV-002` — `S8 ≥ 2` → `ELEVATED` | **D** | Authored. No customer other than CUST-007 reaches it on the demo dataset |
+| `R-WATCH-001` — `S8 ≥ 1` → `WATCH` | **D** | Authored. Produces the only two non-CUST-007 banded customers, CUST-025 and CUST-036 |
+| `R-WATCH-002` — `S4 ≥ 2` **and** `S6 ≤ 30` → `WATCH` | **D** | Authored, for §A5's "active deterioration": velocity plus recency. The 30-day recency bound is authored |
+| `R-WATCH-003` — `S1 ≥ 2` → `WATCH` | **D** | Authored |
+| Chronic backlog (S9) = open **and** past its SLA target **and** created before the lookback window | **D** | §A5 defines it as "far past target but isolated in time" with no number. Chosen to reproduce §A10's pinned `S9 = 0` for CUST-007 while making TKT-010 (CUST-009) and TKT-005 (CUST-048) the backlog cases strategy §4.4 names. Introduces no threshold beyond `lookback_days` |
+| Window tie → earliest start; category tie → lexicographically smallest | **D** | §A24 requires determinism; the tiebreaks themselves are authored |
+| A ticket is open at `as_of` when it carries no resolution date on or before `as_of` | **D** | §A5 measures open tickets created→`as_of`, but never says which column decides. The resolution *date* decides, not `status`, so a ticket resolved after `as_of` is open at `as_of` |
+
+**Nothing in class D is frozen architecture.** Each is a configuration row or a documented
+convention that a later milestone may revise, provided §A27's acceptance criteria still hold.
+
+**Measured consequence of the authored table**, recorded so M7 and M6 are not surprised. At
+`ACCEPTANCE_AS_OF` the 50 customers band as: `CRITICAL` CUST-007 (1); `ELEVATED` none;
+`WATCH` CUST-025 and CUST-036 (2); `NONE` the remaining 47, which include all 15 ticketless
+customers. **Three** customers are therefore band ≥ `WATCH` and would receive a brief under
+§0's defect-11 decision. CUST-007's band is ≥ `ELEVATED`, so §A15's conflict-policy
+precondition is met.
+
+**One measured caveat for M5.** §A16 says CUST-007 triggers all six non-`NO_ACTION` actions at
+the pinned `as_of`. Five of the six are decidable from M3's `SignalSet` alone and all five hold
+for CUST-007: `S5` is true, `S11 > 0`, `S8 = 3`, an active `negotiation` deal exists, and its
+probability is 90. The sixth, `REVIEW_INVOICE_DISPUTE`, requires *an open `billing` ticket* —
+ticket-level detail no signal carries, since `S10` reports only the dominant category
+(`performance`). The precondition is satisfied on the data (TKT-079 is an open `billing`
+ticket), but it must be evaluated from the ticket rows §A14 already puts in the
+`SupportRiskAnalyst` context, not from the signal set. **M3's `SignalSet` is not by itself a
+sufficient input to the §A16 catalogue**, and no signal was added to make it one.
+
+### 0.2.2 Recorded specification gap — NULL `created_at`
+
+**Affected field:** `support_tickets.created_at` (nullable in Layer 1; not required by D1).
+
+**Current M3 behaviour.** A ticket with a NULL `created_at` cannot be placed on any UTC date, so
+it enters no window, no lookback, no recency and no SLA arithmetic. It is excluded from every
+signal, and **it produces no data-quality note**. It is therefore absent from M3 intelligence
+output altogether.
+
+**Why no note was added.** §A23 defines data-quality observation for the *source-key* states
+only — a NULL `customer_id` FK, and a non-NULL key that did not resolve. A missing `created_at`
+is an attribute-level defect, not a missing or unresolved relationship. Inventing a fourth note
+type would have been reinterpreting §A23 rather than implementing it, so **no new signal, note
+type or state was created**.
+
+**Standing of this gap.** No row in `data/demo/` exercises the condition; the behaviour is
+reached only through a synthetic row in the isolated test database, where it is tested. It
+**does not invalidate M3's acceptance**, every criterion of which is measured over the committed
+dataset. It is recorded here as an open decision: **any future production-validity work must
+explicitly decide how a NULL `created_at` is represented** — quarantined at ingestion, reported
+as an attribute-level observation, or excluded silently as now. Until that decision is taken,
+§A23 continues to mean exactly its three source-key states — missing, unresolved, resolved, of
+which the first two produce a note — and nothing more.
+
+### 0.2.3 The M3 → M2 consumption boundary, and the import initialiser rule
+
+**M3 consumes M2 through its public relationship queries and resolves nothing itself.** Which
+tickets, deals and projects belong to a customer is answered once, by `neighbourhood()`; M3
+reads the attributes of the rows that query names.
+
+M3 must not, and does not: import M2's internal modules (`edges_of_type`, `EdgeType`,
+`EdgeSpec`, `spec_for`, `EDGE_SPECS` and the edge builders); reconstruct source-key resolution;
+recreate relationship traversal; or query Layer 1 to duplicate a relationship M2 already
+computes. The executable form is that **`app/intelligence/signals.py` performs no join at all** —
+a relationship resolver has to join — and imports neither the `Employee` nor the `Document`
+model, and reads no `*_source_id` carrier but `customer_source_id`.
+
+**Direct Layer 1 access is permitted for one purpose only:** §A23's data-quality observations.
+That read is the complement of M2's job and M2 cannot express it, because an edge that does not
+exist has no basis to carry. It is a single-table read of two frozen columns,
+`customer_source_id` and `customer_id`, over the three entities of §A9.1 row 2.
+
+**Import initialiser rule, verified empirically rather than argued.** `app/relationships/`
+imports `app.intelligence`, and M3's modules import `app.relationships`. That is loadable only
+because **`app/intelligence/__init__.py` does not import or re-export the M3 modules**. Adding
+such an import raises `ImportError: cannot import name 'EdgeBasis' from partially initialized
+module 'app.intelligence'`. **M3 consumers therefore import the submodule explicitly**, as in
+`from app.intelligence.signals import compute_signals`. This is a concrete dependency
+constraint on these modules, not a general style rule about package initialisers.
+
+`tests/unit/test_m1_boundary.py` records the same direction statically: `app.relationships` is
+allowed to the three M3 module paths by name, and a separate test asserts no M1 foundation
+module imports it.
+
+### 0.2.4 The mutation survivor, and why 29/29 was not pursued
+
+28 of 29 mutants were killed. The survivor replaces `.order_by(SupportTicket.source_id)` with
+`.order_by(SupportTicket.source_id.desc())` in the ticket read.
+
+**Verified, not assumed.** The full M3 payload — every signal for all 50 customers plus the
+data-quality list, serialised with §A24's canonical JSON — was captured clean and mutated
+against a freshly ingested database. Both are SHA-256
+`7a978e6adae212f5ee0613fdb41b87b6bec650528eab2e34b82f94caaa91542c`: **byte-identical**. The
+ticket rows feed only order-independent aggregations — counts, a maximum window with an explicit
+tiebreak, and a minimum category with an explicit tiebreak — so read order cannot reach the
+output.
+
+The mutant is therefore **semantically equivalent**, and no order-sensitive test was added to
+reach 29/29; such a test would assert an implementation detail rather than a behaviour. The
+`ORDER BY` is retained as defence in depth, so the read stays reproducible for any future
+consumer that does depend on row order. The analogous mutant on the *deal* read is **not**
+equivalent and is killed, because `active_deals` is an ordered, observable tuple — which is what
+shows the equivalence claim is a property of this particular read rather than a blanket excuse
+for unordered ones.
 
 ---
 
@@ -474,6 +612,12 @@ does traversal, it means the three fixed queries and nothing else.
 | S14 | `contract_documents` | evidence only | DOC-006 |
 | S15 | `deal_under_pressure` | conflict input | true — an active `negotiation` deal exists while S5 is true |
 
+**S14 is empty until M4.** `contract_documents` requires a Document→Customer association, and
+§A11 makes M4 the sole mechanism for one. M3's signal engine cannot name a document — it imports
+neither `app.evidence` nor the `Document` model — so it states `contract_document_ids = ()` for
+every customer and M4 populates it. The DOC-006 value above is the specification's expectation
+for the completed slice, not M3's output.
+
 ### A11. Derived document links
 
 **Owned by M4, not M2 — exclusively.** M4 owns, and is the only milestone that may introduce:
@@ -663,6 +807,18 @@ reported empty. `as_of` in the future → permitted, recency decays. Invalid rul
 → refuse at load naming the broken rule; no partial assessment. NULL `body_text` → linker skips.
 Stale `payload_hash` on a decision → conflict error. Concurrent identical assessments → unique
 constraint makes the second a read.
+
+**Three source-key states, two of which produce a note, and the two never collapse.** A NULL carrier key
+is a *missing* relationship: the source named no customer. A non-NULL key that E1 could not
+resolve within the scope is an *unresolved* one: the source named a customer Layer 1 could not
+find, which is a different fault, in a different system, needing a different fix. A resolved key
+is neither and produces no note. A key naming a customer of another `source_system` is
+*unresolved*, not missing.
+
+**Open: NULL `created_at` is outside this section.** A support ticket with no `created_at`
+cannot be placed in time, so M3 excludes it from every signal and emits **no** note for it —
+this section governs source keys, not attributes. Recorded as a specification gap in §0.2.2
+rather than resolved by inventing a third state.
 
 ### A24. Determinism and idempotency
 
@@ -919,6 +1075,27 @@ chronic backlog separation.
 backlog.
 
 **Non-goals.** Documents, persistence, positions, briefs.
+
+**CLOSED — commit `34486eb`, 2026-09-21.** Measured against the clean full-dataset path at
+`ACCEPTANCE_AS_OF`: CUST-007 is the only escalated and the only `CRITICAL` customer; CUST-025
+and CUST-036 are `WATCH`; the remaining 47, including all 15 ticketless customers, are `NONE`;
+CUST-009 and CUST-048 report TKT-010 and TKT-005 as chronic backlog and rank below CUST-007.
+Every signal of §A10 is asserted at both 2026-09-18 and the 2026-08-27 fallback, where the
+breach counts differ as §0 defect 3 records. `S2 = 3` and `S2b = 4` are pinned separately.
+Baselines: suite 4731, `app/` coverage 100%, ruff 69, mypy 9, secret scan 0, fingerprint
+`1d891b0b…`, `app/relationships/` byte-identical to `bc0525d`.
+
+Four things a reader must carry forward, all in §0.2: the **band table rows are authored, not
+specified** (§0.2.1, with the provenance of every rule); **NULL `created_at` is an open
+specification gap** and deliberately produces no note (§0.2.2); M3 **consumes M2's public
+queries and resolves nothing itself**, and `app/intelligence/__init__.py` must not import the M3
+modules (§0.2.3); the single mutation survivor is **verified semantically equivalent** (§0.2.4).
+
+S14 is empty: M4 populates it (§A10). `executive_worthy` is not implemented here — §A15 defines
+it, but M3's acceptance does not name it, so it belongs to the milestone that persists an
+assessment. The §A21 events `vs01.signals_computed` and `vs01.band_assigned` are likewise
+deferred: `app.core.logging` is outside the import surface M1's boundary test allows
+`app/intelligence/`, and M3's *Change* list names no logging.
 
 ---
 
