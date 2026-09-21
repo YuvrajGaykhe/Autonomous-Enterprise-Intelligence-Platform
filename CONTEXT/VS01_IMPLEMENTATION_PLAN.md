@@ -1,7 +1,9 @@
 # VS-01 — Customer Risk & Executive Escalation: Implementation Plan (v2)
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
 **v1 2026-09-18 · v2 2026-09-18 after adversarial review · v2.1 2026-09-20, M2/M4 boundary ·
-v2.2 2026-09-20, `deal_owned_by` scope decision · v2.3 2026-09-21, M3 closure**
+v2.2 2026-09-20, `deal_owned_by` scope decision · v2.3 2026-09-21, M3 closure ·
+v2.4 2026-09-21, M4 decision resolution (§0.3) ·
+v2.5 2026-09-21, M4 boundary clarification (§0.3.11)**
 
 **Status as of 2026-09-21 — per milestone, not per document:**
 
@@ -11,7 +13,8 @@ v2.2 2026-09-20, `deal_owned_by` scope decision · v2.3 2026-09-21, M3 closure**
 | **M1** — foundations and contracts | **COMPLETE** | `app/intelligence/`, `config/intelligence/risk_rules.yaml`; commit `29776e0`; fingerprint pinned `1d891b0b…` |
 | **M2** — relationship model | **COMPLETE** | `app/relationships/` — 7 edge types, 3 queries, no persistence; `tests/unit/test_m2_boundary.py` and `tests/integration/test_m2_relationships.py`; commit `bc0525d`; B1–B10 all asserted |
 | **M3** — signal engine and risk band | **COMPLETE** | `app/intelligence/{windows,signals,bands}.py` and the populated band table in `config/intelligence/risk_rules.yaml`; `tests/unit/test_m3_{windows,bands,boundary}.py` and `tests/integration/test_m3_signals.py`; commit `34486eb`; closure §0.2 |
-| **M4–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. `app/evidence/` (M4) does not exist |
+| **M4** | **PLANNED — not started; D-1…D-6 resolved, boundary contradictions closed** | Nothing implemented: no package, table, migration, configuration key or test. `app/evidence/` does not exist. Its six blocking questions have architectural resolutions in **§0.3** (2026-09-21). §0.3.6 splits S14 into M4's composition function and **M5's deferred production invocation**; §0.3.7 lists the lower-level details left open; §0.3.9 **specifies but does not authorise** the test evolution M4 will require. A second gate (2026-09-21) measured three contradictions between §0.3.10 and committed tests and closed them in **§0.3.11** — persistence reads and evidence reconstructs (D-M4-B1), the T2 whitelist is unchanged (D-M4-B2), the secret scanner is not weakened (D-M4-B3), and T5 covers the lint counts (D-M4-B4) |
+| **M5–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -222,6 +225,1105 @@ equivalent and is killed, because `active_deals` is an ordered, observable tuple
 shows the equivalence claim is a property of this particular read rather than a blanket excuse
 for unordered ones.
 
+
+---
+
+## 0.3 M4 decision resolution — pre-implementation, 2026-09-21
+
+The M4 pre-implementation audit at `0c11dcc` found that M4 could **not** be implemented
+unambiguously. Six architectural questions were unresolvable from the plan as written; two of
+them were not underspecification but error, established against the live 233-row database.
+
+**D-1 through D-6 have architectural resolutions**, recorded below. That phrasing is deliberate
+and is narrower than "every M4 and M5 question is answered", which is **not** true:
+
+- **D-6 establishes M4's ownership of the S14 composition function** and its deterministic
+  contract (§0.3.6 A).
+- **The production caller remains an M5 responsibility** (§0.3.6 B): M5 invokes the function
+  when it constructs the executive context of §A14.
+- **The M5 invocation decision is intentionally deferred** to M5's specification.
+- **This does not block implementation of the M4 function itself**, which is complete when the
+  function exists, is pure, and reproduces the measured expectation. The deferred M5
+  responsibility **must not be turned into an M4 requirement**.
+
+§0.3.7 separately lists the lower-level details left open on purpose, and §0.3.9 specifies —
+**without authorising** — the test evolution M4 will require.
+
+This section is **documentation only**: no package, table, migration, test or configuration key
+was created by it, and `app/`, `tests/`, `config/`, `migrations/`, `data/` and `README.md` are
+byte-identical to `34486eb`.
+
+Every decision below is classified with the same four-way vocabulary §0.2.1 introduced, so a
+reader can tell what the architecture forced from what this section chose:
+
+| Classification | Meaning |
+|---|---|
+| **FROZEN** | Already fixed by committed M1/M2/M3 code or by a section of this plan that predates the audit |
+| **OBSERVED** | Measured from the committed dataset. A fact about the data, **never** an architectural rule |
+| **DERIVED** | Follows necessarily from FROZEN material; a different choice would contradict something already built |
+| **AUTHORED** | A genuine choice this section makes. Not forced, not frozen architecture, and reversible by a later decision that says so |
+
+**Lower-level details are deliberately left open.** §0.3.7 lists them. They depend on the grain
+and evidence model settled here and must not be decided by an implementer in passing.
+
+---
+
+### 0.3.1 D-1 — `TOPIC` is removed from VS-01
+
+**The requirement as it stood.** §A11's table read:
+
+> | `TOPIC` | Document topic overlaps the dominant ticket category | **No** | DOC-010 (supporting only) |
+
+and §A9's edge table carried a fourth row, `document_relates_to_topic` · `DERIVED_TOPIC_MATCH`,
+produced by **M4**. M4's *Change* list named `TOPIC` as one of three rules to implement.
+
+**Evidence.**
+
+1. **No input field exists.** `documents` holds exactly `title`, `document_type`, `body_text`,
+   `source_uri`, `owner_source_id`, `created_at`, `updated_at`
+   (`BUSINESS_FIELDS['documents']`, `app/persistence/models/document.py`, migration
+   `8bfd73b6af60`). There is no topic column, and Layer 1 is frozen (§A31).
+2. **The two vocabularies are disjoint.** OBSERVED: `document_type` ∈ {`policy`, `report`,
+   `contract`, `meeting_notes`, `proposal`, `runbook`}; ticket `category` ∈ {`integration`,
+   `billing`, `onboarding`, `auth`, `performance`, `data`}. No value of either appears in the
+   other. DOC-010's `document_type` is `report`.
+3. **The stated expectation is not reproducible.** OBSERVED: under literal ticket-category token
+   overlap across title and body, DOC-010 matches `data` — never `performance`, CUST-007's
+   dominant category. The only documents containing `performance` are DOC-005 and DOC-009, both
+   of which are already `ID_TOKEN` and `EXACT_NAME` links. No rule over any existing column
+   yields the DOC-010 → CUST-007 pairing §A11 expected.
+4. **The contract cannot represent it.** `DerivedLink` (FROZEN, `app/intelligence/contract.py`)
+   requires a `target: EntityRef` whose `entity_type` is a canonical entity — there is no topic
+   entity — and requires a **non-empty** `matched_token` and a **non-empty** `evidence` tuple.
+   A topical overlap asserts no token and no span naming the customer.
+5. **It contradicts the project's own grounding guarantee.** Strategy §7.4: *every asserted fact
+   must carry a machine-resolvable reference to a record id plus field name, or a document id
+   plus character span.* A `TOPIC` link has neither.
+6. **The plan contradicted itself on what a `TOPIC` link even is.** §A9 named the edge
+   `document_relates_to_topic` (Document → **Topic**); §A11's table placed it in a **customer**
+   column; M4's *Tests* said DOC-010 "is reachable only as a `TOPIC` link and **never as a
+   customer association**".
+7. **Nothing in VS-01 consumes it.** §A27's ten acceptance criteria never name DOC-010 or a
+   topic link; criterion 3 cites DOC-003, DOC-006 and DOC-009. §A25's fourteen named tests
+   contain no topic test. §A10's S14 expects DOC-006 only. Before this section was written,
+   DOC-010 appeared in exactly two places in the whole plan — §A11's `TOPIC` row and M4's
+   *Tests* — and both are the wording being removed here.
+8. **No planned slice names it either.** `topic` appears in the strategy only in the two rows
+   describing this same mechanism (§5.2, §7.2) and nowhere in VS-02–VS-08's requirements. It
+   appears nowhere in `AI_CEO_PROJECT_CONTEXT.md`.
+9. **§A9.1 already supplies the membership test**, and it is the test `project_owned_by` and
+   `document_owned_by` were excluded under: *an edge is modelled when it is a Layer 1 fact that
+   a **named** slice needs, and left out when it is speculative or unsafe.* A topic overlap is
+   not a Layer 1 fact at all, and no named slice needs it.
+
+**Decision.**
+
+> **`TOPIC` is not implemented in VS-01.** M4 derives Document → Customer links by `ID_TOKEN`
+> and `EXACT_NAME` only. Specifically:
+>
+> - **No topic entity, topic column, topic vocabulary or topic configuration is introduced.**
+>   Layer 1 gains nothing; `config/intelligence/` gains no topic mapping.
+> - **No embedding, similarity, keyword-expansion or other semantic inference replaces it.**
+>   §A13 and §A31 are unchanged and this decision does not reopen them.
+> - **DOC-010 is not forced into a customer association by any means.** It remains what the
+>   data says it is: a postmortem that names no customer. OBSERVED, and recorded at
+>   `M0_BASELINE_REPORT.md:560` — it contains neither `CUST-007` nor the customer name.
+> - **M4 is deterministic textual evidence linking only.** Every link M4 emits quotes the text
+>   that asserts the relationship.
+> - **`LinkBasis.TOPIC`, `LinkConfidence.SUPPORTING` and `EdgeBasis.DERIVED_TOPIC_MATCH` stay
+>   in M1's contract as reserved vocabulary and are not deleted.** M1 is frozen at `29776e0`
+>   and this decision does not touch it. They are reserved exactly as
+>   `EvidenceKind.MODEL_NARRATIVE` is reserved: declared so the vocabulary is complete, and not
+>   constructible in VS-01. A later slice that acquires a real topic model may use them, and
+>   must state its input field before it does.
+
+**Classification.** The removal is **DERIVED** — evidence 1, 4 and 5 make the mechanism
+impossible to build, not merely unattractive, so no other resolution exists that leaves Layer 1
+and M1 frozen. Evidence 2 and 3 are **OBSERVED** and are the reason the defect was invisible
+until the data was measured. Treating `LinkBasis.TOPIC` as reserved rather than deleting it is
+**AUTHORED**, chosen because deleting it would modify frozen M1 code for no behavioural gain.
+
+**Consequences.** §A9's edge table, §A11's rule table and narrative, §A29's limitations, and
+M4's *Change*, *Tests* and *Non-goals* are all amended below. M4's linker implements two
+mechanisms. **Every link M4 produces is therefore `LinkConfidence.HIGH`**, which removes the
+need for a confidence predicate in §0.3.6. §A9.2's prohibition on M2 deriving links by
+`ID_TOKEN`, `EXACT_NAME` or `TOPIC` is **left exactly as written**: it forbids M2 from doing
+these things whether or not M4 does them, and M2 is frozen at `bc0525d`.
+
+**Remaining uncertainty.** None for VS-01. A future slice that wants topical evidence must
+introduce a topic field or classifier and state its input, its vocabulary and its grounding
+reference first; this section does not pre-authorise one.
+
+---
+
+### 0.3.2 D-2 — the `EXACT_NAME` expectation is corrected to DOC-005/006/009
+
+**The requirement as it stood.** §A11's table read `EXACT_NAME` → **DOC-006, DOC-009**, and M4's
+*Tests* read "exact-name finds DOC-006/009".
+
+**Evidence.**
+
+1. **OBSERVED, live database, 233 rows, `source_system='csv_demo'`:** DOC-005's body contains
+   `Meridian Textiles` at offset 174 — *"Escalation: Meridian Textiles (CUST-007) raised 5
+   tickets between 2026-08-18 and 2026-08-27…"* — at token boundaries, case-insensitively. The
+   correct set is **DOC-005, DOC-006, DOC-009**, identical to `ID_TOKEN`'s.
+2. **This plan already contradicted itself.** `M0_BASELINE_REPORT.md` §12.2 tabulates DOC-005
+   as ✅ under *both* the `CUST-007` token and the exact-name column. `M0_CLOSURE_REPORT.md`
+   finding F7 states plainly that "DOC-005 matches CUST-007 by both `ID_TOKEN` and
+   `EXACT_NAME`". Both predate this plan's table and both were measured.
+3. **Precedence cannot rescue the old value.** If a pair carried only its strongest basis, all
+   three documents carry `ID_TOKEN`, so `EXACT_NAME` would return **nothing** for CUST-007 —
+   wrong by two rather than by one. The old row is wrong under either grain (§0.3.3).
+
+**Decision.**
+
+> `EXACT_NAME` for CUST-007 is **DOC-005, DOC-006, DOC-009**. §A11's table and M4's *Tests* are
+> corrected below. The old DOC-006/009 value is **not** preserved anywhere, in any wording, and
+> an implementation that reproduces it is wrong.
+>
+> M4's acceptance — "links reproduce the measured expectation" — binds to this corrected set.
+> **An implementer who measures a different set must report it, not adjust the expectation.**
+
+**Classification.** **OBSERVED**, promoted to a corrected expectation. The *rule* ("full
+customer name, case-insensitive, at token boundaries") is FROZEN and unchanged; only the
+expected result of applying it was wrong.
+
+**Consequences.** §A11's table and M4's *Tests* are amended. §A27's criteria are unaffected:
+criterion 3 cites DOC-003, DOC-006 and DOC-009 for their *content*, not for their basis, and
+DOC-005's standing as a link was never what §A25 test 4 protects — that test removes DOC-005
+and asserts every signal is unchanged, which stays true because no VS-01 signal is
+document-derived (§A11).
+
+**Remaining uncertainty.** The corpus-wide expectation beyond CUST-007 is recorded in §0.3.8 as
+OBSERVED. It is measurement, not architecture, and M4's tests should assert it as such.
+
+---
+
+### 0.3.3 D-3 — link grain is one row per (document, customer, basis)
+
+**The requirement as it stood.** Nothing in §A11 or §A18 said whether a document–customer pair
+matching on two mechanisms yields one row or two. OBSERVED: this is not hypothetical — after
+§0.3.2, **all three** of CUST-007's documents match on both `ID_TOKEN` and `EXACT_NAME`.
+
+**The two candidates, and what each costs.**
+
+| | **A — one row per pair, strongest basis** | **B — one row per (pair, basis)** |
+|---|---|---|
+| `DerivedLink` | fits: one `basis`, one `matched_token` | fits: one link per basis |
+| **Matched token** | **loses one.** `ID_TOKEN`'s token is `CUST-007`; `EXACT_NAME`'s is `Meridian Textiles`. A single row can record only one | both retained, each with its own span |
+| `documents_for()` | returns ≤1 link per document | returns one link per basis |
+| Unique constraint | `(document, customer, …)` | `(document, customer, basis, …)` |
+| Citations | one span per pair | one span per basis — two independent places a reviewer can check the same association |
+| Idempotency | unaffected either way | unaffected either way |
+| **Requires a precedence rule** | **yes** — which basis wins | **no** — the mechanisms do not compete |
+| §A11's "exact-name finds …" test | **cannot be written**: under `ID_TOKEN` precedence, exact-name finds nothing | writes naturally |
+| S14 | needs a basis-aware predicate | needs none after §0.3.1 |
+
+**Evidence.** The architecture already chose. M4's *Tests* enumerate the two mechanisms'
+results **separately** — "id-token matching finds …; exact-name finds …". That sentence is only
+satisfiable if each mechanism has its own independently observable result set, which is grain B.
+Under grain A the second clause is unwritable. `DerivedLink`'s FROZEN shape — a single `basis`,
+a single `confidence` **fixed by that basis**, and a single `matched_token` — is a
+one-link-per-basis record, and §A18's columns (`basis`, `matched_token`, `match_start`,
+`match_end`, all singular) are its row-wise image. §A11's requirement that every association
+carry "a basis, a matched token and a citation into the text, or it does not exist" is satisfied
+per row under B and forces the loss of a real matched token under A.
+
+**Decision.**
+
+> **Grain B.** One persisted row, and one `DerivedLink`, per `(document, customer, basis)`.
+> A pair matching on both mechanisms produces **two** links, each carrying its own
+> `matched_token`, its own span and its own evidence.
+>
+> **There is no precedence between mechanisms, and none may be introduced.** They do not
+> compete: both results are recorded, and a consumer that needs a single answer per pair states
+> its own rule at the point of consumption rather than discarding evidence at derivation time.
+> `ID_TOKEN` is not "stronger than" `EXACT_NAME`; after §0.3.1 both are
+> `LinkConfidence.HIGH` and both may derive signals in a later slice.
+
+**Classification.** **DERIVED.** Grain A contradicts a test this plan already specifies and
+discards a `matched_token` the contract requires each link to carry.
+
+**Consequences.** §A11 gains an explicit grain statement; §A18 gains the unique constraint in
+§0.3.4; `documents_for()` returns a tuple that may contain more than one link per document.
+A consumer asking "is this document linked to this customer?" asks whether **any** link exists
+for the pair — which is what S14 does in §0.3.6.
+
+**Remaining uncertainty.** The **ordering** of the returned tuple is deliberately not decided
+here; it is a determinism detail listed in §0.3.7. Grain fixes *what* is returned, not *in what
+order*.
+
+---
+
+### 0.3.4 D-4 — uniqueness key and re-derivation semantics
+
+**The requirement as it stood.** §A18 declared a unique constraint on `risk_assessments` and on
+`risk_briefs` and **none** on `document_customer_links`, while §A23 stated "concurrent identical
+assessments → unique constraint makes the second a read" and §A27.8 required "re-run inserts
+nothing". Nothing said what happens when the snapshot or the linker changes.
+
+**Evidence.**
+
+1. §A24 (FROZEN): "An assessment is a pure function of (`as_of`, `source_system`,
+   `layer1_fingerprint`, `rules_version`, `policy_version`, `linker_version`)." Of these, the
+   inputs that can change a **link** are `layer1_fingerprint` (the document and customer text)
+   and `linker_version` (the matching rules). `as_of`, `rules_version` and `policy_version`
+   cannot: no link depends on the evaluation date or on the band or conflict policy.
+2. §A18's sibling table shows the pattern: `risk_assessments` is unique over
+   `(customer_id, as_of, source_system, layer1_fingerprint, rules_version)` — **the identity
+   inputs that affect the output are in the key**, so a changed snapshot yields a *new* row
+   rather than overwriting the old conclusion. §A27.8 states the same behaviour in words:
+   "changing the Layer 1 snapshot produces a new assessment."
+3. §0 defect 9 (FROZEN): links are stamped with `linker_version` + `layer1_fingerprint`
+   precisely so that a link derived under a superseded snapshot or linker is identifiable
+   rather than silently stale.
+4. Grain B (§0.3.3) puts `basis` in the key.
+5. `source_system` needs no column and no place in the key: both foreign keys point at rows
+   that already carry a `source_system`, and a link between two source systems is forbidden, so
+   the FK pair determines it.
+
+**Decision.**
+
+> **Unique key:** `(document_id, customer_id, basis, linker_version, layer1_fingerprint)`.
+>
+> - **Repeated derivation with identical inputs is a no-op.** The second insert is refused by
+>   the constraint and read instead, exactly as §A23 specifies for assessments. §A27.8's "re-run
+>   inserts nothing" is satisfied by the constraint, not by an application-level check.
+> - **A changed `layer1_fingerprint` appends.** New rows are written for the new snapshot; rows
+>   from the previous snapshot are **retained**, so a past assessment's links remain attributable
+>   to the snapshot they were derived from. This is `risk_assessments`' behaviour, applied to
+>   links.
+> - **A changed `linker_version` appends**, for the same reason and on the same key.
+> - **Nothing is ever updated in place, and nothing is deleted** by a re-derivation. The table
+>   grows only when an identity input changes.
+> - **No `computed_at`, no `superseded_by`, no validity interval and no history table is
+>   introduced.** §0 defect 9 was closed by the two stamps, and the stamps are sufficient: the
+>   rows a given assessment used are exactly the rows carrying its fingerprint and linker
+>   version. This decision adds no versioning machinery beyond the key.
+
+**Classification.** **DERIVED** — evidence 1–3 fix which columns are identity, and §A18's
+sibling constraint fixes how identity is expressed. The exclusion of `as_of`, `rules_version`
+and `policy_version` from the key is DERIVED from evidence 1: a link does not depend on them,
+so including them would mint duplicate rows for identical content. The choice **not** to add
+history machinery is **AUTHORED**, and is the minimal reading of §0 defect 9.
+
+**Consequences.** §A18's `document_customer_links` row gains the constraint. M4 must test the
+no-op re-run and the append-on-fingerprint-change. Downgrade still drops only the new table.
+
+**Remaining uncertainty.** Whether a `source_system` column is nonetheless carried for
+readability is a schema detail, not an identity question, and is listed in §0.3.7. It cannot
+change the key.
+
+---
+
+### 0.3.5 D-5 — `linker_version`
+
+**The requirement as it stood.** §A7 said `linker_version` comes "from configuration"; §A18 and
+§A24 required it on every link and in the assessment identity; `DerivedLink` requires it to be a
+**non-empty string**. `config/intelligence/risk_rules.yaml` contains no such key, and
+`app/intelligence/config.py` validates a closed set of keys that does not include one.
+
+**Evidence.**
+
+1. `DerivedLink.linker_version` is validated by `_require_text` (FROZEN): it must be a non-empty
+   **string**. `rules_version` is validated as a **positive int** by `config.py` — the two are
+   not interchangeable, and the string requirement is the frozen side.
+2. §A7 lists `linker_version` alongside `lookback_days`, `rules_version` and `policy_version` as
+   configuration, not as a constant.
+3. `risk_rules.yaml` already establishes the file's versioning convention in prose next to
+   `rules_version`: *"Bumped whenever a rule that can change a band or an action changes. It is
+   part of an assessment's identity, so a rule change yields a new assessment rather than
+   silently overwriting the old conclusion."*
+4. `risk_rules.yaml` is the Layer 2 policy file and already holds every other VS-01 version and
+   pinned value. No second configuration file exists or is planned.
+
+**Decision.**
+
+> - **Key name:** `linker_version`.
+> - **Location:** top level of `config/intelligence/risk_rules.yaml`, beside `rules_version`,
+>   and admitted by `app/intelligence/config.py`'s key whitelist. **No new configuration file
+>   and no new versioning framework is introduced.**
+> - **Type:** YAML **string**, validated as non-empty, because `DerivedLink` requires a string.
+>   It is deliberately *not* modelled on `rules_version`'s integer type; the frozen contract
+>   wins over the file's local convention.
+> - **Initial value:** `"1"`.
+> - **Bump rule:** bumped whenever a change to the linker can change which links are derived,
+>   which token is matched, or where a span falls — the same test `rules_version` applies to
+>   bands and actions. A refactor that provably cannot change any emitted link does **not** bump
+>   it.
+> - **Effect on existing persisted links:** governed by §0.3.4 — a bump appends. Rows carrying
+>   the previous `linker_version` are retained and remain attributable to it. No migration, no
+>   backfill and no rewrite accompanies a bump.
+
+**Classification.** Key name, location, type and bump rule are **DERIVED** (evidence 1–4).
+The literal initial value `"1"` is **AUTHORED**: the frozen contract fixes the *type* but no
+repository evidence fixes the *format*, and `"1"` mirrors `rules_version: 1` as closely as a
+string can. It is recorded here rather than left to an implementer precisely because it is a
+choice, and a later decision may restate it — but it may not be invented differently at
+implementation time.
+
+**Consequences.** M4's *Change* list gains the configuration key and its validation. §A7 is
+unchanged and now resolvable.
+
+**Remaining uncertainty.** None.
+
+---
+
+### 0.3.6 D-6 — S14: M4 owns the composition function, M5 owns invoking it
+
+**The requirement as it stood.** §A10 said M3 "states `contract_document_ids = ()` for every
+customer and **M4 populates it**", while M4's *Change*, *Tests*, *Acceptance* and *Non-goals*
+never mentioned S14, named no owner, and stated no rule for which links are contract documents.
+"M4 populates it" conflated two different responsibilities, which this section separates.
+
+**Evidence.**
+
+1. `SignalSet` is an **M1** type (`app/intelligence/contract.py`), frozen at `29776e0`. It is
+   **not** an M3 type. M3's `signals.py` merely constructs one.
+2. `SignalSet` is a frozen dataclass, so a populated copy is produced by replacement, not by
+   mutation. Producing that copy requires the **type** only.
+3. M3's `signals.py` hard-codes `contract_document_ids=()`, and
+   `tests/unit/test_m3_boundary.py` pins that literal by scanning the source text. M3 is frozen
+   at `34486eb`. **Any resolution that edits `signals.py` is therefore excluded**, and this
+   section does not edit it.
+4. The selection rule is determined by three things together: the signal's own name
+   (`contract_documents`), its OBSERVED expectation for CUST-007 (DOC-006), and the fact that
+   DOC-006 is the only `document_type = 'contract'` document linked to CUST-007. §A27.3 and
+   §A14 both consume it as *contract terms*.
+5. **Filtering documents by `document_type` is an established, frozen pattern**, not an
+   invention: M2 exports `POLICY_DOCUMENT_TYPE = "policy"` and `policy_documents()` filters on
+   it (`app/relationships/queries.py:64`, `:248`).
+6. After §0.3.1 every M4 link is `LinkConfidence.HIGH`, so no confidence predicate is needed.
+7. §A14 places contract documents in `CommercialContext`, which **M5** builds — "plain
+   dataclasses built by a factory". §A6's workflow orders evidence (step 5) after signals
+   (step 3) and before the analyst contexts (step 6), so the assembled executive context is the
+   first place a populated `SignalSet` is actually needed.
+8. M4's own deliverables are the linker, `documents_for()`, citations, the link model, its
+   repository and the first additive migration. **None of them reads a `SignalSet`.** S14 is not
+   an input to, or an output of, deriving or persisting a link.
+9. **No frozen type expresses a link *and* its document type.** `DerivedLink` (M1, frozen)
+   carries both endpoints, the basis, the matched token, the evidence and the provenance stamps
+   but **no `document_type`**; `app/persistence/models/` contains no `DocumentCustomerLink`
+   module, since that model is itself an unbuilt M4 deliverable. The selection rule needs
+   `document_type`, so the minimal pairing below is M4-owned.
+
+**Decision — two responsibilities, held by two milestones.**
+
+> **A. M4 owns the composition function and its deterministic contract.**
+>
+> **The representation it consumes.** The frozen M1 `DerivedLink` already expresses a link's
+> document (`source`), its customer (`target`), its basis, confidence, matched token, evidence
+> and provenance stamps. It carries **no** `document_type`, and the selection rule needs one. No
+> `DocumentCustomerLink` type exists in the repository — `app/persistence/models/` holds no such
+> module — so M4 defines a new type of its own:
+>
+> ```
+> LinkedDocument                   # new, M4-owned
+>     link           DerivedLink   # a frozen M1 value, held by composition
+>     document_type  str | None    # Layer 1's documents.document_type, which is nullable
+> ```
+>
+> **`LinkedDocument` is a new M4-owned wrapper that *contains* a frozen `DerivedLink` alongside
+> the Layer 1 `document_type`. It does not extend, subclass, widen or modify `DerivedLink`, and
+> `document_type` is never added to `DerivedLink`.** `app/intelligence/contract.py` is frozen at
+> `29776e0` and M4 does not touch it. Composition, not extension: that is the whole point of
+> introducing a second type rather than editing the first.
+>
+> `link.source` is the document and `link.target` is the customer: that direction is frozen by
+> M1's own contract test, whose fixture builds `source=EntityRef("documents", …)` and
+> `target=EntityRef("customers", …)`. `LinkedDocument` carries these two members and no others.
+> It is M4-owned and specified here, not implemented here.
+>
+> **The function.**
+>
+> ```
+> with_contract_documents(
+>     signals: SignalSet,
+>     links:   tuple[LinkedDocument, ...],
+> ) -> SignalSet
+> ```
+>
+> - **Input `signals`** is M1's frozen `SignalSet`, imported from `app.intelligence.contract`.
+> - **Input `links`** is a tuple of `LinkedDocument` — the one named representation above. The
+>   tuple shape matches every other collection in M1's contract (`tuple[Evidence, ...]`,
+>   `tuple[DealSignal, ...]`, `tuple[str, ...]`).
+> - **Returns a NEW `SignalSet`.** `SignalSet` is a frozen dataclass; the result is a replacement
+>   copy, never a mutation.
+> - **Every other field is carried through unchanged.** Only `contract_document_ids` differs
+>   between input and output. S1–S13 and S15 are untouched.
+> - **Zero contract links → `()`**, not an error.
+> - **Contract links → distinct document ids**, as described under *Projection* below.
+> - **Deterministic**: same `signals` and same `links` in, same `SignalSet` out.
+> - **No database, no session, no query, no clock, no randomness.**
+> - **No import from M3** — not `app.intelligence.signals`, `windows` or `bands`.
+>
+> **Selection rule.** A customer's contract documents are the documents linked to that customer
+> by any M4 mechanism whose `document_type` **is exactly equal to** the string `"contract"`.
+>
+> - **The constant is named `CONTRACT_DOCUMENT_TYPE` and its value is exactly `"contract"`.**
+>   It is declared in `app/evidence/` the way M2 declares `POLICY_DOCUMENT_TYPE = "policy"`
+>   (`app/relationships/queries.py:64`). The identifier is fixed here so no implementer chooses
+>   one.
+> - **The comparison is exact string equality and case-sensitive.** `document_type ==
+>   CONTRACT_DOCUMENT_TYPE`, and nothing else. **No normalization, no case folding, no
+>   stripping, no substring or prefix matching, no `in` test, no fallback, no synonym list, no
+>   regular expression.** `"Contract"`, `"CONTRACT"`, `" contract"` and `"contract_amendment"`
+>   are **not** contract documents. This matches the source-system discipline the rest of the
+>   project applies to canonical string values, and it matches M2's frozen
+>   `Document.document_type == POLICY_DOCUMENT_TYPE` predicate.
+> - **`document_type is None` is not a contract document and contributes nothing to S14.** This
+>   is stated as a rule rather than left to ordinary Python comparison semantics: `None ==
+>   "contract"` is false, but the behaviour must be a specified property, not an accident of the
+>   expression an implementer happens to write. NULL means *unknown*, and an unknown document
+>   type is never treated as a contract.
+>
+> **Projection — S14 is document grain, the link table is evidence grain.** Under §0.3.3 one
+> customer–document pair legitimately has **more than one** evidence link: DOC-006 reaches
+> CUST-007 on both `ID_TOKEN` and `EXACT_NAME`, and **both rows are correct evidence and both
+> are kept**. `contract_document_ids` is a tuple of document ids, not of links, so the function
+> **projects evidence grain onto document grain**:
+>
+> 1. filter `links` to those whose `document_type` is exactly `CONTRACT_DOCUMENT_TYPE`;
+> 2. collect each one's document id — `link.source.source_id`;
+> 3. **collapse multiple evidence links for the same document to a single document id.
+>    Deduplication is by `document_id` and by nothing else;**
+> 4. **order the surviving ids lexicographically ascending by `document_id`.**
+>
+> This is why CUST-007's **two** contract links yield `("DOC-006",)` and not
+> `("DOC-006", "DOC-006")`.
+>
+> **The projection reads exactly one field of each link.** A `LinkedDocument` contributes only
+> its `link.source.source_id`, after its `document_type` has decided whether it takes part at
+> all. **The customer identity, `link.target`, `basis`, `confidence`, `matched_token`,
+> `evidence`, `source_system`, `layer1_fingerprint` and `linker_version` are not consulted by
+> S14 at any point.** They remain on the evidence rows, where a reviewer reads them; S14 is a
+> list of document ids and nothing more. Narrowing the read surface to one field is what makes
+> the absence of evidence priority structural rather than merely promised.
+>
+> **What the projection must not do.** It **does not choose one evidence basis over another**:
+> there is no evidence priority, no `EXACT_NAME`-over-`ID_TOKEN` preference, and no rule that
+> reads `basis` at all. It **deletes nothing**: the underlying evidence links remain intact in
+> `document_customer_links` and in `documents_for()`'s result, both of which stay at evidence
+> grain. It introduces no history, no supersession, no validity interval and no new relationship
+> semantics. S14 is a **document-level projection only** — a view of the evidence layer, never a
+> replacement for it.
+>
+> **Ordering — frozen for S14, still deferred for `documents_for()`.** Determinism and ordering
+> remain **independent properties**: a function can be deterministic while its order is
+> unspecified, which is exactly the state two correct implementations could exploit to return
+> `("DOC-002", "DOC-006")` and `("DOC-006", "DOC-002")` from the same input. Because
+> `contract_document_ids` is a **contract field that M5 consumes**, its order is frozen here:
+> **lexicographic ascending by `document_id`, applied after deduplication** (step 4 above).
+> It is a sort key, **not** a priority: it ranks document ids, never evidence, and it reads no
+> link metadata. It also matches the ordering discipline already frozen elsewhere in the
+> project — §A5.1's fingerprint and M2's queries both order by `source_id`.
+>
+> `documents_for()`'s ordering remains **deferred** at §0.3.7 #9. That is a different function
+> returning a different grain, and this decision does not settle it.
+>
+> M4 **proves** the function: composing an M3 signal set with M4's links in a test yields exactly
+> `("DOC-006",)` for CUST-007.
+>
+> **B. M5 owns invoking it in production, when it constructs the executive context.**
+>
+> - §A14's `CommercialContext` is where a populated S14 is consumed, and M5 builds that context.
+>   The production call therefore belongs to **M5**, not to M4 and not to M7.
+> - **The invocation design is intentionally deferred to M5's specification** — where in M5's
+>   context factory the call sits, what it is handed, and how the populated `SignalSet` flows
+>   into `CommercialContext`. Deferring it is safe precisely because A is a pure function with a
+>   fixed contract: M5 can wire it without reopening M4.
+>
+> **What M4 must not do.**
+>
+> - **M4 must not invoke the function anywhere in its own linking or persistence pipeline.**
+>   The linker, `documents_for()`, the citation builder, the link repository and the migration
+>   neither call it nor depend on it. M4's pipeline derives and persists links; composing a
+>   `SignalSet` is a separate, caller-driven operation.
+> - M4 assembles and persists **no** assessment. `risk_assessments` and its `signals` JSONB
+>   remain M7's.
+> - **M4 does not import M3.** The M4 → M3 dependency question does not arise and is not
+>   authorised; M4's permitted import surface stays M1 + M2, exactly as the DAG in M4's section
+>   states. A later milestone that needs M3's signal engine imports it itself.
+> - **M3 is not modified.** `app/intelligence/signals.py` continues to state
+>   `contract_document_ids=()`, its boundary test continues to pin that literal, and M3's
+>   closure at `34486eb` stands. **The frozen M3 `SignalSet` contract is unchanged.**
+> - **No signal becomes document-derived.** S14 remains evidence only (§A10, §A11). S1–S13 and
+>   S15 are untouched by M4, and §A25 test 4 continues to assert byte-equality of every signal
+>   value with DOC-005 removed — which holds, because DOC-005 is a `report` and S14 selects
+>   `contract` documents.
+
+**Classification.** Stated per element, because this decision mixes all three kinds.
+
+| Element | Class | Why |
+|---|---|---|
+| M4 owns the composition function; it imports nothing from M3 | **DERIVED** | Evidence 1–3: `SignalSet` is M1's type, and editing M3 is excluded by the freeze |
+| Selection rule — linked ∧ `document_type = 'contract'` | **DERIVED** | Evidence 4–6, following M2's frozen `POLICY_DOCUMENT_TYPE` filter pattern |
+| Keeping the call out of M4's own pipeline | **DERIVED** | Evidence 8: nothing in M4's pipeline holds a `SignalSet` to compose |
+| Projection to document grain; **deduplication by `document_id`** | **DERIVED** | `contract_document_ids` is `tuple[str, ...]` on the frozen `SignalSet`, and §0.3.3's grain makes two evidence links for one document the measured norm. The acceptance value `("DOC-006",)` is unreachable any other way without reading `basis`, which the rule forbids |
+| **Assigning the production call to M5** | **DIRECTED, then corroborated** | This was an explicit instruction during the 2026-09-21 review, not a conclusion this plan reached on its own. Evidence 7 corroborates it — §A14 puts the consumer in `CommercialContext`, which M5 builds — but the directive came first and is the reason it is recorded as settled rather than deferred |
+| `LinkedDocument` as the name and shape of the links parameter | **AUTHORED** | Nothing frozen fixes it. It is the minimal wrapper that closes the `document_type` gap of evidence 9 and carries no other member |
+| `LinkedDocument` **wraps** `DerivedLink` by composition and never extends or modifies it | **DIRECTED** (2026-09-21 review) | Prevents the requirement being read as "add `document_type` to `DerivedLink`", which would break the M1 freeze |
+| `with_contract_documents` as the function name | **AUTHORED** | Nothing frozen fixes it; it is named here so an implementer does not invent one |
+| **`CONTRACT_DOCUMENT_TYPE = "contract"`** as the constant's identifier and value | **DIRECTED** (2026-09-21 review) | The value follows M2's frozen `POLICY_DOCUMENT_TYPE` pattern; fixing the *identifier* removes an implementation choice without touching architecture |
+| **Exact, case-sensitive equality to `"contract"`; `None` and every other value contribute nothing** | **DIRECTED** (2026-09-21 review) | Matches M2's frozen `document_type ==` predicate and the project's source-system string discipline. Stated as a rule so NULL handling is a specified property, not a by-product of Python comparison |
+| **`contract_document_ids` ordered lexicographically ascending by `document_id`** after deduplication | **DIRECTED** (2026-09-21 review) | Determinism alone permits two correct implementations to disagree on order. S14 is a contract field M5 consumes, so its order is frozen. A sort key over ids, never a priority over evidence |
+| S14 reads only `document_type` and `link.source.source_id` | **DIRECTED** (2026-09-21 review) | Extends the existing `basis` prohibition to every other evidence attribute, making the narrow semantics structural |
+| Zero contract links yield `()` rather than raising | **AUTHORED** | A genuine micro-decision. No frozen material forces either behaviour; the empty tuple matches `SignalSet`'s other empty-collection defaults |
+| The function is **total and pure** | **AUTHORED** | Also a micro-decision, and the property that makes M5's deferred invocation design safe |
+
+**Consequences.** §A10's S14 paragraph and M4's *Change*, *Tests*, *Acceptance* and *Non-goals*
+are amended below; §A14 gains a pointer naming M5 as the caller. `app/evidence/` gains
+`with_contract_documents`, the `LinkedDocument` representation and the `contract`
+document-type constant — and **nothing in M4 calls any of them**.
+
+**Remaining uncertainty — recorded, not hidden.** M5's **invocation design** is deferred to M5's
+specification (B above). It is a deferred M5 responsibility and **must not be turned into an M4
+requirement**: M4 is complete when the function exists, is pure, and is proved against the
+measured expectation.
+
+---
+
+### 0.3.7 Deliberately deferred — do not decide these while implementing
+
+These depend on the grain and evidence model settled above, or on decisions a later milestone
+owns. An implementer who needs one of them must have it decided **in this plan** first; none of
+them may be settled in passing.
+
+**Rows 1–8 were closed on 2026-09-21 by §0.3.10** and are struck through below so the record of
+what was open, and when, survives. **Rows 9, 10 and 11 remain genuinely open.**
+
+| # | Open detail | Status |
+|---|---|---|
+| ~~1~~ | `ID_TOKEN` tokenization predicate, case sensitivity, and text normalization | **CLOSED** — §0.3.10.4 |
+| ~~2~~ | NULL `title` semantics (NULL `body_text` is already specified by §A23) | **CLOSED** — §0.3.10.4, citable text |
+| ~~3~~ | Which occurrence yields the span when a token or name appears more than once | **CLOSED** — §0.3.10.4, first occurrence |
+| ~~4~~ | Which `EvidenceKind` a link's evidence carries | **CLOSED** — §0.3.10.1, `DERIVED_RELATIONSHIP` |
+| ~~5~~ | §A22's evidence length cap | **REASSIGNED** — §0.3.10.5 proves it is a rendering control; its value is deferred to **M7**, and it does not constrain M4 |
+| ~~6~~ | The link repository's module name and session/transaction ownership | **CLOSED** — §0.3.10.3 |
+| ~~7~~ | `documents_for()`'s exact signature and return type | **CLOSED** — §0.3.10.2 |
+| ~~8~~ | `source_system` column; column types, nullability, FK `ondelete`, indexes | **CLOSED** — §0.3.10.3 |
+| 9 | Deterministic ordering of **`documents_for()`** — its grain is evidence rows, not document ids. *(S14's ordering is no longer open: §0.3.6 freezes it as lexicographic ascending by `document_id`.)* | §0.3.3 |
+| 10 | B6's retirement mechanics (§0.3.9) | — |
+| 11 | A test that `linker_version` loads and validates as a non-empty string. M4 *Tests* asserts only that it is stamped on every row. **Recorded as a future test requirement; it does not expand M4's scope** | §0.3.5 |
+
+---
+
+### 0.3.8 Measured link expectation — OBSERVED, not architecture
+
+Recomputed during the audit against the live 233-row database at `source_system='csv_demo'`,
+using whole-token and token-boundary matching. **This is a property of the committed dataset.**
+It is the expectation M4's tests assert; it is **not** a rule, and no rule may be inferred from
+it.
+
+| Customer | `ID_TOKEN` | `EXACT_NAME` |
+|---|---|---|
+| CUST-007 Meridian Textiles | DOC-005, DOC-006, DOC-009 | DOC-005, DOC-006, DOC-009 |
+| CUST-015 Unity Pharma | — | DOC-004, DOC-008 |
+| CUST-021 Deltaforge Analytics | DOC-007 | DOC-007, DOC-011 |
+| the other 47 customers | — | — |
+
+Under §0.3.3's grain this is **11 persisted rows**: 3 + 3 for CUST-007, 2 for CUST-015, 1 + 2
+for CUST-021. DOC-001, DOC-002, DOC-003, DOC-010 and DOC-012 are linked to no customer by any
+mechanism — correctly: they name none.
+
+Two OBSERVED facts M4's fixtures must not ignore:
+
+- **The name-collision surface is 26 groups, not one.** The dataset holds 16 shared first name
+  tokens and 10 shared last tokens — `Westbrook` × 5, `Quantix` × 4, `Health` × 9, `Foods` × 9,
+  and, most pointedly, **`Meridian Foods` (CUST-038)** beside Meridian Textiles and
+  **`Deltaforge Health` (CUST-027)** beside Deltaforge Analytics. §A25 test 7 names three
+  customers; the rule it protects faces all 26 groups. Token-boundary matching answers all of
+  them correctly — measured, zero false links — which is *why* substring matching is banned.
+- **A link can be mechanically right and semantically thin.** DOC-004 links to CUST-015 by
+  `EXACT_NAME`, but the match comes from a **deal title** — *"Largest open negotiation: Unity
+  Pharma - Integration Services (DEAL-010)"* — not from a statement about the customer. VS-01
+  accepts this: a link is evidence that a document *mentions* a customer, and the reviewer reads
+  the cited span. It is recorded here so a later slice does not mistake link presence for
+  aboutness.
+
+---
+
+### 0.3.9 D-7 — test evolution that M4 will require: **specified, not authorised**
+
+The audit found five committed assertions that M4 will contradict. This section **specifies**
+the exact evolution each one needs, so that it is designed and reviewed now rather than
+discovered as a red suite later.
+
+> **Status of this section.** It is a **specification of future work**. It is **not executed**,
+> and it **is not an authorisation**. No approval has been given for any of these changes.
+> An implementation may carry out T1–T5 **only after M4 itself is explicitly approved**, and
+> only in the form specified here. Nothing in this section licenses a change made before that
+> approval, and nothing in it licenses a change beyond the five rows below.
+
+The governing principle is unchanged and is not weakened by anything here: **M1, M2 and M3
+implementation remains frozen.** T1–T5 describe changes to *test files and the README* that
+assert the absence of a thing M4 legitimately adds. **None of them changes
+`app/intelligence/`, `app/relationships/`, any Layer 1 module, any migration, or `data/`.**
+
+| # | Assertion | Why M4 contradicts it | Specified evolution (not yet authorised) |
+|---|---|---|---|
+| T1 | `tests/unit/test_m3_boundary.py::test_app_evidence_does_not_exist` | asserts `app/evidence` does not exist | **Remove this obsolete M4-existence assertion only.** Its purpose — "M4 has not started; M3 must not have started it either" — expires exactly when M4 starts. **The unrelated M3 boundary assertions beside it are retained unchanged**: no M3 module imports `app.evidence`, and no M3 module names M4's vocabulary. Those two become the whole of M3's side of the boundary. `app/intelligence/` is not touched |
+| T2 | `tests/unit/test_m1_boundary.py`, the importer scan asserting every importer of `app.intelligence` lives under `app/relationships/` | `app/evidence/` must import M1's contract | **Extend the whitelist to `{app/relationships/, app/evidence/}`** for the legitimate `app/evidence` import boundary — extend, never relax. The test's own docstring already describes this evolution: it named M2 rather than being relaxed when M2 arrived, and must name M4 the same way. An importer that is neither still fails the build |
+| T3 | `tests/unit/test_m2_boundary.py::test_documents_for_does_not_exist_in_the_package` (B6) | `documents_for()` becomes an M4-owned API | **Move, do not drop.** §A11's mirror invariant requires the negative half — `app/relationships/` still exports no `documents_for` — to survive, so it is re-homed in M4's test file beside the positive half. `app/relationships/` itself is untouched and stays byte-identical to `bc0525d` |
+| T4 | `tests/integration/test_h3_migrations.py`, the exact table-set equality after `upgrade head` | the first additive Layer 2 table breaks set equality | **Extend the expected set with the Layer 2 table** — extend, never weaken equality to a subset check. §A27.10's "full Layer 1 suite passes unchanged" means no Layer 1 *behaviour* changes; the canonical and operational tables, their columns, constraints and indexes are unaltered, and the downgrade path still returns the database to empty |
+| T5 | `tests/unit/test_i2_readme.py`, which collects each test layer and asserts the counts the README quotes, including the "4731 tests in four layers" total, **and separately pins the `ruff check app/ tests/ scripts/` and `mypy app/` counts** | M4 adds tests, so the quoted counts stop matching; M4 also adds source files, so the lint counts may move | **Update the README test counts as the existing I2 mechanism requires, and — per §0.3.11 D-M4-B4 — the Ruff and Mypy counts on the same terms.** This is not a new obligation for the test counts: `29776e0`, `bc0525d` and `34486eb` each updated `README.md` by exactly four lines for the same reason. The lint half is recorded by §0.3.11: these are informational project-state counts, so **`ruff = 69` and `mypy = 9` are M3-era observations, not M4 contracts**, and no test may be weakened or skipped to preserve them |
+
+**Current state, verified.** At the time of writing, `app/`, `tests/`, `config/`, `migrations/`,
+`data/` and `README.md` are byte-identical to `34486eb`; `app/relationships/` is byte-identical
+to `bc0525d`; `app/evidence/` does not exist; and the Layer 1 fingerprint is `1d891b0b…`. **None
+of T1–T5 has been performed.**
+
+---
+
+### 0.3.10 The four implementation-gate blockers, closed 2026-09-21
+
+The gate of 2026-09-21 found four questions that M4's deliverables need and §0.3.7 deferred.
+They are closed here. §0.3.6's S14 decisions are **not** reopened: `CONTRACT_DOCUMENT_TYPE`,
+exact case-sensitive matching, `document_id` deduplication, lexicographic ordering,
+`LinkedDocument` as composition, the absence of evidence priority and of any history framework,
+the M3 import ban and the M4-owns / M5-invokes split all stand unchanged.
+
+---
+
+#### 0.3.10.1 B1 — `EvidenceKind.DERIVED_RELATIONSHIP`
+
+**Decision.** Every `Evidence` M4 attaches to a `DerivedLink` carries
+**`EvidenceKind.DERIVED_RELATIONSHIP`**, citing a `DocumentCitation`. No new `EvidenceKind` is
+introduced and none of the other four is used for a link.
+
+**Evidence, from frozen M1 code.**
+
+1. `EvidenceKind`'s own docstring glosses its four usable members in declaration order — *"a
+   measured canonical value … a link this system inferred … text a document happens to contain …
+   a rule the project chose"*. `DERIVED_RELATIONSHIP` is the second: **a link this system
+   inferred**. A `DerivedLink` is exactly that.
+2. `_EVIDENCE_CITATIONS` lets `DERIVED_RELATIONSHIP` cite **either** citation shape, while
+   `DOCUMENT_SPAN` accepts only a `DocumentCitation`. The wider allowance exists for the kind
+   that describes an inference, which may be grounded in a record field or in text.
+3. **M1's committed test asserts it on the wire.**
+   `test_a_derived_link_serialises_both_ends_and_its_whole_provenance` pins
+   `DerivedLink.to_payload()` to `"evidence": [{"kind": "DERIVED_RELATIONSHIP", "citation":
+   {"kind": "document", …}}]`. That is not a fixture convention: it is a frozen assertion on a
+   `DerivedLink`'s serialised form, and any other kind would fail it.
+4. The same kind is used in the second `DerivedLink` the M1 suite builds.
+
+**Classification: DERIVED.** Point 3 is decisive — a committed M1 test already fixes the
+serialised kind of a derived link's evidence, so no other choice is available without breaking
+the M1 freeze.
+
+---
+
+#### 0.3.10.2 B2 — `documents_for()` returns `tuple[LinkedDocument, ...]`
+
+**The contract as it stood.** §A11 describes `documents_for(customer)` as returning *"derived
+links with basis, matched token and offsets"*. That is a statement about **content**, not a
+Python type; §0.3.7 #7 recorded the signature and return type as still open, so nothing is being
+overridden here.
+
+**Decision.**
+
+```
+documents_for(
+    session: Session,
+    scope:   Scope,
+    customer_source_id: str,
+) -> tuple[LinkedDocument, ...]
+```
+
+- **The return type is `tuple[LinkedDocument, ...]`.** §A11's description is preserved: a
+  `LinkedDocument` holds the `DerivedLink`, so every returned value still carries its basis,
+  matched token and offsets.
+- **There is no adapter, and no unnamed seam.** The composition happens in exactly one place.
+  **§0.3.11 D-M4-B1 revises *which* place.** As originally written this bullet put the
+  construction of `LinkedDocument` in the repository read; that was found, at the 2026-09-21
+  implementation gate, to contradict §0.3.9 T2, because reconstructing the contained
+  `DerivedLink` forces `app/persistence/` to import `app.intelligence`. **The repository
+  performs the query and the `documents` join and returns persisted data only;
+  `app/evidence/documents.py` is the sole constructor of `LinkedDocument` and of the
+  `DerivedLink` it holds.** Nothing else in VS-01 constructs a `LinkedDocument`, and the
+  single-place property this bullet exists to protect is preserved — it now names the
+  evidence layer rather than the repository. See §0.3.11.
+- **`document_type` is read from Layer 1, never stored on the link.** §A18's column list gains
+  no `document_type` column; the value is joined at read time from `documents.document_type`,
+  so a Layer 1 correction is reflected without re-deriving links.
+- **Signature shape** follows M2's query convention — `(session, scope, customer_source_id)`,
+  as in `neighbourhood`, `escalation_path` and `policy_documents`. Following it is a **choice**:
+  no committed test compels M4 to adopt M2's parameter order.
+- **`documents_for()` reads persisted rows.** §A11 says links *"are produced by
+  `app/evidence/linker.py`, read through `documents_for(customer)`"*: the linker derives and the
+  repository persists; `documents_for` reads back. It does not re-run the linker.
+
+**Classification. Every element of this decision is AUTHORED**: the signature shape (M2's
+convention, followed by choice), the return type, the placement of the composition in the
+repository read, and the read-persisted-rows reading of §A11. Nothing frozen compels any of them
+— §0.3.7 #7 recorded the whole question as open, and it is answered here rather than derived. The alternative — returning
+`tuple[DerivedLink, ...]` and naming a separate component to attach `document_type` — was
+considered and rejected: it adds a second query or a second type-mapping step for a value that
+is already on a row the read must touch, and it is the shape that leaves a seam.
+
+**Still deferred:** `documents_for()`'s **ordering** (§0.3.7 #9). It does not block M4 — M4's
+acceptance asserts which links are returned, not their order, and S14 sorts its own output — but
+it is a public API M5 will consume, and the argument that froze S14's order applies to it. It is
+recorded here as the next ordering question, not answered.
+
+---
+
+#### 0.3.10.3 B3 — the persistence contract
+
+Every item below is grounded in an existing Layer 1 convention where one exists; the rest are
+labelled.
+
+**Session and transaction.**
+
+- **The caller owns the session.** Every Layer 1 repository function takes `session: Session` as
+  its first parameter (`app/persistence/repositories/canonical.py::upsert`, `load_states`,
+  `canonical_row`), and no other pattern exists in the codebase. M4's repository does the same.
+  **AUTHORED**, grounded in that uniform convention — a repository that opened its own session
+  would contradict no committed test, so this is a choice to follow the house rule, not a
+  deduction from it.
+- **The caller owns the transaction.** No Layer 1 repository calls `commit`, `rollback` or
+  `begin`; the orchestrator opens `sessions.begin()` and its context manager commits
+  (`app/ingestion/orchestrator.py`). **M4's repository calls none of
+  `commit`/`rollback`/`begin`/`close`.** **AUTHORED**, grounded in the same convention. Note that
+  M2's frozen rule is *read-only*, caller-owned; M4 writes, so only the ownership half carries
+  over and it carries over by choice.
+- **No explicit `flush`.** Nothing downstream needs the generated primary keys inside the same
+  call, so the repository issues its statements and returns. **AUTHORED.**
+
+**Conflict behaviour.**
+
+- The insert is `insert(...).on_conflict_do_nothing(constraint=
+  "uq_document_customer_links_identity")` — **DO NOTHING, never DO UPDATE**. §0.3.4 states that
+  nothing is ever updated in place; `on_conflict_do_update`, which Layer 1 uses for canonical
+  upserts, would contradict it. The conflict is resolved **by the database**, not by a
+  pre-existence check. **DERIVED** from §0.3.4 plus Layer 1's named-constraint `on_conflict`
+  pattern.
+- **Rows are sorted before insertion**, matching `upsert`'s `ordered = sorted(rows, …)`, so the
+  statement is byte-stable across runs. **AUTHORED**, grounded in that convention.
+
+**Model.** `app/persistence/models/document_customer_link.py`, registered on `Base.metadata`.
+**It does not use `ProvenanceMixin`**: a derived link has no source system, no ingestion run and
+no `record_hash`, and §A18's column list contains none of the eight provenance columns. **DERIVED.**
+
+| Column | Type | Null | Grounding |
+|---|---|---|---|
+| `id` | `UUID` primary key `pk_document_customer_links` | NOT NULL | Every Layer 1 table uses a UUID surrogate key; the constraint *name* is forced by `NAMING_CONVENTION`. The UUID *type* is **AUTHORED**, grounded in that convention — a bigserial would contradict no committed test |
+| `document_id` | `UUID` FK → `documents.id` | NOT NULL | **DERIVED** |
+| `customer_id` | `UUID` FK → `customers.id` | NOT NULL | **DERIVED** |
+| `basis` | `String(50)` | NOT NULL | Layer 1 sizes short enumerated strings at 50 (`status`). **AUTHORED** |
+| `matched_token` | `String(255)` | NOT NULL | It is a copy of either `customers.name` or `documents.source_id`, both `String(255)`. **DERIVED** |
+| `match_start` | `Integer` | NOT NULL | Offsets into text. Layer 1 has no precedent. **AUTHORED** |
+| `match_end` | `Integer` | NOT NULL | As above. **AUTHORED** |
+| `linker_version` | `String(50)` | NOT NULL | A short version string (§0.3.5). **AUTHORED** |
+| `layer1_fingerprint` | `String(64)` | NOT NULL | A SHA-256 hex digest, exactly as `record_hash` is `String(64)`. **DERIVED** |
+
+**No `source_system` column.** Both foreign keys point at rows that already carry one, a link may
+never cross source systems, and §A18's list does not include it. This closes the first clause of
+§0.3.7 #8. **DERIVED.**
+
+**Every column is NOT NULL**, because `DerivedLink` validates each corresponding value as
+present and non-empty before a row can exist. **DERIVED.**
+
+**Foreign keys: `ondelete='CASCADE'` on both.** Layer 1 uses `SET NULL` for canonical entity FKs
+and `CASCADE` for dependent child rows. `SET NULL` is **structurally impossible** here because
+both columns are NOT NULL, and a link row without either endpoint asserts nothing. **DERIVED.**
+
+**Uniqueness, database-enforced.** `UniqueConstraint(document_id, customer_id, basis,
+linker_version, layer1_fingerprint, name="uq_document_customer_links_identity")` — the key
+§0.3.4 fixed, named in Layer 1's `uq_<table>_<suffix>` style. **DERIVED.**
+
+**Indexes.** `ix_document_customer_links_customer_id` on `customer_id`, because `documents_for()`
+queries by customer and the unique constraint's index leads with `document_id`, which does not
+serve that lookup. Layer 1 indexes every FK column, so
+`ix_document_customer_links_document_id` is added for consistency although the unique index
+already covers that access path. **DERIVED** (the customer index), **AUTHORED** (keeping the
+redundant document index for convention).
+
+**Repository responsibilities** — `app/persistence/repositories/document_links.py`, module name
+**AUTHORED** in the style of `canonical.py`, `cursors.py`, `runs.py`:
+
+- **write:** one function taking `(session, links)` that sorts, inserts with
+  `on_conflict_do_nothing`, and returns the number of rows actually inserted — which is how a
+  caller observes that a re-run inserted nothing (§A27.8).
+- **read:** one function taking `(session, scope, customer_source_id)` that joins the link rows
+  to `documents` and returns **the persisted link data together with the joined
+  `document_type`** — rows, not domain objects. **Revised by §0.3.11 D-M4-B1**, which moves the
+  construction of `LinkedDocument` out of this function and into
+  `app/evidence/documents.py`; the join itself stays here, so the repository remains the sole
+  location of the query.
+- The repository performs **no derivation** — it never matches text — and **no rendering**.
+- **The repository imports neither `app.intelligence` nor `app.evidence`** (§0.3.11 D-M4-B2).
+  It is infrastructure code, and the M1 importer whitelist of §0.3.9 T2 is unchanged.
+
+---
+
+#### 0.3.10.4 B4 — linker matching semantics
+
+`DocumentCitation` is frozen as `(document_id, start, end)` with **no field discriminator**, so a
+span can address only one text per document. That forces the first decision below.
+
+**Citable text.** A document's **citable text** is
+
+```
+citable_text(document) = (title or "") + "\n" + (body_text or "")
+```
+
+Every offset this milestone produces — `match_start`, `match_end` and the `DocumentCitation`
+span — indexes **that string and no other**. One definition serves both the persisted columns and
+the citation, so the two can never diverge.
+
+- §A11 permits a match in *"title or body"*. Addressing `body_text` alone would silently drop
+  the title half and make a title-only match **unrepresentable**, since `DerivedLink` requires
+  non-empty evidence and `DocumentCitation` requires a non-empty span.
+- A NULL `title` contributes the empty string; this closes §0.3.7 #2. A NULL `body_text` never
+  arises, because §A23 already makes the linker skip such a document entirely.
+- **Classification: AUTHORED.** The frozen `DocumentCitation` shape forces *a* single text; which
+  one is a choice, and this is it. **OBSERVED:** the committed corpus has **zero** title-only
+  matches, so this decision changes no measured value in §0.3.8 — it decides what happens on data
+  that does not yet exist.
+
+**Matching rules.**
+
+| Aspect | Rule | Class |
+|---|---|---|
+| `ID_TOKEN` predicate | The canonical `source_id` appears in citable text bounded on both sides by a character that is **not** `[A-Za-z0-9_-]`, or by the start/end of the text. The hyphen is inside the class, so `CUST-007` matches in `… (CUST-007) …` but **not** in `CUST-007Z`, `CUST-0071` or `XCUST-007` | **AUTHORED** |
+| `ID_TOKEN` case | **Case-sensitive.** §A11 says the *canonical* `source_id` appears; a differently cased string is not that identifier | **AUTHORED** |
+| `EXACT_NAME` predicate | The full `customers.name` appears bounded on both sides by a character that is **not** `[A-Za-z0-9]`, or by the start/end of the text | **AUTHORED** |
+| `EXACT_NAME` case | **Case-insensitive** | **FROZEN** — §A11 states it |
+| Normalization | **None.** No Unicode normalization, no case folding beyond `EXACT_NAME`'s own comparison, no whitespace collapsing, no punctuation stripping, no accent folding. Citable text is searched exactly as Layer 1 stores it | **AUTHORED** |
+| Multiple occurrences | **The first occurrence in citable text wins** — the one with the lowest `match_start`. Exactly one link row is written per `(document, customer, basis)`, carrying that one span | **AUTHORED** |
+| `match_start` / `match_end` | The half-open span `[start, end)` of that first occurrence in citable text. `match_end - match_start` equals the matched text's length | **AUTHORED** |
+| Quoted-span semantics | **`citable_text(document)[match_start:match_end] == matched_token`** must hold for every persisted row, and the `DocumentCitation` on the link's evidence carries the identical `(document_id, match_start, match_end)`. `matched_token` is therefore the text **as the document writes it**, not the canonical form — for a case-insensitive `EXACT_NAME` hit on "meridian textiles", `matched_token` is `"meridian textiles"` | **AUTHORED** |
+
+**DOC-009, the adversarial fixture.** Measured on the live database, DOC-009 contains
+`Meridian Textiles` **three** times and `CUST-007` once:
+
+| Field | Basis | Offsets within that field |
+|---|---|---|
+| `title` (`Account Review Notes - Meridian Textiles`) | `EXACT_NAME` | `[23, 40)` |
+| `body_text` | `EXACT_NAME` | `[16, 33)` and `[219, 236)` |
+| `body_text` | `ID_TOKEN` | `[35, 43)` |
+
+In **citable text** those become `EXACT_NAME` at `[23, 40)`, `[57, 74)` and `[260, 277)`, and
+`ID_TOKEN` at `[76, 84)`. Under the first-occurrence rule DOC-009 therefore persists **exactly
+two** rows for CUST-007:
+
+```
+(DOC-009, CUST-007, EXACT_NAME, "Meridian Textiles", 23,  40)
+(DOC-009, CUST-007, ID_TOKEN,   "CUST-007",          76,  84)
+```
+
+These values are **uniquely determined** — no other pair of offsets satisfies the rules — which
+is what the gate required beyond mere determinism. M4's tests assert them literally.
+
+---
+
+#### 0.3.10.5 §A22's evidence length cap — a rendering control, not a storage one
+
+The gate asked for proof rather than reassignment. §A22's control reads: *"**Rendered** only as
+quoted, length-capped, escaped evidence with id and span. The linker never treats body text as
+configuration."* Two independent sentences: the first governs **rendering** and carries the cap;
+the second governs the **linker** and carries no length component.
+
+§A17 confirms the split: the hashed decision payload's evidence contract is
+`{kind: "document", document_id, start, end}` — **a span, never the text** — and the *"rendered
+narrative"* is separately described as *"a view, not hashed"*. Nothing that M4 stores contains
+document prose, so a cap has nothing to apply to at the storage or derivation layer.
+
+**Conclusion: the cap constrains rendering, and belongs to the milestone that renders** — M7,
+whose *Change* names `app/decisions/brief.py` (narrative rendering) and
+`app/decisions/templates/`. **The cap's value stays deferred to M7**; this section assigns
+ownership, it does not invent a number. It does not block M4: the only text M4's
+`citations.py` returns is the span of a matched token, whose length is bounded by the match
+itself. §0.3.7 #5 is amended accordingly.
+
+---
+
+### 0.3.11 M4 boundary clarification — three verified contradictions, closed 2026-09-21
+
+A second implementation gate, run before any M4 file was created, measured three conflicts
+between §0.3.10 and committed tests. The first two are genuine contradictions: the
+specification as written could not be implemented without failing a test the plan itself
+declares authoritative. The third is a latent obligation §0.3.9 under-described.
+
+Nothing measured in §0.3.8 or §0.3.10.4 changed. **The 11-row corpus expectation, the DOC-009
+offsets, the 26 collision groups and every matching rule were independently re-measured against
+the live 233-row `csv_demo` database during this gate and reproduced exactly.** This section
+moves a construction step between two modules, preserves one whitelist, and records two
+reporting rules. It alters no behaviour a test can observe at the linker's boundary.
+
+**All four decisions below are AUTHORED.** None is forced by frozen code: each resolves a
+conflict between two things the plan had already chosen, and a different resolution was
+available in every case. They are recorded here rather than left to an implementer precisely
+because they are choices.
+
+---
+
+#### D-M4-B1 — persistence reads; evidence reconstructs
+
+**The contradiction.** §0.3.10.2 placed the construction of `LinkedDocument` — and therefore of
+the `DerivedLink` it contains — inside
+`app/persistence/repositories/document_links.py`. Reconstructing a `DerivedLink` from a
+persisted row requires `EntityRef`, `LinkBasis`, `LinkConfidence`, `Evidence` and
+`DocumentCitation`, all of which live in `app/intelligence/contract.py`. §0.3.9 T2 fixes the
+M1 importer whitelist at exactly `{app/relationships/, app/evidence/}` and states that an
+importer which is neither *"still fails the build"*.
+`tests/unit/test_m1_boundary.py::test_only_the_relationship_model_depends_on_the_foundation`
+scans `app/`, `scripts/`, `migrations/` and `docker/`, so the repository module is in its scope
+and the build would fail. Routing the import through `app.evidence` instead would invert the
+Layer 1 → Layer 2 direction *and* close an import cycle between `documents.py` and
+`document_links.py`.
+
+**Decision.**
+
+> **The repository owns persistence and read concerns only.**
+> `app/persistence/repositories/document_links.py`:
+>
+> - queries `document_customer_links`;
+> - joins `documents`;
+> - returns the persisted link data together with the joined `document_type`, as rows;
+> - constructs **no** `DerivedLink` and **no** `LinkedDocument`;
+> - imports **no** `app.intelligence` module and **no** `app.evidence` module.
+>
+> **The evidence layer owns domain reconstruction.** `app/evidence/documents.py` builds
+> `EntityRef`, `LinkBasis`, `Evidence`, `DocumentCitation`, `DerivedLink` and `LinkedDocument`
+> from the repository's rows, **using the frozen M1 contract definitions**. M1 is not modified
+> and none of its dataclasses is duplicated, re-declared or shadowed.
+>
+> **`documents_for()` remains the public evidence-layer API**, with the signature §0.3.10.2
+> fixed and unchanged:
+>
+> ```
+> documents_for(session, scope, customer_source_id) -> tuple[LinkedDocument, ...]
+> ```
+>
+> Its behaviour is: call the repository, receive persisted link and document data, construct
+> `LinkedDocument` values in `app/evidence/documents.py`, return the tuple.
+
+**This is not the unnamed adapter seam §0.3.10.2 rejected**, and the distinction is the reason
+this resolution is admissible rather than a reversal. The seam that section forbade was a
+*third* component — a converter sitting between the repository and the evidence layer, owned by
+neither, with a second query or a second type-mapping step. No such component exists here.
+There remain exactly two modules and one query: the repository is the **sole** location of the
+database read and the `documents` join, and `app/evidence/documents.py` is the **sole**
+location of conversion into `LinkedDocument`. §0.3.10.2's load-bearing property — that exactly
+one place constructs a `LinkedDocument` — is preserved verbatim; only which place is named has
+changed. The repository is not permitted to return a competing domain abstraction of its own,
+and **no additional public adapter module is introduced.**
+
+**Why the repository must not reconstruct `DerivedLink`**: doing so forces `app/persistence/`
+to depend on `app.intelligence`, which is exactly what T2 forbids and what D-M4-B2 preserves.
+
+**Consequences.** §0.3.10.2's second bullet and §0.3.10.3's *read* bullet are amended above.
+`document_type` is still read from Layer 1 at join time and still never stored on the link
+row (§A18 gains no `document_type` column), so a Layer 1 correction is still reflected without
+re-deriving links. Every other element of §0.3.10.2 and §0.3.10.3 — the signature shape, the
+return type, the read-persisted-rows reading of §A11, the write function, the unique key, the
+column table, the FK and index decisions — stands unchanged.
+
+**Remaining uncertainty.** `documents_for()`'s **ordering** remains deferred (§0.3.7 #9). This
+section does not settle it.
+
+---
+
+#### D-M4-B2 — the T2 whitelist is unchanged
+
+**Decision.**
+
+> **§0.3.9 T2 stands exactly as written.** The allowed importers of `app.intelligence` remain
+> `app/relationships/` and `app/evidence/`. **`app/persistence/` is not added**, and the
+> existing architectural boundary test remains authoritative rather than being extended to
+> accommodate M4.
+
+The resulting dependency direction, which an M4 boundary test must assert:
+
+```
+app.evidence  →  app.intelligence        (permitted, T2)
+app.evidence  →  app.persistence         (permitted; the repository read)
+app.evidence  →  app.relationships       (permitted, unused by M4)
+
+app.persistence   ✗→  app.evidence
+app.persistence   ✗→  app.intelligence
+app.relationships ✗→  app.evidence
+M3                ✗→  app.evidence
+```
+
+**Post-implementation verification is required**, not assumed: M4 must assert that
+`app/persistence/repositories/document_links.py` imports neither `app.intelligence` nor
+`app.evidence`. The repository remains infrastructure code.
+
+Note that T1 still removes `test_app_evidence_does_not_exist` — that assertion expires when M4
+starts — while **every other M3-side assertion is retained**, including that no M3 module
+imports `app.evidence`. The existence of `app/evidence/` is not permission for M3 to reach it.
+
+---
+
+#### D-M4-B3 — the CUST-007 literal must not weaken the secret scanner
+
+**The conflict.** `scripts/secret_scan.py`'s `quoted_secret_assignment` rule matches any
+identifier containing `token` assigned a quoted, whitespace-free value of at least
+`GENERIC_MIN_LENGTH = 8` characters. `matched_token` contains `token`, and `CUST-007` is
+exactly 8 characters, so the natural spelling of §0.3.10.4's pinned assertion —
+`matched_token = "CUST-007"` — **is flagged**. Verified by running the committed rule set
+against a probe file. `matched_token = "Meridian Textiles"` is **not** flagged: the rule's
+value group `["']([^"'\s]+)["']` rejects a value containing a space. M1 met the same rule in
+`LinkBasis` and resolved it by deriving member values with `auto()` instead of writing quoted
+literals — the precedent for working around the scanner rather than changing it.
+
+**Decision.**
+
+> - **The secret scanner is not weakened, and its rules are not modified.** No change to
+>   `scripts/secret_scan.py`, its patterns, its minimum length or its prose-skipping behaviour.
+> - **`CUST-007` is not added to `ALLOWED_FINDINGS`.** The allowlist is for clearly synthetic
+>   credential-shaped fixtures; a customer identifier is not one, and pinning it there would
+>   teach the next reader that the allowlist absorbs inconvenient matches.
+> - **The test suite asserts the exact literal `"CUST-007"`**, and must do so through an
+>   expression that does not assign it to a `token`-named identifier. The preferred form is the
+>   inline comparison:
+>
+>   ```
+>   assert link.matched_token == "CUST-007"
+>   ```
+>
+>   Any semantically equivalent expression preserving the exact contract is acceptable.
+> - **The runtime value remains exactly `CUST-007`.** The scanner constrains how a test is
+>   *spelled*, never what it asserts. **No test may be weakened, loosened or skipped to satisfy
+>   the scanner**, and an implementation that asserts a different value, a prefix, a length or a
+>   truthiness check in place of the literal is wrong.
+
+**Classification: AUTHORED.** Three resolutions existed — amend the scanner, pin the finding,
+or spell the assertion differently — and the third is chosen because it is the only one that
+leaves both the security tooling and the asserted contract untouched.
+
+---
+
+#### D-M4-B4 — T5 covers the Ruff and Mypy counts too
+
+**The gap.** §0.3.9 T5 named only the per-layer test counts. `tests/unit/test_i2_readme.py`
+also pins the counts the README quotes for `ruff check app/ tests/ scripts/` and `mypy app/`,
+currently **69** and **9**. M4 adds source files, so either may legitimately move, and T5 as
+written did not authorise updating them.
+
+**Decision.**
+
+> **T5 authorises updating the README's test count, Ruff count and Mypy count** when those
+> values change as a direct consequence of M4.
+>
+> - These are **informational project-state counts**, not behavioural contracts. The README
+>   test's job is to keep the README honest about the current state, and it continues to do
+>   exactly that.
+> - **`ruff = 69` and `mypy = 9` are M3-era observations. They are not M4 acceptance criteria**,
+>   and no historical M0 or M3 value is an immutable M4 contract.
+> - **No test behaviour may be modified, and no lint finding suppressed, merely to preserve
+>   them.** If M4 legitimately changes a count, the README is updated to the actual verified
+>   value; if M4 changes none, the README is left alone.
+> - The distinction that matters: a *count* may move, but a *gate* may not. M4 introducing new
+>   Ruff findings of its own is a defect to fix, not a number to re-quote — this decision
+>   licenses recording reality, never lowering the bar.
+
+**Classification: AUTHORED**, and narrow: it extends an existing reporting obligation to two
+sibling values the same mechanism already validates.
+
 ---
 
 ## Part A — Specification
@@ -379,11 +1481,13 @@ Nodes: `Customer`, `SupportTicket`, `Deal`, `Project`, `Employee`, `Document`.
 | `customer_has_ticket` / `customer_has_deal` / `customer_has_project` | `CANONICAL_FK` | M2 |
 | `customer_owned_by`, `ticket_assigned_to`, `employee_reports_to`, `deal_owned_by` | `SOURCE_KEY_JOIN` (within one source system) | M2 |
 | `document_mentions_customer` | `DERIVED_TEXT_MATCH` (id token or exact full name) | **M4** |
-| `document_relates_to_topic` | `DERIVED_TOPIC_MATCH` — supporting evidence only | **M4** |
+| ~~`document_relates_to_topic`~~ | `DERIVED_TOPIC_MATCH` | **not modelled in VS-01** (§0.3.1) |
 
-The first two rows are the **relationship model** (M2). The last two are **derived links** (M4)
-and are reached through the evidence interface below, never through the relationship API. The
-`EdgeBasis` vocabulary that names all four is M1's and is not redeclared.
+The first two rows are the **relationship model** (M2). The third is the **derived link** (M4),
+reached through the evidence interface below and never through the relationship API. The
+`EdgeBasis` vocabulary that names all four bases is M1's and is not redeclared;
+**`DERIVED_TOPIC_MATCH` is reserved vocabulary that VS-01 never constructs**, because `documents`
+carries no topic field and a topical overlap cites no span (§0.3.1).
 
 **`document_owned_by` is deliberately absent, and its absence is load-bearing.**
 
@@ -499,7 +1603,8 @@ construction**, not by policy. M4 connects the node.
 3. `policy_documents()` → `document_type = 'policy'`
 
 **Derived document links are not a fourth relationship query.** `documents_for(customer)` →
-derived links with basis, matched token and offsets — is an **M4 evidence interface** exported
+derived links with basis, matched token and offsets, returned as `tuple[LinkedDocument, ...]`
+(§0.3.10.2) — is an **M4 evidence interface** exported
 from `app/evidence/`, outside the M2 relationship API (§A11).
 
 The dependency runs one way: `app/evidence` reads `app/relationships`, never the reverse. That
@@ -609,19 +1714,49 @@ does traversal, it means the three fixed queries and nothing else.
 | S11 | `active_deal_count` + stages + probabilities | worthiness | 1 — negotiation, 90% |
 | S12 | `exposure_by_currency` | **no** | `{USD: [DEAL-001, 5361.44, 90%]}` |
 | S13 | `active_project_count` | worthiness | **0** |
-| S14 | `contract_documents` | evidence only | DOC-006 |
+| S14 | `contract_documents` | evidence only | DOC-006 (M4's function, M5's call — §0.3.6) |
 | S15 | `deal_under_pressure` | conflict input | true — an active `negotiation` deal exists while S5 is true |
 
 **S14 is empty until M4.** `contract_documents` requires a Document→Customer association, and
 §A11 makes M4 the sole mechanism for one. M3's signal engine cannot name a document — it imports
 neither `app.evidence` nor the `Document` model — so it states `contract_document_ids = ()` for
-every customer and M4 populates it. The DOC-006 value above is the specification's expectation
-for the completed slice, not M3's output.
+every customer, and it is filled later by the function §0.3.6 assigns to M4. The DOC-006 value
+above is the specification's expectation for the completed slice, not M3's output.
+
+**Who fills it, decided 2026-09-21 (§0.3.6) — two responsibilities, two milestones.** Earlier
+drafts of this paragraph said only *"M4 populates it"*, which conflated them; they are separate.
+
+**M4 owns the composition function.** `SignalSet` is an **M1** type, not an M3 one, and it is
+frozen, so a populated copy is produced by replacement. M4 exports from `app/evidence/` the
+**pure** function `with_contract_documents(signals: SignalSet, links: tuple[LinkedDocument, ...])
+-> SignalSet`, which returns a **new** `SignalSet` with every other field unchanged.
+`LinkedDocument` is a **new M4-owned wrapper** holding a frozen `DerivedLink` by composition
+plus the document's nullable `document_type`; it does **not** extend or modify `DerivedLink`
+(§0.3.6 A). The function imports `SignalSet` from `app.intelligence.contract` and **imports
+nothing from M3**; `app/intelligence/signals.py` is not edited and keeps its
+`contract_document_ids=()` literal.
+
+**Selection rule:** a document is a contract document when its `document_type` is **exactly
+equal** to `CONTRACT_DOCUMENT_TYPE = "contract"` — case-sensitive, no normalization, no substring
+or prefix matching, no fallback. **`None` is not a contract document and contributes nothing.**
+This is M2's frozen `POLICY_DOCUMENT_TYPE` pattern applied to contracts.
+
+The function then **projects evidence grain onto document grain**: a document reached by two
+evidence links contributes **one** id, deduplicated by `document_id` and never by preferring one
+basis over another, and the surviving ids are ordered **lexicographically ascending by
+`document_id`**. Only `document_type` and `link.source.source_id` are read; no other link
+attribute is consulted. Zero contract links yield `()`. The underlying evidence links are
+untouched (§0.3.6 A).
+
+**M5 owns invoking it in production**, when it builds §A14's `CommercialContext`, which is where a
+populated S14 is consumed. **M4 never calls the function** — not in the linker, not in
+`documents_for()`, not in the citation builder, not in the repository, not in the migration. M5's
+invocation design is deferred to M5's specification and is **not** an M4 requirement.
 
 ### A11. Derived document links
 
 **Owned by M4, not M2 — exclusively.** M4 owns, and is the only milestone that may introduce:
-document→customer derivation; the `ID_TOKEN` / `EXACT_NAME` / `TOPIC` rules; `LinkBasis` and
+document→customer derivation; the `ID_TOKEN` and `EXACT_NAME` rules; `LinkBasis` and
 `LinkConfidence` in use; `linker_version`; matched tokens and offsets; the
 `document_customer_links` table and its migration; and citation/evidence retrieval over documents.
 They are produced by `app/evidence/linker.py`, read through `documents_for(customer)` which
@@ -642,18 +1777,43 @@ ever related — there is no canonical FK, no source key, no composable ownershi
 other query. Every customer–document association in a brief therefore carries a basis, a matched
 token and a citation into the text, or it does not exist.
 
-| Basis | Rule | May derive signals? | CUST-007 |
-|---|---|---|---|
-| `ID_TOKEN` | Canonical `source_id` appears as a whole token in title or body | Yes | DOC-005, DOC-006, DOC-009 |
-| `EXACT_NAME` | Full customer name, case-insensitive, at token boundaries | Yes | DOC-006, DOC-009 |
-| `TOPIC` | Document topic overlaps the dominant ticket category | **No** | DOC-010 (supporting only) |
+| Basis | Rule | Confidence | May derive signals? | CUST-007 (measured) |
+|---|---|---|---|---|
+| `ID_TOKEN` | Canonical `source_id` appears as a whole token in title or body | `HIGH` | Yes | DOC-005, DOC-006, DOC-009 |
+| `EXACT_NAME` | Full customer name, case-insensitive, at token boundaries | `HIGH` | Yes | **DOC-005, DOC-006, DOC-009** |
+| ~~`TOPIC`~~ | — | — | — | **not implemented in VS-01 (§0.3.1)** |
+
+**VS-01 derives links by these two mechanisms and no other.** `TOPIC` was removed on 2026-09-21:
+`documents` carries no topic field, `document_type` and ticket `category` are disjoint
+vocabularies, a topical overlap cites no span and so cannot satisfy strategy §7.4's grounding
+guarantee, and `DerivedLink` cannot represent a non-canonical target. `LinkBasis.TOPIC` stays in
+M1's frozen contract as reserved vocabulary and is never constructed. DOC-010 is linked to no
+customer, which is what the data says: it names none. The full reasoning and its evidence are in
+§0.3.1.
+
+**`EXACT_NAME` includes DOC-005** — corrected 2026-09-21 (§0.3.2). DOC-005's body contains
+"Meridian Textiles" at offset 174, at token boundaries. The earlier DOC-006/009 value was wrong
+and is contradicted by `M0_BASELINE_REPORT.md` §12.2 and `M0_CLOSURE_REPORT.md` F7, both of which
+measured DOC-005 as matching on both mechanisms.
+
+**Grain: one link per (document, customer, basis)** — decided 2026-09-21 (§0.3.3). A pair
+matching on both mechanisms produces **two** links, each with its own `matched_token`, span and
+evidence. **There is no precedence between the mechanisms and none may be introduced**: they do
+not compete, both results are recorded, and a consumer needing one answer per pair states its own
+rule at the point of consumption rather than discarding evidence at derivation time. A single
+row cannot hold both tokens — `CUST-007` and `Meridian Textiles` are different strings — so
+collapsing the pair would destroy a `matched_token` this section requires every link to carry.
 
 Substring matching is **forbidden** and pinned by a test: the dataset holds "Meridian Textiles",
-"Westbrook Textiles", "Northstar Textiles" and "Evergrid Textiles" (CUST-039).
+"Westbrook Textiles", "Northstar Textiles" and "Evergrid Textiles" (CUST-039). §0.3.8 records the
+measured collision surface in full — 26 name-token groups, including "Meridian Foods" and
+"Deltaforge Health" — which is wider than this sentence's four names suggest.
 
 **In VS-01 no signal is derived from any document link.** Every signal S1–S15 is computed
 deterministically from canonical `support_tickets`, `deals` and `projects` rows; S14
-(`contract_documents`) is evidence only. The "may derive signals" column above is a property
+(`contract_documents`) is evidence only: it is filled from `document_type = 'contract'` links by
+M4's composition function, called by M5, and no signal becomes document-derived (§A10, §0.3.6).
+The "may derive signals" column above is a property
 reserved for later slices. This matters because DOC-005 is an `ID_TOKEN` match for CUST-007 and
 states the escalation conclusion in prose, so §A25 test 4 must keep asserting exact equality of
 **every signal value** — that test is what stops a later slice from quietly making the conclusion
@@ -687,6 +1847,10 @@ database session**. Scope is therefore enforced by construction, not by conventi
 
 A test asserts each context dataclass has no field of a forbidden type, and that neither analyst
 module imports `Session` or any ORM model.
+
+**`CommercialContext` is where S14 is consumed, so M5 owns the production call** that populates
+it. M4 owns, exports and proves the composition function and never calls it; M5's context factory
+invokes it. The invocation design belongs to M5's specification (§0.3.6).
 
 ### A15. Conflict detection and reconciliation — the core of the slice
 
@@ -756,13 +1920,38 @@ and the generator raises.
 
 | Table | Key columns |
 |---|---|
-| `document_customer_links` | `document_id` FK, `customer_id` FK, `basis`, `matched_token`, `match_start`, `match_end`, `linker_version`, `layer1_fingerprint` |
+| `document_customer_links` | `document_id` FK, `customer_id` FK, `basis`, `matched_token`, `match_start`, `match_end`, `linker_version`, `layer1_fingerprint`; **unique** `(document_id, customer_id, basis, linker_version, layer1_fingerprint)` |
 | `risk_assessments` | `customer_id` FK, `as_of`, `source_system`, `layer1_fingerprint`, `rules_version`, `band`, `satisfied_rules` JSONB, `signals` JSONB, `executive_worthy`; **unique** `(customer_id, as_of, source_system, layer1_fingerprint, rules_version)` |
 | `risk_positions` | `assessment_id` FK, `function`, `stance`, `proposed_action`, `rationale`, `citations` JSONB |
 | `risk_briefs` | `assessment_id` FK, `policy_version`, `template_version`, `decision_payload` JSONB, `payload_hash`, `narrative` TEXT, `status` `DRAFT`; **unique** `(assessment_id, payload_hash)` |
 | `brief_decisions` | `brief_id` FK, `payload_hash`, `actor`, `decision`, `note`, `decided_at`, `supersedes_id` nullable. **Append-only** |
 
 Canonical tables are untouched; downgrade drops only these five.
+
+**`document_customer_links` identity and re-derivation, decided 2026-09-21 (§0.3.4).** The key
+holds exactly the inputs that can change a link: `basis` (the grain, §0.3.3), plus the two stamps
+§0 defect 9 added. `as_of`, `rules_version` and `policy_version` are deliberately **absent** — no
+link depends on the evaluation date, the band table or the conflict policy, so including them
+would mint duplicate rows for identical content. Re-deriving with identical inputs is a **no-op**:
+the constraint refuses the second insert and it is read instead, which is how §A27.8's "re-run
+inserts nothing" is satisfied. A changed `layer1_fingerprint` or `linker_version` **appends**,
+leaving earlier rows attributable to the snapshot and linker that produced them — the same
+behaviour `risk_assessments` gets from its own constraint. Nothing is updated in place, nothing
+is deleted by a re-derivation, and **no `computed_at`, `superseded_by`, validity interval or
+history table is introduced**: the two stamps are sufficient to identify the rows any given
+assessment used.
+
+**The full column, nullability, FK, index and repository contract for
+`document_customer_links` is §0.3.10.3**, grounded in Layer 1's conventions: caller-owned session,
+caller-owned transaction, `on_conflict_do_nothing` against the named constraint, all columns NOT
+NULL, both FKs `ondelete='CASCADE'`, no `source_system` column and no `ProvenanceMixin`.
+
+**`linker_version` lives in `config/intelligence/risk_rules.yaml`** beside `rules_version`, as a
+non-empty **string** (initial value `"1"`), because `DerivedLink` requires a string where
+`rules_version` is an int. It is bumped whenever a linker change can alter which links are
+derived, which token is matched, or where a span falls. A bump appends under the key above and
+carries no migration or backfill. §0.3.5 records the reasoning and marks the literal value as an
+authored choice.
 
 ### A19. API (additive; F1/F2 conventions reused unchanged)
 
@@ -870,6 +2059,12 @@ documents with a customer name embedded as a substring of another; a ticket with
 `customer_source_id`; a customer holding deals in two currencies; a document containing
 instruction-like text, asserted to be quoted and never interpreted.
 
+**M4 needs four more, because the committed corpus exercises none of them** (measured, §0.3.8):
+a document with NULL `body_text` (all 12 have one); a document naming **two** customers (none
+does); a document and a customer in a **second `source_system`**, to prove a link never crosses
+one, following M2's `other_demo` precedent; and a document naming a customer id that exists in no
+`customers` row.
+
 ### A27. Acceptance criteria (binary)
 
 1. `make verify-vs01` exits 0 against a running stack whose database was built by the **clean full-dataset path** (§A28): all 233 canonical rows across all 7 entity types, evaluated at `ACCEPTANCE_AS_OF = 2026-09-18`.
@@ -904,7 +2099,9 @@ assessment (identical hash, no new rows) → `pytest -k doc005_leave_out`.
 ### A29. Known limitations
 
 Single source system; no cross-source entity resolution; document links derived, not
-provenance-backed; `TOPIC` links are supporting only; no FX, so no cross-currency total;
+provenance-backed; **topical evidence is not modelled — a document that concerns a customer
+without naming it, such as DOC-010, is linked to no customer at all (§0.3.1)**; no FX, so no
+cross-currency total;
 business days have no holiday calendar; the band is a policy artefact, not a probability;
 approver identity is asserted, not authenticated; the dataset is synthetic, 233 rows;
 `employees.organization_id` remains NULL; **document stewardship is not modelled** —
@@ -1091,8 +2288,10 @@ specification gap** and deliberately produces no note (§0.2.2); M3 **consumes M
 queries and resolves nothing itself**, and `app/intelligence/__init__.py` must not import the M3
 modules (§0.2.3); the single mutation survivor is **verified semantically equivalent** (§0.2.4).
 
-S14 is empty: M4 populates it (§A10). `executive_worthy` is not implemented here — §A15 defines
-it, but M3's acceptance does not name it, so it belongs to the milestone that persists an
+S14 is empty: the composition that fills it is M4's and the production call is M5's
+(§A10, §0.3.6 — decided after this block was written). `executive_worthy` is not implemented
+here — §A15 defines it, but M3's acceptance does not name it, so it belongs to the milestone
+that persists an
 assessment. The §A21 events `vs01.signals_computed` and `vs01.band_assigned` are likewise
 deferred: `app.core.logging` is outside the import surface M1's boundary test allows
 `app/intelligence/`, and M3's *Change* list names no logging.
@@ -1106,13 +2305,31 @@ touching Layer 1.
 
 **Before.** Documents are unreachable from a customer.
 
-**Change.** `app/evidence/linker.py` (`ID_TOKEN`, `EXACT_NAME`, `TOPIC`),
-`app/evidence/documents.py` exporting **`documents_for(customer)`** — the evidence interface
-§A9 keeps out of the M2 relationship API — `app/evidence/citations.py` (build and resolve),
+**Change.** `app/evidence/linker.py` (**`ID_TOKEN` and `EXACT_NAME` only** — `TOPIC` is not
+implemented in VS-01, §0.3.1), `app/evidence/documents.py` exporting
+**`documents_for(session, scope, customer_source_id) -> tuple[LinkedDocument, ...]`** — the
+evidence interface §A9 keeps out of the M2 relationship API, composed in the repository read
+(§0.3.10.2) —
+plus **`with_contract_documents`**, the **`LinkedDocument`** representation it consumes and the
+`contract` document-type constant, all of which M4 owns, exports and proves but **never calls** —
+M5 invokes the function when it builds the executive context (§0.3.6);
+`app/evidence/citations.py` (build and resolve);
 `app/persistence/models/document_customer_link.py`,
-its repository, and the **first additive Alembic revision** (`document_customer_links`) branching
-from `8bfd73b6af60`. Links are derived inside an assessment run and stamped with `linker_version`
-and `layer1_fingerprint`.
+`app/persistence/repositories/document_links.py` (§0.3.10.3), and the **first additive
+Alembic revision** (`document_customer_links`) chained after `8bfd73b6af60` — *chained*, not
+branched: the history must keep exactly one head. `linker_version` is added to
+`config/intelligence/risk_rules.yaml` and to the key whitelist in `app/intelligence/config.py`
+(§0.3.5). Links are derived inside an assessment run and stamped with `linker_version` and
+`layer1_fingerprint`.
+
+**Decisions this milestone is built on.** **D-1 through D-6 have architectural resolutions** in
+§0.3: `TOPIC` removed (§0.3.1), `EXACT_NAME` corrected to DOC-005/006/009 (§0.3.2), grain
+`(document, customer, basis)` with no precedence (§0.3.3), the uniqueness key and append
+semantics (§0.3.4), `linker_version` (§0.3.5), and S14 split into **M4's composition function**
+and **M5's production invocation** (§0.3.6). §0.3.7 lists what is still deliberately open, and
+**an implementer must not settle any of it in passing**. §0.3.9 **specifies, but does not
+authorise**, the five test/README changes M4 will require; performing any of them before M4 is
+explicitly approved is out of scope.
 
 `app/evidence/` may read `app/relationships/`; the reverse import is forbidden and §A22's boundary
 test pins the direction. M4 therefore **adds a package** rather than reopening M2's, and M2's
@@ -1123,20 +2340,123 @@ test pins the direction. M4 therefore **adds a package** rather than reopening M
 depending on M1 and M2 only. M4 consumes M2 by importing it; M2 never names M4. Invariant B4
 fails the build on the reverse edge, so the DAG is enforced rather than merely intended.
 
-**Tests.** `documents_for(CUST-007)` returns exactly the links below and nothing else — DOC-010
-carries neither the `CUST-007` token nor the name, so it is reachable only as a `TOPIC` link and
-never as a customer association; id-token matching finds DOC-005/006/009 for CUST-007;
-exact-name finds DOC-006/009;
-substring safety across the three "… Textiles" customers; NULL `body_text` skipped; spans resolve
-to the exact quoted text; record citations resolve to a real field; an adversarial document is
-quoted, never interpreted; downgrade drops only the new table.
+**Tests.** `documents_for(CUST-007)` returns exactly six links and nothing else: DOC-005,
+DOC-006 and DOC-009, each on **both** `ID_TOKEN` and `EXACT_NAME` (§0.3.3's grain, §0.3.2's
+correction). **DOC-010 is returned for no customer** — it carries neither the `CUST-007` token
+nor the name, and VS-01 models no topical link at all (§0.3.1). Id-token matching finds
+DOC-005/006/009 for CUST-007; **exact-name finds DOC-005/006/009** — asserting DOC-006/009 is the
+corrected defect and must fail. The corpus-wide expectation of §0.3.8 holds: CUST-015 → DOC-004
+and DOC-008 by name only, CUST-021 → DOC-007 by both and DOC-011 by name only, the other 47
+customers → nothing, 11 rows in all.
+
+Substring safety across the three non-Meridian "… Textiles" customers, **and across "Meridian
+Foods" (CUST-038) and "Deltaforge Health" (CUST-027)**, which share a name token with a customer
+that does have links (§0.3.8). NULL `body_text` skipped; NULL `title` contributes the empty
+string. A link never crosses a `source_system`. Record citations resolve to a real field; an
+adversarial document is quoted, never interpreted.
+
+**Matching and spans (§0.3.10.4).** Offsets index **citable text**, `(title or "") + "\n" +
+(body_text or "")`, and the invariant `citable_text[match_start:match_end] == matched_token`
+holds for **every** persisted row. `ID_TOKEN` is case-sensitive and bounded by `[^A-Za-z0-9_-]`:
+`CUST-007` matches inside `(CUST-007)` and **not** inside `CUST-007Z`, `CUST-0071` or
+`XCUST-007` — the last of which also pins §A25 test 13b's rename case. `EXACT_NAME` is
+case-insensitive and bounded by `[^A-Za-z0-9]`, and `matched_token` records the text **as the
+document writes it**, so a document saying "meridian textiles" yields that string, not the
+canonical name. **DOC-009 is the adversarial fixture**: it holds `Meridian Textiles` three times
+and `CUST-007` once, and under the first-occurrence rule it persists exactly two rows for
+CUST-007 — `(EXACT_NAME, "Meridian Textiles", 23, 40)` and `(ID_TOKEN, "CUST-007", 76, 84)`.
+Those literal offsets are asserted.
+
+**Evidence kind (§0.3.10.1).** Every link's evidence carries
+`EvidenceKind.DERIVED_RELATIONSHIP` with a `DocumentCitation` whose span equals the link's own
+`(match_start, match_end)`, matching the payload shape M1's committed contract test already pins.
+
+**Persistence (§0.3.10.3).** No module under `app/evidence/` or
+`app/persistence/repositories/document_links.py` calls `commit`, `rollback`, `begin` or `close` —
+the M1 `FORBIDDEN_WRITES` scan extended to both. The conflict is resolved by the database: a
+second identical derivation inserts **0** rows and raises nothing. Every column is NOT NULL, both
+foreign keys cascade, and the unique constraint and both indexes exist in the migrated schema.
+
+Persistence: re-deriving with identical inputs inserts nothing; a changed `layer1_fingerprint`
+appends rather than replacing; `linker_version` is stamped on every row; downgrade drops only the
+new table and the history keeps one head.
+
+S14, `with_contract_documents` (§0.3.6): composing an M3 signal set with M4's links yields
+exactly `("DOC-006",)` for CUST-007 — **the decisive case, because CUST-007's DOC-006 arrives on
+two evidence links and must project to one id**; every other `SignalSet` field is byte-identical
+between input and output; the returned object is a new `SignalSet`, never a mutated one; the
+function is pure and total — same inputs give the same output, and a customer with no `contract`
+link yields `()` rather than an error; **the result is unchanged when the two evidence links are
+supplied in either order or when one basis is dropped**, which is what pins the absence of any
+evidence-priority rule; `documents_for()` still returns **both** DOC-006 links, so the evidence
+layer is not collapsed by the projection; **no module under `app/evidence/` calls the function**,
+so it cannot creep into the linking or persistence pipeline; and no module under `app/evidence/`
+imports M3.
+
+Four more S14 assertions, one per decision frozen on 2026-09-21. **The constant** is named
+`CONTRACT_DOCUMENT_TYPE` and equals `"contract"`. **Matching is exact and case-sensitive**: a
+link whose `document_type` is `"Contract"`, `"CONTRACT"`, `" contract"` or
+`"contract_amendment"` contributes nothing, and neither does one whose `document_type` is
+**`None`** — asserted with a fixture, since the committed corpus has no NULL `document_type`.
+**Ordering** is lexicographic ascending by `document_id`: a fixture giving one customer contract
+links to DOC-006 and DOC-002 yields `("DOC-002", "DOC-006")` in that order, whatever order the
+links arrive in. **`LinkedDocument` wraps and does not extend**: `app/intelligence/contract.py`
+is byte-identical to `29776e0`, `DerivedLink` has no `document_type` attribute, and
+`LinkedDocument` is not a subclass of it.
+
+Boundary, mirrored from M2 (§A11): `documents_for` **does** exist in `app/evidence/` and still
+does not exist in `app/relationships/`; B9(a) is re-run so `app/relationships/` still models no
+`Document` edge once `app/evidence/` exists; M2's transitive scan still never reaches
+`app.evidence`; the Layer 1 fingerprint still recomputes to `1d891b0b…`.
+
+**Negative controls for the M2 architectural invariant, now that `app/evidence/` may import both
+models.** *Employee ownership of a document is not evidence that the document belongs to,
+concerns or supports a customer* (§A9, §A9.2) — and B9 scans `app/relationships/`, which cannot
+see `app/evidence/`. M4 therefore asserts on its own side: no module under `app/evidence/` reads
+`documents.owner_source_id` or `customers.owner_source_id`; and B9(b)'s composition is written
+out again as a live negative control — it yields **61** pairs on the demo dataset, including
+DOC-007 → CUST-007 — with the assertion that no `documents_for()` result contains any of them.
+Note that `owner_source_id` is a *citable* business field, so `RecordCitation('documents', …,
+'owner_source_id')` is accepted by M1's frozen contract: nothing but this test stops ownership
+becoming link evidence.
 
 **After.** Any claim can cite a record field or a document span, and the citation is verifiable.
 
-**Acceptance.** Links reproduce the measured expectation; every citation resolves.
+**Acceptance.** `documents_for()` reproduces §0.3.8's measured expectation exactly — 11 rows,
+six of them CUST-007's — and every citation resolves. Composing an M3 signal set with M4's links
+yields `("DOC-006",)` for CUST-007 **in a test** — M4 ships the function, not a call to it.
+A re-run inserts nothing. `app/relationships/` is
+byte-identical to `bc0525d` and `app/intelligence/` to `34486eb` — including
+`signals.py`'s `contract_document_ids=()`. The Layer 1 fingerprint is
+`1d891b0b…`. Regression per §A27.10, with README's quoted test counts updated in the same commit
+(§0.3.9).
 
-**Non-goals.** Embeddings; letting `TOPIC` links derive signals; exposing `documents_for()` through
-`app/relationships/` (§A9); adding any customer reference to Layer 1's `documents` table.
+**An implementer who measures a link set different from §0.3.8 must report it rather than adjust
+the expectation.** That table is the acceptance criterion, and it was corrected once already
+(§0.3.2).
+
+**The normal tooling gate is restored for the implementation pass.** The specification work of
+§0.3 was verified by static reading and read-only SQL because no project virtualenv was present;
+that was acceptable for documentation and is **not** acceptable for implementation. M4 does not
+close until `pytest`, `ruff` and `mypy` have actually been **run** and their results reported —
+suite green, `app/` coverage 100%, ruff 69, mypy 9, secret scan 0 (§A27.10). **A static argument
+that the suite would pass is not evidence that it passed, and may not be recorded as one.** The
+sequence is: specification freeze → implementation → tests → mutation and adversarial audit →
+closure documentation.
+
+**Non-goals.** Embeddings, similarity, keyword expansion or any other semantic inference —
+`TOPIC` is not implemented and **no replacement mechanism may be introduced for it** (§0.3.1);
+introducing a topic entity, column or vocabulary; forcing DOC-010 into a customer association;
+a precedence rule between mechanisms (§0.3.3); any history, validity-interval or
+`superseded_by` machinery on the link table (§0.3.4); importing M3 from `app/evidence/`
+(§0.3.6); **calling `with_contract_documents` anywhere in M4's own linking or persistence
+pipeline, or building any part of M5's executive context** — M5 owns the production invocation
+(§0.3.6); **any evidence-priority rule** — no basis outranks another, S14's projection never
+reads `basis`, and no link is deleted, superseded or hidden by it (§0.3.6); assembling or
+persisting an assessment — `risk_assessments` is M7's; exposing
+`documents_for()` through `app/relationships/` (§A9); adding any customer reference to Layer 1's
+`documents` table; editing `app/intelligence/signals.py` or any other M1/M2/M3 module; settling
+any item of §0.3.7.
 
 ---
 
