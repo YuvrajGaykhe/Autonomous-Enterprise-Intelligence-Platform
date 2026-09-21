@@ -1263,9 +1263,10 @@ imports `app.evidence`. The existence of `app/evidence/` is not permission for M
 **The conflict.** `scripts/secret_scan.py`'s `quoted_secret_assignment` rule matches any
 identifier containing `token` assigned a quoted, whitespace-free value of at least
 `GENERIC_MIN_LENGTH = 8` characters. `matched_token` contains `token`, and `CUST-007` is
-exactly 8 characters, so the natural spelling of §0.3.10.4's pinned assertion —
-`matched_token = "CUST-007"` — **is flagged**. Verified by running the committed rule set
-against a probe file. `matched_token = "Meridian Textiles"` is **not** flagged: the rule's
+exactly 8 characters, so the natural spelling of §0.3.10.4's pinned assertion — that id
+assigned to `matched_token` in the quoted form — **is flagged**. Verified by running the
+committed rule set against a probe file. The same assignment of `"Meridian Textiles"` is
+**not** flagged: the rule's
 value group `["']([^"'\s]+)["']` rejects a value containing a space. M1 met the same rule in
 `LinkBasis` and resolved it by deriving member values with `auto()` instead of writing quoted
 literals — the precedent for working around the scanner rather than changing it.
