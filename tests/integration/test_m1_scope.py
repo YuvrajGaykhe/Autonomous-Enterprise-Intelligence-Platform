@@ -434,8 +434,22 @@ def test_the_pinned_scope_refuses_a_contaminated_database(demo):
 
 
 def test_a_caller_may_supply_its_own_rules_configuration(demo):
-    config = RiskRulesConfig(rules_version=9, acceptance_as_of=ACCEPTANCE_AS_OF,
-                             layer1_fingerprints={"csv_demo": PINNED})
+    """
+    Scope resolution reads only the pin, but the type is whole.
+
+    M3 added the lookback, DOC-003's targets and window, and the band
+    table, so a hand-built configuration has to carry them. Only the
+    fingerprint pin is what this test is about.
+    """
+    committed = default_risk_rules()
+    config = RiskRulesConfig(
+        rules_version=9, acceptance_as_of=ACCEPTANCE_AS_OF,
+        layer1_fingerprints={"csv_demo": PINNED},
+        lookback_days=committed.lookback_days,
+        sla_resolution_targets=committed.sla_resolution_targets,
+        escalation=committed.escalation,
+        band_rules=committed.band_rules,
+    )
 
     with demo() as session:
         assert resolve_pinned_scope(session, config=config).layer1_fingerprint == PINNED

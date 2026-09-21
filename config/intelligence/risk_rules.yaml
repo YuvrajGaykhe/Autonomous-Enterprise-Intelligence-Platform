@@ -39,3 +39,89 @@ acceptance_as_of: 2026-09-18
 # yields a different fingerprint.
 layer1_fingerprints:
   csv_demo: "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+
+# ---------------------------------------------------------------------------
+# M3: what "recent" means, what DOC-003 requires, and the band decision table.
+# ---------------------------------------------------------------------------
+
+# How far back from as_of a signal may look. Strategy section 4.4: a burst in
+# January 2026 must not escalate a customer forever, so the DOC-003 escalation
+# state is constrained to a recency window rather than all history.
+lookback_days: 90
+
+# DOC-003, Customer Support SLA Policy: resolution targets in business days.
+# There is no holiday calendar (plan A24, A29). A priority absent from this
+# mapping has no target and therefore never breaches.
+sla_resolution_targets:
+  high: 1
+  medium: 5
+
+# DOC-003: "Customers raising three or more tickets within 14 days are
+# escalated to their account owner." The threshold and the window are the
+# document's, not an invented pair; the rule cites the document it came from.
+escalation:
+  window_days: 14
+  ticket_threshold: 3
+  because_documents:
+    - DOC-003
+
+# The band decision table (plan A5, strategy 4.2). Ordinal bands, no weights:
+# every satisfied rule is reported, and the assigned band is the highest one
+# satisfied. The explanation IS the rule list.
+#
+# Only the seven signals plan A10 marks "band input: yes" may appear here, and
+# app/intelligence/bands.py refuses any other name at load. That is what keeps
+# money (S12), SLA breach totals (S7) and chronic backlog (S9) structurally
+# unable to drive a band - the two measured traps of strategy 4.3 and 4.4.
+bands:
+  - id: R-CRIT-001
+    band: CRITICAL
+    description: >
+      An account under the DOC-003 escalation policy that also has more than
+      one open high-priority ticket past its resolution target.
+    when:
+      policy_escalation_state: true
+      open_sla_breach_high_count_at_least: 2
+    because_documents:
+      - DOC-003
+
+  - id: R-ELEV-001
+    band: ELEVATED
+    description: The DOC-003 escalation policy is active for this account.
+    when:
+      policy_escalation_state: true
+    because_documents:
+      - DOC-003
+
+  - id: R-ELEV-002
+    band: ELEVATED
+    description: >
+      More than one open high-priority ticket is past its resolution target,
+      whether or not the escalation policy has triggered.
+    when:
+      open_sla_breach_high_count_at_least: 2
+    because_documents:
+      - DOC-003
+
+  - id: R-WATCH-001
+    band: WATCH
+    description: An open high-priority ticket is past its resolution target.
+    when:
+      open_sla_breach_high_count_at_least: 1
+    because_documents:
+      - DOC-003
+
+  - id: R-WATCH-002
+    band: WATCH
+    description: >
+      Recent ticket velocity: more than one ticket in a single 14-day window,
+      with the account still active within the last 30 days.
+    when:
+      max_tickets_in_14d_window_at_least: 2
+      days_since_last_ticket_at_most: 30
+
+  - id: R-WATCH-003
+    band: WATCH
+    description: More than one ticket is open at the evaluation date.
+    when:
+      open_ticket_count_at_least: 2

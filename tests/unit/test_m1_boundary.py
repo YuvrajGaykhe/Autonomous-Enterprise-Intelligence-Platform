@@ -40,6 +40,17 @@ ALLOWED_LAYER1_IMPORTS = {
     "app.persistence.models",
     "app.persistence.repositories.canonical",
 }
+#: M3's signal engine is built against M2's relationship API (plan A11): it
+#: asks neighbourhood() what a customer is connected to instead of joining
+#: its own way there. The allowance is named per module rather than granted
+#: to the package, so an M1 foundation module that reaches for M2 still
+#: fails, and so does any module reaching past the one Layer 2 API it may use.
+M3_MODULES = {
+    "app/intelligence/windows.py",
+    "app/intelligence/signals.py",
+    "app/intelligence/bands.py",
+}
+ALLOWED_LAYER2_IMPORTS = {"app.relationships"}
 #: Session methods that would write. The package reads; the caller owns the
 #: transaction, matching the repository convention.
 FORBIDDEN_WRITES = {"commit", "rollback", "add", "add_all", "flush", "delete", "merge",
@@ -77,7 +88,7 @@ def test_the_scanned_package_exists_and_is_not_empty():
         "app/intelligence/__init__.py", "app/intelligence/contract.py",
         "app/intelligence/scope.py", "app/intelligence/money.py",
         "app/intelligence/timeutil.py", "app/intelligence/config.py",
-        "app/intelligence/errors.py"}
+        "app/intelligence/errors.py"} | M3_MODULES
 
 
 def test_no_module_reads_a_clock():
@@ -116,10 +127,29 @@ def test_no_module_reaches_for_a_model_a_graph_database_or_a_vector_store():
 
 def test_the_package_reads_only_the_named_layer_1_surface():
     for name, tree in _modules():
+        allowed = ALLOWED_LAYER1_IMPORTS | (
+            ALLOWED_LAYER2_IMPORTS if name in M3_MODULES else set()
+        )
         for module in _imported_modules(tree):
             if not module.startswith("app.") or module.startswith("app.intelligence"):
                 continue
-            assert module in ALLOWED_LAYER1_IMPORTS, f"{name}: {module}"
+            assert module in allowed, f"{name}: {module}"
+
+
+def test_no_m1_foundation_module_reaches_for_the_relationship_model():
+    """
+    The allowance above is M3's, and only M3's.
+
+    M1 is the bottom of the Layer 2 graph: app.relationships imports it, so
+    a foundation module importing app.relationships back would close a cycle
+    the interpreter refuses to load. The guard is stated separately from the
+    allowance so that widening one does not silently widen the other.
+    """
+    for name, tree in _modules():
+        if name in M3_MODULES:
+            continue
+        for module in _imported_modules(tree):
+            assert not module.startswith("app.relationships"), f"{name}: {module}"
 
 
 def test_the_package_never_writes_and_never_owns_a_transaction():
