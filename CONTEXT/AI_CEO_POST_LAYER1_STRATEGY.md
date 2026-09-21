@@ -1,7 +1,8 @@
 # AI CEO — Post-Layer-1 Strategy and Vertical-Slice Roadmap
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
 **Created: 2026-09-18 | Maintained by: Yuvraj Gaykhe**
-**Status of this document: PLANNED / PROPOSED. Nothing described here is implemented.**
+**Status of this document: PLANNED / PROPOSED, except VS-01, which is IN PROGRESS.**
+**VS-01 milestones M1–M3 are built and committed; everything else here is unbuilt.**
 
 > **Purpose**: This is the authoritative strategy for everything after Layer 1. It defines how
 > the platform grows from the frozen connector layer toward the AI CEO vision, what the current
@@ -9,7 +10,8 @@
 >
 > **Companion documents**
 > - `CONTEXT/AI_CEO_PROJECT_CONTEXT.md` — confirmed project state, Layer 1 record (IMPLEMENTED).
-> - `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` — the detailed VS-01 build plan (PLANNED).
+> - `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` — the detailed VS-01 build plan (IN PROGRESS).
+>   Its per-milestone status table is the single authority for what is built.
 
 ---
 
@@ -20,7 +22,8 @@ existing unless it is `IMPLEMENTED`.
 
 | Status | Meaning |
 |---|---|
-| **IMPLEMENTED** | Built, tested and committed. Only Layer 1 (tasks A1–I2) holds this status. |
+| **IMPLEMENTED** | Built, tested and committed. Layer 1 (tasks A1–I2) holds this status; a slice reaches it only when every one of its milestones does. |
+| **IN PROGRESS** | Some milestones built, tested and committed; the slice is not finished. Only VS-01 holds this status. The milestone table in the slice's own plan says which are done. |
 | **PLANNED** | Designed to implementation depth, approved in principle, not built. |
 | **PROPOSED** | A design direction with open questions; must be re-grilled before build. |
 | **FUTURE / CONDITIONAL** | Blocked on data, infrastructure or an external decision that does not yet exist. |
@@ -634,7 +637,7 @@ Dependencies are strict: a slice may not begin until its predecessors are accept
 ```
 Layer 1 (IMPLEMENTED)
    │
-   ├─ VS-01  Customer Risk & Executive Escalation          PLANNED  ← next
+   ├─ VS-01  Customer Risk & Executive Escalation      IN PROGRESS  ← M1-M3 built
    │     builds: relationship model, signal engine, evidence links,
    │             analyst contracts, brief, approval record
    │
@@ -656,7 +659,7 @@ Layer 1 (IMPLEMENTED)
          VS-08  Revenue Forecasting        (depends on VS-06 + VS-02 FX)
 ```
 
-### 10.1 VS-01 — Customer Risk & Executive Escalation · PLANNED
+### 10.1 VS-01 — Customer Risk & Executive Escalation · IN PROGRESS
 
 **Full specification: `CONTEXT/VS01_IMPLEMENTATION_PLAN.md`.** Summary only here.
 

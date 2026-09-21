@@ -1,6 +1,6 @@
 # AI CEO — Project Context Document
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
-**Last updated: 2026-09-19 | Maintained by: Yuvraj Gaykhe**
+**Last updated: 2026-09-21 | Maintained by: Yuvraj Gaykhe**
 
 > **Purpose**: This file is the single source of truth for all confirmed project understanding, design decisions, and task state. Read this file at the start of any new session before asking questions or writing code.
 
@@ -321,13 +321,16 @@ Do not embed Neo4j schema, graph logic, or LLM framework configuration anywhere 
 **Total: 26 tasks across 9 phases. All 26 are complete; the task map defines no task after I2.**
 
 Release state: `origin/main` is `945e0bb`. All of A1–I2 is pushed, including the I-phase commits
-(`99f4f75..945e0bb`). The Layer 1 task map is closed. Local `main` carries documentation-only
-commits ahead of it (the post-Layer-1 strategy, the VS-01 v2 plan, and the M0 baseline and
-closure), none of which touch code.
+(`99f4f75..945e0bb`). The Layer 1 task map is closed. Local `main` carries unpushed commits ahead
+of it: the post-Layer-1 strategy, the VS-01 plan and the M0 reports, which touch no code, **and
+the VS-01 milestones M1, M2 and M3, which do**. Layer 1 itself remains frozen — those milestones
+add packages under `app/intelligence/` and `app/relationships/` and change no Layer 1 module,
+migration, route or dataset row.
 
-**M0 (Layer 2 pre-flight) completed 2026-09-19** — see Section 18. The next unit of work is
-**VS-01 milestone M1**, specified in `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` Part B and not yet
-started.
+**M0 (Layer 2 pre-flight) completed 2026-09-19** — see Section 18. VS-01 is **in progress**:
+M1, M2 and M3 are complete and the next unit of work is **milestone M4**.
+`CONTEXT/VS01_IMPLEMENTATION_PLAN.md` carries the per-milestone status table, and it is the
+single authority for which milestone is done — this section does not restate it.
 
 ---
 
@@ -512,7 +515,7 @@ identity. The D1–D2, E1–E2, F1–F2, G1–G2 and H1–H5 regression groups a
 
 ---
 
-## 17. Post-Layer-1 Strategy (PLANNED — nothing implemented)
+## 17. Post-Layer-1 Strategy (VS-01 in progress; VS-02 onward PLANNED)
 
 **Decided 2026-09-18** after a repository and dataset audit, a strategy grilling, a second
 grilling of VS-01, and a third adversarial review that rebuilt the VS-01 plan as v2. The full
@@ -522,13 +525,13 @@ bindings that apply to all future work.
 | Document | Contents | Status |
 |---|---|---|
 | `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` | Vertical-slice rationale; measured Layer 1 capability; data-feasibility verdict; graph / RAG / ML / agent / governance strategy; VS-01–VS-08 roadmap; deferred-infrastructure triggers; future data requirements; grilling record | PLANNED / PROPOSED |
-| `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | **v2.** Section 0 records the sixteen defects the adversarial review found; specification A1–A31; milestones M1–M9 with objective, before/change/after, tests, acceptance and non-goals | PLANNED |
+| `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | **v2.3.** Section 0 records the sixteen defects the adversarial review found, and §0.1–§0.2 the M2/M4 boundary and the M3 closure; specification A1–A31; milestones M1–M9 with objective, before/change/after, tests, acceptance and non-goals | IN PROGRESS — M1–M3 complete; see its status table |
 | `CONTEXT/M0_BASELINE_REPORT.md` | The measured Layer 2 pre-flight baseline and findings F1–F8 | COMPLETE — see Section 18 |
 | `CONTEXT/M0_CLOSURE_REPORT.md` | F1 root cause, the F2 fingerprint decision, F3–F9 verification, corrections and M1 entry conditions | COMPLETE — see Section 18 |
 
 ### 17.1 Slice sequence
 
-VS-01 Customer Risk & Executive Escalation (**next**) → VS-02 Revenue & Pipeline Intelligence
+VS-01 Customer Risk & Executive Escalation (**in progress**) → VS-02 Revenue & Pipeline Intelligence
 (introduces FX normalization) → VS-03 Executive Account 360 → VS-04 Cross-Functional CEO
 Decision → VS-05 Enterprise Copilot. Then, **FUTURE / CONDITIONAL**: VS-06 Longitudinal
 Analytical Projection → VS-07 Churn Modelling → VS-08 Revenue Forecasting.
