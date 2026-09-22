@@ -34,6 +34,7 @@ positions.
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -71,6 +72,9 @@ FALLBACK_AS_OF = date(2026, 8, 27)
 
 MERIDIAN = "CUST-007"
 UNITY = "CUST-015"
+#: The dataset's two-currency customer: two USD deals and two INR deals, the
+#: same customer §A25 test 14 and §0.4.8 criterion 15 are written against.
+MULTI_CURRENCY = "CUST-042"
 
 #: §0.4.1's measured consequence: exactly six positions for CUST-007, as
 #: (function, action, object_ref, stance). The table is the acceptance
@@ -763,20 +767,46 @@ def test_the_commercial_context_renders_exposure_per_currency(linked, scope):
     assert str(exposure["USD"].amount) == "5361.44"
 
 
+def test_a_two_currency_customer_renders_both_in_the_commercial_context(linked, scope):
+    """
+    §0.4.8 criterion 15's first clause, and §A25 test 14: CUST-042 holds two
+    USD deals and two INR deals, and **both** currencies reach
+    CommercialContext. Each is stated on its own with an exact per-currency
+    total, and no field anywhere spans the two.
+
+    Read through the ordinary factory, so this asserts what an analyst would
+    actually be handed rather than what M3 computes on its own.
+    """
+    commercial = contexts_for(linked, scope, MULTI_CURRENCY).commercial
+    exposure = commercial.signals.exposure_by_currency
+
+    assert sorted(exposure) == ["INR", "USD"]
+    assert exposure["USD"].amount == Decimal("107746.98")
+    assert exposure["INR"].amount == Decimal("9611500.00")
+    assert len(commercial.signals.active_deals) == 4
+
+
 def test_summing_two_currencies_raises_rather_than_inventing_a_rate(linked, scope):
     """
-    §A12, on a real context: VS-01 publishes no FX rate set, so no
-    cross-currency total exists to publish. The second currency is a fixture,
-    because the demo dataset's deals for one customer share a currency.
+    §0.4.8 criterion 15's second clause, and §A12: VS-01 publishes no FX rate
+    set, so no cross-currency total exists to publish.
+
+    **Both values come out of CommercialContext**, not from a MoneyValue built
+    here: a hand-made second currency would prove the type refuses addition
+    without proving the context ever carries two. Both summing routes are
+    checked, because the guarantee is that no call site can produce a
+    cross-currency total, not that one API happens to refuse.
     """
     from app.intelligence.errors import CurrencyMismatchError
     from app.intelligence.money import MoneyValue
 
-    commercial = contexts_for(linked, scope, MERIDIAN).commercial
-    usd = commercial.signals.exposure_by_currency["USD"]
+    exposure = contexts_for(linked, scope, MULTI_CURRENCY).commercial.signals.exposure_by_currency
+    usd, inr = exposure["USD"], exposure["INR"]
 
     with pytest.raises(CurrencyMismatchError):
-        MoneyValue.total("USD", [usd, MoneyValue(amount=usd.amount, currency="EUR")])
+        MoneyValue.total("USD", [usd, inr])
+    with pytest.raises(CurrencyMismatchError):
+        _ = usd + inr
 
 
 # ---------------------------------------------------------------------------
