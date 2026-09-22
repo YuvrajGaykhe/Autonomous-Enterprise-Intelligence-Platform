@@ -3,9 +3,11 @@
 **v1 2026-09-18 · v2 2026-09-18 after adversarial review · v2.1 2026-09-20, M2/M4 boundary ·
 v2.2 2026-09-20, `deal_owned_by` scope decision · v2.3 2026-09-21, M3 closure ·
 v2.4 2026-09-21, M4 decision resolution (§0.3) ·
-v2.5 2026-09-21, M4 boundary clarification (§0.3.11)**
+v2.5 2026-09-21, M4 boundary clarification (§0.3.11) ·
+v2.6 2026-09-22, M5 re-specification — six blockers closed (§0.4) ·
+v2.7 2026-09-22, M5 second-pass review — three §0.4 defects closed (§0.4.9)**
 
-**Status as of 2026-09-21 — per milestone, not per document:**
+**Status as of 2026-09-22 — per milestone, not per document:**
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -13,8 +15,9 @@ v2.5 2026-09-21, M4 boundary clarification (§0.3.11)**
 | **M1** — foundations and contracts | **COMPLETE** | `app/intelligence/`, `config/intelligence/risk_rules.yaml`; commit `29776e0`; fingerprint pinned `1d891b0b…` |
 | **M2** — relationship model | **COMPLETE** | `app/relationships/` — 7 edge types, 3 queries, no persistence; `tests/unit/test_m2_boundary.py` and `tests/integration/test_m2_relationships.py`; commit `bc0525d`; B1–B10 all asserted |
 | **M3** — signal engine and risk band | **COMPLETE** | `app/intelligence/{windows,signals,bands}.py` and the populated band table in `config/intelligence/risk_rules.yaml`; `tests/unit/test_m3_{windows,bands,boundary}.py` and `tests/integration/test_m3_signals.py`; commit `34486eb`; closure §0.2 |
-| **M4** | **PLANNED — not started; D-1…D-6 resolved, boundary contradictions closed** | Nothing implemented: no package, table, migration, configuration key or test. `app/evidence/` does not exist. Its six blocking questions have architectural resolutions in **§0.3** (2026-09-21). §0.3.6 splits S14 into M4's composition function and **M5's deferred production invocation**; §0.3.7 lists the lower-level details left open; §0.3.9 **specifies but does not authorise** the test evolution M4 will require. A second gate (2026-09-21) measured three contradictions between §0.3.10 and committed tests and closed them in **§0.3.11** — persistence reads and evidence reconstructs (D-M4-B1), the T2 whitelist is unchanged (D-M4-B2), the secret scanner is not weakened (D-M4-B3), and T5 covers the lint counts (D-M4-B4) |
-| **M5–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them |
+| **M4** — evidence and citations | **COMPLETE** | `app/evidence/`, `app/persistence/models/document_customer_link.py`, `app/persistence/repositories/document_links.py`, migration `c4a1e97d5b02` chained after `8bfd73b6af60` (one head); `tests/unit/test_m4_{linker,signals,boundary}.py` and `tests/integration/test_m4_{evidence,migration}.py`; commit `65eb462`, specification `42f9eeb`, correction `0b017e2`. D-1…D-6 (§0.3), the four gate blockers (§0.3.10) and the three boundary contradictions (§0.3.11) all closed; T1–T5 (§0.3.9) performed. `with_contract_documents` is defined, exported and proved, and **called by nothing in M4** |
+| **M5** — analysts and positions | **PLANNED — not started; re-specified 2026-09-22, six blockers closed** | Nothing implemented: `app/analysts/` does not exist, and no M5 test exists. A takeover audit against `65eb462` found six points where an implementer would have had to invent architecture; all six are closed in **§0.4**, which — unlike §0.3.9 — **is an authorisation** for the test and README evolution it names (T-M5-1…T-M5-4, §0.4.4) and for nothing wider. §0.4.8 fixes M5's scope and its sixteen acceptance criteria, and **§0.4.9** closes three defects a second review pass found in §0.4 itself (D-M5-B7, D-M5-B8, D-M5-B9) |
+| **M6–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. §0.4.3 records one **forward** decision M7 must honour: the assessment run owns the production call to `derive_and_persist()` |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -1327,6 +1330,829 @@ sibling values the same mechanism already validates.
 
 ---
 
+## 0.4 M5 re-specification — pre-implementation, 2026-09-22
+
+M4 closed at `65eb462` (specification `42f9eeb`, correction `0b017e2`). A takeover audit run
+before M5 began measured the repository against this plan and found **six** places where an
+implementer would have had to invent architecture. Five are the ones the audit named; the sixth
+was found while closing the first and is the most serious of the set.
+
+> **Status of this section.** Unlike §0.3.9, this section **is an authorisation**. Each decision
+> below is settled, and §0.4.4 explicitly authorises the test and README evolution M5 requires.
+> Nothing here licenses a change outside the rows it names.
+>
+> **M1, M2, M3 and M4 remain frozen.** No decision below edits `app/intelligence/`,
+> `app/relationships/`, `app/evidence/`, `app/persistence/`, any migration, `data/`, or any
+> Layer 1 module. Every one of them was checked against the committed source before being
+> written, and each records what it was checked against.
+
+**The six.**
+
+| # | Blocker | Closed by |
+|---|---|---|
+| B1 | §A16 requires six satisfied actions for CUST-007; frozen `Position.proposed_action` carries **one**, and no rule mapped many to one | §0.4.1 |
+| B2 | `SupportContext` needs ticket facts that exist only in M3's **private, frozen** `_Ticket` | §0.4.2 |
+| B3 | Nothing in the plan owns the **production** call to `derive_and_persist()`; without it S14 is silently empty | §0.4.3 |
+| B4 | M5 necessarily fails a committed M1 boundary test, and no §0.3.9 equivalent authorised the fix | §0.4.4 |
+| B5 | `app/analysts/` → `app/evidence/` was required by §0.3.6 B but never authorised as a dependency | §0.4.5 |
+| **B6** | §A16 makes **Support** propose an action on `DEAL-001` while §A14 forbids `SupportContext` any deal field — the contested object was structurally unnameable | §0.4.6 |
+
+**A second review pass, 2026-09-22, found three further defects — all of them in §0.4 itself, none
+in M1–M4 — and §0.4.9 closes them: the `SupportContext` carrier for S1–S10 (D-M5-B7), S14's
+unstated status (D-M5-B8), and a silently narrowed §A16 precondition (D-M5-B9).** §0.4.3's M7
+forward amendment and §0.4.7's purity language were reviewed and confirmed sound.
+
+---
+
+### 0.4.1 D-M5-B1 — one `Position` per (function, contested object): **AUTHORED**, on derived foundations
+
+**The requirement as it stood.** §A16 states that at the pinned `as_of` CUST-007 "triggers all
+six non-`NO_ACTION` entries", and §0.2.1's *"One measured caveat for M5"* instructs M5 to
+evaluate `REVIEW_INVOICE_DISPUTE` from the context's ticket rows. Frozen `Position` carries a
+single `proposed_action`. M5's *Acceptance* named two positions. No rule mapped five satisfied
+Support entries onto one action, and no carrier held the rest.
+
+**Evidence, verified against the committed source.**
+
+1. **`Position.object_ref` is a required, non-empty field** of the frozen M1 contract
+   (`app/intelligence/contract.py:511`, enforced by `_require_text`). §A5's one-line Position
+   definition omits it; M1's implementation does not. It is load-bearing and was unspecified.
+2. §A15 detects a conflict "over the same object identity (**here `DEAL-001`**)", and §A5
+   defines a conflict as two positions "over the same object".
+3. `Conflict.__post_init__` enforces one position per function **per conflict**, and that every
+   position's `object_ref` equals the conflict's. **It places no bound on how many positions a
+   function states overall.**
+4. §A18's `risk_positions` is `assessment_id` FK, `function`, `stance`, `proposed_action`,
+   `rationale`, `citations` — **with no unique constraint**. Several rows per function per
+   assessment are structurally permitted, and always were.
+5. §A16's own closing sentence — "CUST-007 triggers all six non-`NO_ACTION` entries, **and the
+   last two conflict**" — is satisfied exactly and only by six positions of which two share an
+   object.
+
+**Decision.**
+
+> **An analyst emits one `Position` per satisfied catalogue entry, each carrying that entry's
+> contested object in `object_ref`. Nothing is discarded, nothing is ranked, and no action is
+> selected over another.**
+>
+> The apparent "many actions, one field" contradiction was an artefact of reading `Position` as
+> *one per function* rather than *one per function per contested object*. The frozen contract
+> already expresses the intended shape.
+>
+> **§A16 gains an `Object` column**, fixing `object_ref` for every entry so no implementer
+> chooses one:
+
+| Action | `object_ref` | Multiplicity |
+|---|---|---|
+| `ESCALATE_TO_ACCOUNT_OWNER_PER_SLA` | the customer `source_id` | at most one |
+| `SCHEDULE_EXECUTIVE_SPONSOR_CALL` | the customer `source_id` | at most one |
+| `ASSIGN_DEDICATED_SUPPORT_OWNER` | the customer `source_id` | at most one |
+| `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` | the **deal** `source_id` | one per qualifying deal |
+| `REVIEW_INVOICE_DISPUTE` | the **ticket** `source_id` | one per qualifying ticket |
+| `ACCELERATE_DEAL_CLOSE` | the **deal** `source_id` | one per qualifying deal |
+| `NO_ACTION` | the customer `source_id` | at most one |
+
+> **`stance`.** `RESTRAIN` for `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED`; `ADVANCE` for
+> `ACCELERATE_DEAL_CLOSE`; `NEUTRAL` for every other entry. Stance is load-bearing only for the
+> contested pair, where it is what makes the opposition legible to a reader of the brief.
+>
+> **`NO_ACTION` is emitted by neither analyst.** §A16 leaves its *Proposed by* column empty. A
+> function with no satisfied entry emits **no position**, not a `NO_ACTION` one; the empty tuple
+> is the representation of "this function has nothing to say".
+>
+> **Ordering — a sort key, never a priority.** An analyst returns
+> `tuple[Position, ...]` ordered **ascending by `(function, object_ref, proposed_action)`**, all
+> three compared as strings. This is required by §A24 and mirrors the discipline already frozen
+> for S14 (§0.3.6) and M2's queries: it ranks positions for reproducibility and **expresses no
+> precedence between actions**. No rule anywhere in M5 reads it to choose a winner — choosing is
+> M6's, by policy, and only between positions sharing an object.
+>
+> **The public M5 contract** is therefore `tuple[Position, ...]` per analyst, not `Position`.
+> M5's *Change*, *Tests* and *Acceptance* are amended accordingly.
+
+**Measured consequence at `ACCEPTANCE_AS_OF`, for CUST-007 — six positions.**
+
+| # | Function | Action | `object_ref` | Stance |
+|---|---|---|---|---|
+| 1 | SUPPORT | `ASSIGN_DEDICATED_SUPPORT_OWNER` | `CUST-007` | NEUTRAL |
+| 2 | SUPPORT | `ESCALATE_TO_ACCOUNT_OWNER_PER_SLA` | `CUST-007` | NEUTRAL |
+| 3 | SUPPORT | `SCHEDULE_EXECUTIVE_SPONSOR_CALL` | `CUST-007` | NEUTRAL |
+| 4 | SUPPORT | `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` | `DEAL-001` | RESTRAIN |
+| 5 | SUPPORT | `REVIEW_INVOICE_DISPUTE` | `TKT-079` | NEUTRAL |
+| 6 | SALES | `ACCELERATE_DEAL_CLOSE` | `DEAL-001` | ADVANCE |
+
+Exactly one SUPPORT and one SALES position share `DEAL-001`, so M6 detects **exactly one**
+conflict and `Conflict`'s "at most one position per function" holds without M5 doing anything to
+make it hold. Rows 1–3 and 5 never enter a conflict because no SALES position names their
+object. §A16's "all six … and the last two conflict" is reproduced literally.
+
+**What §A17's *"resolved action set"* means, recorded so M6 and M7 are not surprised.** It is the
+set of proposed actions that survive reconciliation: every emitted action, minus those on
+positions M6 overrules. For CUST-007 that is rows 1–5 (Support's five), with row 6 preserved as
+dissent under `ConflictResolution.dissent`, which derives it from the conflict rather than
+storing it. **This paragraph settles nothing that is M6's**; it records the arithmetic that D-M5-B1
+makes possible, and no more.
+
+**Classification.**
+
+| Element | Class | Why |
+|---|---|---|
+| One `Position` per satisfied entry; nothing discarded | **DERIVED** | Evidence 3–5: the frozen `Conflict` invariant and the unconstrained `risk_positions` grain both already permit it, and only this reading reproduces §A16's closing sentence |
+| Analysts return `tuple[Position, ...]` | **DERIVED** | Follows from the above and matches every other collection in M1's contract |
+| The `Object` column of §A16 | **AUTHORED** | Nothing frozen fixes which object each action contests. §A15 fixes only `DEAL-001` for the pair; the other five are authored here so an implementer does not choose |
+| `stance` per entry | **AUTHORED** | §A5 and M1 fix the vocabulary, not the mapping |
+| Ordering by `(function, object_ref, proposed_action)` | **AUTHORED** | §A24 demands determinism; the key itself is authored, and is explicitly not a priority |
+| `NO_ACTION` emitted by neither analyst | **DERIVED** | §A16's *Proposed by* column is empty for it |
+
+---
+
+### 0.4.2 D-M5-B2 — ticket facts: an **M5-owned derivation, pinned to M3's signals**: **AUTHORED**
+
+**The requirement as it stood.** §A14 puts "Tickets" in `SupportContext` and has the analyst
+report breaches; §0.2.1 requires the `billing` precondition to be evaluated "from the ticket
+rows §A14 already puts in the `SupportRiskAnalyst` context". No public contract carries them.
+
+**Evidence, verified against the committed source.**
+
+1. `CustomerSignals` (`app/intelligence/signals.py:164`) exposes `customer`, `signals`,
+   `escalation_window`, `backlog_ticket_ids` — **no ticket attributes**. Category B of the audit
+   ("an existing public M3 contract suffices") is **ruled out**, and §0.2.1 ruled it out in
+   writing already: `S10` reports only the dominant category.
+2. `_Ticket` and `_tickets` (`signals.py:184`, `:411`) are private to a module frozen at
+   `34486eb`. Category "make them public" is **excluded by the freeze**.
+3. **M2 already answers a different question with a different rule.** `escalation_path()`
+   returns `open_tickets`, but `_open_ticket_ids` (`app/relationships/queries.py:216`) selects
+   `SupportTicket.status == 'open'` with **no `as_of`**, while M3's `_Ticket.is_open_at` ignores
+   `status` and tests the resolution date against `as_of`. §0.2.1 records M3's as the authored
+   rule: "The resolution *date* decides, not `status`." **The two definitions are not
+   interchangeable, and M5 must use M3's**, because S1, S2, S8 and therefore the band are built
+   on it. Consuming `escalation_path().open_tickets` would give `SupportContext` an
+   `as_of`-insensitive notion of "open" that disagrees with the signals beside it.
+4. **Every semantic M5 needs is already stated normatively in this plan and available from
+   public M1 surfaces**, so the derivation reuses rules rather than reinventing them:
+   - *open at `as_of`* — §0.2.1: no resolution date on or before `as_of`;
+   - *SLA breach* — §A5: elapsed business days exceed DOC-003's target for the priority;
+     resolved measured created→resolved, open measured created→`as_of`;
+   - the targets come from the public `RiskRulesConfig.sla_resolution_targets`
+     (`app/intelligence/config.py:73`), and the arithmetic from the public
+     `app.intelligence.timeutil.business_days_between` and `utc_date`. Both are M1, both are
+     already exported from `app.intelligence`.
+   - *membership* — M2's `neighbourhood()`, exactly as M3 obtains it (§0.2.3).
+
+**Decision.**
+
+> **M5 owns a context-local ticket derivation. M3 is neither modified nor imported for it, and
+> no rule is re-authored — only re-applied from its statement in this plan, using M1's public
+> arithmetic and configuration.**
+>
+> **Owner.** `app/analysts/context.py`, inside the context factory of §0.4.7.
+> **Input.** `(session, scope, customer_source_id, config: RiskRulesConfig)`.
+> **Output.** `tuple[TicketFact, ...]`, ordered ascending by `source_id`.
+> **M3 involvement.** None for this derivation. **Database access.** Yes — one read, through the
+> factory, which owns the session (§0.4.7). **Writes.** None.
+>
+> ```
+> TicketFact                    # new, M5-owned, frozen
+>     source_id     str
+>     priority      str | None  # Layer 1's column, nullable
+>     category      str | None  # Layer 1's column, nullable
+>     is_open       bool        # at scope.as_of
+>     breaches_sla  bool        # at scope.as_of
+> ```
+>
+> `TicketFact` carries **no** subject, description, assignee, customer key, deal, project or
+> monetary field. It is the smallest shape that answers §A16's ticket-level preconditions and
+> grounds a `RecordCitation`, and it carries nothing else.
+>
+> **Exact semantics, restated so they are a specified property and not an accident of whichever
+> expression an implementer writes.**
+>
+> - **Placed in time.** A ticket with NULL `created_at` is **excluded entirely** and produces no
+>   note, matching M3 exactly and the open gap of §0.2.2. A ticket whose `created_at` date is
+>   after `as_of` is **not yet visible** and is excluded. Dates are UTC dates via `utc_date`.
+> - **`is_open`.** `resolved_at` is NULL, **or** its UTC date is strictly after `as_of`.
+>   `status` is **not read**, is not consulted as a fallback, and does not break a tie. This is
+>   M3's rule verbatim (§0.2.1) and deliberately **not** M2's.
+> - **`breaches_sla`.** `target = sla_resolution_targets[priority]`. **A priority the policy does
+>   not name, and a NULL priority, have no target and therefore cannot breach** — inventing one
+>   would manufacture breaches DOC-003 never states. The measured interval ends at the resolution
+>   date when one falls on or before `as_of`, and at `as_of` otherwise; the breach holds when
+>   `business_days_between(created, end) > target`.
+> - **`billing`.** Exact, case-sensitive equality to the string `"billing"`, declared in
+>   `app/analysts/` as `BILLING_CATEGORY = "billing"`. **No normalization, no case folding, no
+>   stripping, no substring or prefix match, no synonym list.** `None` is not `billing` and
+>   contributes nothing. This is the discipline §0.3.6 fixed for `CONTRACT_DOCUMENT_TYPE` and M2
+>   fixed for `POLICY_DOCUMENT_TYPE`, applied to the one Layer 1 category string M5 reads.
+> - **Breach representation.** A boolean per ticket, plus the counts already on `SignalSet`
+>   (S7, S8). **M5 introduces no breach severity, no overdue-by measure and no new note type.**
+>
+> **The divergence risk is closed by a test, not by a promise.** Because two implementations of
+> one stated rule now exist, **M5 is not complete without an equivalence test** asserting, over
+> **every** customer in the demo dataset at both `2026-09-18` and the `2026-08-27` fallback:
+>
+> | M5 derivation | must equal | M3 signal |
+> |---|---|---|
+> | `sum(f.is_open)` | = | `S1 open_ticket_count` |
+> | `sum(f.is_open and f.priority == 'high')` | = | `S2 open_high_priority_count` |
+> | `sum(f.priority == 'high')` | = | `S2b high_priority_total` |
+> | `sum(f.breaches_sla)` | = | `S7 sla_breach_count` |
+> | `sum(f.is_open and f.priority == 'high' and f.breaches_sla)` | = | `S8 open_sla_breach_high_count` |
+> | `{f.source_id}` | = | the ids `neighbourhood()` returns, minus those excluded above |
+>
+> This makes drift a **build failure** rather than a latent defect, and it is the reason this
+> decision is acceptable at all. It is the same technique B9(b) and §A25 test 13b already use:
+> write the would-be-wrong computation out and assert against it.
+
+**What this decision does not do.** It does not read `status`; it does not re-resolve
+relationships (membership stays `neighbourhood()`'s, §0.2.3); it does not touch
+`app/intelligence/`; it adds no signal, no note type and no configuration key; and it does not
+give `SupportContext` any field §A14 forbids.
+
+**Classification: AUTHORED.** The *rules* are pre-existing and cited above; the *ownership*, the
+`TicketFact` shape, the `BILLING_CATEGORY` identifier and the equivalence test are authored here.
+It is recorded as authored rather than derived because nothing frozen forced a second
+implementation of the open-ness predicate to exist — the freeze did.
+
+---
+
+### 0.4.3 D-M5-B3 — production ownership of `derive_and_persist()`: **AUTHORED**
+
+**The requirement as it stood.** M4's *Change* says links "are derived inside an assessment run".
+No milestone's *Change* list owns that call, and the audit confirmed **zero production callers**
+of `derive_and_persist`, `documents_for` or `with_contract_documents` anywhere in `app/` or
+`scripts/`. `documents_for()` reads persisted rows and never derives (`app/evidence/documents.py:86`),
+and §0.3.6 fixes "zero contract links → `()`, not an error" — so a run that never derived would
+hand M5 an **empty S14 that is indistinguishable from a customer with no contract**.
+
+**Evidence.**
+
+1. `derive_links(session, scope, *, config)` (`app/evidence/linker.py:107`) takes **no customer
+   argument**: it derives over the whole snapshot. Derivation is therefore naturally **per scope,
+   once per run** — not per customer. This is read off the signature, not chosen.
+2. `persist_links` uses `on_conflict_do_nothing` against the §0.3.4 constraint, so a second
+   identical derivation inserts **0** rows and raises nothing. Idempotency already exists.
+3. No M4 module commits, rolls back, begins or closes (pinned by
+   `tests/unit/test_m4_boundary.py`). The **caller owns the transaction**, as every Layer 1
+   repository does.
+4. **M5's *Non-goals* name persistence.** M5 therefore may not call `derive_and_persist` itself.
+5. The first milestone that owns an assessment run and may write is **M7** (`risk_assessments`
+   and the second additive migration). M8 exposes it over HTTP; M9 drives it from
+   `make verify-vs01`.
+
+**Decision.**
+
+> **The production call to `derive_and_persist()` belongs to the assessment run, which is
+> M7's. M5 never derives and never writes.**
+>
+> **A forward amendment to M7, recorded now because M5's correctness depends on it.** M7's
+> *Change* list gains `app/decisions/assessment.py` — the assessment run that orders §A6's steps.
+> The order it must implement, read off the real call graph rather than assumed:
+>
+> ```
+>   caller (M8 route, or M9's acceptance script) opens a Session and a transaction
+>         ↓
+>   resolve_pinned_scope(session, …)                       M1   — fails closed on a fingerprint mismatch (§A27.1b)
+>         ↓
+>   derive_and_persist(session, scope, config=…)           M4   — ONCE per run, per scope, before any customer is visited
+>         ↓
+>   for each customer in scope:
+>       compute_signals(session, scope, customer, …)       M3
+>       assign_band(signals, rules, floor=…)               M3
+>       build_contexts(session, scope, customer, …)        M5   — reads documents_for(), calls with_contract_documents()
+>       SupportRiskAnalyst / CommercialAnalyst             M5   — tuple[Position, …]
+>         ↓
+>   conflicts, policy, reconciliation                      M6
+>         ↓
+>   payload, hash, persistence, narrative                  M7
+>         ↓
+>   caller commits
+> ```
+>
+> - **Session ownership.** The caller opens and owns it, matching every Layer 1 repository. No
+>   module under `app/evidence/`, `app/analysts/` or `app/decisions/` opens, commits, rolls back
+>   or closes one.
+> - **Transaction boundary.** One transaction for the run. Derivation and any M7 write are in it;
+>   a failure anywhere rolls the whole run back, so **no partial assessment is ever durable**
+>   (§A23).
+> - **Customer scope.** Derivation is **scope-wide and customer-independent** (evidence 1). A
+>   single-customer assessment still derives the whole snapshot's links; that is correct, because
+>   the link table is keyed by fingerprint and linker, not by the customer being assessed, and
+>   because re-deriving is free (evidence 2).
+> - **Idempotency.** Exactly §0.3.4's: an unchanged snapshot and linker insert **0** rows and
+>   raise nothing; a changed `layer1_fingerprint` or `linker_version` **appends**. Nothing is
+>   updated in place or deleted.
+> - **Failure behaviour.** `UnciteableLinkError` — or any exception from derivation — **aborts
+>   the run before any context is constructed**. The run does not continue with partial evidence,
+>   does not retry, and does not fall back to whatever was persisted earlier. **No retry,
+>   backoff, history, supersession or validity-interval semantics are introduced**, consistent
+>   with §0.3.4's prohibition.
+>
+> **Until M7 exists, M5 is not independently runnable in production**, which is already true of
+> it: no entry point reaches Layer 2 at all. M5's own tests derive links in an explicit arrange
+> step, and M5's acceptance (§0.4.8) asserts `("DOC-006",)` reaches `CommercialContext`, so the
+> silent-empty hazard fails loudly the moment the ordering is got wrong.
+
+**Classification: AUTHORED.** The sequence's *shape* is §A6's and the per-scope grain and
+idempotency are read off M4's committed signatures; **assigning the call to M7 and naming
+`app/decisions/assessment.py` are new design choices**, made here because leaving them open is
+what lets an implementer put a write inside M5's factory.
+
+---
+
+### 0.4.4 D-M5-B4 — M5 test and README evolution: specified **and authorised**: **AUTHORED**
+
+§0.3.9 specified M4's test evolution without authorising it. That separation was right for M4,
+which had not yet been approved. **M5's equivalent is authorised here**, in this exact form and
+no wider, because each row was measured against the committed suite rather than anticipated.
+
+The governing rule is unchanged: **extend, move or remove only the obsolete assertion. Never
+weaken the surrounding test.** None of the rows below changes `app/intelligence/`,
+`app/relationships/`, `app/evidence/`, `app/persistence/`, any migration, or `data/`.
+
+| # | Test / file | Exact assertion affected | Why M5 contradicts it | Authorised evolution | What stays frozen |
+|---|---|---|---|---|---|
+| **T-M5-1** | `tests/unit/test_m1_boundary.py` | `LAYER2_PACKAGES = ("app/relationships/", "app/evidence/")`, used by `test_only_the_relationship_model_depends_on_the_foundation:212` to assert **every** importer of `app.intelligence` under `app/`, `scripts/`, `migrations/`, `docker/` lives in one of them | `app/analysts/` must import `Position`, `Function`, `Stance`, `ActionId`, `Evidence`, `SignalSet`, `Scope`, `MoneyValue` | **Extend the tuple to `("app/relationships/", "app/evidence/", "app/analysts/")`** — extend, never relax to a substring or a prefix check. The test's own docstring already describes this evolution: it named M2 rather than being relaxed when M2 arrived, and §0.3.9 T2 named M4 the same way | The scan itself, its four scanned directories, its `assert importers` non-vacuity guard, and the rule that an importer which is none of the three **still fails the build** |
+| **T-M5-2** | `README.md` + `tests/unit/test_i2_readme.py::test_the_test_counts_the_readme_quotes_are_the_counts:247` | The per-layer counts the `Layer / Command / Tests / Needs` table quotes for `pytest tests/unit` (**4030**) and `pytest tests/integration` (**694**), and the two "`N` tests in four layers" totals (README:1162, :1277) | M5 adds unit and integration tests | **Update the two per-layer counts and both totals to the actual collected values** — the mechanism is unchanged and already recomputes them by `pytest --collect-only`. `29776e0`, `bc0525d`, `34486eb` and `65eb462` each did exactly this | That the totals must **agree with each other** and with the sum of the per-layer rows; the contract layer count; the e2e count |
+| **T-M5-3** | `README.md:1380` + `test_the_lint_counts_the_readme_quotes_are_the_counts:279` | "`ruff check app/ tests/ scripts/` reports **69** findings" | M5 adds source and test files, so the count may move | **Re-quote the actually observed value.** Per §0.3.11 D-M4-B4 these are informational project-state counts, **not** M5 acceptance criteria | **No lint finding may be suppressed, and no test weakened or skipped, to preserve a number.** A *count* may move; the *gate* may not. New Ruff findings of M5's own are a defect to fix, never a number to re-quote |
+| **T-M5-4** | `README.md:1381` + the same test | "`mypy app/` reports **9** errors" | as T-M5-3 | as T-M5-3 | as T-M5-3. The test already **skips** when the installed tool version differs from the quoted one, so a version bump is not a failure and is not a licence either |
+
+**Measured, so that nothing is left implied.** The audit scanned the committed suite for every
+other assertion M5 could contradict and found **none**:
+
+- **No test asserts `app/analysts/` does not exist.** The M4 analogue (§0.3.9 T1,
+  `test_app_evidence_does_not_exist`) has no M5 counterpart. Nothing to remove.
+- `tests/unit/test_m2_boundary.py:30` already lists `app.analysts` in `FORBIDDEN_PACKAGES` —
+  in the **forbidding** direction, `app/relationships/` must not import it. **This is correct
+  and must not change.** M5 makes M2 import nothing.
+- **No whitelist governs who may import `app.evidence`.** `test_m4_boundary.py` forbids
+  `app/persistence/`, `app/relationships/` and the M3 modules from importing it and constrains
+  nothing else, so `app/analysts/` → `app/evidence/` trips no committed test (see §0.4.5).
+- `test_no_m4_module_invokes_the_s14_composition:343` scans **only** `EVIDENCE_DIR`, so M5
+  invoking `with_contract_documents` from `app/analysts/` is already outside its scope, exactly
+  as §0.3.6 B intended. **It must not be touched.**
+- `test_m3_still_states_no_contract_document:366` and
+  `test_the_signal_set_m3_builds_states_no_contract_document` pin `contract_document_ids=()` in
+  `signals.py` from both sides. **M5 populates S14 by composition at context-construction time
+  and never by editing M3, so both assertions stand unchanged.**
+- `test_the_architecture_section_carries_a_diagram_and_the_repository_layout:100` checks only
+  top-level directories (`app/`, `config/`, `data/`, `migrations/`, `scripts/`, `tests/`). M4
+  needed no layout edit and **M5 needs none**.
+- `tests/integration/test_h3_migrations.py` is untouched: **M5 adds no table and no migration.**
+
+**Anything not in T-M5-1…T-M5-4 is not authorised.** An implementer who finds a sixth
+contradiction must report it and stop, exactly as §0.3.8 requires of a measured link set.
+
+---
+
+### 0.4.5 D-M5-B5 — the M5 dependency boundary: **AUTHORED**
+
+**The package is `app/analysts/`**, as M5's *Change* list and §A22's no-executor row both already
+name. M5 introduces no other package; `app/decisions/` is M6's and M7's.
+
+**The DAG, extended by one node.** Verified against the committed import graph, which contains no
+reverse edge today:
+
+```
+app.intelligence (M1)  ←  app.relationships (M2)  ←  app.evidence (M4)
+         ↑                        ↑                        ↑
+         └────────────────────────┴────────────────────────┴──  app.analysts (M5)
+```
+
+`app/analysts/` is a **leaf**: it is the top of the graph and nothing imports it. Adding it
+creates no cycle and reverses no edge.
+
+| Direction | Status | Enforced by |
+|---|---|---|
+| `app.analysts` → `app.intelligence` (M1 contract, scope, money, timeutil, config) | **authorised** | T-M5-1 extends the importer whitelist to admit it |
+| `app.analysts` → `app.intelligence.signals` / `.bands` (M3) | **authorised**, submodule-explicit | §0.2.3's import-initialiser rule: `from app.intelligence.signals import compute_signals`, never via `app.intelligence`'s `__init__`, which must continue not to re-export the M3 modules |
+| `app.analysts` → `app.relationships` (M2 `neighbourhood`) | **authorised** | membership is answered once, by M2 (§0.2.3), and M5 resolves nothing itself |
+| **`app.analysts` → `app.evidence` (M4)** | **explicitly authorised** | Required by §0.3.6 B: `documents_for()` and `with_contract_documents()` are M5's to call. **No M4 boundary test is modified to permit it** — none forbids it (§0.4.4), because M4's scans constrain `app/persistence/`, `app/relationships/` and the M3 modules only |
+| `app.analysts` → `app.persistence.models` (Layer 1 ORM, for D-M5-B2's one ticket read) | **authorised for the context factory only** | §0.4.7; and the analyst modules themselves are forbidden it, below |
+| `app.analysts` → `app.decisions` (M6/M7) | **forbidden** | would reverse the DAG |
+| `app.relationships` / `app.evidence` / `app.intelligence` → `app.analysts` | **forbidden** | `test_m2_boundary.py:30` already forbids it for M2; M5 adds the mirrored assertions for M1, M3 and M4 |
+| `app.analysts` → any outbound HTTP/SMTP/source-write | **forbidden** | §A22; the transitive no-executor test is **M8's** (§A22 lists all five packages), and M5 adds only the `FORBIDDEN_INFRASTRUCTURE` scan over its own package |
+
+**Two M5-side boundary assertions, mirroring M1's and M2's rather than inventing a style.**
+
+- **No module under `app/analysts/` reads a clock or a random source** — the M1
+  `datetime.now` / `date.today` / `utcnow` scan and `FORBIDDEN_RANDOM_MODULES`, extended to this
+  package. Determinism stays structural.
+- **No module under `app/analysts/` writes** — the M1 `FORBIDDEN_WRITES` scan (`commit`,
+  `rollback`, `add`, `add_all`, `flush`, `delete`, `merge`, `begin`, `begin_nested`, `close`,
+  `bulk_save_objects`), extended to this package. This is what makes D-M5-B3's "M5 never
+  persists" executable rather than promised.
+
+**And the one §A14 already names, stated as an import rule:** `support_risk.py` and
+`commercial.py` import **neither `Session` nor any ORM model**, directly or transitively through
+an `app.analysts` sibling. `context.py` is the only module in the package permitted either.
+
+---
+
+### 0.4.6 D-M5-B6 — Support's visibility of the contested object: **AUTHORED**
+
+**This blocker was not in the takeover audit's list. It is the most serious of the six**, because
+the slice's central conflict was structurally inexpressible.
+
+**The contradiction, stated exactly.**
+
+1. §A16 assigns `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` to **Support**, with the precondition
+   "`S8 >= 1` **and an active `negotiation` deal**".
+2. §A15 requires the conflict to be "over the same object identity (**here `DEAL-001`**)", and
+   `Conflict.__post_init__` requires every position's `object_ref` to equal the conflict's.
+3. `Position.object_ref` is a **required, non-empty** string in the frozen M1 contract.
+4. §A14 forbids `SupportContext` "**any deal, project or monetary field**", and M5's *Tests*
+   assert a context-purity test enforcing it.
+5. M5's *Acceptance* requires Support to propose exactly this action for CUST-007.
+
+Support must therefore propose an action it cannot evaluate, on an object it cannot name. **A
+literal reading of §A14 makes M5's own acceptance criterion unsatisfiable.**
+
+**Two resolutions were considered, and one is rejected on the record.**
+
+> **Rejected — use `S15 deal_under_pressure` as a proxy.** S15 is a boolean already on the frozen
+> `SignalSet`, and §A10 labels it "conflict input", so it is the obvious shortcut. It is wrong on
+> two counts. **It is not the same predicate**: S15 is "an active `negotiation` deal exists
+> **while `S5` is true**", whereas §A16's precondition is `S8 >= 1` and an active `negotiation`
+> deal, with no `S5` term — so a customer with breaches and a negotiation deal but no escalation
+> state would be treated differently by the two rules. On the committed dataset they happen to
+> agree, because **no customer other than CUST-007 has both `S8 >= 1` and an active
+> `negotiation` deal** (CUST-025 has no deal; CUST-036's DEAL-037 is `qualification`) — which
+> makes the divergence invisible to every test and is precisely why it must not be adopted. And
+> **a boolean cannot supply `object_ref`**, so it does not solve the naming half at all.
+
+**Decision.**
+
+> **`SupportContext` carries the contested object's identity, and nothing else about it.**
+>
+> ```
+> SupportContext
+>     …
+>     contested_deal  EntityRef | None    # identity only
+> ```
+>
+> - It is populated by the **context factory** — which is the assembler and sees everything, not
+>   an analyst — from the same `SignalSet.active_deals` that `CommercialContext` consumes,
+>   filtered to `stage == NEGOTIATION_STAGE`. M5 reuses M3's existing
+>   `NEGOTIATION_STAGE = "negotiation"` constant rather than redeclaring the literal.
+> - Where more than one active `negotiation` deal exists, `contested_deal` holds the one with
+>   the **lexicographically smallest `source_id`**, and §0.4.1's "one per qualifying deal"
+>   multiplicity for `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` is bounded to that single deal.
+>   No customer in the demo dataset has two, so this tiebreak is exercised only by a fixture and
+>   is recorded as a **known limitation** (§A29) rather than a behaviour the dataset proves.
+> - Support then evaluates §A16's precondition **literally** — `S8 >= 1 and contested_deal is not
+>   None` — with no proxy, no `S5` term and no divergence from the written rule.
+>
+> **The field-scope rule of §A14 is restated precisely, because "any deal field" was too coarse
+> to implement.** *Field scope* is what a context may hold; it is unrelated to the *functional*
+> purity of `build_contexts()`, which §0.4.7 answers separately and in the negative.
+> `SupportContext` must carry:
+>
+> - **no** `DealSignal`, `MoneyValue` or `Decimal` field;
+> - **no** deal or project *attribute* — no amount, currency, stage, probability, close date,
+>   deal count or project count;
+> - **no** `exposure_by_currency`, and **no** S11, S12, S13 or S15;
+> - it **may** carry `contested_deal: EntityRef | None` — an `(entity_type, source_id)` pair and
+>   nothing more — and `has_active_deal: bool` (§0.4.9 D-M5-B9), a boolean that carries no
+>   amount, currency, stage, probability, identity or count, not even *how many*.
+>
+> **The complete field list is §0.4.9 D-M5-B7**, which also settles what carries S1–S10:
+> `SupportContext` holds `SupportSignals`, **never a `SignalSet`**.
+>
+> **Why identity is not a field-scope violation.** §A14's column exists to stop Support *reasoning
+> commercially* — the v2 defect 6 it answers is "any module holding a session can read any
+> table". An `EntityRef("deals", "DEAL-001")` supports no commercial reasoning whatever: exposure,
+> ranking, worthiness and every §A15 ordering term need attributes the context does not have, and
+> §A15 already forbids money as a sort key. Knowing *that there is a contested deal, and what to
+> call it* is the minimum §A15 requires of any participant in a conflict, and it is strictly less
+> than §A10 already grants Support through S15. **The context field-scope test is written against
+> the list above**, so it is enforced by field inspection and not by the word "any". §0.4.9
+> D-M5-B7 tightens it to reject a `SignalSet` field, which this earlier wording would have
+> admitted.
+>
+> `CommercialContext` is unchanged by this decision and keeps S11–S15, deals, projects and
+> contract documents.
+
+**Classification: AUTHORED**, and recorded as the resolution of a contradiction between two
+Part A sections rather than as a new capability. §A14 gains the precise list; §A16 gains the
+`Object` column of §0.4.1; no frozen type changes, and `Position` is **not** modified.
+
+---
+
+### 0.4.7 M5 context factory — ownership, session and purity
+
+Resolved against the repository's existing conventions; no second transaction abstraction is
+introduced.
+
+| Question | Answer |
+|---|---|
+| Who creates the context? | `build_contexts()` in `app/analysts/context.py` — **the one factory**, and the only module in `app/analysts/` that may import `Session` or an ORM model |
+| Who owns the `Session`? | **The caller**, exactly as every Layer 1 repository and both Layer 2 packages already require. The factory **receives** a session and never creates one |
+| Does the factory open or close anything? | **No.** Pinned by the `FORBIDDEN_WRITES` scan of §0.4.5, which includes `begin`, `begin_nested` and `close` |
+| Does it mutate persistence? | **No.** It reads. Derivation is M7's (§0.4.3), and M5's *Non-goals* name persistence |
+| Is it **functionally** pure? | **No, and it does not claim to be** — it performs four database reads. It is *deterministic*, *side-effect-free* and *read-only*: same database state, same scope, same output; no clock, no randomness, no write, no log. Determinism and purity are independent properties, exactly as §0.3.6 notes for ordering. This is a different question from the *field-scope* rule of §0.4.6, which governs what a context may hold; `support_signals()` and `with_contract_documents()` **are** functionally pure, the factory around them is not |
+| Signature | `build_contexts(session, scope, customer_source_id, *, config=None) -> AnalystContexts` — the `config` keyword defaulting to `default_risk_rules()`, matching `compute_signals` and `derive_links` |
+| What it does, in order | 1. `compute_signals` and `assign_band` (M3). 2. `documents_for(session, scope, customer_source_id)` (M4). 3. `with_contract_documents(signals, links)` (M4) — **this is the production invocation §0.3.6 B assigned to M5**; its populated `SignalSet` goes to `CommercialContext`. 4. `policy_documents(session, scope)` (M2) for `SupportContext`. 5. The D-M5-B2 ticket derivation. 6. `support_signals(signals)` — the S1–S10 projection (§0.4.9 D-M5-B7); `has_active_deal` and `contested_deal` from `signals.active_deals`. 7. Construct both frozen context dataclasses (§0.4.9 D-M5-B7 lists every field) |
+| What it must not do | Call `derive_and_persist` (§0.4.3); construct a `DerivedLink` or a `LinkedDocument` (M4 owns both, and `test_m4_boundary.py` pins the single place each is built); re-resolve membership (§0.2.3); edit `app/intelligence/signals.py` to populate S14 |
+
+**The analysts receive a context and nothing else.** `SupportRiskAnalyst(context) ->
+tuple[Position, ...]` and `CommercialAnalyst(context) -> tuple[Position, ...]`. Scope is a
+property of construction, and `support_risk.py` and `commercial.py` import neither `Session` nor
+any ORM model (§0.4.5).
+
+---
+
+### 0.4.8 M5 scope and acceptance
+
+#### M5 IN-SCOPE
+
+1. `app/analysts/context.py` — `SupportContext`, `CommercialContext`, `SupportSignals`,
+   `TicketFact`, `AnalystContexts`, `BILLING_CATEGORY`, `support_signals()` and
+   `build_contexts()`. Every field of every one of them is listed in §0.4.9 D-M5-B7; the
+   factory's contract is §0.4.7.
+2. The D-M5-B2 ticket derivation and its equivalence test.
+3. The **production invocation** of `documents_for()` and `with_contract_documents()`
+   (§0.3.6 B), populating S14 on `CommercialContext`.
+4. `app/analysts/base.py` — the shared analyst abstraction and the catalogue-precondition
+   evaluation of §A16.
+5. `app/analysts/support_risk.py` and `app/analysts/commercial.py`, each returning
+   `tuple[Position, ...]` per §0.4.1.
+6. The `has_active_deal` and `contested_deal` seams of §0.4.6 and §0.4.9 D-M5-B9, which let
+   Support evaluate both of §A16's commercial preconditions literally.
+7. The boundary assertions of §0.4.5 and the test/README evolution of §0.4.4.
+
+#### M5 OUT-OF-SCOPE
+
+Conflict detection, policy loading, reconciliation, dissent, `conflict_policy.yaml`,
+`action_catalogue.yaml` (**M6**) · `risk_assessments`, `risk_positions`, `risk_briefs`, payload
+hashing, narrative rendering, templates, `template_version`, §A22's evidence length cap,
+`executive_worthy`, §A15's worthiness and ordering, `app/decisions/assessment.py`, the second
+migration (**M7**) · routes, approval, `brief_decisions`, the transitive no-executor test
+(**M8**) · `make verify-vs01`, the e2e scenario, §A26 fixtures, the mutation audit (**M9**) ·
+**any** persistence, migration, table or configuration key · any model, embedding, vector store,
+semantic retrieval or `TOPIC` mechanism (§0.3.1, §A13, §A31) · any history, supersession or
+validity-interval machinery (§0.3.4) · any change to M1, M2, M3, M4, Layer 1 or `data/demo/` ·
+settling §0.3.7 rows 9, 10 or 11 · any refactoring not named in §0.4.4.
+
+#### M5 acceptance criteria — expected outcomes, stated before the tests are written
+
+Binary, and measured at `ACCEPTANCE_AS_OF = 2026-09-18` over the clean full-dataset path of §A28
+unless a row says otherwise.
+
+| # | Criterion | Expected outcome |
+|---|---|---|
+| 1 | **Action resolution** | CUST-007 yields **exactly six** positions, matching §0.4.1's table row for row — function, action, `object_ref` and stance — in `(function, object_ref, proposed_action)` order |
+| 2 | **Multiple satisfied actions** | All five Support entries are emitted; **none is dropped, ranked or merged**. Exactly one SUPPORT and one SALES position carry `object_ref = "DEAL-001"`, so M6 will detect exactly one conflict |
+| 3 | **Support ticket condition** | `REVIEW_INVOICE_DISPUTE` is emitted with `object_ref = "TKT-079"` — the one open `billing` ticket. A fixture ticket with category `"Billing"`, `"BILLING"`, `" billing"` or `None` yields **no** such position |
+| 4 | **Ticket breach reporting** | The D-M5-B2 equivalence table holds for **every** customer at both `2026-09-18` and `2026-08-27`. TKT-079 has `breaches_sla = True` yet is absent from S8, because S8 counts open **high**-priority breaches; a NULL-priority fixture ticket has `breaches_sla = False` |
+| 5 | **Contract-document integration** | `CommercialContext`'s `SignalSet.contract_document_ids == ("DOC-006",)` — reached through `documents_for()` and `with_contract_documents()` in the factory, with **both** DOC-006 evidence links still returned by `documents_for()` |
+| 6 | **Empty evidence** | A customer with links but no `contract` document yields `()` and **no error** (§0.3.6) |
+| 7 | **Missing evidence** | With no links persisted at all, the factory still builds both contexts and S14 is `()`. This is the silent-empty hazard of §0.4.3, and criterion 5 is what detects it in the real ordering |
+| 8 | **No qualifying tickets** | A ticketless customer yields band `NONE`, an empty `TicketFact` tuple and **no SUPPORT position at all** — not a `NO_ACTION` one (§0.4.1). It is **not** silent commercially: §A16's `ACCELERATE_DEAL_CLOSE` carries no band term, so of the 15 ticketless customers the **three** with a qualifying deal — CUST-019 (DEAL-011), CUST-042 (DEAL-005), CUST-043 (DEAL-029), each `negotiation` at 90% — emit exactly one SALES position and no conflict. The other 12 emit nothing |
+| 9 | **Qualifying tickets** | CUST-025 and CUST-036 (`WATCH`) emit Support positions for the entries they satisfy and **no** `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED`, because neither has an active `negotiation` deal — the case that would have been wrong under the rejected S15 proxy of §0.4.6 |
+| 10 | **Deterministic output** | Two runs in one session, and once more after reinsertion in a different physical order, give exactly equal ordered tuples of positions and identical `to_payload()` output. No clock or random source is reachable from `app/analysts/` |
+| 11 | **Session and transaction behaviour** | The factory receives a session and never opens, commits, rolls back or closes one; no module under `app/analysts/` calls a `FORBIDDEN_WRITES` method; `support_risk.py` and `commercial.py` import neither `Session` nor an ORM model |
+| 12 | **Production `derive_and_persist` invocation** | **No module under `app/analysts/` calls `derive_and_persist`, `derive_links` or `persist_links`** — asserted by AST scan, mirroring `test_no_m4_module_invokes_the_s14_composition` |
+| 13 | **M4 → M5 handoff** | `app/evidence/`, `app/relationships/` and `app/intelligence/` are byte-identical to `65eb462`; `signals.py` still states `contract_document_ids=()`; the Layer 1 fingerprint still recomputes to `1d891b0b…`; every M4 and M3 boundary test passes **unchanged** |
+| 14 | **Context field scope** | By field-**type** inspection: `SupportContext` has **no field of type `SignalSet`**, `DealSignal`, `MoneyValue` or `Decimal`, and none whose type contains one as a member or element; `SupportSignals` has **exactly** D-M5-B7's eleven fields and no other; `CommercialContext` has no `TicketFact` field or collection of them. The `SignalSet` clause is load-bearing — without it `signals: SignalSet` passes while carrying every forbidden value. Also: **every `Position` validates and carries at least one `Evidence`**, and every citation in every position resolves |
+| 15 | **Multi-currency** | A two-currency fixture customer renders both in `CommercialContext`, and summing them raises (§A12) |
+| 16 | **Regression** | Full suite green, `app/` coverage **100%**, secret scan **0**, migration history **one head and no new migration**, and the README counts updated per §0.4.4 to their actually observed values |
+
+**Measured corpus-wide expectation — OBSERVED, not architecture.** Counted from `data/demo/` on
+2026-09-22, and recorded so an implementer verifies rather than assumes. **Eight** customers hold
+an active `negotiation` deal at probability ≥ 80 and therefore draw a SALES
+`ACCELERATE_DEAL_CLOSE` position: CUST-003, CUST-007, CUST-019, CUST-031, CUST-042, CUST-043,
+CUST-046, CUST-050. **Only CUST-007 also draws a SUPPORT position on the same deal**, because it
+is the only customer with both `S8 >= 1` and an active `negotiation` deal — CUST-025 has no deal
+and CUST-036's DEAL-037 is `qualification`. **The demo dataset therefore contains exactly one
+conflict, and §A15's claim is a measured property of the data rather than an assertion.**
+
+An implementer who measures a different set must report it rather than adjust this paragraph,
+exactly as §0.3.8 requires of the link expectation.
+
+**An implementer who measures a position set different from §0.4.1's table must report it rather
+than adjust the expectation**, exactly as §0.3.8 requires of the measured link set. That table is
+the acceptance criterion.
+
+**The tooling gate of M4 applies unchanged.** M5 does not close until `pytest`, `ruff` and `mypy`
+have actually been **run** and their results reported. A static argument that the suite would
+pass is not evidence that it passed, and may not be recorded as one.
+
+---
+
+### 0.4.9 Second-pass review findings, closed 2026-09-22
+
+A focused review of §0.4.6 and §0.4.3, run before the specification was committed, found three
+defects **in §0.4 itself** — not in M1–M4. §0.4.3's M7 forward amendment and §0.4.7's purity
+language were both confirmed sound and are unchanged. The three below are closed here.
+
+| Finding | Defect | Closed by |
+|---|---|---|
+| 1 | §A14 says `SupportContext` contains "S1–S10", but frozen `SignalSet` is **one dataclass carrying all sixteen** signal fields, so "S1–S10" named no implementable representation | **D-M5-B7** |
+| 2 | S14 appeared in neither §A14 column for `SupportContext` — neither granted nor forbidden | **D-M5-B8** |
+| 3 | §A16's `SCHEDULE_EXECUTIVE_SPONSOR_CALL` was silently narrowed from `S11 > 0` to negotiation-only | **D-M5-B9** |
+
+---
+
+#### D-M5-B7 — the two context representations, field by field: **AUTHORED**
+
+**Frozen source, verified.** `SignalSet` (`app/intelligence/contract.py:416–440`) is a single
+frozen dataclass whose sixteen fields are S1, S2, S2b, S3, S4, S5, S6, S7, S8, S9, S10 (eleven
+fields) followed by S11 `active_deals`, S12 `exposure_by_currency`, S13 `active_project_count`,
+S14 `contract_document_ids` and S15 `deal_under_pressure`. `EntityRef` (`:308`) is
+`(entity_type, source_id)` and nothing else. `EscalationPolicy` (`app/intelligence/config.py:56`)
+is `window_days`, `ticket_threshold`, `because_documents` — no monetary member.
+`app/analysts/` does not exist and no `SupportContext` or `CommercialContext` is implemented
+anywhere, so nothing is being retrofitted.
+
+**The defect.** A `SignalSet` field on `SupportContext` transitively carries `active_deals`
+(`DealSignal`), `exposure_by_currency` (`MoneyValue`), `active_project_count`,
+`contract_document_ids` and `deal_under_pressure` — every value §0.4.6 forbids. Worse, a purity
+test that inspects field **types** would not catch it: the field's type is `SignalSet`, which is
+not literally "a `DealSignal`, `MoneyValue` or `Decimal` field". The letter of §0.4.8 criterion
+14 was satisfiable by an implementation that violated its whole purpose. This is the same
+monolithic-frozen-type problem D-M5-B2 closed for tickets, left open for signals.
+
+**Decision — one obvious representation, stated field by field.**
+
+> **`SupportContext` never holds a `SignalSet`.** It holds `SupportSignals`, a new frozen
+> M5-owned projection carrying **exactly** the eleven S1–S10 fields, with the **same names and
+> the same types** as `SignalSet` declares them:
+>
+> ```
+> SupportSignals                            # new, M5-owned, frozen
+>     open_ticket_count           int         S1
+>     open_high_priority_count    int         S2
+>     high_priority_total         int         S2b
+>     tickets_in_lookback         int         S3
+>     max_tickets_in_14d_window   int         S4
+>     policy_escalation_state     bool        S5
+>     days_since_last_ticket      int | None  S6
+>     sla_breach_count            int         S7
+>     open_sla_breach_high_count  int         S8
+>     stale_open_ticket_count     int         S9
+>     dominant_ticket_category    str | None  S10
+> ```
+>
+> Built by `support_signals(signals: SignalSet) -> SupportSignals` — **pure and total**: a
+> field-by-field copy, no session, no clock, no derivation, no rounding, no defaulting. It
+> **narrows by construction**: S11–S15 have no field to land in, so Support cannot receive them
+> even by mistake. Same name, same type, same value — so no second definition of any signal is
+> created, and nothing needs pinning to M3 the way `TicketFact` does.
+>
+> ```
+> SupportContext                            # new, M5-owned, frozen
+>     customer           EntityRef
+>     signals            SupportSignals            S1–S10 only
+>     band               str                       from BandAssignment.band
+>     satisfied_rules    tuple[str, ...]           from BandAssignment.satisfied_rules
+>     tickets            tuple[TicketFact, ...]    §0.4.2, ordered by source_id
+>     sla_targets        Mapping[str, int]         RiskRulesConfig.sla_resolution_targets
+>     escalation         EscalationPolicy          DOC-003's rule and the document it quotes
+>     policy_documents   tuple[EntityRef, ...]     M2's policy_documents()
+>     has_active_deal    bool                      S11 > 0, any stage — D-M5-B9
+>     contested_deal     EntityRef | None          the active negotiation deal — D-M5-B6
+> ```
+>
+> ```
+> CommercialContext                         # new, M5-owned, frozen
+>     customer           EntityRef
+>     signals            SignalSet                 the FULL set, S14 populated
+>     band               str
+>     satisfied_rules    tuple[str, ...]
+> ```
+>
+> ```
+> AnalystContexts                           # new, M5-owned, frozen
+>     support            SupportContext
+>     commercial         CommercialContext
+> ```
+>
+> `CommercialContext` needs no projection: S11, S12, S13, S14 and S15 are exactly what §A14
+> grants it, and they live on the `SignalSet` that `with_contract_documents()` returns. §0.4.8
+> criterion 5 already pins `CommercialContext`'s `SignalSet.contract_document_ids`, so this is
+> the shape that section was already written against.
+
+**The asymmetry is deliberate, and rests on the source material rather than on convenience.**
+`CommercialContext` holds S1–S10 as a by-product of holding the `SignalSet`; `SupportContext`
+holds no commercial signal at all. Three reasons, all pre-existing:
+
+1. **§A14's two prohibitions are not the same kind.** Support may hold no deal, project or
+   monetary **field** — a prohibition on values. Commercial may hold no ticket **record** — a
+   prohibition on rows. `TicketFact` is a record and is absent from `CommercialContext`; S1–S10
+   are aggregates and are not records.
+2. **A commercial signal already depends on a ticket signal.** S15 is "an active `negotiation`
+   deal exists **while `S5` is true**" (§A10). Denying Commercial every ticket aggregate would
+   make its own S15 unexplainable.
+3. **§A27.3 requires the brief to cite ticket counts and commercial facts together**, and both
+   positions must ground their claims.
+
+**The purity test is tightened so the letter matches the purpose.** §0.4.8 criterion 14 is
+amended to assert, by field-type inspection:
+
+- `SupportContext` has **no field of type `SignalSet`**, `DealSignal`, `MoneyValue` or `Decimal`,
+  and no field whose type contains one of those as a member or element;
+- `SupportSignals` has **exactly** the eleven fields above and no other;
+- `CommercialContext` has **no field of type `TicketFact`** and no collection of them.
+
+The first clause is the one that closes this finding: without it, `signals: SignalSet` passes.
+
+**Classification: AUTHORED.** The field lists, `SupportSignals`, `support_signals()` and
+`AnalystContexts` are named here so an implementer chooses nothing. No frozen type is modified,
+no signal is recomputed, and no value differs from M3's.
+
+---
+
+#### D-M5-B8 — S14 is **not** in `SupportContext`: **AUTHORED**, on derived grounds
+
+**Frozen source.** §A14 lists "contract documents" under `CommercialAnalyst`, never under
+`SupportRiskAnalyst`. §A10 classifies S14 as "evidence only". §0.3.6 B states that
+"`CommercialContext` is where S14 is consumed" and assigns M5 the production call on that basis.
+`with_contract_documents()` returns a `SignalSet`, and §0.4.8 criterion 5 asserts the populated
+value on `CommercialContext`.
+
+**The defect.** §A14's *contains* column said "S1–S10" and its *cannot contain* column said
+"S11, S12, S13, S15". **S14 was named in neither**, so its status for `SupportContext` was
+implicit in a list §0.4.6 had declared explicit.
+
+**Decision.**
+
+> **S14 IS NOT in `SupportContext`.** It is consumed **only** in `CommercialContext`, through the
+> populated `SignalSet` that `build_contexts()` obtains from `with_contract_documents()`
+> (§0.4.7 steps 2–3).
+>
+> The exclusion is **structural, not merely stated**: `SupportSignals` has no
+> `contract_document_ids` field, so no contract document id can reach a Support analyst by any
+> route. §A14's *cannot contain* column is corrected to read **S11–S15**, which names S14
+> explicitly instead of skipping it.
+>
+> No Support catalogue entry reads a contract document: `ESCALATE_TO_ACCOUNT_OWNER_PER_SLA`,
+> `SCHEDULE_EXECUTIVE_SPONSOR_CALL` and `ASSIGN_DEDICATED_SUPPORT_OWNER` read S5, S8 and
+> `has_active_deal`; `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` reads S8 and `contested_deal`;
+> `REVIEW_INVOICE_DISPUTE` reads `TicketFact` rows. Support's document evidence is DOC-003, which
+> reaches it through `escalation.because_documents` and M2's `policy_documents()` — a **policy**
+> document, structurally cited (§A13, §7.3), never a derived contract link.
+
+**Classification: AUTHORED** as a statement, **DERIVED** in substance — §A14, §A10 and §0.3.6 B
+all already placed S14 on the commercial side; only the explicit exclusion was missing.
+
+---
+
+#### D-M5-B9 — `SCHEDULE_EXECUTIVE_SPONSOR_CALL` is restored to its frozen precondition: **CORRECTION**
+
+**Frozen semantics.** The committed plan at `65eb462` states:
+
+> `| SCHEDULE_EXECUTIVE_SPONSOR_CALL | S5 and S11 > 0 | Support |`
+
+S11 is `active_deal_count` (§A10) — **every** active deal, of any stage.
+
+**The defect.** The first §0.4 pass rewrote that precondition as `S5 and contested_deal is not
+None`, where `contested_deal` is the active **`negotiation`** deal. That is a narrowing, not a
+restatement: a customer with `S5` true and an active `qualification` deal satisfied the frozen
+rule and fails the rewritten one. On the demo dataset the change is **unobservable**, because
+CUST-007 is the only customer with `S5` true and it holds a `negotiation` deal — which is exactly
+the invisible-divergence property §0.4.6 uses to **reject** the S15 proxy. The section applied a
+standard to one rule and breached it in another.
+
+**Decision — restore, and supply the seam the restoration needs.**
+
+> **`SCHEDULE_EXECUTIVE_SPONSOR_CALL`'s precondition is `S5` and `S11 > 0`, exactly as frozen.**
+> No narrowing, no stage filter.
+>
+> Support cannot hold S11 itself — it is a deal count, which §0.4.6 forbids — so `SupportContext`
+> carries one further scalar beside `contested_deal`:
+>
+> ```
+> has_active_deal  bool    # True iff len(signals.active_deals) > 0 — any stage
+> ```
+>
+> The factory sets it from the same `SignalSet.active_deals` it already reads for
+> `contested_deal`. Support then evaluates `S5 and has_active_deal`, which is `S5 and S11 > 0`
+> and nothing else.
+>
+> **Both Support preconditions are now literal.** `SCHEDULE_EXECUTIVE_SPONSOR_CALL` is
+> `S5 and has_active_deal` ≡ frozen `S5 and S11 > 0`. `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` is
+> `S8 >= 1 and contested_deal is not None` ≡ frozen `S8 >= 1 and an active negotiation deal`.
+> **Neither is a proxy, and neither diverges from §A16 for any customer, on this dataset or any
+> other.**
+>
+> **`has_active_deal` does not widen Support's scope.** It is a boolean, not a count: it carries
+> no amount, no currency, no stage, no probability, no identity and not even *how many*. It is
+> strictly less than `contested_deal` already grants, and every §0.4.6 argument covers it
+> unchanged. The two fields together are the whole of Support's commercial visibility, and the
+> §0.4.8 criterion 14 type assertions bound them.
+
+**Measured consequence: none, on this dataset.** `S5` is true for CUST-007 alone (M3 closure,
+§0.2.1), and CUST-007 holds DEAL-001, so `has_active_deal` and `contested_deal is not None` agree
+there. §0.4.1's six-position table for CUST-007 is **unchanged**. The correction matters for
+correctness against the written rule, not for the acceptance numbers — which is precisely why it
+had to be caught by reading rather than by testing.
+
+**Classification: CORRECTION** of a §0.4 drafting defect. It restores frozen §A16 rather than
+authoring anything, and `has_active_deal` is the minimum needed to make the restoration
+expressible under §0.4.6.
+
+---
+
 ## Part A — Specification
 
 ### A1. Business objective
@@ -1843,15 +2669,43 @@ database session**. Scope is therefore enforced by construction, not by conventi
 
 | Analyst | Context contains | Context cannot contain | Emits |
 |---|---|---|---|
-| `SupportRiskAnalyst` | Tickets, SLA rules, policy documents, S1–S10 | Any deal, project or monetary field | `Position(function=SUPPORT)` + band + satisfied rules + breaches |
-| `CommercialAnalyst` | Deals, projects, contract documents, S11–S15 | Any ticket record | `Position(function=SALES)` + per-currency exposure + contract terms |
+| `SupportRiskAnalyst` | `TicketFact` rows, SLA rules, policy documents, **`SupportSignals`** (S1–S10), band and satisfied rules, `has_active_deal`, `contested_deal` (identity only) | Any `SignalSet`; any deal or project **attribute**; any monetary field; **S11–S15**, S14 included | `tuple[Position, ...]`, `function=SUPPORT` |
+| `CommercialAnalyst` | Deals, projects, contract documents, S11–S15 | Any ticket record | `tuple[Position, ...]`, `function=SALES` + per-currency exposure + contract terms |
 
 A test asserts each context dataclass has no field of a forbidden type, and that neither analyst
 module imports `Session` or any ORM model.
 
+**Amended 2026-09-22 by §0.4, which is authoritative where this table is coarser.** Three points
+an implementer needs and this section did not carry:
+
+- **Each analyst returns `tuple[Position, ...]`, not one `Position`** — one per satisfied §A16
+  entry, each naming that entry's contested object. §0.4.1 fixes the objects, the stances and the
+  ordering, and shows the six positions CUST-007 produces.
+- **"Any deal, project or monetary field" is too coarse to implement, and §0.4.6 replaces it with
+  an explicit list.** `SupportContext` carries no `DealSignal`, `MoneyValue` or `Decimal`, no deal
+  or project attribute, no deal or project count and no `exposure_by_currency` — but it **does**
+  carry `has_active_deal: bool` and `contested_deal: EntityRef | None`. Without an object
+  identity, §A15's conflict over `DEAL-001` is structurally inexpressible, because
+  `Position.object_ref` is a required field of M1's frozen contract.
+- **"S1–S10" is not a `SignalSet`.** Frozen `SignalSet` carries all sixteen signal fields in one
+  dataclass, so "S1–S10" named no implementable shape. **§0.4.9 D-M5-B7 settles it**:
+  `SupportContext` holds `SupportSignals`, an M5-owned projection of exactly the eleven S1–S10
+  fields, and **never a `SignalSet`**. `CommercialContext` holds the full populated `SignalSet`;
+  the asymmetry and its three grounds are in D-M5-B7.
+- **S14 is *not* in `SupportContext`** (§0.4.9 D-M5-B8). It is consumed only in
+  `CommercialContext`, and `SupportSignals` has no field for it, so the exclusion is structural.
+  Support's document evidence is DOC-003, reached as a **policy** document through
+  `escalation.because_documents` and M2's `policy_documents()`.
+- **"Tickets" means `TicketFact`**, the five-field M5-owned shape of §0.4.2, derived in the
+  context factory from Layer 1 under M3's stated open-ness and breach rules and pinned to M3's
+  signals by an equivalence test. M3 is neither modified nor consulted for it.
+
 **`CommercialContext` is where S14 is consumed, so M5 owns the production call** that populates
 it. M4 owns, exports and proves the composition function and never calls it; M5's context factory
-invokes it. The invocation design belongs to M5's specification (§0.3.6).
+invokes it. The invocation design was deferred by §0.3.6 and is **settled in §0.4.7**:
+`build_contexts()` in `app/analysts/context.py` calls `documents_for()` and then
+`with_contract_documents()`, receives a caller-owned session, and writes nothing. The links it
+reads are derived by the assessment run, which §0.4.3 assigns to **M7**.
 
 ### A15. Conflict detection and reconciliation — the core of the slice
 
@@ -1888,18 +2742,39 @@ gate worthiness.
 
 ### A16. Action catalogue (versioned config)
 
-| Action | Preconditions | Proposed by |
-|---|---|---|
-| `ESCALATE_TO_ACCOUNT_OWNER_PER_SLA` | `S5` | Support |
-| `SCHEDULE_EXECUTIVE_SPONSOR_CALL` | `S5` and `S11 > 0` | Support |
-| `ASSIGN_DEDICATED_SUPPORT_OWNER` | `S8 >= 2` | Support |
-| `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` | `S8 >= 1` and an active `negotiation` deal | Support |
-| `REVIEW_INVOICE_DISPUTE` | an open `billing` ticket | Support |
-| `ACCELERATE_DEAL_CLOSE` | active deal, stage `negotiation`, probability ≥ 80 | Sales |
-| `NO_ACTION` | band `NONE` | — |
+| Action | Preconditions | `object_ref` | Stance | Proposed by |
+|---|---|---|---|---|
+| `ESCALATE_TO_ACCOUNT_OWNER_PER_SLA` | `S5` | customer | NEUTRAL | Support |
+| `SCHEDULE_EXECUTIVE_SPONSOR_CALL` | `S5` and `S11 > 0`, read as `has_active_deal` | customer | NEUTRAL | Support |
+| `ASSIGN_DEDICATED_SUPPORT_OWNER` | `S8 >= 2` | customer | NEUTRAL | Support |
+| `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` | `S8 >= 1` and `contested_deal is not None` | **deal** | RESTRAIN | Support |
+| `REVIEW_INVOICE_DISPUTE` | an open `billing` ticket | **ticket** | NEUTRAL | Support |
+| `ACCELERATE_DEAL_CLOSE` | active deal, stage `negotiation`, probability ≥ 80 | **deal** | ADVANCE | Sales |
+| `NO_ACTION` | band `NONE` | customer | NEUTRAL | — |
 
 At the pinned `as_of`, CUST-007 triggers all six non-`NO_ACTION` entries, and the last two
 conflict.
+
+**The `object_ref` and `Stance` columns were added 2026-09-22 by §0.4.1**, which also fixes
+multiplicity — one position per qualifying ticket or deal, at most one per customer-object entry
+— and the order analysts return them in. They are what make §A15's conflict "over the same object
+identity" expressible: `Position.object_ref` is a required field of M1's frozen contract, and
+until these columns existed no rule said what to put in it.
+
+**Two preconditions are restated, and neither is changed.** `SCHEDULE_EXECUTIVE_SPONSOR_CALL`
+reads `S11 > 0` and `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` reads "an active `negotiation` deal"
+— both facts §A14 forbids `SupportContext` from holding. §0.4.6 and §0.4.9 D-M5-B9 supply the two
+scalars that carry them without carrying any deal attribute: `has_active_deal` (`S11 > 0`, **any
+stage**) and `contested_deal` (the active `negotiation` deal, identity only). Support therefore
+evaluates both original rules **literally**, with no proxy and no divergence for any customer.
+
+> **Correction, 2026-09-22.** The first §0.4 pass rewrote `SCHEDULE_EXECUTIVE_SPONSOR_CALL` as
+> `S5 and contested_deal is not None`, which silently narrowed it from *any* active deal to
+> `negotiation`-stage only. That was a defect, invisible on the demo dataset because `S5` is true
+> for CUST-007 alone. **§0.4.9 D-M5-B9 restores the frozen precondition.**
+
+**`NO_ACTION` is emitted by neither analyst** — its *Proposed by* column is empty. A function with
+no satisfied entry emits no position at all (§0.4.1).
 
 ### A17. Brief — payload and view, separated
 
@@ -2103,7 +2978,10 @@ Single source system; no cross-source entity resolution; document links derived,
 provenance-backed; **topical evidence is not modelled — a document that concerns a customer
 without naming it, such as DOC-010, is linked to no customer at all (§0.3.1)**; no FX, so no
 cross-currency total;
-business days have no holiday calendar; the band is a policy artefact, not a probability;
+business days have no holiday calendar; **a customer with two or more active `negotiation` deals
+contests only the lexicographically smallest, because `SupportContext` carries a single
+`contested_deal` (§0.4.6) — no such customer exists in the demo dataset, so the tiebreak is
+exercised only by a fixture**; the band is a policy artefact, not a probability;
 approver identity is asserted, not authenticated; the dataset is synthetic, 233 rows;
 `employees.organization_id` remains NULL; **document stewardship is not modelled** —
 `documents.owner_source_id` exists in Layer 1 but VS-01 exposes no `document_owned_by` edge
@@ -2468,23 +3346,46 @@ other's data, and have each state a position.
 
 **Before.** All facts sit in one undifferentiated bag.
 
-**Change.** `app/analysts/context.py` (`SupportContext`, `CommercialContext` — plain dataclasses
-built by a factory; **no session, no ORM model**), `app/analysts/base.py`,
-`app/analysts/support_risk.py`, `app/analysts/commercial.py`. Each emits a `Position` with a
-proposed action drawn from the catalogue and citations for every claim.
+**Change.** `app/analysts/context.py` (`SupportContext`, `CommercialContext`, `TicketFact`,
+`AnalystContexts`, `BILLING_CATEGORY`, and `build_contexts()` — the **one** module in the package
+permitted a `Session` or an ORM model, §0.4.7), `app/analysts/base.py`,
+`app/analysts/support_risk.py`, `app/analysts/commercial.py`. Each analyst emits
+**`tuple[Position, ...]`** — one position per satisfied §A16 entry, each naming that entry's
+contested object, with citations for every claim (§0.4.1).
 
-**Tests.** A context-purity test asserting `SupportContext` has no deal/project/monetary field
-and `CommercialContext` has no ticket field; an import test asserting neither analyst module
-imports `Session` or an ORM model; each `Position` validates and carries citations; exposure is
-per currency and summing raises; Support proposes `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` and
-Sales proposes `ACCELERATE_DEAL_CLOSE` for CUST-007.
+**Decisions this milestone is built on.** **§0.4 resolves six blockers** found by the
+pre-implementation audit of 2026-09-22, and an implementer must not settle any of them again in
+passing: action representation (§0.4.1), the ticket derivation and its equivalence test
+(§0.4.2), production ownership of `derive_and_persist` (§0.4.3), the authorised test and README
+evolution T-M5-1…T-M5-4 (§0.4.4), the dependency boundary (§0.4.5), and Support's visibility of
+the contested object (§0.4.6). §0.4.7 fixes the context factory's session and purity contract;
+§0.4.8 fixes scope and the sixteen acceptance criteria. **M1, M2, M3 and M4 stay frozen**: M5
+adds a package, reads their public APIs, and edits none of them.
 
-**After.** Two functions reason independently, and their isolation is structural.
+**Tests.** The sixteen criteria of §0.4.8. In particular: a context-purity test written against
+§0.4.6's explicit field list, not the phrase "any deal field"; an import test asserting neither
+analyst module imports `Session` or an ORM model; the §0.4.2 equivalence table binding M5's
+`TicketFact` derivation to M3's S1, S2, S2b, S7 and S8 for **every** customer at both `as_of`
+dates; every `Position` validates, carries citations, and every citation resolves; exposure is
+per currency and summing raises; `CommercialContext` carries `contract_document_ids ==
+("DOC-006",)` while `documents_for()` still returns both DOC-006 links; AST scans asserting no
+`app/analysts/` module writes, reads a clock, or calls `derive_and_persist`; and CUST-007's
+**six** positions match §0.4.1's table row for row.
 
-**Acceptance.** Both positions are produced for CUST-007 with the expected opposing actions;
-scope violations are impossible to express, not merely discouraged.
+**After.** Two functions reason independently, their isolation is structural, and every action
+either function wants is on the record with the object it contests.
 
-**Non-goals.** Reconciliation; any model; persistence.
+**Acceptance.** §0.4.8's sixteen criteria. CUST-007 yields exactly six positions — five SUPPORT,
+one SALES — of which exactly one SUPPORT and one SALES carry `object_ref = "DEAL-001"`, so M6
+will detect exactly one conflict; nothing is dropped, ranked or merged; scope violations are
+impossible to express, not merely discouraged; `app/intelligence/`, `app/relationships/` and
+`app/evidence/` are byte-identical to `65eb462`; the Layer 1 fingerprint is `1d891b0b…`.
+
+**Non-goals.** Reconciliation, conflict detection and the conflict policy (M6); **any
+persistence, table, migration or configuration key** — including the production call to
+`derive_and_persist`, which §0.4.3 assigns to M7; `executive_worthy` and §A15's worthiness and
+ordering (M7); any model; any change to M1, M2, M3, M4 or Layer 1; any test evolution beyond
+T-M5-1…T-M5-4 (§0.4.4).
 
 ---
 
@@ -2523,9 +3424,14 @@ approval.
 
 **Before.** A reconciled result exists only in memory.
 
-**Change.** `app/decisions/payload.py` (the hashed decision payload), `app/decisions/brief.py`
-(narrative rendering), `app/decisions/templates/`, models for `risk_assessments`,
-`risk_positions` and `risk_briefs`, their repositories, and the **second additive migration**.
+**Change.** `app/decisions/assessment.py` (**the assessment run** — §0.4.3 assigns it the
+production call to `derive_and_persist()`, once per run per scope, before any context is built,
+inside the caller's transaction), `app/decisions/payload.py` (the hashed decision payload),
+`app/decisions/brief.py` (narrative rendering), `app/decisions/templates/`, models for
+`risk_assessments`, `risk_positions` and `risk_briefs`, their repositories, and the **second
+additive migration**. `risk_positions` takes **one row per `Position`**, so several rows per
+function per assessment are normal (§0.4.1) — the table already carries no unique constraint
+(§A18).
 
 **Tests.** Payload hash excludes timestamps and `template_version` — changing a template does
 **not** change the hash, changing a fact **does**; hash identical across two processes;
