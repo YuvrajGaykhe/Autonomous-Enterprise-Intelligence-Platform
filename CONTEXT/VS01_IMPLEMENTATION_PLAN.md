@@ -5,9 +5,10 @@ v2.2 2026-09-20, `deal_owned_by` scope decision · v2.3 2026-09-21, M3 closure �
 v2.4 2026-09-21, M4 decision resolution (§0.3) ·
 v2.5 2026-09-21, M4 boundary clarification (§0.3.11) ·
 v2.6 2026-09-22, M5 re-specification — six blockers closed (§0.4) ·
-v2.7 2026-09-22, M5 second-pass review — three §0.4 defects closed (§0.4.9)**
+v2.7 2026-09-22, M5 second-pass review — three §0.4 defects closed (§0.4.9) ·
+v2.8 2026-09-24, M5 recorded complete; M6 specification — eight gaps closed (§0.5)**
 
-**Status as of 2026-09-22 — per milestone, not per document:**
+**Status as of 2026-09-24 — per milestone, not per document:**
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -16,8 +17,9 @@ v2.7 2026-09-22, M5 second-pass review — three §0.4 defects closed (§0.4.9)*
 | **M2** — relationship model | **COMPLETE** | `app/relationships/` — 7 edge types, 3 queries, no persistence; `tests/unit/test_m2_boundary.py` and `tests/integration/test_m2_relationships.py`; commit `bc0525d`; B1–B10 all asserted |
 | **M3** — signal engine and risk band | **COMPLETE** | `app/intelligence/{windows,signals,bands}.py` and the populated band table in `config/intelligence/risk_rules.yaml`; `tests/unit/test_m3_{windows,bands,boundary}.py` and `tests/integration/test_m3_signals.py`; commit `34486eb`; closure §0.2 |
 | **M4** — evidence and citations | **COMPLETE** | `app/evidence/`, `app/persistence/models/document_customer_link.py`, `app/persistence/repositories/document_links.py`, migration `c4a1e97d5b02` chained after `8bfd73b6af60` (one head); `tests/unit/test_m4_{linker,signals,boundary}.py` and `tests/integration/test_m4_{evidence,migration}.py`; commit `65eb462`, specification `42f9eeb`, correction `0b017e2`. D-1…D-6 (§0.3), the four gate blockers (§0.3.10) and the three boundary contradictions (§0.3.11) all closed; T1–T5 (§0.3.9) performed. `with_contract_documents` is defined, exported and proved, and **called by nothing in M4** |
-| **M5** — analysts and positions | **PLANNED — not started; re-specified 2026-09-22, six blockers closed** | Nothing implemented: `app/analysts/` does not exist, and no M5 test exists. A takeover audit against `65eb462` found six points where an implementer would have had to invent architecture; all six are closed in **§0.4**, which — unlike §0.3.9 — **is an authorisation** for the test and README evolution it names (T-M5-1…T-M5-4, §0.4.4) and for nothing wider. §0.4.8 fixes M5's scope and its sixteen acceptance criteria, and **§0.4.9** closes three defects a second review pass found in §0.4 itself (D-M5-B7, D-M5-B8, D-M5-B9) |
-| **M6–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. §0.4.3 records one **forward** decision M7 must honour: the assessment run owns the production call to `derive_and_persist()` |
+| **M5** — analysts and positions | **COMPLETE** | `app/analysts/` — `context.py` (the one factory, and the only module permitted a `Session`), `base.py`, `support_risk.py`, `commercial.py`; `tests/unit/test_m5_{analysts,context,boundary}.py`, `tests/unit/m5_support.py` and `tests/integration/test_m5_contexts.py`; specification `6a8d413` (§0.4, nine decisions D-M5-B1…B9), implementation `d48c970`, and `6158f81`, which closed §0.4.8 criterion 15's first clause (a two-currency context, CUST-042) that `d48c970` had left unasserted — **all sixteen criteria are now asserted**. Measured at `6158f81`: **5163** tests (unit 4166, contract 185, integration 732, e2e 80), `app/` coverage **100%** (5937 statements), ruff 69, mypy 9, secret scan 0, **one** migration head `c4a1e97d5b02` and **no** new migration. Only T-M5-1 and T-M5-2 were needed; T-M5-3/T-M5-4 authorised a re-quote that no count required. `app/intelligence/`, `app/relationships/`, `app/evidence/` and `app/persistence/` byte-identical to `65eb462` |
+| **M6** — conflict detection and reconciliation | **PLANNED — specified 2026-09-24, not started** | Nothing implemented: `app/decisions/` does not exist. A readiness audit against `6158f81` found M6 blocked on specification in eight places; all eight are closed in **§0.5**, which — like §0.4 — **is an authorisation** for the test and README evolution it names (T-M6-1…T-M6-4, §0.5.3) and for nothing wider. §0.5.14 fixes M6's scope and its twenty-one acceptance criteria |
+| **M7–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. §0.4.3 records one **forward** decision M7 must honour: the assessment run owns the production call to `derive_and_persist()`. §0.5.1 records another: M7 **persists** M6's worthiness and ordering and computes neither |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -1451,7 +1453,8 @@ set of proposed actions that survive reconciliation: every emitted action, minus
 positions M6 overrules. For CUST-007 that is rows 1–5 (Support's five), with row 6 preserved as
 dissent under `ConflictResolution.dissent`, which derives it from the conflict rather than
 storing it. **This paragraph settles nothing that is M6's**; it records the arithmetic that D-M5-B1
-makes possible, and no more.
+makes possible, and no more. *(M6's own statement of it — `resolved_positions` as `Position`s,
+not action ids — is §0.5.7 D-M6-B7.)*
 
 **Classification.**
 
@@ -1621,7 +1624,8 @@ hand M5 an **empty S14 that is indistinguishable from a customer with no contrac
 >       build_contexts(session, scope, customer, …)        M5   — reads documents_for(), calls with_contract_documents()
 >       SupportRiskAnalyst / CommercialAnalyst             M5   — tuple[Position, …]
 >         ↓
->   conflicts, policy, reconciliation                      M6
+>   conflicts, policy, reconciliation,                     M6   — pure; one Reconciliation per customer,
+>   worthiness, ordering                                         then order_reconciliations() (§0.5)
 >         ↓
 >   payload, hash, persistence, narrative                  M7
 >         ↓
@@ -1883,10 +1887,11 @@ any ORM model (§0.4.5).
 #### M5 OUT-OF-SCOPE
 
 Conflict detection, policy loading, reconciliation, dissent, `conflict_policy.yaml`,
-`action_catalogue.yaml` (**M6**) · `risk_assessments`, `risk_positions`, `risk_briefs`, payload
-hashing, narrative rendering, templates, `template_version`, §A22's evidence length cap,
-`executive_worthy`, §A15's worthiness and ordering, `app/decisions/assessment.py`, the second
-migration (**M7**) · routes, approval, `brief_decisions`, the transitive no-executor test
+`action_catalogue.yaml`, §A15's worthiness and ordering (**M6** — corrected 2026-09-24 by §0.5.1
+D-M6-B1; this line first read "(M7)" for the last two) · `risk_assessments`, `risk_positions`,
+`risk_briefs`, payload hashing, narrative rendering, templates, `template_version`, §A22's evidence
+length cap, persisting `executive_worthy`, `app/decisions/assessment.py`, the second migration
+(**M7**) · routes, approval, `brief_decisions`, the transitive no-executor test
 (**M8**) · `make verify-vs01`, the e2e scenario, §A26 fixtures, the mutation audit (**M9**) ·
 **any** persistence, migration, table or configuration key · any model, embedding, vector store,
 semantic retrieval or `TOPIC` mechanism (§0.3.1, §A13, §A31) · any history, supersession or
@@ -2150,6 +2155,610 @@ had to be caught by reading rather than by testing.
 **Classification: CORRECTION** of a §0.4 drafting defect. It restores frozen §A16 rather than
 authoring anything, and `has_active_deal` is the minimum needed to make the restoration
 expressible under §0.4.6.
+
+---
+
+## 0.5 M6 decision specification — pre-implementation, 2026-09-24
+
+M5 closed at `6158f81` (specification `6a8d413`, implementation `d48c970`). A readiness audit run
+against `6158f81` before M6 began found M6 **blocked on specification, not on code**: Part B's
+M6 block is some twenty lines, and it and §A15/§A16 left eight places where an implementer would
+have had to invent architecture. This section closes all eight, and the three further points the
+milestone owner asked to be frozen explicitly, in the discipline §0.4 set for M5.
+
+> **Status of this section.** Like §0.4, this section **is an authorisation**. Each decision below
+> is settled, and D-M6-B3 authorises the test and README evolution M6 requires (T-M6-1…T-M6-4)
+> and nothing wider.
+>
+> **M1, M2, M3, M4 and M5 remain frozen.** No decision below edits `app/intelligence/`,
+> `app/relationships/`, `app/evidence/`, `app/persistence/`, `app/analysts/`, any migration,
+> `data/`, or any Layer 1 module. Verified at `6158f81`: the first four are byte-identical to
+> `65eb462`, and `app/analysts/` to `d48c970`. M6 **adds** `app/decisions/` and two files under
+> `config/intelligence/`, and reads everything else through public surfaces.
+
+**The eight audit gaps, and what closes each.**
+
+| # | Gap, verified against `6158f81` | Closed by |
+|---|---|---|
+| G1 | **Worthiness and ordering had two owners.** Part B M6 puts them in `reconciler.py` and M6's *Tests* name a worthiness truth table and amount-invariant ordering; §0.4.8's M5 OUT-OF-SCOPE, Part B M5's *Non-goals* and Part B M3's closure block assign them to M7 | D-M6-B1 |
+| G2 | **`action_catalogue.yaml` was a filename only** — no schema, loader, consumer or test. Strategy §8.3 wants "preconditions in configuration", but §A16's thresholds are frozen M5 constants (`app/analysts/base.py`), re-exported by `app/analysts/__init__.py` and imported by frozen tests | D-M6-B2 |
+| G3 | **Two committed tests M6 necessarily contradicts**, with no authorisation: `test_m5_boundary.py::test_the_decision_layer_does_not_exist_yet` and `test_m1_boundary.py`'s `LAYER2_PACKAGES`; plus the README counts | D-M6-B3 |
+| G4 | **"The resolution cites DOC-003 and DOC-009" named no evidence shape.** `ConflictResolution.evidence` must be non-empty; `DETERMINISTIC_RULE` and `DOCUMENT_SPAN` need a `DocumentCitation` span, and no module builds one for DOC-003 | D-M6-B4 |
+| G5 | **CONF-001's `when` can be false for a detected conflict** — `S8 = 1` without `S5` bands `WATCH` (`R-WATCH-001`), and a `negotiation` deal at ≥ 80% still draws the pair — and no behaviour was stated | D-M6-B5 |
+| G6 | **`version` or `policy_version`?** §A15's example carries only `version: 1`; §A7, §A18 and §A24 name `policy_version` | D-M6-B6 |
+| G7 | **M6's output had no named type.** The M6 → M7 seam was unshaped, and "resolved action set" could mean positions or action ids | D-M6-B7, with D-M6-B8 and D-M6-B9 |
+| G8 | **The status table still recorded M5 as "PLANNED — not started"**, and this plan forbids starting a milestone before the previous one is recorded complete | The status table, this revision |
+
+D-M6-B10 (reconciliation scope) and D-M6-B11 (the frozen contracts suffice) close no gap; they
+are stated so that neither can be reopened in passing. §0.5.12 freezes the policy schema,
+§0.5.13 the dependency boundary, and §0.5.14 M6's scope and acceptance criteria.
+
+---
+
+### 0.5.1 D-M6-B1 — ownership: **AUTHORED**, resolving a contradiction
+
+**Evidence.** Part B M6's *Change* list says `reconciler.py (worthiness, ordering, resolved action
+set, dissent)`, and its *Tests* name a worthiness truth table and ordering unchanged under amount
+perturbation. Strategy §8.1 gives the `ExecutiveReconciler` "executive-worthiness, ordering,
+action selection". Against that, §0.4.8's M5 OUT-OF-SCOPE and Part B M5's *Non-goals* wrote
+"§A15's worthiness and ordering (**M7**)", and Part B M3's closure block said `executive_worthy`
+"belongs to the milestone that persists an assessment". The sources that assign the work to
+**modules and tests** — Part B M6 and strategy §8.1 — put it in M6; the three that name M7 do so
+in passing, inside the scope lists of *other* milestones, and none names an M7 module or test for
+either computation.
+
+**Decision.**
+
+> **M6 owns:** conflict detection; loading and validating `conflict_policy.yaml` and
+> `action_catalogue.yaml`; policy evaluation; reconciliation — the winning action and the
+> preserved dissent; the resolved position set; **worthiness**; **deterministic ordering**, of
+> positions within one customer's result and of customers within a run; and the M6 result type,
+> which is the M6 → M7 seam (D-M6-B7).
+>
+> **M7 owns neither worthiness nor ordering.** It **persists** the value M6 computed —
+> `risk_assessments.executive_worthy` is `Reconciliation.worthiness.executive_worthy` — and lists
+> assessments in the order `order_reconciliations()` returns. It recomputes neither.
+>
+> **M6 does not:** persist anything; hash a payload; render narrative or templates; apply §A22's
+> evidence length cap; approve; route; open, commit, roll back or close a session; or call
+> `derive_and_persist()`, which is M7's `app/decisions/assessment.py` (§0.4.3).
+
+**§A21's two M6 events are not emitted by M6.** `vs01.conflict_detected` and
+`vs01.conflict_resolved` are deferred to the assessment run, on the ground M3 already used for
+its own two events (Part B M3): M6's modules are pure, and a log line is a side effect. The run
+owns the transaction and receives a `Reconciliation` carrying exactly what the two events name —
+the applied policy ids and the resolved actions — so nothing is lost by the deferral.
+
+**Corrections made by this revision, so the plan has one ownership model:** §0.4.8's M5
+OUT-OF-SCOPE; Part B M3's closure block; Part B M5's *Non-goals*; Part B M6 and M7; §0.4.3's
+sequence line for M6; §A15 and §A16; §A21. Strategy §8.1 already agrees.
+
+**Strategy §4.3 is superseded on one clause.** It says commercial impact "is used only to decide
+executive-worthiness **and ordering among equally-banded customers**". §A15 — authoritative — says
+"**Money is never a sort key**", and the strategy's own next bullet requires the ranking not to
+change when amounts are perturbed. §A15 governs; the strategy document is not edited in this
+revision (it carries a pre-existing uncommitted edit that is not this milestone's to commit).
+
+---
+
+### 0.5.2 D-M6-B2 — the action catalogue is a declarative vocabulary: **AUTHORED**
+
+**Decision.** `config/intelligence/action_catalogue.yaml` declares **what each action is** — who
+may propose it, what kind of object it contests, and which way it pulls. It declares **no
+precondition and no threshold.**
+
+```yaml
+version: 1              # file format; must be 1; read by the loader only, never propagated
+actions:                # exactly one entry per ActionId member — no more, no fewer
+  - id: <ActionId>                                  # exact, case-sensitive
+    function: SUPPORT | SALES | null               # null for NO_ACTION, and only for it
+    object: customers | deals | support_tickets    # the entity type the action contests
+    stance: ADVANCE | RESTRAIN | NEUTRAL
+```
+
+**The committed content is §0.4.1's table and §A16's *Proposed by* column, exactly:**
+
+| `id` | `function` | `object` | `stance` |
+|---|---|---|---|
+| `ESCALATE_TO_ACCOUNT_OWNER_PER_SLA` | `SUPPORT` | `customers` | `NEUTRAL` |
+| `SCHEDULE_EXECUTIVE_SPONSOR_CALL` | `SUPPORT` | `customers` | `NEUTRAL` |
+| `ASSIGN_DEDICATED_SUPPORT_OWNER` | `SUPPORT` | `customers` | `NEUTRAL` |
+| `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` | `SUPPORT` | `deals` | `RESTRAIN` |
+| `REVIEW_INVOICE_DISPUTE` | `SUPPORT` | `support_tickets` | `NEUTRAL` |
+| `ACCELERATE_DEAL_CLOSE` | `SALES` | `deals` | `ADVANCE` |
+| `NO_ACTION` | `null` | `customers` | `NEUTRAL` |
+
+**Validation — refused at load, naming the broken entry by index and id, with nothing partially
+loaded:** top-level keys exactly `{version, actions}` and `version == 1`; `actions` a non-empty
+list; each entry's keys exactly `{id, function, object, stance}`; `id` an `ActionId` value; no id
+twice; **every** `ActionId` member present (a missing one is named); `function` a `Function`
+value or `null`, and `null` **if and only if** the id is `NO_ACTION` (§A16 leaves its *Proposed
+by* empty, and §0.4.1 has neither analyst emit it); `object` one of the three entity types
+§0.4.1 fixes as contested objects — a later slice that contests another type widens the set
+deliberately; `stance` a `Stance` value; and a YAML mapping that repeats a key is refused
+(§0.5.12 row 10).
+
+**What it does not hold, and why.** §A16's three thresholds stay exactly where M5 put them —
+`ACCELERATE_PROBABILITY_THRESHOLD`, `DEDICATED_OWNER_BREACH_THRESHOLD` and
+`PAUSE_BREACH_THRESHOLD` in `app/analysts/base.py` — **neither moved nor copied.** Moving them
+edits frozen M5 source and a frozen test that imports them; copying them creates two sources for
+one number. M5 remains the sole authority for generating positions, and M6 consumes the
+positions M5 generates. Two consequences are recorded rather than left to be discovered:
+
+- `app/analysts/base.py`'s docstring says the thresholds live there "until M6 loads the
+  catalogue". **That forward reference is superseded**: in VS-01 they live there permanently.
+  The docstring is frozen M5 source and is not edited.
+- Strategy §8.3's "each entry declaring its preconditions in configuration" is **deliberately not
+  implemented in VS-01**. Preconditions are code, with each number a named constant, and the
+  catalogue declares the vocabulary. A later slice that moves them does so as its own decision.
+
+**How M6 uses the catalogue — two load-bearing uses, so no field is decorative:**
+
+1. **Policy validation.** Both `between` actions of a rule must be proposable (non-`null`
+   `function`), of **different** functions, and share **one** `object` type. That is what makes
+   a rule's scope structural (§0.5.12).
+2. **Runtime agreement.** Every position M6 reconciles must propose a proposable action whose
+   catalogue `function` and `stance` equal the position's own. A disagreement raises
+   `ReconciliationError` naming the position, so drift between M5's code and the catalogue fails
+   the run rather than reaching a brief.
+
+`object` cannot be checked against a position at runtime: frozen `Position.object_ref` is a bare
+source id with no entity type, and M6 does not parse identifiers.
+
+**Versioning.** The catalogue has a file-format `version` and **no semantic version of its own**:
+it is covered by `policy_version` (D-M6-B6), because the policy is validated against it.
+
+**Loader.** `load_action_catalogue(path)` and the cached `default_action_catalogue()` in
+`app/decisions/policy.py`, mirroring `load_risk_rules`: a missing file is named, invalid YAML is
+reported with its location, every section is checked for exactly its keys, and the result is a
+complete frozen object or an exception. Errors are `DecisionConfigError`, a subclass of M1's
+`IntelligenceConfigError` — a deployment fault, deliberately not an `IntelligenceError`, by M1's
+own convention.
+
+---
+
+### 0.5.3 D-M6-B3 — M6 test and README evolution: specified **and authorised**: **AUTHORED**
+
+The governing rule is §0.4.4's, unchanged: **extend, move or replace only the obsolete assertion,
+never weaken the surrounding test**, and never delete a test merely because M6 makes it obsolete
+— replace its assumption with a stronger M6-aware one.
+
+| # | Test / file | Exact assertion affected | Why M6 contradicts it | Authorised evolution | What stays frozen |
+|---|---|---|---|---|---|
+| **T-M6-1** | `tests/unit/test_m1_boundary.py` | `LAYER2_PACKAGES = ("app/relationships/", "app/evidence/", "app/analysts/")`, which `test_only_the_relationship_model_depends_on_the_foundation` uses to assert every importer of `app.intelligence` lives in one of them | `app/decisions/` must import `Position`, `Conflict`, `ConflictResolution`, `Evidence`, `RecordCitation`, `RiskBand`, `EntityRef` and M1's errors | **Extend the tuple with `"app/decisions/"`**, and name T-M6-1 in the test's docstring beside T-M5-1 | The scan, its four directories, its non-vacuity guard, and the rule that an importer outside the named packages fails the build |
+| **T-M6-2** | `tests/unit/test_m5_boundary.py` | `test_the_decision_layer_does_not_exist_yet` asserts `app/decisions` is absent; `test_no_module_imports_the_decision_layer`'s docstring says it "does not exist yet" | M6 creates `app/decisions/` | **Replace** the absence test with `test_the_decision_layer_exists_so_the_scan_above_is_not_moot`: the package exists and imports, and the import scan demonstrably flags a `from app.decisions import …` line. Correct the docstring's tense | `FORBIDDEN_DOWNSTREAM`, the forbidding scan and every other M5 assertion. The inventory of `app/decisions/` — exactly M6's four modules, no M7 module — is asserted in `tests/unit/test_m6_boundary.py`, where it belongs |
+| **T-M6-3** | `README.md` + `tests/unit/test_i2_readme.py::test_the_test_counts_the_readme_quotes_are_the_counts` | The per-layer counts for `pytest tests/unit` and `pytest tests/integration`, and both "`N` tests in four layers" totals | M6 adds unit and integration tests | **Update to the actually collected values**, as every milestone since M1 has | That the totals agree with each other and with the per-layer sum; the contract and e2e counts |
+| **T-M6-4** | `README.md` + `test_the_lint_counts_the_readme_quotes_are_the_counts` | "reports **69** findings", "reports **9** errors" | M6 adds source and test files | **Re-quote an observed value only if it moves** (§0.3.11 D-M4-B4) | **No finding suppressed, no test weakened or skipped to keep a number.** A new finding of M6's own is a defect to fix, never a number to re-quote |
+
+**Measured, so nothing is implied — every other assertion M6 could touch, and why it stands:**
+
+- `test_m2_boundary.py`'s `FORBIDDEN_PACKAGES` contains `app.decisions` in the **forbidding**
+  direction: M2 must not import it. Correct, and unchanged.
+- `test_m5_boundary.py::test_no_module_imports_the_decision_layer` forbids `app/analysts/` from
+  importing `app.decisions`. Correct, unchanged, and now non-vacuous.
+- `test_m5_boundary.py`'s `UPSTREAM_DIRS` omits `app/decisions/`, correctly: the decision layer is
+  **downstream** of M5 and must import it.
+- `test_m4_boundary.py` constrains `app/evidence/`, `app/persistence/`, `app/relationships/` and
+  the M3 modules only. Nothing there governs M6.
+- `test_m1_config.py` pins `risk_rules.yaml`'s path only; M6 adds no key to it.
+- `test_i2_readme.py`'s layout test checks top-level directories only.
+- `tests/integration/test_h3_migrations.py` is untouched: **M6 adds no table and no migration.**
+- The F1 and G2 whole-`app/` scans include `app/decisions/` automatically and must pass
+  **unchanged**.
+
+**Anything not in T-M6-1…T-M6-4 is not authorised.** A fifth contradiction is reported, not fixed.
+
+---
+
+### 0.5.4 D-M6-B4 — resolution evidence: structural citation by document id: **AUTHORED**
+
+**Decision.** A `ConflictResolution`'s evidence is **one `Evidence` per document the matched rule
+names in `because_documents`, ascending by document id**:
+
+```
+Evidence(kind=EvidenceKind.CANONICAL_FACT,
+         citation=RecordCitation(entity_type="documents", source_id=<document id>,
+                                 field_name="body_text"))
+```
+
+- **The document's identity is structural** — the citation's `source_id` — exactly as §A13 and
+  strategy §7.3 cite policy documents: "the rule configuration names its source document".
+- **No `Session`, no Layer 1 query, no span.** `DOCUMENT_SPAN` and `DETERMINISTIC_RULE` both
+  require a `DocumentCitation`, which requires reading the text to find a span; M6 holds no
+  session and no module builds a DOC-003 span. `CANONICAL_FACT` over a `RecordCitation` is the
+  frozen M1 shape that needs neither, and M1 validates `body_text` as a citable business field of
+  `documents` at construction.
+- **No `DerivedLink` or `LinkedDocument` is constructed, and `app.evidence` is not imported.** A
+  policy citation is not a derived link, and M4 alone builds those.
+- **Resolvability** is proved by the integration test against Layer 1 rows, as §0.4.8 criterion 14
+  proved it for positions. Quoting a span of `body_text` in a brief is rendering, which is M7's.
+
+**For CUST-007:** CONF-001's resolution cites exactly DOC-003 then DOC-009. **The dissent keeps its
+own evidence.** The overruled `ACCELERATE_DEAL_CLOSE` position is preserved whole — frozen
+`ConflictResolution.dissent` derives it from the conflict — with the three `deals` record
+citations M5 gave it. **M6 never edits, copies or rebuilds a `Position`**, so losing cannot
+discard evidence.
+
+---
+
+### 0.5.5 D-M6-B5 — policy failure: an unresolvable conflict raises: **AUTHORED**
+
+**Detection is policy-driven** (§A15): a conflict exists when one `SUPPORT` and one `SALES`
+position over the same `object_ref` propose a pair of actions some rule's `between` declares
+incompatible. Because no two rules may share a pair (§0.5.12 row 9), **every detected conflict has
+exactly one candidate rule.**
+
+> **The candidate rule matches if and only if every one of its `when` conditions holds** for the
+> customer. **A rule whose `when` fails is not a matching policy.** M6 then raises
+> `UnresolvableConflictError` naming the customer, the object, both actions, the rule id and each
+> failing condition with the value observed.
+>
+> M6 does **not**: ignore the conflict, choose a default winner, return a partial result for the
+> customer, drop the conflict, average the actions, or fabricate a rule. No `Reconciliation` is
+> returned for that customer. The assessment run inherits §A23 — its transaction rolls back and
+> **no partial assessment is durable**.
+
+**One further shape is unresolvable by construction:** more than one declared pair over one object.
+Frozen `Conflict` admits one position per function, and VS-01's policy resolves pairs; a
+three-way or cyclic conflict is VS-04's (strategy §8.2; M6 *Non-goals*). It raises the same error,
+with no rule id. The shipped catalogue cannot produce it — the only cross-function pair on one
+object type is `PAUSE`/`ACCELERATE` — so it is exercised by a fixture catalogue.
+
+**Measured:** raised for **no** customer of the demo dataset at `ACCEPTANCE_AS_OF`; the only
+conflict is CUST-007's, which is `CRITICAL` with `S8 = 3`. The failing shape exists only off the
+dataset, and is proved by fixture. **Recorded in §A29 as a known limitation:** a real snapshot
+holding that shape would abort the run until CONF-001 is extended — by design, since the
+alternative is a silent default.
+
+`UnresolvableConflictError` subclasses `ReconciliationError`, which subclasses M1's
+`IntelligenceError`: a runtime decision failure, distinguishable from a configuration fault.
+
+---
+
+### 0.5.6 D-M6-B6 — `policy_version` is the one decision-configuration version: **AUTHORED**
+
+`conflict_policy.yaml` carries two integers whose meanings **do not overlap**, which is exactly
+`risk_rules.yaml`'s convention (`version` beside `rules_version`):
+
+| Key | Meaning | Where it goes |
+|---|---|---|
+| `version` | The **file format**. Must be `1` | Read by the loader and nowhere else. Never stored, never propagated, never part of an identity |
+| `policy_version` | **The** version of the decision configuration: `conflict_policy.yaml` **and** the `action_catalogue.yaml` it is validated against. A positive integer, initially `1` | `ConflictPolicy.policy_version` → `Reconciliation.policy_version`, unchanged. It is §A7's input, §A18's `risk_briefs.policy_version` and §A24's identity term |
+
+**Bumped** whenever a change to either file can alter a detected conflict, a resolution, the
+resolved position set or the dissent — the analogue of `rules_version` for the band table. No
+other M6 version field exists: the catalogue carries only its format `version`. §A15's example is
+corrected to carry `policy_version`.
+
+---
+
+### 0.5.7 D-M6-B7 — the M6 result: **AUTHORED**
+
+All frozen, in `app/decisions/reconciler.py`, and all tuples — no list, dict or set field.
+
+```
+Worthiness                                  # M6-owned
+    band                   RiskBand
+    active_deal_count      int              S11 — any stage
+    active_project_count   int              S13
+    executive_worthy       bool             derived (property) — D-M6-B8
+
+Reconciliation                              # M6-owned — the M6 → M7 seam, one per customer
+    customer            EntityRef                          stored
+    policy_version      int                                stored
+    ordered_positions   tuple[Position, ...]               stored
+    resolutions         tuple[ConflictResolution, ...]     stored
+    worthiness          Worthiness                         stored
+    ranking_key         tuple[int, int, int, str]          stored
+    conflicts           tuple[Conflict, ...]               derived (property)
+    dissent             tuple[Position, ...]               derived (property)
+    resolved_positions  tuple[Position, ...]               derived (property)
+    policy_ids          tuple[str, ...]                    derived (property)
+```
+
+**Each field, exactly.**
+
+- **`customer`** — the customer both contexts name. `reconcile()` refuses contexts that disagree
+  on customer or band (`ReconciliationError`).
+- **`policy_version`** — D-M6-B6.
+- **`ordered_positions`** — **every** `Position` the two M5 analysts emit for this customer, each
+  exactly once and **unmodified**: M6 invokes `SupportRiskAnalyst` and `CommercialAnalyst` on the
+  contexts it is given, so positions and contexts cannot come from different customers. Prevailing,
+  uncontested and overruled positions are all here, in D-M6-B9's position order. It is §A17's
+  "positions".
+- **`resolutions`** — one `ConflictResolution` per detected conflict, ascending by `object_ref`:
+  `policy_id` is the matched rule's id (CONF-001), `rationale` the rule's, `evidence` D-M6-B4's,
+  and `prevailing` the conflict's position proposing `resolve_to`.
+- **`worthiness`** — D-M6-B8. **`ranking_key`** — D-M6-B9.
+- **`conflicts`** (derived) — `tuple(r.conflict for r in resolutions)`. Every detected conflict is
+  resolved or M6 raised, so a returned result has **no unresolved-conflict state** and conflicts
+  cannot disagree with resolutions. Each `Conflict`'s positions are in D-M6-B9's position order.
+- **`dissent`** (derived) — every position any resolution overrules, in `ordered_positions` order.
+  **Dissent is represented as the whole `Position`**, with its own evidence — the M1 frozen
+  `ConflictResolution.dissent` — never as an action id.
+- **`resolved_positions`** (derived) — `ordered_positions` minus `dissent`, in the same order.
+  **`Position` objects, not `ActionId`s**: an action id alone loses the object, and `PAUSE…`,
+  `ACCELERATE…` and `REVIEW_INVOICE_DISPUTE` are per-object. It is §A17's "resolved action set",
+  and exactly §0.4.1's arithmetic: every emitted position minus those overruled. **Every
+  non-conflicting position remains.** A losing position is "removed" from this derived view only:
+  it stays in `ordered_positions` and in its resolution's dissent, and nothing is deleted.
+- **`policy_ids`** (derived) — the ids of the rules applied, in resolution order; empty when
+  nothing conflicted. In the frozen model a policy's identity is `ConflictResolution.policy_id`
+  (the rule), and the policy document's identity is its `policy_version`; **no separate
+  policy-document id exists, and none is invented.**
+
+**Why four fields are derived.** M1's `ConflictResolution` derives `dissent` rather than storing it,
+"so there is no field a future change can leave empty". The same discipline here means
+`conflicts`, `dissent`, `resolved_positions` and `policy_ids` **cannot disagree** with the stored
+fields they come from.
+
+**Invariants** (`__post_init__`, raising M1's `ContractViolationError`): `policy_version ≥ 1`;
+`ordered_positions` is in canonical order with no two positions sharing
+`(function, object_ref, proposed_action)`; every resolution's conflict positions are members of
+`ordered_positions`; resolutions are strictly ascending by `object_ref`; `ranking_key` names this
+customer and this worthiness band.
+
+**Serialisation.** `to_payload()` composes the frozen M1 projections (`EntityRef`, `Position`,
+`Conflict`, `ConflictResolution`) with the worthiness projection, as ordered lists, so
+`canonical_json` of it is byte-stable. **It is a projection, not §A17's hashed decision payload**,
+which is M7's.
+
+**`reconcile()` is pure:** a function of `(AnalystContexts, ConflictPolicy)` with no session, no
+clock, no randomness and no write.
+
+**CUST-007 at `ACCEPTANCE_AS_OF` — the expected result, stated before the tests are written.**
+
+| Field | Value |
+|---|---|
+| `ordered_positions` | 6: `SALES ACCELERATE_DEAL_CLOSE DEAL-001`; `SUPPORT ASSIGN_DEDICATED_SUPPORT_OWNER CUST-007`; `SUPPORT ESCALATE_TO_ACCOUNT_OWNER_PER_SLA CUST-007`; `SUPPORT SCHEDULE_EXECUTIVE_SPONSOR_CALL CUST-007`; `SUPPORT PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED DEAL-001`; `SUPPORT REVIEW_INVOICE_DISPUTE TKT-079` |
+| `conflicts` | 1, over `DEAL-001`: the SALES and SUPPORT positions on it |
+| `resolutions` | CONF-001; prevailing `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED`; evidence DOC-003, DOC-009 |
+| `dissent` | the `ACCELERATE_DEAL_CLOSE` position, whole, with its three `deals` citations |
+| `resolved_positions` | §0.4.1 rows 1–5 — the five Support positions |
+| `worthiness` | `CRITICAL`, S11 = 1, S13 = 0 → **worthy** |
+| `ranking_key` | `(-3, -3, -5, "CUST-007")` |
+| `policy_version`, `policy_ids` | `1`, `("CONF-001",)` |
+
+**Public API**, exported from `app/decisions/__init__.py`: the catalogue and policy types and
+loaders (`ActionCatalogue`, `CatalogueEntry`, `ConflictPolicy`, `ConflictRule`,
+`ResolutionCondition`, `load_action_catalogue`, `default_action_catalogue`,
+`load_conflict_policy`, `default_conflict_policy`, `DecisionConfigError`); `detect_conflicts`,
+`ReconciliationError`, `UnresolvableConflictError`; and `reconcile(contexts, *, policy=None) ->
+Reconciliation`, `order_reconciliations(reconciliations) -> tuple[Reconciliation, ...]`,
+`Reconciliation`, `Worthiness`.
+
+---
+
+### 0.5.8 D-M6-B8 — worthiness: §A15's rule, verbatim: **DERIVED**
+
+> `executive_worthy = band ≥ ELEVATED and (S11 > 0 or S13 > 0)`
+
+Inputs, and nothing else: the contexts' band parsed to `RiskBand` (compared with M1's
+`RiskBand.at_least`); **S11** = the commercial `SignalSet.active_deal_count`, any stage; **S13** =
+its `active_project_count`. **Never** an amount, currency, exposure, probability, stage, S14 (a
+derived document count — §0 defect 7), a timestamp, input order, or a random value.
+
+| band | S11 > 0 | S13 > 0 | `executive_worthy` |
+|---|---|---|---|
+| `NONE` or `WATCH` | any | any | **no** |
+| `ELEVATED` or `CRITICAL` | no | no | **no** |
+| `ELEVATED` or `CRITICAL` | yes | no | **yes** |
+| `ELEVATED` or `CRITICAL` | no | yes | **yes** |
+| `ELEVATED` or `CRITICAL` | yes | yes | **yes** |
+
+All sixteen band × S11 × S13 combinations are tested individually. **Measured at
+`ACCEPTANCE_AS_OF`: exactly one worthy customer, CUST-007** (§A27.2). No `ELEVATED` customer exists
+(§0.2.1), and 16 customers have S13 > 0 but none is band ≥ `ELEVATED`, so the `ELEVATED` rows and
+the S13-only row are proved by fixture.
+
+---
+
+### 0.5.9 D-M6-B9 — ordering: two total orders, neither reading money: **AUTHORED** on §A15
+
+**(a) Positions within one result** — §0.4.1's key, `(function, object_ref, proposed_action)`
+ascending as strings, applied with **M5's own `order_positions`**, reused rather than restated. It
+is total because M6 refuses two positions sharing the whole key (`ReconciliationError`), which M5
+never emits (§0.4.1). `resolutions` are ascending by `object_ref`, unique because an object holds at
+most one conflict (D-M6-B5); a `Conflict`'s positions and the `dissent` follow the position key; a
+resolution's evidence is ascending by document id. **None of these is a priority.**
+
+**(b) Customers within a run** — §A15: **band desc → S8 desc → S4 desc → customer `source_id`
+asc.** The key is M3's frozen `ranking_key` (`app/intelligence/bands.py`), which already implements
+exactly this order; M6 **calls it** rather than restating it, so the codebase holds one definition
+of §A15's order. `order_reconciliations()` sorts ascending by `ranking_key`, refusing a customer
+that appears twice and a mix of `policy_version`s (`ReconciliationError`). It is therefore total:
+`source_id` is the last component and is unique.
+
+| Two customers X and Y first differ in | X is ordered before Y when |
+|---|---|
+| band | X's band ranks higher |
+| S8, bands equal | X's S8 is larger |
+| S4, bands and S8 equal | X's S4 is larger |
+| none of the above | X's `source_id` is lexicographically smaller |
+
+**Never an ordering input:** amount, currency, exposure, probability, stage, S11, S13, S14,
+worthiness, rule ids, timestamps, database row order, input order, dict or set iteration,
+randomness.
+
+**Measured at `ACCEPTANCE_AS_OF`:** CUST-007 (`CRITICAL`, 3, 5) first; then CUST-025 and CUST-036
+(`WATCH`, 1, 1) — equal in every term but `source_id`, which splits them; then CUST-009 (`NONE`,
+0, 2); then the thirteen `NONE` customers with S4 = 1, then the thirty-three with S4 = 0, each group
+ascending by id. The dataset exercises the band, S4 and `source_id` steps; the S8 step is proved by
+fixture.
+
+**Amount invariance** (§A25 test 5): multiplying every amount by 1000 changes **nothing** M6
+returns — no position, conflict, resolution, worthiness or order. Asserted on hand-built contexts
+that differ only in amount, and on the database, by the same `UPDATE deals SET amount = amount *
+1000` M3's test uses.
+
+---
+
+### 0.5.10 D-M6-B10 — scope: one object identity: **DERIVED**
+
+M6 compares positions **only** when their `Position.object_ref` values are equal — the frozen
+field, compared as strings. It never compares across objects, never within one function (three
+Support positions share `CUST-007` and none is compared with another), and never across customers:
+`reconcile()` takes one customer's contexts. Only **declared** pairs conflict: two functions
+proposing different actions on one object that no rule names do not conflict, and both survive.
+
+**A customer whose two functions share no object has no conflict, no dissent and no resolution**,
+and its `resolved_positions` equal its `ordered_positions`. Measured: of the ten customers with any
+position at `ACCEPTANCE_AS_OF`, nine are in this case — including CUST-019, CUST-042 and CUST-043,
+the ticketless customers with a qualifying deal.
+
+---
+
+### 0.5.11 D-M6-B11 — the frozen contracts suffice: **VERIFIED**, no mismatch
+
+Checked against `6158f81` before any code was written:
+
+| M6 needs | Frozen surface | Sufficient? |
+|---|---|---|
+| A detected pair | `Conflict` — ≥ 2 positions, one per function, one object, ≥ 2 distinct actions | yes |
+| A resolution that cannot lose the dissent | `ConflictResolution` — `policy_id`, `prevailing ∈ conflict`, non-empty `rationale` and `evidence`; `dissent` derived | yes |
+| Positions | `Position` — M6 constructs **none**; it reconciles M5's | yes |
+| Customer identity | `EntityRef` | yes |
+| Band comparisons | `RiskBand.at_least`, `RiskBand.rank` | yes |
+| Document evidence | `Evidence(CANONICAL_FACT, RecordCitation("documents", id, "body_text"))` | yes |
+| Catalogue vocabulary | `ActionId`, `Function`, `Stance` | yes |
+| §A15's order | M3's `ranking_key` and `BandAssignment` | yes |
+| Position order and generation | M5's `order_positions`, `SupportRiskAnalyst`, `CommercialAnalyst`, `AnalystContexts` | yes |
+
+**No frozen type is modified.** `Conflict`, `ConflictResolution`, `Position`, `EntityRef`,
+`RiskBand`, the citation types, the Layer 1 models and M1–M5 behaviour are untouched; M6 builds M1
+types only through their validating constructors.
+
+---
+
+### 0.5.12 The conflict policy schema — frozen
+
+```yaml
+version: 1              # file format; must be 1 — D-M6-B6
+policy_version: 1       # THE decision-configuration version — D-M6-B6
+conflicts:
+  - id: CONF-001
+    between: [ACCELERATE_DEAL_CLOSE, PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED]
+    resolve_to: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED
+    when:
+      support_band_at_least: ELEVATED
+      open_sla_breach_high_count_at_least: 1
+    because_documents: [DOC-003, DOC-009]
+    rationale: >
+      An active support-policy escalation outranks deal acceleration on the same
+      account, and the customer has explicitly linked the deal decision to
+      resolution of the open tickets.
+```
+
+**Refused at load, each naming the file, the rule's index and its id:**
+
+| # | Rule |
+|---|---|
+| 1 | Top-level keys exactly `{version, policy_version, conflicts}`; `version == 1`; `policy_version` an integer ≥ 1 (a boolean is not one); `conflicts` a non-empty list |
+| 2 | Each rule's keys exactly `{id, between, resolve_to, when, because_documents, rationale}` — all required, none unknown |
+| 3 | `id` a non-empty string, unique across rules |
+| 4 | `between` a list of **exactly two distinct** `ActionId` names, each in the catalogue, **neither `NO_ACTION`** nor any other non-proposable action, of **different** functions, sharing **one** catalogue `object` type |
+| 5 | `resolve_to` one of the two `between` actions |
+| 6 | `when` a **non-empty** mapping whose keys are drawn from the whitelist `{support_band_at_least, open_sla_breach_high_count_at_least}`; `support_band_at_least` an exact `RiskBand` name; `open_sla_breach_high_count_at_least` an integer ≥ 0 (not a boolean) |
+| 7 | `because_documents` a non-empty list of document ids — non-empty strings with no surrounding whitespace — none repeated; held ascending |
+| 8 | `rationale` a non-empty string, held stripped |
+| 9 | **No two rules share an unordered `between` pair**, whatever their `when` — two candidate rules for one conflict are ambiguous by construction |
+| 10 | **A YAML mapping that repeats a key is refused** — an authored strengthening over `load_risk_rules`: `yaml.safe_load` keeps the last duplicate silently, so a repeated `resolve_to` would flip the winner unseen, and that is exactly §A25 test 3's lever |
+| 11 | Nothing partial: the loader returns a complete `ConflictPolicy` or raises |
+
+**`scope` is removed** from §A15's example. D-M6-B10 fixes every rule's scope to one object
+identity, and the object's type is the catalogue's, which row 4 requires both actions to share —
+so CONF-001 is a same-deal rule by construction. A key with one legal value configures nothing.
+
+**`when` evaluation.** Every condition must hold: `support_band_at_least` against the contexts'
+band by `RiskBand.at_least`, `open_sla_breach_high_count_at_least` against Support's S8. A failing
+condition makes the rule non-matching (D-M6-B5). `when` reads nothing else — in particular no
+commercial value.
+
+**Loader.** `load_conflict_policy(path, *, catalogue)` and the cached `default_conflict_policy()`,
+beside the catalogue loader in `app/decisions/policy.py`. `ConflictPolicy` holds the catalogue it
+was validated against, so a policy and a catalogue cannot be mismatched at the call site.
+
+---
+
+### 0.5.13 The M6 dependency boundary: **AUTHORED**
+
+```
+app.intelligence (M1, M3)  ←  app.relationships (M2)  ←  app.evidence (M4)  ←  app.analysts (M5)
+         ↑                                                                          ↑
+         └──────────────────────────────  app.decisions (M6)  ──────────────────────┘
+```
+
+| Direction | Status | Enforced by |
+|---|---|---|
+| `app.decisions` → `app.intelligence` (M1 contract and errors) | **authorised** | T-M6-1 |
+| `app.decisions` → `app.intelligence.bands` (M3 `ranking_key`, `BandAssignment`) | **authorised**, submodule-explicit | §0.2.3's import-initialiser rule |
+| `app.decisions` → `app.analysts` (M5 contexts, analysts, `order_positions`) | **authorised** | `test_m6_boundary.py` |
+| `app.decisions` → `app.evidence`, `app.relationships` | **forbidden** — M6 cites by id (D-M6-B4) and resolves no membership | `test_m6_boundary.py` |
+| `app.decisions` → `app.persistence`, `app.core.database`, `sqlalchemy`, `Session` | **forbidden** — M6 is pure | `test_m6_boundary.py` |
+| `app.decisions` → any M7 module (`assessment`, `payload`, `brief`, `templates`, `approval`) | **forbidden**, and none may exist | `test_m6_boundary.py` |
+| M1, M2, M3, M4, M5, `app/persistence` → `app.decisions` | **forbidden** | `test_m2_boundary.py` and `test_m5_boundary.py` already; `test_m6_boundary.py` adds the rest |
+
+And, mirroring the M1 and M5 scans over `app/decisions/`: no clock and no random source; no
+logging or printing (D-M6-B1); no `FORBIDDEN_WRITES` call; no call to `derive_and_persist`,
+`derive_links` or `persist_links`; no construction of `DerivedLink` or `LinkedDocument`; no
+`TOPIC`, `DERIVED_TOPIC_MATCH` or `LinkBasis`; no model, vector or outbound infrastructure; and
+**no read of a monetary or deal attribute** — `.amount`, `.currency`, `.exposure_by_currency`,
+`.probability`, `.stage`, `.active_deals`, `.contract_document_ids`. Code is scanned with
+docstrings stripped, by M4's `_code()` technique, so a module may explain what it does not do.
+
+---
+
+### 0.5.14 M6 scope and acceptance
+
+#### M6 IN-SCOPE
+
+1. `app/decisions/__init__.py`, `policy.py`, `conflicts.py`, `reconciler.py` — exactly four modules.
+2. `config/intelligence/action_catalogue.yaml` (D-M6-B2) and
+   `config/intelligence/conflict_policy.yaml` (§0.5.12).
+3. The M6 result, worthiness and both orders (D-M6-B7…B9).
+4. The boundary assertions of §0.5.13 and the test/README evolution of D-M6-B3.
+
+#### M6 OUT-OF-SCOPE
+
+Persistence of any kind, any table, model, repository or migration; payload hashing;
+`app/decisions/assessment.py`, `payload.py`, `brief.py`, `templates/`, `approval.py` (**M7/M8**);
+narrative; §A22's cap; routes and approval (**M8**); the production call to `derive_and_persist`
+(**M7**, §0.4.3); §A21's log events (deferred to the run, D-M6-B1); moving or copying §A16's
+thresholds (D-M6-B2); more than two functions, three-way or cyclic conflicts (**VS-04**); any
+model; any change to M1–M5, Layer 1 or `data/demo/`; any test evolution beyond T-M6-1…T-M6-4.
+
+#### M6 acceptance criteria — expected outcomes, stated before the tests are written
+
+Binary, at `ACCEPTANCE_AS_OF = 2026-09-18` over the clean full-dataset path unless a row says
+otherwise.
+
+| # | Criterion | Expected outcome |
+|---|---|---|
+| 1 | **Conflict detection** | CUST-007 yields **exactly one** conflict, over `DEAL-001`, between the SALES `ACCELERATE_DEAL_CLOSE` and SUPPORT `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` positions |
+| 2 | **Corpus** | Across all 50 customers exactly **one** conflict exists and **no** customer raises |
+| 3 | **Winner** | CONF-001 applies; `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` prevails; `policy_ids == ("CONF-001",)` |
+| 4 | **Policy liveness** | With `resolve_to` flipped, `ACCELERATE_DEAL_CLOSE` prevails and `PAUSE…` is the dissent |
+| 5 | **Resolution evidence** | Exactly two `CANONICAL_FACT` `RecordCitation`s, `documents`/DOC-003 then `documents`/DOC-009, field `body_text`; each resolves to a Layer 1 row |
+| 6 | **Dissent** | The `ACCELERATE_DEAL_CLOSE` position is preserved **whole**, equal to the position M5 emitted, with its own three citations |
+| 7 | **Resolved set** | `resolved_positions` is §0.4.1 rows 1–5 as `Position`s; `ordered_positions` is all six; `dissent` is row 6 |
+| 8 | **No shared object** | A customer with no deal, and each ticketless customer with a qualifying deal, yields no conflict, no dissent and no resolution, and `resolved_positions == ordered_positions` |
+| 9 | **Scope** | Positions on different objects, and positions of one function, are never compared; an undeclared cross-function pair on one object is not a conflict |
+| 10 | **Unresolvable** | A detected conflict whose rule's `when` fails raises `UnresolvableConflictError` naming the rule and each failing condition; so does a multi-way conflict; nothing is returned |
+| 11 | **Policy validation** | Every refusal of §0.5.12 is proved, each naming the broken rule; a flipped policy and the committed one differ only in the winner |
+| 12 | **Catalogue validation** | Every refusal of D-M6-B2 is proved; the committed catalogue equals D-M6-B2's table; a catalogue disagreeing with a position's function or stance fails the run |
+| 13 | **`policy_version`** | Loaded from the policy and carried unchanged by every `Reconciliation`; `version` is carried nowhere |
+| 14 | **Worthiness** | All sixteen truth-table combinations; exactly CUST-007 worthy on the corpus |
+| 15 | **Ordering** | Each step of D-M6-B9's table decides on a fixture; the measured corpus order holds; duplicate customers and mixed policy versions are refused |
+| 16 | **Amount invariance** | Multiplying every amount by 1000 leaves every `Reconciliation` **equal** and the order unchanged — on fixtures and on the database |
+| 17 | **Determinism** | Repeated runs, permuted positions and permuted customers give equal results and byte-identical `canonical_json(to_payload())` |
+| 18 | **Immutability** | Every M6 type is frozen and holds tuples only |
+| 19 | **Boundary** | §0.5.13, every row, each scan with a companion proving it would catch a reintroduction |
+| 20 | **Frozen M1–M5** | `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970` (structural proof by `git diff`); every M1–M5 test passes, changed only by T-M6-1 and T-M6-2; the Layer 1 fingerprint still `1d891b0b…` |
+| 21 | **Regression** | Full suite green, `app/` coverage **100%**, no new ruff or mypy finding, secret scan **0**, **one** migration head and no new migration, README counts per T-M6-3 |
+
+**The tooling gate is unchanged:** M6 does not close until `pytest`, `ruff` and `mypy` have
+actually been **run** and their results reported. A measured value different from this section's
+is **reported, not accommodated** (§0.3.8).
 
 ---
 
@@ -2712,14 +3321,14 @@ reads are derived by the assessment run, which §0.4.3 assigns to **M7**.
 **Detection.** Two positions conflict when they propose actions declared incompatible in
 `config/intelligence/conflict_policy.yaml` over the same object identity (here `DEAL-001`).
 
-**Resolution.** A versioned policy entry, for example:
+**Resolution.** A versioned policy entry — the committed one, in the schema §0.5.12 freezes:
 
 ```yaml
 version: 1
+policy_version: 1
 conflicts:
   - id: CONF-001
     between: [ACCELERATE_DEAL_CLOSE, PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED]
-    scope: same_deal
     resolve_to: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED
     when:
       support_band_at_least: ELEVATED
@@ -2739,6 +3348,15 @@ did not prevail.
 gate worthiness.
 
 **Ordering.** band desc → `S8` desc → `S4` desc → `source_id` asc. **Money is never a sort key.**
+
+**Amended 2026-09-24 by §0.5, which is authoritative where this section is coarser.** The example
+above was corrected in two places: it gained **`policy_version`**, the one decision-configuration
+version (§0.5.6 D-M6-B6; `version` is the file format), and lost **`scope: same_deal`**, which
+D-M6-B10 makes structural — both `between` actions must contest one catalogue object type
+(§0.5.12). **M6 owns detection, reconciliation, worthiness and both orders** (§0.5.1 D-M6-B1);
+M7 persists them. A detected conflict whose rule's `when` fails **raises** rather than resolving
+(§0.5.5 D-M6-B5). The resolution cites its documents by id (§0.5.4 D-M6-B4), and the M6 result
+type is §0.5.7 D-M6-B7.
 
 ### A16. Action catalogue (versioned config)
 
@@ -2775,6 +3393,12 @@ evaluates both original rules **literally**, with no proxy and no divergence for
 
 **`NO_ACTION` is emitted by neither analyst** — its *Proposed by* column is empty. A function with
 no satisfied entry emits no position at all (§0.4.1).
+
+**What "versioned config" means, settled 2026-09-24 by §0.5.2 D-M6-B2.**
+`config/intelligence/action_catalogue.yaml` holds the `Proposed by`, `object_ref` and `Stance`
+columns — the vocabulary — and **not** the *Preconditions* column. The preconditions, and the three
+thresholds in them, stay M5 code with each number a named constant in `app/analysts/base.py`;
+they are neither moved nor copied. The catalogue is versioned by `policy_version` (§0.5.6).
 
 ### A17. Brief — payload and view, separated
 
@@ -2851,6 +3475,10 @@ path) · `vs01.signals_computed` · `vs01.band_assigned` · `vs01.links_derived`
 `vs01.conflict_detected` (policy id) · `vs01.conflict_resolved` (winning action) ·
 `vs01.brief_generated` (payload hash, citation count) · `vs01.decision_recorded`. No document
 text, customer email or monetary value in any log line.
+
+`vs01.conflict_detected` and `vs01.conflict_resolved` are emitted by the assessment run (M7) from
+the `Reconciliation` M6 returns, not by M6, whose modules are pure (§0.5.1 D-M6-B1) — the same
+deferral M3 made for its two events.
 
 ### A22. Security
 
@@ -2981,7 +3609,10 @@ cross-currency total;
 business days have no holiday calendar; **a customer with two or more active `negotiation` deals
 contests only the lexicographically smallest, because `SupportContext` carries a single
 `contested_deal` (§0.4.6) — no such customer exists in the demo dataset, so the tiebreak is
-exercised only by a fixture**; the band is a policy artefact, not a probability;
+exercised only by a fixture**; **a detected conflict whose CONF-001 `when` fails — `S8 ≥ 1`
+without `S5` bands `WATCH`, yet still draws the pause/accelerate pair on a `negotiation` deal at
+≥ 80% — raises and aborts the run rather than resolving by default (§0.5.5); no such customer
+exists in the demo dataset**; the band is a policy artefact, not a probability;
 approver identity is asserted, not authenticated; the dataset is synthetic, 233 rows;
 `employees.organization_id` remains NULL; **document stewardship is not modelled** —
 `documents.owner_source_id` exists in Layer 1 but VS-01 exposes no `document_owned_by` edge
@@ -3171,7 +3802,9 @@ S14 is empty: the composition that fills it is M4's and the production call is M
 (§A10, §0.3.6 — decided after this block was written). `executive_worthy` is not implemented
 here — §A15 defines it, but M3's acceptance does not name it, so it belongs to the milestone
 that persists an
-assessment. The §A21 events `vs01.signals_computed` and `vs01.band_assigned` are likewise
+assessment. *(Corrected 2026-09-24 by §0.5.1 D-M6-B1: **M6 computes** worthiness and M7
+persists the value; "the milestone that persists" named the wrong owner for the computation.)*
+The §A21 events `vs01.signals_computed` and `vs01.band_assigned` are likewise
 deferred: `app.core.logging` is outside the import surface M1's boundary test allows
 `app/intelligence/`, and M3's *Change* list names no logging.
 
@@ -3384,7 +4017,8 @@ impossible to express, not merely discouraged; `app/intelligence/`, `app/relatio
 **Non-goals.** Reconciliation, conflict detection and the conflict policy (M6); **any
 persistence, table, migration or configuration key** — including the production call to
 `derive_and_persist`, which §0.4.3 assigns to M7; `executive_worthy` and §A15's worthiness and
-ordering (M7); any model; any change to M1, M2, M3, M4 or Layer 1; any test evolution beyond
+ordering (**M6** computes both and M7 persists them — corrected 2026-09-24 by §0.5.1 D-M6-B1;
+this line first read "(M7)"); any model; any change to M1, M2, M3, M4 or Layer 1; any test evolution beyond
 T-M5-1…T-M5-4 (§0.4.4).
 
 ---
@@ -3396,24 +4030,46 @@ resolve it by a stated policy, and keep the losing argument.
 
 **Before.** Two positions exist side by side with nothing deciding between them.
 
-**Change.** `app/decisions/conflicts.py` (detection over proposed actions and object identity),
-`app/decisions/policy.py` (load and evaluate `conflict_policy.yaml`),
-`app/decisions/reconciler.py` (worthiness, ordering, resolved action set, dissent),
-`config/intelligence/conflict_policy.yaml`, `config/intelligence/action_catalogue.yaml`.
+**Change.** `app/decisions/__init__.py`; `app/decisions/policy.py` (load and validate
+`action_catalogue.yaml` and `conflict_policy.yaml`, and evaluate a rule's `when`);
+`app/decisions/conflicts.py` (detection over proposed actions and object identity, and the
+runtime catalogue agreement check); `app/decisions/reconciler.py` (policy matching, the winning
+action, dissent, the resolved position set, worthiness, both orders, and the `Reconciliation`
+result); `config/intelligence/action_catalogue.yaml`; `config/intelligence/conflict_policy.yaml`.
+**Exactly those four modules and two files** — no M7 module, no persistence, no migration.
 
-**Tests.** Conflict detected for CUST-007 over DEAL-001; `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED`
-wins; the resolution cites DOC-003 and DOC-009; **dissent is preserved with its own citations**;
-policy liveness — flipping `resolve_to` flips the outcome; a customer with no deal produces no
-conflict and no dissent; worthiness truth table; ordering unchanged when amounts are perturbed;
-an unresolvable conflict (no matching policy entry) raises rather than silently picking one.
+**Decisions this milestone is built on.** **§0.5 closes the eight gaps** a readiness audit found
+against `6158f81`, and an implementer must not settle any of them again in passing: ownership
+(D-M6-B1 — M6 owns worthiness and ordering, M7 persists them); the catalogue as a declarative
+vocabulary with M5's thresholds left where they are (D-M6-B2); the authorised test and README
+evolution T-M6-1…T-M6-4 (D-M6-B3); resolution evidence cited by document id (D-M6-B4); an
+unresolvable conflict raises (D-M6-B5); `policy_version` (D-M6-B6); the `Reconciliation` result
+(D-M6-B7); worthiness (D-M6-B8); both orders (D-M6-B9); one-object scope (D-M6-B10); and the
+frozen contracts, verified sufficient (D-M6-B11). §0.5.12 freezes the policy schema, §0.5.13 the
+dependency boundary, §0.5.14 scope and the twenty-one acceptance criteria. **M1–M5 stay frozen.**
+
+**Tests.** The twenty-one criteria of §0.5.14. In particular: conflict detected for CUST-007 over
+DEAL-001 and exactly one across the corpus; `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED` wins under
+CONF-001; the resolution cites DOC-003 and DOC-009; **dissent is preserved with its own
+citations**; policy liveness — flipping `resolve_to` flips the outcome; a customer with no shared
+object produces no conflict and no dissent; worthiness truth table; ordering truth table, and
+ordering unchanged when amounts are perturbed; an unresolvable conflict — its rule's `when` fails
+— raises rather than silently picking one; every policy and catalogue refusal names what it
+refuses; and the §0.5.13 boundary, each scan with a companion.
 
 **After.** The system performs executive reconciliation, deterministically and explainably. This
 is the milestone that makes the slice a proof of the AI CEO concept rather than a report.
 
-**Acceptance.** For CUST-007 the conflict, the winning action, the named policy id and the
-recorded dissent are all present and correct.
+**Acceptance.** §0.5.14's twenty-one criteria. For CUST-007 the conflict, the winning action, the
+named policy id and the recorded dissent are all present and correct; its `Reconciliation`
+matches §0.5.7's table; `app/intelligence/`, `app/relationships/`, `app/evidence/` and
+`app/persistence/` are byte-identical to `65eb462` and `app/analysts/` to `d48c970`.
 
-**Non-goals.** More than two functions (VS-04); model-generated rationale.
+**Non-goals.** More than two functions, three-way or cyclic conflicts (VS-04); model-generated
+rationale; any persistence, payload hash, narrative, route or approval (M7, M8); the production
+call to `derive_and_persist` (M7); §A21's log events (the run's, §0.5.1); moving or copying
+§A16's thresholds (§0.5.2); any change to M1–M5 or Layer 1; any test evolution beyond
+T-M6-1…T-M6-4.
 
 ---
 
@@ -3431,7 +4087,11 @@ inside the caller's transaction), `app/decisions/payload.py` (the hashed decisio
 `risk_assessments`, `risk_positions` and `risk_briefs`, their repositories, and the **second
 additive migration**. `risk_positions` takes **one row per `Position`**, so several rows per
 function per assessment are normal (§0.4.1) — the table already carries no unique constraint
-(§A18).
+(§A18). **M7 consumes M6's `Reconciliation` (§0.5.7) and computes neither worthiness nor
+ordering**: `risk_assessments.executive_worthy` is `Reconciliation.worthiness.executive_worthy`,
+`risk_briefs.policy_version` is `Reconciliation.policy_version`, and assessments are listed in
+`order_reconciliations()` order (§0.5.1). The run also emits §A21's `vs01.conflict_detected` and
+`vs01.conflict_resolved` from that result.
 
 **Tests.** Payload hash excludes timestamps and `template_version` — changing a template does
 **not** change the hash, changing a fact **does**; hash identical across two processes;
@@ -3446,7 +4106,8 @@ brief at `ACCEPTANCE_AS_OF`.
 **Acceptance.** The CUST-007 brief matches the golden file byte-for-byte and contains every item
 of §A27.3 and §A27.5.
 
-**Non-goals.** Approval; API; UI.
+**Non-goals.** Approval; API; UI; computing worthiness or ordering, or re-deciding any conflict
+(M6, §0.5.1).
 
 ---
 
