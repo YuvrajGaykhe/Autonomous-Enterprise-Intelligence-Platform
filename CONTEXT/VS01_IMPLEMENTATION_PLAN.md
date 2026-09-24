@@ -7,9 +7,12 @@ v2.5 2026-09-21, M4 boundary clarification (§0.3.11) ·
 v2.6 2026-09-22, M5 re-specification — six blockers closed (§0.4) ·
 v2.7 2026-09-22, M5 second-pass review — three §0.4 defects closed (§0.4.9) ·
 v2.8 2026-09-24, M5 recorded complete; M6 specification — eight gaps closed (§0.5) ·
-v2.9 2026-09-24, M6 closure**
+v2.9 2026-09-24, M6 closure ·
+v2.10 2026-09-24, M7 specification — twelve directed decisions, and four open items resolved
+(§0.6) ·
+v2.11 2026-09-25, M7 material items MP1–MP6 resolved with normative wording (§0.6.13)**
 
-**Status as of 2026-09-24 — per milestone, not per document:**
+**Status as of 2026-09-25 — per milestone, not per document:**
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -20,7 +23,8 @@ v2.9 2026-09-24, M6 closure**
 | **M4** — evidence and citations | **COMPLETE** | `app/evidence/`, `app/persistence/models/document_customer_link.py`, `app/persistence/repositories/document_links.py`, migration `c4a1e97d5b02` chained after `8bfd73b6af60` (one head); `tests/unit/test_m4_{linker,signals,boundary}.py` and `tests/integration/test_m4_{evidence,migration}.py`; commit `65eb462`, specification `42f9eeb`, correction `0b017e2`. D-1…D-6 (§0.3), the four gate blockers (§0.3.10) and the three boundary contradictions (§0.3.11) all closed; T1–T5 (§0.3.9) performed. `with_contract_documents` is defined, exported and proved, and **called by nothing in M4** |
 | **M5** — analysts and positions | **COMPLETE** | `app/analysts/` — `context.py` (the one factory, and the only module permitted a `Session`), `base.py`, `support_risk.py`, `commercial.py`; `tests/unit/test_m5_{analysts,context,boundary}.py`, `tests/unit/m5_support.py` and `tests/integration/test_m5_contexts.py`; specification `6a8d413` (§0.4, nine decisions D-M5-B1…B9), implementation `d48c970`, and `6158f81`, which closed §0.4.8 criterion 15's first clause (a two-currency context, CUST-042) that `d48c970` had left unasserted — **all sixteen criteria are now asserted**. Measured at `6158f81`: **5163** tests (unit 4166, contract 185, integration 732, e2e 80), `app/` coverage **100%** (5937 statements), ruff 69, mypy 9, secret scan 0, **one** migration head `c4a1e97d5b02` and **no** new migration. Only T-M5-1 and T-M5-2 were needed; T-M5-3/T-M5-4 authorised a re-quote that no count required. `app/intelligence/`, `app/relationships/`, `app/evidence/` and `app/persistence/` byte-identical to `65eb462` |
 | **M6** — conflict detection and reconciliation | **COMPLETE** | `app/decisions/` — `policy.py`, `conflicts.py`, `reconciler.py` and the initialiser, exactly; `config/intelligence/{action_catalogue,conflict_policy}.yaml`; `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py`, `tests/unit/m6_support.py` and `tests/integration/test_m6_reconciliation.py`; specification `1d1ee59` (§0.5, eleven decisions D-M6-B1…B11), implementation `fd3a7e0`. All twenty-one §0.5.14 criteria asserted; only T-M6-1…T-M6-3 were needed. Measured at `fd3a7e0`: **5533** tests (unit 4518, contract 185, integration 750, e2e 80), 0 skipped, `app/` coverage **100%** (6347 statements), ruff 69, mypy 9, secret scan 0 over 292 files, **one** migration head `c4a1e97d5b02` and **no** new migration. `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`. Closure notes: Part B M6 |
-| **M7–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. §0.4.3 records one **forward** decision M7 must honour: the assessment run owns the production call to `derive_and_persist()`. §0.5.1 records another: M7 **persists** M6's worthiness and ordering and computes neither |
+| **M7** — brief assembly, hashing and persistence | **SPECIFIED — not started** | §0.6, recorded against `6919fe5`: twelve directed decisions, D-M7-B1…B12, and §0.6.14's four open items, all RESOLVED on 2026-09-24. §0.6.13's six material items, MP1–MP6, were **RESOLVED on 2026-09-25**, with normative wording in §0.6.13.1–§0.6.13.6. **No specification item gates implementation any longer; it begins only on the owner's instruction.** Nothing is implemented: no M7 module, table, migration or test exists. The forward decisions of §0.4.3 (the run owns the production `derive_and_persist()` call) and §0.5.1 (M7 persists M6's worthiness and ordering and computes neither) stand |
+| **M8–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for either |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -479,7 +483,9 @@ nothing". Nothing said what happens when the snapshot or the linker changes.
    `(customer_id, as_of, source_system, layer1_fingerprint, rules_version)` — **the identity
    inputs that affect the output are in the key**, so a changed snapshot yields a *new* row
    rather than overwriting the old conclusion. §A27.8 states the same behaviour in words:
-   "changing the Layer 1 snapshot produces a new assessment."
+   "changing the Layer 1 snapshot produces a new assessment." *(This is §A18's key as it stood
+   then. On 2026-09-24, §0.6.6 D-M7-B6 added `linker_version` to it, on this same principle,
+   because S14 inside `signals` changes with the linker.)*
 3. §0 defect 9 (FROZEN): links are stamped with `linker_version` + `layer1_fingerprint`
    precisely so that a link derived under a superseded snapshot or linker is identifiable
    rather than silently stale.
@@ -804,7 +810,7 @@ what was open, and when, survives. **Rows 9, 10 and 11 remain genuinely open.**
 | ~~2~~ | NULL `title` semantics (NULL `body_text` is already specified by §A23) | **CLOSED** — §0.3.10.4, citable text |
 | ~~3~~ | Which occurrence yields the span when a token or name appears more than once | **CLOSED** — §0.3.10.4, first occurrence |
 | ~~4~~ | Which `EvidenceKind` a link's evidence carries | **CLOSED** — §0.3.10.1, `DERIVED_RELATIONSHIP` |
-| ~~5~~ | §A22's evidence length cap | **REASSIGNED** — §0.3.10.5 proves it is a rendering control; its value is deferred to **M7**, and it does not constrain M4 |
+| ~~5~~ | §A22's evidence length cap | **REASSIGNED** — §0.3.10.5 proves it is a rendering control; its value is deferred to **M7**, and it does not constrain M4. **Set 2026-09-24 by §0.6.10: `MAX_QUOTED_SPAN_CHARS = 500`** |
 | ~~6~~ | The link repository's module name and session/transaction ownership | **CLOSED** — §0.3.10.3 |
 | ~~7~~ | `documents_for()`'s exact signature and return type | **CLOSED** — §0.3.10.2 |
 | ~~8~~ | `source_system` column; column types, nullability, FK `ondelete`, indexes | **CLOSED** — §0.3.10.3 |
@@ -1139,7 +1145,9 @@ document prose, so a cap has nothing to apply to at the storage or derivation la
 **Conclusion: the cap constrains rendering, and belongs to the milestone that renders** — M7,
 whose *Change* names `app/decisions/brief.py` (narrative rendering) and
 `app/decisions/templates/`. **The cap's value stays deferred to M7**; this section assigns
-ownership, it does not invent a number. It does not block M4: the only text M4's
+ownership, it does not invent a number. *(Set 2026-09-24 by §0.6.10 D-M7-B10, a directed
+decision: `MAX_QUOTED_SPAN_CHARS = 500` characters of resolved span text, escaped with
+`json.dumps(text, ensure_ascii=False)`, with a fixed truncation marker.)* It does not block M4: the only text M4's
 `citations.py` returns is the span of a matched token, whose length is bounded by the match
 itself. §0.3.7 #5 is amended accordingly.
 
@@ -1387,7 +1395,11 @@ Support entries onto one action, and no carrier held the rest.
    function states overall.**
 4. §A18's `risk_positions` is `assessment_id` FK, `function`, `stance`, `proposed_action`,
    `rationale`, `citations` — **with no unique constraint**. Several rows per function per
-   assessment are structurally permitted, and always were.
+   assessment are structurally permitted, and always were. *(This was §A18's list as it stood.
+   On 2026-09-24, §0.6.5 added `ordinal`, `object_ref` and an identity key over
+   `(assessment_id, function, object_ref, proposed_action)`. That key bounds identical positions
+   only, so several rows per function per assessment are still permitted, and this evidence
+   still holds.)*
 5. §A16's own closing sentence — "CUST-007 triggers all six non-`NO_ACTION` entries, **and the
    last two conflict**" — is satisfied exactly and only by six positions of which two share an
    object.
@@ -1615,23 +1627,32 @@ hand M5 an **empty S14 that is indistinguishable from a customer with no contrac
 > ```
 >   caller (M8 route, or M9's acceptance script) opens a Session and a transaction
 >         ↓
->   resolve_pinned_scope(session, …)                       M1   — fails closed on a fingerprint mismatch (§A27.1b)
+>   resolve_scope(session, …, expected_fingerprint=…)       M1   — pinned only when a fingerprint is supplied;
+>                                                                 fails closed on a mismatch (§A27.1b)
 >         ↓
 >   derive_and_persist(session, scope, config=…)           M4   — ONCE per run, per scope, before any customer is visited
 >         ↓
 >   for each customer in scope:
->       compute_signals(session, scope, customer, …)       M3
->       assign_band(signals, rules, floor=…)               M3
->       build_contexts(session, scope, customer, …)        M5   — reads documents_for(), calls with_contract_documents()
->       SupportRiskAnalyst / CommercialAnalyst             M5   — tuple[Position, …]
+>       build_contexts(session, scope, customer, …)        M5   — computes signals and band (M3), reads documents_for(),
+>                                                                 calls with_contract_documents()
+>       reconcile(contexts, policy=…)                      M6   — invokes both analysts; pure; one Reconciliation
 >         ↓
->   conflicts, policy, reconciliation,                     M6   — pure; one Reconciliation per customer,
->   worthiness, ordering                                         then order_reconciliations() (§0.5)
+>   order_reconciliations(…)                               M6
 >         ↓
->   payload, hash, persistence, narrative                  M7
+>   assessment, positions, payload, hash, citations,       M7   — §0.6.3, in that order per customer
+>   narrative, brief, then events
 >         ↓
 >   caller commits
 > ```
+>
+> *Corrected 2026-09-24 by §0.6.3 D-M7-B3.* As first written, this diagram had the run call
+> `resolve_pinned_scope`, `compute_signals`, `assign_band` and both analysts itself. The first
+> contradicted §A25 tests 4 and 13: a pinned run fails closed on the very snapshot change those
+> tests make. The rest duplicated work that `build_contexts` (§0.4.7 step 1) and `reconcile`
+> (§0.5.7) already perform. The run now pins only when given a fingerprint, and calls neither M3
+> nor an analyst itself, except for the one read §0.6.4 permits. The bullets below — session,
+> transaction, customer scope, idempotency and failure — are unchanged, and §0.6.3 is the
+> authoritative sequence.
 >
 > - **Session ownership.** The caller opens and owns it, matching every Layer 1 repository. No
 >   module under `app/evidence/`, `app/analysts/` or `app/decisions/` opens, commits, rolls back
@@ -2327,7 +2348,7 @@ never weaken the surrounding test**, and never delete a test merely because M6 m
 | # | Test / file | Exact assertion affected | Why M6 contradicts it | Authorised evolution | What stays frozen |
 |---|---|---|---|---|---|
 | **T-M6-1** | `tests/unit/test_m1_boundary.py` | `LAYER2_PACKAGES = ("app/relationships/", "app/evidence/", "app/analysts/")`, which `test_only_the_relationship_model_depends_on_the_foundation` uses to assert every importer of `app.intelligence` lives in one of them | `app/decisions/` must import `Position`, `Conflict`, `ConflictResolution`, `Evidence`, `RecordCitation`, `RiskBand`, `EntityRef` and M1's errors | **Extend the tuple with `"app/decisions/"`**, and name T-M6-1 in the test's docstring beside T-M5-1 | The scan, its four directories, its non-vacuity guard, and the rule that an importer outside the named packages fails the build |
-| **T-M6-2** | `tests/unit/test_m5_boundary.py` | `test_the_decision_layer_does_not_exist_yet` asserts `app/decisions` is absent; `test_no_module_imports_the_decision_layer`'s docstring says it "does not exist yet" | M6 creates `app/decisions/` | **Replace** the absence test with `test_the_decision_layer_exists_so_the_scan_above_is_not_moot`: the package exists and imports, and the import scan demonstrably flags a `from app.decisions import …` line. Correct the docstring's tense | `FORBIDDEN_DOWNSTREAM`, the forbidding scan and every other M5 assertion. The inventory of `app/decisions/` — exactly M6's four modules, no M7 module — is asserted in `tests/unit/test_m6_boundary.py`, where it belongs |
+| **T-M6-2** | `tests/unit/test_m5_boundary.py` | `test_the_decision_layer_does_not_exist_yet` asserts `app/decisions` is absent; `test_no_module_imports_the_decision_layer`'s docstring says it "does not exist yet" | M6 creates `app/decisions/` | **Replace** the absence test with `test_the_decision_layer_exists_so_the_scan_above_is_not_moot`: the package exists and imports, and the import scan demonstrably flags a `from app.decisions import …` line. Correct the docstring's tense | `FORBIDDEN_DOWNSTREAM`, the forbidding scan and every other M5 assertion. The inventory of `app/decisions/` — exactly M6's four modules, no M7 module — is asserted in `tests/unit/test_m6_boundary.py`, where it belongs. *(From §0.6.1 T-M7-1 onwards, that inventory is the exact M6 + M7 set)* |
 | **T-M6-3** | `README.md` + `tests/unit/test_i2_readme.py::test_the_test_counts_the_readme_quotes_are_the_counts` | The per-layer counts for `pytest tests/unit` and `pytest tests/integration`, and both "`N` tests in four layers" totals | M6 adds unit and integration tests | **Update to the actually collected values**, as every milestone since M1 has | That the totals agree with each other and with the per-layer sum; the contract and e2e counts |
 | **T-M6-4** | `README.md` + `test_the_lint_counts_the_readme_quotes_are_the_counts` | "reports **69** findings", "reports **9** errors" | M6 adds source and test files | **Re-quote an observed value only if it moves** (§0.3.11 D-M4-B4) | **No finding suppressed, no test weakened or skipped to keep a number.** A new finding of M6's own is a defect to fix, never a number to re-quote |
 
@@ -2707,6 +2728,19 @@ logging or printing (D-M6-B1); no `FORBIDDEN_WRITES` call; no call to `derive_an
 `.probability`, `.stage`, `.active_deals`, `.contract_document_ids`. Code is scanned with
 docstrings stripped, by M4's `_code()` technique, so a module may explain what it does not do.
 
+**Scope, amended 2026-09-24 by §0.6.2 D-M7-B2 and §0.6.1 T-M7-1.** Every row and scan of this
+section governs **the four M6 modules** — `__init__.py`, `policy.py`, `conflicts.py` and
+`reconciler.py` — and not the whole `app/decisions/` directory. As first enforced, the scans
+covered every `.py` file under `app/decisions/`, which made the M7 modules Part B places there
+illegal by construction. T-M7-1 re-scopes them, equally strict.
+
+- The row "`app.decisions` → any M7 module — **forbidden**, and none may exist" keeps its first
+  half: an M6 module still may not import one. Its second half no longer holds, because M7's
+  modules exist from §0.6 on.
+- "M6 is pure" and the package docstring's "This package is pure" describe the M6 modules. The
+  docstring is frozen M6 source and is not edited.
+- M7's own boundary — including the one impure module, `assessment.py` — is §0.6.2.
+
 ---
 
 ### 0.5.14 M6 scope and acceptance
@@ -2760,6 +2794,1665 @@ otherwise.
 **The tooling gate is unchanged:** M6 does not close until `pytest`, `ruff` and `mypy` have
 actually been **run** and their results reported. A measured value different from this section's
 is **reported, not accommodated** (§0.3.8).
+
+---
+
+## 0.6 M7 specification decisions — pre-implementation, 2026-09-24
+
+M6 closed at `6919fe5` (specification `1d1ee59`, implementation `fd3a7e0`). A readiness audit run
+against `6919fe5` before M7 began found M7 **blocked on specification, not on code**. Part B's M7
+block named modules, tables and tests, but §A17 and §A18 gave content lists and key columns only.
+The decisive finding was that §0.5.13's M6 boundary, enforced over the whole `app/decisions/`
+tree, forbade exactly what Part B places there for M7. The milestone owner directed twelve
+decisions on 2026-09-24. This section records them, and the consequences each one forces.
+
+> **Status of this section.** Like §0.4 and §0.5, this section **is an authorisation**. It
+> covers D-M7-B1…B12, the four resolutions of §0.6.14, the six material resolutions MP1–MP6 of
+> §0.6.13, and the test evolution T-M7-1…T-M7-5, and nothing wider.
+>
+> - **2026-09-24.** Recording the directed decisions against the frozen code exposed four
+>   contradictions, which the owner resolved (§0.6.14). The decisions also left details unfixed.
+>   §0.6.13 classifies them, and its DERIVED items are accepted.
+> - **2026-09-25.** The six material items were finalised, with exact normative wording in
+>   §0.6.13.1–§0.6.13.6. Finalising them exposed one more contradiction, over which links the
+>   payload carries. The owner resolved it the same day (§0.6.13.1).
+>
+> **M7 is fully specified.** Implementation has not started, and begins only on the owner's
+> instruction.
+>
+> **M1–M6 remain frozen.** No decision below edits `app/intelligence/`, `app/relationships/`,
+> `app/evidence/`, `app/analysts/`, the four M6 modules, the two M6 configuration files, any
+> existing migration, `data/`, or the behaviour of any Layer 1 module. Verified at `6919fe5`:
+> `app/intelligence/`, `app/relationships/`, `app/evidence/` and `app/persistence/` are
+> byte-identical to `65eb462`, `app/analysts/` to `d48c970`, and `app/decisions/` and `config/`
+> to `fd3a7e0`. M7 **adds** three
+> modules and `templates/` under `app/decisions/`, three models and their repositories under
+> `app/persistence/`, one migration, and one additive registration in
+> `app/persistence/models/__init__.py`, following M4's precedent.
+
+**Classification.** **DIRECTED** means decided by the milestone owner on 2026-09-24, recorded here
+in substance. **FROZEN**, **OBSERVED** and **DERIVED** mean what §0.3 defines them to mean.
+**PROPOSED** is a detail the directed decisions need but do not fix. It is written here so no
+implementer settles it in passing. A material PROPOSED item binds only once confirmed; a
+non-material one — a name — stands unless replaced (§0.6.13). All six material items were
+resolved on 2026-09-25. **AUTHORED**, used only in §0.6.13's resolutions, means what §0.3
+defines it to mean: a genuine choice made while finalising, not forced, and reversible only by
+a later decision that says so.
+
+**The audit gaps, and what closes each.**
+
+| # | Gap, verified against `6919fe5` | Closed by |
+|---|---|---|
+| G1 | 17 committed assertions contradict M7, and nothing authorised evolving them | D-M7-B1 |
+| G2 | §0.5.13's boundary, scanned over the whole directory, forbids M7's mandated placement; no M7 boundary existed | D-M7-B2 |
+| G3 | §0.4.3's sequence was stale: duplicate signal, band and analyst steps; `resolve_pinned_scope` contradicted §A25 tests 4 and 13; no run signature or result | D-M7-B3 |
+| G4 | Brief inputs the M6 seam does not carry | D-M7-B4, with OPEN-M7-2 and OPEN-M7-3 **RESOLVED** (§0.6.14) |
+| G5 | The column-level contract of the three tables and their repositories | D-M7-B5, with OPEN-M7-1 **RESOLVED** |
+| G6 | The assessment key omitted `linker_version` although §A24 names it; key collisions, write-once positions, several briefs per assessment | D-M7-B6 |
+| G7 | How "listed in `order_reconciliations()` order" is persisted | D-M7-B6 |
+| G8 | Payload composition and schema version | D-M7-B7; exact form MP1 (§0.6.13.1) |
+| G9 | The selection rule for the DOC-003, DOC-006 and DOC-009 spans §A27.3 requires | D-M7-B8; MP3 (§0.6.13.3) |
+| G10 | No production citation resolver; record semantics existed only in a test helper | D-M7-B9 |
+| G11 | Narrative engine, format, escaping, cap, truncation, `template_version`, money format, golden file | D-M7-B10; MP4 and MP5 (§0.6.13.4, §0.6.13.5) |
+| G12 | Event fields, cardinality, timing and ownership | D-M7-B11; MP6 (§0.6.13.6) |
+| G13 | The exception contract for M7 failures | D-M7-B11; MP5 (§0.6.13.5) |
+| G14 | Fixture ownership between M7 and M9 | D-M7-B12 |
+| G15 | Four §A27.3 facts had no field-level citation, and the "9-day span" had no source — found while recording, not by the audit | OPEN-M7-3 and OPEN-M7-4 **RESOLVED**: evidence-level provenance (§0.6.7); exact form MP1 and MP2 (§0.6.13.1, §0.6.13.2) |
+
+---
+
+### 0.6.1 D-M7-B1 — M7 test and README evolution: specified **and authorised**: **DIRECTED**
+
+The governing rule is §0.4.4's, unchanged: **extend, move, re-scope or replace only the obsolete
+assertion, and never weaken the surrounding test.**
+
+| # | Test / file | Exact assertion affected | Why M7 contradicts it | Authorised evolution | What stays frozen |
+|---|---|---|---|---|---|
+| **T-M7-1** | `tests/unit/test_m6_boundary.py` | `_modules()` walks `app/decisions/` with `rglob("*.py")`, so every scan built on it covers any module added there: forbidden packages, `Session` and ORM names, `FORBIDDEN_WRITES`, clock, random, infrastructure, logging, linker calls, M4 link types, `TOPIC`, money attributes, the orders, the initialiser rule and the thresholds. `test_the_decision_layer_is_exactly_m6s_four_modules` pins `M6_MODULES`. `test_no_later_milestone_module_exists` is parametrised over `LATER_MODULES = ("assessment", "payload", "brief", "templates", "approval")`. `test_the_public_surface_is_exactly_the_declared_one` equates the public names of `vars(app.decisions)` with `__all__ ∪ {conflicts, policy, reconciler}` | M7 adds `assessment.py`, `payload.py`, `brief.py` and `templates/` to that directory, and `assessment.py` must hold a session, call the linker, log and read money. Importing any M7 submodule also binds its name on the package, so the surface test fails whenever one was imported earlier in the process | **(a)** `_modules()` yields **exactly the four M6 modules** — `__init__.py`, `policy.py`, `conflicts.py`, `reconciler.py` — so every scan built on it keeps every forbidden set, companion test and docstring-stripping unchanged: equally strict, over M6. **(b)** The inventory test walks the directory itself and asserts **the exact declared M6 + M7 inventory**: the four M6 modules plus `assessment.py`, `payload.py` and `brief.py`, and no other `.py` file anywhere under `app/decisions/`, since `templates/` holds no Python. **(c)** `LATER_MODULES` becomes **`("approval",)`** for the existence test. **(d)** `test_no_m6_module_imports_a_later_milestone` is **kept unchanged in behaviour**: it still forbids every M6 module importing `assessment`, `payload`, `brief`, `templates` or `approval`. Because (c) shortens `LATER_MODULES`, its parametrisation reads a separate constant holding the original five names, and its body is not edited. *DERIVED: this is the only way to honour both (c) and "unchanged".* **(e)** The surface test **admits the M7 submodules explicitly**. It imports `app.decisions.assessment`, `.payload` and `.brief` before comparing, then asserts exact equality with `__all__ ∪ {conflicts, policy, reconciler, assessment, payload, brief}`. `__all__` itself is unchanged. *DERIVED: importing first keeps the equality exact and order-independent, rather than relaxing it to a subset* | Every forbidden set and its companion; M6's purity, money-blindness and no-log rules over its four modules; `test_nothing_outside_the_package_imports_it`; `app/decisions/__init__.py` |
+| **T-M7-2** | `tests/integration/test_m4_migration.py` | `test_the_m4_revision_chains_after_the_b1_schema` asserts `list(script.get_heads()) == ["c4a1e97d5b02"]`. `test_upgrading_adds_only_the_link_table` upgrades to `"head"` and asserts the difference is exactly `{document_customer_links}` | M7's revision becomes the head, and upgrading to it adds three more tables | **Assert chaining, not sole-headship**: `c4a1e97d5b02`'s `down_revision` is still `8bfd73b6af60`, and `c4a1e97d5b02` lies on the chain from base to the single head. **The upgrade test upgrades to `c4a1e97d5b02`, not to `"head"`** | The down-revision assertion; every column, nullability, constraint, FK, index, downgrade and cycle assertion; H3's single-head test. The file's other tests that upgrade to `"head"` inspect only the link table, still pass, and are **not** edited |
+| **T-M7-3** | `tests/integration/test_h3_migrations.py` | `EXPECTED_TABLES` set equality through `LAYER2_TABLES = ("document_customer_links",)` | Three new tables | **Extend `LAYER2_TABLES` with `risk_assessments`, `risk_positions` and `risk_briefs`**: extend, never weaken to a subset check | Set equality; the canonical and operational sets; downgrade to empty |
+| **T-M7-4** | `README.md` + `tests/unit/test_i2_readme.py::test_the_test_counts_the_readme_quotes_are_the_counts` | The per-layer counts and both "`N` tests in four layers" totals | M7 adds tests | **Update to the actually collected values**, as every milestone since M1 has | The totals agree with each other and with the per-layer sum |
+| **T-M7-5** | `README.md` + `test_the_lint_counts_the_readme_quotes_are_the_counts` | "reports **69** findings", "reports **9** errors" | M7 adds source and test files | **Re-quote an observed value only if it genuinely moves** (§0.3.11 D-M4-B4) | No finding suppressed, and no test weakened or skipped, to keep a number |
+
+**New: `tests/unit/test_m7_boundary.py`.** It asserts §0.6.2 on its own, independently of the M6
+file. Every scan has a companion proving it would catch a reintroduction, and code is scanned
+with docstrings stripped, using M4's `_code()` technique.
+
+**Measured, so nothing is implied: every other assertion M7 could touch, and why it stands.**
+
+- `test_m1_boundary.py`'s `LAYER2_PACKAGES` already lists `app/decisions/`. `app/persistence/` is
+  deliberately absent, so an M7 model or repository that imported `app.intelligence` would fail
+  it. That is the intended D-M4-B2 guard, not a conflict.
+- `test_m2_boundary.py` and `test_m5_boundary.py` forbid M2 and M5 from importing
+  `app.decisions`. Both are unchanged, and M7 adds no such import.
+- `test_m4_boundary.py`'s persistence scan is parametrised over the link repository and model
+  only. M7's persistence modules get the mirrored scan in `test_m7_boundary.py`.
+- `test_e1_boundary.py` (repositories own no transaction, use no textual SQL and do not log) and
+  the G2 scans (`log_event` only, no textual SQL, no unsafe deserialisation, no HTTP client) cover
+  M7's files automatically. They must pass **unchanged**.
+- `test_b1_models.py` checks the canonical and operational tables by intersection; the F1 and E2
+  row-count helpers count canonical models only; `tests/conftest.py` truncates every registered
+  table. None of them needs a change.
+
+**Anything not in T-M7-1…T-M7-5 is not authorised.** A sixth contradiction is reported, not
+fixed.
+
+---
+
+### 0.6.2 D-M7-B2 — the M7 dependency boundary: **DIRECTED**
+
+M7 is **exactly three modules and one template directory**:
+
+| Module | Role | Purity |
+|---|---|---|
+| `app/decisions/assessment.py` | the run: orchestration | **the only impure M7 module** |
+| `app/decisions/payload.py` | the hashed decision payload and the cited-span targets | **pure** |
+| `app/decisions/brief.py` | narrative rendering | **pure** |
+| `app/decisions/templates/` | UTF-8 template text | holds no Python |
+
+**Direction:** `assessment → payload`, `assessment → brief`, `brief → payload`. **Never**
+`payload → brief`, `payload → assessment` or `brief → assessment`.
+
+- No M6 module imports an M7 module (T-M7-1 (d)).
+- No module outside `app/decisions/` imports M7: not M1–M5, not `app/persistence/`, not the API,
+  scripts or migrations. `test_nothing_outside_the_package_imports_it` enforces this unchanged, so
+  M8's routes will need their own authorised evolution.
+- **`app/decisions/__init__.py` does not re-export M7.** M7 is imported by submodule path, as the
+  M3 modules are (§0.2.3).
+
+| May import or do | `assessment.py` | `payload.py` | `brief.py` |
+|---|---|---|---|
+| `Session` (type), `sqlalchemy` | **yes** | no | no |
+| M7's repositories (§0.6.5) | **yes** | no | no |
+| Any other `app.persistence` module, `app.core.database`, an ORM model | no — every read goes through M7's repositories | no | no |
+| `app.intelligence` — contract, scope, config, errors, timeutil (M1) | yes, including `utc_date` for the ticket dates | yes — `canonical_json`, the `to_payload` projections, `decimal_text`, `money_payload`, `closed_window` | yes — contract and errors only |
+| `app.intelligence.signals` (M3) | yes: `customers_in_scope`, and `compute_signals` **only** for §0.6.4's two fields | no — it receives the window, the backlog ids and the ticket dates as plain values, and states M3's `'high'` literal itself (DR22) | no |
+| `app.relationships` (M2) | yes: `escalation_path` only (§0.6.4) | no — it receives `EscalationPath.to_payload()` | no |
+| `app.evidence` (M4) | yes: `derive_and_persist`, `documents_for`, `citable_text`, `resolve_document_citation`, `CitationResolutionError` | no — it receives `DerivedLink`s, already restricted to the assessment's own stamps (§0.6.13.1), and text, never a `LinkedDocument` | no |
+| `app.analysts` (M5) | yes: `build_contexts` | yes: `AnalystContexts` as a type | no |
+| `app.decisions` M6 public API | yes: `reconcile`, `order_reconciliations`, `ConflictPolicy`, `default_conflict_policy` | yes: `Reconciliation` as a type | no |
+| `app.core.logging`, `logging.getLogger` | yes — events through `log_event` only (G2) | no | no |
+| Log or print | through `log_event` only | no | no |
+| Read a template file | no | no | yes, read-only (§0.6.10) |
+| `app.api`, `app.ingestion`, `app.connectors`, network or infrastructure modules | no | no | no |
+
+**Never called by `assessment.py`:** `derive_links` or `persist_links` (only `derive_and_persist`,
+once); `assign_band`, `SupportRiskAnalyst`, `CommercialAnalyst`, `detect_conflicts`,
+`order_positions`, `ranking_key`. `build_contexts` and `reconcile` own all of these, so naming one
+would duplicate M3, M5 or M6 work. `assessment.py` calls none of `FORBIDDEN_WRITES`: it writes
+only through repository functions, and it never commits, rolls back, begins or closes anything.
+
+**Clock and randomness, in all three modules.** These rules are DERIVED: §A24 forbids `now()` and
+randomness, and they apply M1's scans.
+
+- No clock name (`now`, `today`, `utcnow`, `utcfromtimestamp`, `fromtimestamp`, `time`,
+  `monotonic`, `perf_counter`) and no `time` module.
+- A `datetime` import is permitted in `assessment.py` only, for the `as_of: date | None`
+  parameter. It is forbidden in `payload.py` and `brief.py`, which receive dates inside `Scope`
+  and serialise them with `.isoformat()`.
+- `random` and `secrets` are forbidden everywhere.
+- `assessment.py` may import the `UUID` *type* for its result and calls no `uuid` generator.
+  `payload.py` and `brief.py` import `uuid` not at all. Database-generated ids never enter the
+  payload (§0.6.7).
+
+**Money.** The M6 money-blind rule stays **M6-only**. `payload.py` serialises S11 and S12, and
+`brief.py` renders currency amounts. No M7 module *logs* a monetary value (§0.6.11).
+
+**The "pure package" statement is clarified, not edited.** `app/decisions/__init__.py`'s
+docstring says "This package is pure", and `test_m6_boundary.py`'s docstring says the same of the
+package. Both are frozen M6 text. From M7 on, both describe **the four M6 modules**, and M7's
+purity is this section's table. §0.5.13 carries the matching scope note.
+
+---
+
+### 0.6.3 D-M7-B3 — the assessment run: **DIRECTED**
+
+```
+run_assessment(
+    session: Session,
+    *,
+    as_of: date | None,
+    source_system: str = "csv_demo",
+    customer_source_id: str | None = None,
+    expected_fingerprint: str | None = None,
+    config: RiskRulesConfig | None = None,
+    policy: ConflictPolicy | None = None,
+) -> tuple[AssessmentResult, ...]
+```
+
+**Parameter types are DERIVED.**
+
+- `as_of` is a required keyword typed `date | None`, per §A7. `None` selects §A5's
+  `max(created_at)` fallback through `resolve_scope`; acceptance always names the date.
+- `source_system` defaults to M1's `DEFAULT_SOURCE_SYSTEM`.
+- `config` defaults to `default_risk_rules()` and `policy` to `default_conflict_policy()`,
+  exactly as `build_contexts` and `reconcile` default theirs.
+
+**Result.** The field list is DIRECTED; the name `AssessmentResult` is PROPOSED. It is a frozen
+dataclass holding `assessment_id: UUID`, `created: bool`, `brief_id: UUID | None` and
+`payload_hash: str | None`. The run returns **one per customer assessed**, in
+`order_reconciliations()` order. It carries no customer identity: the order and the assessment id
+identify the customer (§0.6.13).
+
+**Scope.** The run calls `resolve_scope(session, source_system=…, as_of=…,
+expected_fingerprint=expected_fingerprint)`.
+
+- **Unpinned** when `expected_fingerprint` is `None`.
+- **Pinned** otherwise. A mismatch raises `FingerprintMismatchError` and fails closed, before
+  anything is derived.
+- M9 supplies `default_risk_rules().pinned_fingerprint(source_system)`, the value
+  `resolve_pinned_scope` reads.
+- M7's own tests run unpinned. That is what makes §A25 tests 4 and 13 expressible: a pinned run
+  would refuse the very snapshot change they make.
+
+**Sequence.** Steps 7–10 run per customer, in the order step 6 returns.
+
+1. Resolve the scope.
+2. `derive_and_persist(session, scope, config=…)`: **exactly once**, before any customer is
+   visited (§0.4.3).
+3. Obtain the customers: `customers_in_scope(session, scope)`, or `(customer_source_id,)` when one
+   is named. A named id with no customer row in scope raises M2's `UnknownCustomerError` from
+   step 4, unchanged. *DERIVED: D-M7-B11 propagates existing exceptions.*
+4. `build_contexts(session, scope, customer, config=…)` for each customer.
+5. `reconcile(contexts, policy=…)` for each customer.
+6. `order_reconciliations(…)` over all of them.
+7. Persist the assessment: `insert_assessment` (§0.6.5).
+8. Persist its positions **only when step 7 returned `created=True`**.
+9. **Only when the band is at least `WATCH`** (`RiskBand.at_least`, §0 defect 11): read §0.6.4's
+   inputs, build the payload (§0.6.7; exactly §0.6.13.1 and §0.6.13.2) with its cited spans
+   (§0.6.8; §0.6.13.3), resolve every citation (§0.6.9) and render the narrative (§0.6.10;
+   §0.6.13.4 and §0.6.13.5). This step runs whether or not the brief already exists.
+10. Persist the brief: `insert_brief`.
+11. Emit the events (§0.6.11; exactly §0.6.13.6), once every write has succeeded.
+12. Return the results.
+
+**What the run does not do.**
+
+- It does not call `compute_signals`, `assign_band` or either analyst itself, because
+  `build_contexts` (§0.4.7 step 1) and `reconcile` (§0.5.7) already do. The single exception is
+  §0.6.4's `compute_signals` read of two fields.
+- It never recomputes worthiness, either order, a conflict, a resolution, dissent or the resolved
+  set (§0.5.1).
+- It never opens a session, and never commits, rolls back, begins or closes one.
+
+**Transaction.** The caller's. Steps 2–10 are all inside it. Any failure propagates, the caller
+rolls back, and **no partial assessment is durable** (§A23). Log lines are not transactional
+(§0.6.11).
+
+---
+
+### 0.6.4 D-M7-B4 — brief inputs outside the M6 seam: **DIRECTED**, option (a)
+
+For a briefed customer only, `assessment.py` may read facts the M6 seam does not carry, through
+existing public APIs.
+
+| Fact | Source | For |
+|---|---|---|
+| escalation window, chronic-backlog ticket ids | `compute_signals(session, scope, customer, config=…)` (M3): `CustomerSignals.escalation_window` and `.backlog_ticket_ids` **only** | `support_evidence.escalation_window`, `.backlog_ticket_ids` |
+| escalation path | `escalation_path(session, scope, customer)` (M2) | `support_evidence.escalation_path` |
+| each visible ticket's `created_at` | §0.6.5's authorised read, over `contexts.support.tickets`' ids, turned into a UTC date by M1's `utc_date` | `support_evidence.tickets[].created_date` and `.ticket_span` (OPEN-M7-3, resolved; populations MP2, §0.6.13.2) |
+| derived document links | `documents_for(session, scope, customer)` (M4), keeping only the links stamped with the assessment's own `layer1_fingerprint` and `linker_version` (MP1, §0.6.13.1) | the payload's `document_evidence` |
+| citable text, document-citation resolution | `citable_text`, `resolve_document_citation` (M4) | §0.6.8, §0.6.9 |
+
+**Authority rule.** Wherever an M3 value overlaps what `AnalystContexts` carries — S1–S15, the
+band, the satisfied rules, the tickets' priority, category, open-ness and breach — **the context
+is authoritative**, and `compute_signals(...).signals` is **never read**. The call is permitted
+solely for its two fields, and it is the one exception to §0.6.3's rule against calling
+`compute_signals` separately. No signal is redefined, and no second signal semantics is created.
+
+**Every fact read here lands in the hashed payload** (OPEN-M7-2, RESOLVED), in §0.6.7's
+`support_evidence`. The narrative renders it from there and never reads or derives it again.
+**The 9-day span is derived from the tickets' own dates** (OPEN-M7-3, RESOLVED), never from the
+14-day `escalation_window`, which is carried beside it as a separate fact.
+
+---
+
+### 0.6.5 D-M7-B5 — the persistence schema: **DIRECTED**, conventions DERIVED
+
+**General rules, DIRECTED:**
+
+- UUID primary keys.
+- NOT NULL unless stated.
+- Every foreign key indexed.
+- **No timestamp column.**
+- Repositories own no transaction, do not log, accept and return plain data (mappings, tuples,
+  scalars), and import **no** `app.intelligence`, `app.evidence`, `app.analysts` or
+  `app.decisions` module (D-M4-B2; §0.6.2).
+
+**How the directive's field lists are read.** This reading is DERIVED (§0.6.13). The lists name
+the *required* fields. §A18's other columns remain unless the directive contradicts one, and two
+are kept on that reading:
+
+- `risk_assessments.band`: §A19 filters on it.
+- `risk_briefs.decision_payload`: §A19 serves it, and §0.6.6's hash re-verification needs it.
+
+**`risk_positions` is exactly the DIRECTED list** — `id`, `assessment_id`, `ordinal`, `function`,
+`object_ref`, `proposed_action`, `stance`, `rationale` and `citations` (§0.6.14 OPEN-M7-1,
+**RESOLVED**). **There is no `confidence` column.** The frozen `Position` has no confidence field,
+so M7 neither derives nor manufactures one.
+
+**`risk_assessments`**
+
+| Column | Type | Null | Grounding |
+|---|---|---|---|
+| `id` | `UUID`, `pk_risk_assessments`, `default=uuid.uuid4` | NOT NULL | DIRECTED; the key convention of every Layer 1 and M4 model |
+| `customer_id` | `UUID` FK → `customers.id`, **`ondelete="SET NULL"`** | **NULL permitted** | DIRECTED: "the non-destructive FK philosophy of the existing customer-linked persistence layer". Layer 1's canonical customer FKs are `ondelete="SET NULL"` (`app/persistence/models/deal.py:60`; §0.3.10.3). SET NULL requires a nullable column, so this is **the one stated exception** to NOT NULL. DERIVED |
+| `as_of` | `Date` | NOT NULL | `Scope.as_of` is a calendar date |
+| `source_system` | `String(100)` | NOT NULL | Layer 1's `source_system` type (`ProvenanceMixin`) |
+| `layer1_fingerprint` | `String(64)` | NOT NULL | A SHA-256 hex digest, as in M4 |
+| `rules_version` | `Integer` | NOT NULL | `RiskRulesConfig.rules_version`, a positive int (FROZEN) |
+| `linker_version` | `String(50)` | NOT NULL | DIRECTED; typed as in M4 (§0.3.5) |
+| `band` | `String(50)` | NOT NULL | §A18; a `RiskBand` name, from the contexts |
+| `executive_worthy` | `Boolean` | NOT NULL | `Reconciliation.worthiness.executive_worthy`, verbatim (§0.5.1) |
+| `signals` | `JSONB` | NOT NULL | `contexts.commercial.signals.to_payload()`, with S14 populated (§0.6.4's authority rule) |
+| `satisfied_rules` | `JSONB` | NOT NULL | The satisfied rule ids as a list, in `contexts.commercial.satisfied_rules` order |
+| `ranking_key` | `JSONB` | NOT NULL | `Reconciliation.ranking_key` as a four-element list, verbatim (§0.6.6) |
+
+- **Unique:** `uq_risk_assessments_identity` on `(customer_id, as_of, source_system,
+  layer1_fingerprint, rules_version, linker_version)` (DIRECTED).
+- **Index:** `ix_risk_assessments_customer_id`.
+- **Consequence of SET NULL, recorded rather than guarded.** If a customer row were deleted, its
+  assessments would survive with `customer_id` NULL. PostgreSQL treats NULLs as distinct in the
+  unique constraint. Layer 1 never deletes a canonical row — it upserts — so this is unreachable
+  on the pipeline.
+
+**`risk_positions`**
+
+| Column | Type | Null | Grounding |
+|---|---|---|---|
+| `id` | `UUID`, `pk_risk_positions` | NOT NULL | DIRECTED |
+| `assessment_id` | `UUID` FK → `risk_assessments.id`, `ondelete="CASCADE"` | NOT NULL | DIRECTED: ownership is unambiguous |
+| `ordinal` | `Integer` | NOT NULL | DIRECTED: the position's index in `Reconciliation.ordered_positions`, from 0 |
+| `function` | `String(50)` | NOT NULL | `Position.function` |
+| `stance` | `String(50)` | NOT NULL | DIRECTED (OPEN-M7-1's resolution); `Position.stance` |
+| `proposed_action` | `String(50)` | NOT NULL | An `ActionId` value; the longest is 38 characters |
+| `object_ref` | `String(255)` | NOT NULL | DIRECTED; a `source_id`, typed as Layer 1's |
+| `rationale` | `Text` | NOT NULL | `Position.rationale` |
+| `citations` | `JSONB` | NOT NULL | `Position.to_payload()["evidence"]`: each item's kind, citation and any `rule_id` |
+
+- **Unique:** `uq_risk_positions_identity` on `(assessment_id, function, object_ref,
+  proposed_action)` (DIRECTED).
+- **Index:** `ix_risk_positions_assessment_id`.
+- **No column depends on `policy_version`** (DIRECTED). There is no disposition or
+  prevailing/dissent flag; that lives in the brief's payload. The key bounds *identical*
+  positions only, so §0.4.1 evidence 4 — several rows per function per assessment — still holds.
+
+**`risk_briefs`**
+
+| Column | Type | Null | Grounding |
+|---|---|---|---|
+| `id` | `UUID`, `pk_risk_briefs` | NOT NULL | DIRECTED |
+| `assessment_id` | `UUID` FK → `risk_assessments.id`, `ondelete="CASCADE"` | NOT NULL | DIRECTED |
+| `policy_version` | `Integer` | NOT NULL | `Reconciliation.policy_version`, verbatim (§0.5.1) |
+| `template_version` | `String(50)` | NOT NULL | `"1"` (§0.6.10) |
+| `decision_payload` | `JSONB` | NOT NULL | §A18; the payload of §0.6.7 |
+| `payload_hash` | `String(64)` | NOT NULL | §0.6.7 |
+| `narrative` | `Text` | NOT NULL | §0.6.10 |
+| `status` | `String(50)`, ORM default and server default `'DRAFT'` | NOT NULL | DIRECTED default; any other value is M8's |
+
+- **Unique:** `uq_risk_briefs_identity` on `(assessment_id, payload_hash)`. This is §A18's key,
+  unchanged.
+- **Index:** `ix_risk_briefs_assessment_id`.
+
+**Models.** The module names are PROPOSED: `app/persistence/models/risk_assessment.py`,
+`risk_position.py` and `risk_brief.py`, following `document_customer_link.py`. None uses
+`ProvenanceMixin`, and none imports a Layer 2 module. They are registered in
+`app/persistence/models/__init__.py` by the additive pattern M4 established. That is the one
+authorised edit of that Layer 1 file, and nothing else in it changes.
+
+**Repositories.** The module names are PROPOSED.
+
+`app/persistence/repositories/risk_assessments.py`, with DIRECTED behaviour:
+
+- **`insert_assessment(session, row) -> tuple[UUID, bool]`**: `INSERT … ON CONFLICT ON CONSTRAINT
+  uq_risk_assessments_identity DO NOTHING RETURNING id`. When nothing is returned, it
+  **re-selects** the existing id by the identity columns and returns `created=False`. There is no
+  update and no rejection.
+- **`insert_positions(session, assessment_id, rows) -> int`**: rows sorted by `ordinal`,
+  `on_conflict_do_nothing` on the identity, returning the rows inserted. The run calls it only
+  when `created=True`.
+- **`insert_brief(session, row) -> tuple[UUID, bool]`**: the same pattern on
+  `uq_risk_briefs_identity`.
+
+`app/persistence/repositories/citation_reads.py` holds three plain Layer 1 reads the run needs:
+
+- The `(title, body_text)` of named documents in one `source_system`, for §0.6.8.
+- Whether a record exists in scope, and whether a named field on it is NULL, for §0.6.9.
+- **The `created_at` of named support tickets** in one `source_system`, for §0.6.7's
+  `support_evidence`. This is the **explicitly authorised read path** of OPEN-M7-3's resolution
+  (§0.6.14). The ticket ids it is given are the customer's visible tickets — the `source_id`s of
+  `contexts.support.tickets` — so it decides no membership (§0.2.3).
+
+All three use `ENTITY_MODELS` from `canonical.py`, take strings, return plain values, and name no
+domain type. The M4 `DOMAIN_NAMES` scan is mirrored in `test_m7_boundary.py`.
+
+**Migration.** The second additive revision, with `down_revision = "c4a1e97d5b02"`. It creates
+exactly the three tables, and its downgrade drops exactly them. The history keeps one head.
+
+---
+
+### 0.6.6 D-M7-B6 — identity, idempotency and ordering: **DIRECTED**
+
+| Change between two runs | `risk_assessments` | `risk_positions` | `risk_briefs` (band ≥ `WATCH`) |
+|---|---|---|---|
+| Nothing | read, `created=False` | untouched | read: same key, same hash |
+| `layer1_fingerprint`, `as_of`, `source_system`, `rules_version` or `linker_version` | **new row** | inserted | new brief |
+| `policy_version`, or a policy or catalogue change | read | untouched | **a new brief under the same assessment whenever the payload changes**. A `policy_version` bump always changes it, because `versions.policy` is hashed. A flipped `resolve_to` changes the resolution and the dissent. A change that alters nothing hashed reads the existing brief |
+| Template only | read | untouched | **read**: the hash is unchanged, and the stored narrative and `template_version` are **not** updated |
+
+- **`linker_version` is in the assessment identity. `policy_version` is not.** The assessment row
+  and its positions do not depend on the policy; the brief does.
+- **A key collision is trusted.** There is no content comparison, no update and no conflict
+  exception. A code change that alters content without a version bump is therefore not caught by
+  the database. §0.3.4 records the same property for links.
+- **Several briefs per assessment are normal**, one per distinct payload. M7 marks none as
+  current and supersedes none. Which brief an API presents is M8's decision.
+- **Ordering.** `Reconciliation.ranking_key` is persisted verbatim, and M8 consumes it and never
+  recomputes it. Reproducing §A15's order exactly from the stored key — including comparing its
+  `source_id` component by code point, as Python does — is M8's to specify.
+- **Hash re-verification**, DERIVED. JSONB preserves every value the payload holds: strings,
+  integers, booleans, null, arrays and objects. There are no floats, because decimals are
+  strings. `canonical_json` re-sorts keys, so `canonical_json(decision_payload)` read back
+  re-hashes to the stored `payload_hash`. M7's tests assert this.
+
+---
+
+### 0.6.7 D-M7-B7 — the decision payload: **DIRECTED**
+
+The payload is authoritative for approval and for hash identity.
+
+```
+{
+  "payload_version":   1,
+  "scope":             {"source_system": str, "as_of": "YYYY-MM-DD", "layer1_fingerprint": str},
+  "versions":          {"rules": int, "linker": str, "policy": int},
+  "customer":          {"entity": "customers", "id": str},
+  "band":              str,
+  "satisfied_rules":   [str, ...],
+  "signals":           {...},
+  "reconciliation":    {...},
+  "document_evidence": [...],
+  "cited_spans":       [...],
+  "support_evidence":  {...},
+  "commercial_evidence": {...}
+}
+```
+
+The last two keys were added on 2026-09-24 by the resolutions of OPEN-M7-2, OPEN-M7-3 and
+OPEN-M7-4 (§0.6.14). Their **content** is DIRECTED. Their **representation** — shapes, rule
+texts, orders — was PROPOSED as the material item MP1 and was **RESOLVED on 2026-09-25**.
+
+**§0.6.13.1 (MP1) is the exact, normative contract for all twelve keys.** It fixes every
+nested key, JSON type, list order, rule text and the hash process. §0.6.13.2 (MP2) fixes which
+tickets each ticket fact counts. This section keeps the overview and the provenance map. Where
+the two differ in precision, §0.6.13.1 and §0.6.13.2 prevail. The field-level sketches that
+stood here on 2026-09-24 were the MP1 proposal; they are superseded, not repeated.
+
+| Key | Content | Class |
+|---|---|---|
+| `payload_version` | `1` | DIRECTED |
+| `scope` | Exactly these three fields; `as_of` as an ISO date. `as_of_source` and `entity_counts` are **not** carried | DIRECTED |
+| `versions` | `config.rules_version`, `config.linker_version`, `Reconciliation.policy_version` | DIRECTED |
+| `customer` | `Reconciliation.customer.to_payload()` | DERIVED: the frozen projection |
+| `band` | The contexts' band name | DERIVED: §0.6.4's authority rule |
+| `satisfied_rules` | The contexts' satisfied rule ids, order preserved | DERIVED |
+| `signals` | `contexts.commercial.signals.to_payload()` | DERIVED |
+| `reconciliation` | `Reconciliation.to_payload()`: ordered positions, conflicts, resolutions, resolved positions, dissent, worthiness, ranking key. M6's frozen projection, embedded and not restated | DERIVED |
+| `document_evidence` | `linked.link.to_payload()` for every `LinkedDocument` that `documents_for()` returns for the customer **and whose link carries the assessment's own `layer1_fingerprint` and `linker_version`**. `assessment.py` unwraps each `DerivedLink` (§0.6.2). Sorted ascending by `(document id, basis)`, which is total within one stamp pair | projection DERIVED; **stamp filter DIRECTED 2026-09-25**, resolving a contradiction with §0.3.4 (§0.6.13.1); order **RESOLVED (MP1)**. `documents_for()`'s own order stays open (§0.3.7 #9) |
+| `cited_spans` | One entry per applicable target (§0.6.8): `{"target": name, "citation": DocumentCitation.to_payload()}`, ascending by target name | shape and order **RESOLVED (MP1, MP3)**: §0.6.13.1, §0.6.13.3 |
+| `support_evidence` | The escalation and support evidence §A27.3 and §A17 need, summarised below | content DIRECTED (OPEN-M7-2/3/4); representation **RESOLVED (MP1)**: §0.6.13.1; populations **RESOLVED (MP2)**: §0.6.13.2 |
+| `commercial_evidence` | The source evidence for each active deal's stated facts, summarised below | content DIRECTED (OPEN-M7-4); representation **RESOLVED (MP1)**: §0.6.13.1 |
+
+**`support_evidence`, in summary.** Field names follow M1/M3/M5 terms, as directed. It holds
+six keys:
+
+- **`tickets`**: every visible ticket, with its stated `created_date`, its M5 facts and four
+  citations.
+- **`escalation_window`**: M3's.
+- **`ticket_span`**: 5 tickets in 9 days, for CUST-007.
+- **`backlog_ticket_ids`**: M3's.
+- **`escalation_path`**: M2's.
+- **`derivations`**: five records, one per §A27.3 ticket fact.
+
+The rules that follow are the DERIVED ones. §0.6.13.1 and §0.6.13.2 state each one exactly.
+
+- **Values are the context's.** Every derivation's `value` is the same-named field of
+  `contexts.commercial.signals`, which is authoritative (§0.6.4).
+- **`ticket_ids` are selected by applying each record's rule to `tickets`.** The rules are the
+  §0.4.2 equivalence formulas — `sum(f.is_open)`, `sum(f.is_open and f.priority == 'high')`,
+  `sum(f.priority == 'high')`, `sum(f.is_open and f.priority == 'high' and f.breaches_sla)` — and
+  M3's S10 rule for the dominant category: the most frequent non-empty category among tickets
+  created within the lookback window, ties to the lexicographically smallest name
+  (`app/intelligence/signals.py`; §0.2.1). A record's `ticket_ids` are the tickets its rule
+  **counts**. For S10 that is every ticket whose category is counted, not only the winning
+  category's (MP1 revision, §0.6.13.1).
+- **Lookback bounds** come from M1's `closed_window(as_of, lookback_days)`, and `lookback_days`
+  from the configuration `versions.rules` names.
+- **A derivation that disagrees with its value raises `ContractViolationError`**, and the brief is
+  not built. A count must equal its `ticket_ids` length. For S10, the category counts must sum
+  to the length of its `ticket_ids`, and the recomputed dominant category must equal `value`.
+  This rule is DERIVED: a payload may not state a fact whose provenance does not
+  produce it. **No new signal semantics is created.** The rules are the ones §0.4.2 and M3
+  already state, and tests pin them for every customer, as §0.4.2 did.
+- **`ticket_span` is the burst the escalation window counts** (OPEN-M7-3, RESOLVED).
+  - **Selection (RESOLVED, MP2 — §0.6.13.2):** the tickets whose `created_date` lies in
+    `[escalation_window.start, escalation_window.end]`: M3's own window population.
+  - **Arithmetic:** `ticket_count` is their number; `first_ticket_date` and `last_ticket_date` are
+    their earliest and latest `created_date`; **`ticket_span_days` is the elapsed days
+    `(last_ticket_date − first_ticket_date).days`**. This is DERIVED from the directed result, in
+    which CUST-007's tickets of 08-18 through 08-27 make **9** days, whereas an inclusive count
+    would give 10.
+  - **Consistency:** `ticket_count` must equal `escalation_window.count`, or
+    `ContractViolationError` is raised.
+  - **Distinct from the window.** The window is carried beside the span and is **never substituted
+    for it**: CUST-007's window is `[2026-08-18, 2026-08-31]`, 14 dates, and its span is 9 days.
+  - **No window** (no ticket in the lookback) makes `ticket_span` `null` — nothing is stated, and
+    nothing is invented.
+  - **A missing ticket, or a NULL `created_at`,** for any visible ticket raises
+    `CitationResolutionError` (§0.6.9). The brief fails rather than inventing the span.
+    §0.6.13.2 lists every other edge case.
+- **`escalation_path`** is M2's projection unchanged. Its `open_tickets` follow M2's `status`
+  rule, not M3's resolution-date rule (§0.4.2, evidence 3). The two agree on the demo dataset at
+  `ACCEPTANCE_AS_OF`, and the divergence is recorded in §A29.
+
+**`commercial_evidence`, in summary.** One entry per active deal, in id order: `DealSignal`'s
+frozen projection, plus five citations — `is_active`, `stage`, `probability`, `amount`,
+`currency` (§0.6.13.1).
+
+`amount` and `currency` are citable business fields of `deals` (`BUSINESS_FIELDS`), so "USD
+5,361.44" is cited to the two stored fields it states. It is a direct citation, not a derivation.
+
+**Every §A27.3 fact has a provenance path in the payload** (OPEN-M7-4, RESOLVED: citation is
+evidence-level). The table uses CUST-007's values.
+
+| §A27.3 fact | Stated from | Provenance |
+|---|---|---|
+| 5 tickets in a 9-day span | `support_evidence.ticket_span` | `ticket_span.ticket_ids` → `tickets[].created_date`, each with its `created_at` citation; the stated selection and elapsed-day rule (MP2, §0.6.13.2) |
+| 4 open | `signals.open_ticket_count` | `derivations[open_ticket_count]` → `tickets[].is_open` and `resolved_at` citations |
+| 3 open high-priority | `signals.open_high_priority_count` | `derivations[open_high_priority_count]` → `is_open`, `priority` |
+| 4 high-priority in total | `signals.high_priority_total` | `derivations[high_priority_total]` → `priority` citations, TKT-073's included |
+| 3 open high-priority SLA breaches | `signals.open_sla_breach_high_count` | `derivations[open_sla_breach_high_count]` → `is_open`, `priority`, `breaches_sla`; the `created_at`, `resolved_at` and `priority` citations; SLA targets from `versions.rules` |
+| dominant category `performance` | `signals.dominant_ticket_category` | `derivations[dominant_ticket_category]` → `category_counts` over the lookback, and the `category` and `created_at` citations of every ticket counted (MP1) |
+| DEAL-001 `negotiation` at 90% for USD 5,361.44 | `commercial_evidence.deals[DEAL-001]` | `is_active`, `stage`, `probability`, `amount` and `currency` citations |
+| DOC-003's escalation rule | `cited_spans[DOC_003_ESCALATION_RULE]` | a `DocumentCitation`, resolved through M4 (§0.6.8; MP3, §0.6.13.3) |
+| DOC-006's 36-month term and 90-day notice | `cited_spans[DOC_006_TERM_AND_NOTICE]` | as above |
+| DOC-009's linkage of the deal to ticket resolution | `cited_spans[DOC_009_DEAL_LINKAGE]` | as above |
+
+**No fake citation is created.**
+
+- Every citation names a field `BUSINESS_FIELDS` declares, and M1 refuses any other at
+  construction.
+- A derived fact is never cited as if a field stored it: it is stated with its rule and the
+  source facts the rule reads.
+- §A27.4's absence (no active project) is `signals.active_project_count = 0`. An absent row has
+  nothing to cite, and none is fabricated.
+
+**Hash (DIRECTED).** `payload_hash = sha256(canonical_json(payload).encode("utf-8")).hexdigest()`,
+stored as 64 lowercase hex characters.
+
+- **It includes:** `as_of`, `source_system`, `layer1_fingerprint`, the rules, linker and policy
+  versions, and all approval-relevant evidence — `support_evidence` and `commercial_evidence`,
+  their source facts and their derivations included.
+- **It excludes:** database-generated UUIDs, timestamps, `template_version`, narrative prose and
+  every presentation-only value. A cited span's text is excluded too: a span is hashed, never
+  the text it names (§A17's evidence contract).
+- **The one document-derived text the payload does hold** is each `document_evidence` entry's
+  `matched_token`. M1's frozen `DerivedLink` projection carries it, and it is bounded by its
+  match (§0.3.10.5). The wording of 2026-09-24, "the quoted document text is excluded", was
+  imprecise on this point and is corrected here. The narrative quotes it under the same rule as
+  a span (§0.6.13.4).
+
+**Serialisation** follows M1's discipline throughout: `decimal_text`, `money_payload`,
+`str(enum)`, tuples as ordered lists, dict keys sorted by `canonical_json`, `null` for `None`,
+and the `Evidence` and citation projections. **No database id is in the payload.** The payload is
+stored as `risk_briefs.decision_payload`. The exact value domain, canonical form and hash steps
+are §0.6.13.1 items 1 and 11.
+
+---
+
+### 0.6.8 D-M7-B8 — cited spans: named semantic targets: **DIRECTED**
+
+The targets are declared as constants in `payload.py`. This placement is DERIVED: locating a
+phrase is a pure string search, `payload.py` owns `cited_spans`, and `brief.py` may not be
+imported by it. The targets are version-controlled with M7.
+
+| Target (name **RESOLVED**, MP3) | Document | Phrase: exact text, the whole sentence stating the directed fact (**RESOLVED**, MP3) | OBSERVED span in citable text |
+|---|---|---|---|
+| `DOC_003_ESCALATION_RULE` | DOC-003 | `Customers raising three or more tickets within 14 days are escalated to their account owner.` | `[238, 330)` |
+| `DOC_006_TERM_AND_NOTICE` | DOC-006 | `Term: 36 months, renewing annually unless either party gives 90 days' written notice.` | `[153, 238)` |
+| `DOC_009_DEAL_LINKAGE` | DOC-009 | `The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them.` | `[238, 333)` |
+
+The spans were measured from `data/demo/documents.csv` on 2026-09-24 and re-verified on
+2026-09-25, which also found every phrase to be pure ASCII and to occur exactly once
+(§0.6.13.3). They are **test expectations only**, to be re-measured against the database.
+**No offset appears in code** (DIRECTED). §0.6.13.3 is the normative contract for the targets,
+the matching algorithm, the failures and the path the text takes to the narrative.
+
+**Resolution.**
+
+1. **Text.** M4's `citable_text(title, body_text)`, over the row §0.6.5's read returns. A
+   `DocumentCitation` indexes citable text and nothing else (§0.3.10.4).
+2. **Match.** The phrase must occur exactly, case-sensitively, with no normalisation, case
+   folding, whitespace collapsing or regular expression.
+3. **Uniqueness.** **Exactly one occurrence is required.** Zero or more than one raises M4's
+   `CitationResolutionError`, naming the target and the document. There is no substitute span
+   and no whole-document fallback (DIRECTED). This deliberately differs from M4's
+   first-occurrence rule: a link records a mention, and a target asserts one statement. The
+   occurrence test, overlapping occurrences included, is §0.6.13.3's two-`find` algorithm.
+4. **Citation.** `DocumentCitation(document_id, start, start + len(phrase))`, which is then
+   resolved through M4's `resolve_document_citation` (§0.6.9). The resolved text must equal the
+   phrase.
+
+**Applicability, DERIVED.** This follows from §0.6.10's "span text resolved from the payload's
+citations" and from §A22's scope-leakage control. A target is resolved for a brief **if and only
+if its document is named by at least one citation elsewhere in that payload**, in
+`reconciliation` or `document_evidence`. "Named" means a citation `{"kind": "record", "entity":
+"documents", "id": D}` or `{"kind": "document", "document_id": D}` (§0.6.13.3).
+`document_evidence` holds only the assessment's own-stamp links (§0.6.13.1), so a link left by
+an earlier snapshot cannot make a target apply.
+
+- **CUST-007:** DOC-003 and DOC-009 are named by CONF-001's resolution evidence, and DOC-006 (and
+  DOC-009 again) by the customer's derived links. All three targets apply.
+- **CUST-025 and CUST-036:** both are `WATCH`, with no conflict and no derived link (§0.3.8), and
+  Support positions cite only ticket and deal fields (`app/analysts/support_risk.py`). None
+  applies, so no Meridian text can enter their briefs.
+- A target whose document is not cited is neither searched for nor an error.
+
+**This is not a linker.** §A11's ban on substring matching governs customer-name links and is
+untouched. A target is a fixed statement located in one named document, not a relationship.
+
+---
+
+### 0.6.9 D-M7-B9 — production citation resolution: **DIRECTED**
+
+**When and what.** Every citation in a brief's payload is resolved in step 9, before the brief is
+persisted. That covers every `Evidence` citation in `reconciliation` (positions, conflict
+positions, resolution evidence and dissent), in `document_evidence`, in `cited_spans`, and in
+`support_evidence` and `commercial_evidence` (§0.6.7), deduplicated by their canonical wire form. An unresolvable citation makes the brief invalid, and
+the run raises (§A17). Assessments without a brief are not resolved at run time; §A25 test 8
+proves theirs in tests. *DERIVED from §A17, which puts the obligation on the brief generator.*
+
+**Exactly which citations, and when two are one (MP6, §0.6.13.6).**
+
+- **Which:** a brief's citations are every value found under a key named `citation`, at any
+  depth of its payload. Every such value is a `RecordCitation` or `DocumentCitation` projection.
+- **When two are one:** two are the same citation when `canonical_json` of the two values is
+  equal. That string is the "canonical wire form".
+- **Order:** they are resolved in ascending order of that string, so the first failure the
+  run names is deterministic.
+- **The count:** the number resolved is `vs01.brief_generated`'s `citation_count`.
+
+**Record citation.** A record citation resolves **if and only if**:
+
+- a row exists with that `source_id`, with `source_entity` equal to the entity type, in the
+  scope's `source_system`; and
+- the cited field satisfies the NULL rule. A NULL field is **accepted in general**, because M5
+  cites an open ticket's empty `resolved_at` as the ground for "open". The exceptions are the
+  fields whose value the payload states or derives from, which must be non-NULL:
+  - **`documents.body_text`**: a document cited for its text must have text.
+  - **`support_tickets.created_at`**, which `support_evidence` cites: the ticket span is derived
+    from it. If it is NULL, the brief fails rather than inventing the span (OPEN-M7-3's
+    resolution).
+  - **`deals.amount`** and **`deals.currency`**, which `commercial_evidence` cites: the brief
+    states them.
+
+  The last three are DERIVED from the resolutions of OPEN-M7-3 and OPEN-M7-4 ("do not claim a
+  source field exists when it does not"). They apply B9's own principle — text must exist where
+  text is required — to the other values the payload now states.
+
+  **The rule is keyed by `entity.field` alone, wherever the citation occurs** (DR21). The
+  deduplication above carries no payload location, so a location-qualified rule would be
+  ambiguous for a citation that appears in two sections. No reachable citation changes outcome:
+  - M5 cites `created_at` only for visible tickets, whose `created_at` is non-NULL by M5's own
+    rule;
+  - M6 cites `body_text` only for a rule's documents, where this rule already applied;
+  - no M5 or M6 position cites `amount` or `currency`.
+
+This is the committed convention of `_row_exists` in `tests/integration/test_m6_reconciliation.py`,
+made normative. It is **one** semantics, not a second (DIRECTED). M1 already refuses a
+non-citable field at construction.
+
+**Document citation.** M4's `resolve_document_citation`, unchanged.
+
+**Failure.** M4's `CitationResolutionError` for both kinds (DIRECTED).
+
+**Where it runs.** The row check is a plain read in §0.6.5's `citation_reads.py`, and the rule is
+applied in `assessment.py`.
+
+---
+
+### 0.6.10 D-M7-B10 — the narrative: **DIRECTED**
+
+- **Engine:** the standard library's `string.Template`, with **no new dependency**, so
+  `pyproject.toml` is unchanged. Rendering uses `substitute`, never `safe_substitute`, so a
+  missing placeholder fails rather than leaving `$name` in the text. *DERIVED from §0.6.11's "no
+  silent degradation".*
+- **Location and format:** `app/decisions/templates/`, **UTF-8 plain text**. A single file,
+  `brief.txt`, is PROPOSED. `brief.py` reads it read-only, and nothing writes anywhere. The API
+  image installs dependencies before copying the source, then runs `app` from `/app`, into which
+  `app/` is copied whole. The templates therefore ship with the module that reads them, and no
+  packaging change is made.
+- **Inputs:** **only** the hashed payload and the resolved text of its cited spans. This is
+  structural. `brief.py` receives the payload mapping and the span texts, holds no session, and
+  imports only `payload.py` and M1's contract and errors (§0.6.2). A database fact absent from the
+  payload cannot reach the narrative.
+- **Sections:** §A17's eleven, rendered from payload content, and every one has a payload
+  source:
+
+  | Section | Payload source |
+  |---|---|
+  | risk state and why | `band`, `satisfied_rules`, `signals`, and `support_evidence`'s `escalation_window`, `ticket_span` and `derivations` |
+  | evidence | `document_evidence`, `cited_spans`, `support_evidence.tickets` |
+  | commercial context (per currency) | `signals` and `commercial_evidence` |
+  | conflict and how it was resolved; recorded dissent; recommended actions | `reconciliation` |
+  | policy and contract context | `cited_spans`, S14 in `signals` |
+  | chronic backlog | `support_evidence.backlog_ticket_ids` |
+  | escalation path | `support_evidence.escalation_path` |
+
+  The limitations section is fixed template text, not a database fact. **Absence is stated**: a
+  zero S13 renders an explicit "no active project" line. Likewise every `null` or empty payload
+  value a section renders becomes a fixed absence line, and no section is omitted (DR24). Examples
+  are a `null` `ticket_span` or `escalation_window`, an empty `backlog_ticket_ids`, and an empty
+  `cited_spans`, `document_evidence` or `commercial_evidence.deals`.
+- **No derivation in the narrative** (OPEN-M7-2, RESOLVED). `brief.py` renders stated values and
+  stated derivations — counts, contributing ticket ids, the span, category counts — exactly as the
+  payload holds them. It never queries, counts, filters or re-derives a fact after the payload is
+  built. Formatting money and dates is presentation, not derivation.
+- **Escaping:** every quoted span is rendered as `json.dumps(text, ensure_ascii=False)`.
+- **Cap:** **`MAX_QUOTED_SPAN_CHARS = 500`** (DIRECTED). The cap counts characters of the
+  resolved text, before escaping. A longer span renders its first 500 characters, escaped,
+  followed by a fixed truncation marker. The payload's citation still carries the full span. The
+  marker **`" [truncated]"`, appended after the closing quote, is RESOLVED** (MP4). §0.6.13.4 is
+  the normative quoting rule: which strings it applies to, the unit of the cap, and the edge
+  cases (exactly 500, empty, multibyte) and offsets. The three targets are 92, 85 and 95
+  characters long, so the golden brief contains no marker, and truncation is proved on a
+  fixture.
+- **`template_version`:** **`"1"`** (DIRECTED). It is a constant in `brief.py` (location
+  PROPOSED, NM4), bumped on any template change, stored, and never hashed. **"Template" means
+  every fixed string the narrative can contain**, whether it is in `brief.txt` or in `brief.py`
+  (DR23). `string.Template` has no conditionals, so absence lines and list joins are composed in
+  `brief.py`, and the narrative's bytes are a function of the payload, the span texts and
+  `template_version` alone.
+- **Money:** currency, a space, then the amount in comma-grouped fixed-point:
+  `f"{currency} {format(Decimal(amount), ',f')}"`, built from the payload's `money_payload`. The
+  amount is shown exactly as the payload states it, with **no rounding and no padding**, and no
+  locale is consulted. *DERIVED: §A12 forbids restating money.* DEAL-001 renders as
+  `USD 5,361.44`.
+- **Golden file:** **`tests/golden/vs01_cust007_brief.txt`**. Its test verifies:
+  - the exact narrative bytes;
+  - the literal `payload_hash`;
+  - every §A27.3 fact, each with its provenance path (§0.6.7's map) — the 9-day span included,
+    distinct from the 14-day window;
+  - the §A27.5 dissent;
+  - that every citation resolves.
+- **`BriefRenderError`:** a subclass of M1's `IntelligenceError`, raised when a placeholder is
+  missing or a payload value cannot be rendered, and naming it. It was **PROPOSED as
+  "necessary"** in the directive's sense, because a bare `KeyError` names nothing a reader can
+  act on. It is **RESOLVED** (MP5): no existing frozen exception covers a rendering failure. It is
+  the only exception type M7 adds. §0.6.13.5 fixes its module, constructor, and the exact
+  conditions that raise it and those that must not.
+
+---
+
+### 0.6.11 D-M7-B11 — events and failure semantics: **DIRECTED**
+
+**Events.** They are emitted through `app.core.logging.log_event` only, at level **INFO**. The
+level was PROPOSED, because §A21 names none and ingestion's run events are INFO. It is
+**RESOLVED** (MP6). §0.6.13.6 is the normative event contract: level, field order and types,
+cardinality, order, timing, re-runs and logging failure.
+
+| Event | Fields | Emitted | Class |
+|---|---|---|---|
+| `vs01.scope_resolved` | `source_system`, `as_of`, `layer1_fingerprint`, `as_of_source` | once per run | DIRECTED event; fields DERIVED from §A21's "as_of, fingerprint, resolution path" |
+| `vs01.links_derived` | `source_system`, `layer1_fingerprint`, `linker_version`, `inserted` (the return value of `derive_and_persist`) | once per run | DIRECTED event; fields **RESOLVED (MP6)**, since §A21 names none |
+| `vs01.conflict_detected` | `customer`, `object_ref`, `policy_id`, `policy_version` | once per conflict resolution | DIRECTED |
+| `vs01.conflict_resolved` | `customer`, `object_ref`, `policy_id`, `policy_version`, `resolved_action` | immediately after its `conflict_detected` | DIRECTED |
+| `vs01.brief_generated` | `customer`, `payload_hash`, `citation_count`, `created` | once per brief | DIRECTED; **`citation_count` = the number of distinct citations the brief resolved (§0.6.9), RESOLVED (MP6)** |
+
+- **Order**, DERIVED from "run order":
+  1. `scope_resolved`
+  2. `links_derived`
+  3. then, for each customer in `order_reconciliations()` order: its resolutions' event pairs in
+     resolution order, then its `brief_generated`.
+- **Timing:** after every write of steps 2–10 has succeeded, and before `run_assessment` returns.
+  The events are emitted on every run, re-runs included: `created=False` shows the no-op. A run
+  that raises emits no event at all (§0.6.13.6).
+- **Not emitted:**
+  - `vs01.signals_computed` and `vs01.band_assigned` stay **deferred**. No frozen contract
+    requires them, and Part B M3's deferral stands.
+  - `vs01.decision_recorded` is M8's.
+  - No other event type is introduced.
+- **Never logged:** document text, email addresses, money amounts, timestamps, or any payload
+  value other than the identifiers, versions, counts, flags and hash in the table above.
+  (2026-09-24's "payload content beyond the hash" overlooked that `customer`, `object_ref`,
+  `policy_id` and `resolved_action` are themselves identifiers taken from the payload.) Every
+  field name passes G2's credential-name check.
+- **No counter.** §A21 reads "`log_event` + existing counters", but every existing counter
+  (`app/observability/metrics.py`) counts ingestion runs, batches and connector failures. None
+  describes an assessment run, so M7 increments none and adds none. *DERIVED from "log_event
+  exclusively".*
+- **Logging is not transactional.** A line may describe a run the caller then rolls back (§A29).
+
+**Failure semantics.** Nothing is caught, retried, wrapped or degraded, except the rendering
+failures §0.6.13.5 lists, which become `BriefRenderError` (§0.6.10; MP5).
+
+| Failure | Result | Durable after the caller rolls back? | Source |
+|---|---|---|---|
+| Fingerprint mismatch (pinned run) | `FingerprintMismatchError`, before derivation | nothing | M1; §A27.1b |
+| No `as_of` and no ticket in scope | `ScopeResolutionError` | nothing | M1 |
+| Invalid rules, policy or catalogue | `IntelligenceConfigError` / `DecisionConfigError` at load | nothing | §A23; §0.5.2 |
+| Link derivation | `UnciteableLinkError` or any M4 exception; aborts before any context | nothing | §0.4.3 |
+| Unknown named customer | M2 `UnknownCustomerError` | nothing | §0.6.3 step 3 |
+| Unresolvable or multi-way conflict | `UnresolvableConflictError` | nothing | §0.5.5; §A29 |
+| Mismatched contexts, a duplicate customer, mixed policy versions, catalogue drift | `ReconciliationError` | nothing | §0.5.2; §0.5.7; §0.5.9 |
+| Payload serialisation (a non-finite `Decimal`, NaN) | `ContractViolationError` / `ValueError` from M1's serialisers | nothing | M1 |
+| A missing target, an ambiguous target, an unresolvable citation | `CitationResolutionError` | nothing | §0.6.8; §0.6.9; §0.6.13.3 |
+| A visible ticket missing from the `created_at` read, or with a NULL `created_at` | `CitationResolutionError`; the brief fails rather than inventing the span | nothing | §0.6.7; §0.6.14 OPEN-M7-3; §0.6.13.2 |
+| A `created_at` that M1's `utc_date` refuses (a naive `datetime`; unreachable through the timezone-aware column) | `ContractViolationError`, unchanged | nothing | M1; §0.6.13.2 |
+| A derivation disagreeing with its context value, or `ticket_count` ≠ `escalation_window.count` | `ContractViolationError` | nothing | §0.6.7; §0.6.13.1; §0.6.13.2 |
+| A rendering failure: unreadable template, failed substitution, a payload value the narrative cannot render, a span-text mapping that does not match the payload's targets | `BriefRenderError` (RESOLVED, MP5) | nothing | §0.6.10; §0.6.13.5 |
+| Repository or database error | propagates unchanged | nothing | §0.3.10.3 conventions |
+| Identical re-run, or a concurrent identical run | not a failure: the second write becomes a read, and 0 rows are inserted | — | §A23; §0.6.6 |
+
+Every failure leaves nothing durable, so a retry is always safe. A deterministic failure, such as
+an unresolvable conflict or a broken configuration, fails identically until its cause is changed.
+
+---
+
+### 0.6.12 D-M7-B12 — fixtures: **DIRECTED**
+
+- **M7's tests mutate only the isolated test database.** They never modify `data/`, the committed
+  demo fixtures, or any M1–M6 production fixture.
+- **They may:**
+  - insert one synthetic ticket, for §A25 test 13;
+  - delete DOC-005, for test 4;
+  - reuse M6's DEAL-037 edit, for the rollback case;
+  - build local unit fixtures for M7's own behaviour, such as a two-currency brief, an over-cap
+    span, a missing or duplicated phrase, an unresolvable citation, a ticket with no
+    `created_at`, and a source-fact set that disagrees with its context value.
+- **M9 remains the owner of §A26's canonical fixture package.** M7 does not redefine it.
+
+---
+
+### 0.6.13 Details this section fixes that D-M7-B1…B12 do not — derived, and resolved
+
+**The rule, directed 2026-09-24.**
+
+- **DERIVED** items are accepted without another owner decision, provided each is mechanically
+  implied by an authoritative D-M7-B1…B12 decision, a §0.6.14 resolution, or a frozen M1–M6
+  contract. A DERIVED item may still be challenged.
+- **PROPOSED items that materially change** data ownership, persistence semantics, payload
+  contents, rendering semantics or externally observable behaviour are **not accepted silently**.
+  They are listed separately below, and **each needs review before implementation**.
+- **Non-material PROPOSED items** — names and orderings that change none of those five things —
+  are recorded here, and stand unless the reviewer replaces them.
+
+**The resolution, directed 2026-09-25.** The owner directed that MP1–MP6 be finalised with exact
+normative wording. **All six are RESOLVED.**
+
+- **Where the normative text lives.** §0.6.13.1–§0.6.13.6 hold it. It prevails wherever an
+  earlier subsection of §0.6, or Part A, is less exact, and each of those places now points
+  here.
+- **How each element is classified.** Every element of a resolution carries one of four labels:
+  - **DIRECTED**: decided by the owner, in D-M7-B1…B12, §0.6.14, or the 2026-09-25 answer
+    recorded in §0.6.13.1;
+  - **DERIVED**: mechanically implied by those, by a frozen M1–M6 contract, or by an earlier
+    plan section;
+  - **OBSERVED**: measured from the committed dataset;
+  - **AUTHORED**: a genuine choice made while finalising (§0.3's meaning).
+- **What to review first.** §0.6.13.7 lists every AUTHORED element.
+
+**DERIVED — accepted.**
+
+| # | Detail | Where | Implied by |
+|---|---|---|---|
+| DR1 | The directive's field lists read as required, not exhaustive: §A18's `risk_assessments.band` and `risk_briefs.decision_payload` are kept | §0.6.5 | §A18, §A19; §0.6.6's hash re-verification |
+| DR2 | `customer_id` is nullable, with `ondelete="SET NULL"` | §0.6.5 | D-M7-B5's "non-destructive FK philosophy"; `deal.py:60` |
+| DR3 | Column types and sizes, and the constraint and index names | §0.6.5 | Layer 1's and M4's conventions; `NAMING_CONVENTION` |
+| DR4 | `as_of: date \| None`, as a required keyword | §0.6.3 | §A7; `resolve_scope` |
+| DR5 | The per-module clock, `datetime` and `uuid` rules | §0.6.2 | §A24; M1's scans |
+| DR6 | T-M7-1 (d)'s separate constant, and (e)'s importing of the M7 submodules before comparing | §0.6.1 | T-M7-1 (c) together with "unchanged" and "equally strict" |
+| DR7 | Target applicability: a target's document must be cited elsewhere in the payload | §0.6.8 | D-M7-B10's "resolved from the payload's citations"; §A22 |
+| DR8 | Run-time resolution for briefs only, deduplicated by wire form | §0.6.9 | §A17 |
+| DR9 | `substitute`, not `safe_substitute` | §0.6.10 | D-M7-B11: no silent degradation |
+| DR10 | Money shown without rounding or padding | §0.6.10 | §A12; D-M7-B10's "fixed-point" |
+| DR11 | The `scope_resolved` fields; event order; emission on re-runs | §0.6.11 | §A21; "run-order deterministic" |
+| DR12 | A named customer outside the scope raises M2's `UnknownCustomerError` | §0.6.3 | D-M7-B11: propagate |
+| DR13 | No counter is incremented or added | §0.6.11 | D-M7-B11: "`log_event` exclusively" |
+| DR14 | Derivation values are the context's; a disagreeing derivation raises `ContractViolationError` | §0.6.7 | D-M7-B4's authority rule; OPEN-M7-4: "do not claim a source that does not produce the fact" |
+| DR15 | `ticket_span_days = (last_ticket_date − first_ticket_date).days` | §0.6.7 | OPEN-M7-3: 08-18 to 08-27 must give 9 (an inclusive count gives 10) |
+| DR16 | `ticket_count` must equal `escalation_window.count` | §0.6.7 | the span must describe the burst the window counts; OPEN-M7-3 |
+| DR17 | Non-NULL `created_at`, `amount` and `currency` where the payload uses or states them | §0.6.9 | OPEN-M7-3 ("fail rather than invent"); OPEN-M7-4 |
+| DR18 | `payload.py` imports no M2 or M3 module and receives their facts as plain values | §0.6.2 | D-M7-B2's purity and direction |
+| DR19 | `escalation_path` is M2's projection unchanged, status-based open tickets included; recorded in §A29 | §0.6.7 | D-M7-B4 names `escalation_path()` |
+| DR20 | Lookback bounds from M1's `closed_window(as_of, lookback_days)`; ticket dates via M1's `utc_date` | §0.6.7 | M3's own S10 rule; §A24's date rule |
+| DR21 | *Added 2026-09-25.* The NULL rule is keyed by `entity.field` alone: `documents.body_text`, `support_tickets.created_at`, `deals.amount` and `deals.currency` must be non-NULL wherever cited, and every other citable field may be NULL | §0.6.9 | §0.6.9's deduplication by wire form, which carries no payload location. No reachable citation changes outcome (§0.6.9) |
+| DR22 | *Added 2026-09-25.* `payload.py` states M3's `'high'` literal itself, and a test pins it to `app.intelligence.signals.HIGH_PRIORITY` | §0.6.2; §0.6.13.1; §0.6.13.2 | §0.6.2: `payload.py` may not import M3; §0.6.7: no second signal semantics |
+| DR23 | *Added 2026-09-25.* `template_version` covers every fixed string the narrative can contain, in `brief.txt` or in `brief.py` | §0.6.10 | `string.Template` has no conditionals, so absence lines and joins live in `brief.py`; §0.6.6's "template only" row needs the version to move with them |
+| DR24 | *Added 2026-09-25.* Every `null` or empty payload value a section renders becomes a fixed absence line; no section is omitted | §0.6.10 | §A17: "Absence is stated, never omitted" |
+
+**PROPOSED — non-material (names only).**
+
+| # | Detail | Where |
+|---|---|---|
+| NM1 | Module names: `risk_assessment.py`, `risk_position.py`, `risk_brief.py`, `risk_assessments.py`, `citation_reads.py` | §0.6.5 |
+| NM2 | The result type's name, `AssessmentResult` (its fields are DIRECTED) | §0.6.3 |
+| ~~NM3~~ | ~~Orders: `document_evidence` by `(document id, basis)`; `cited_spans` by target name; `tickets` and `deals` by id; `derivations` in the listed order~~ **Moved into MP1 on 2026-09-25.** Every one of these orders is hashed, so changing one changes `payload_hash`, which is externally observable: by this section's own rule, the orders were material. They are now part of §0.6.13.1, unchanged except that `document_evidence`'s key is made total there | §0.6.13.1 |
+| NM4 | Template file `brief.txt`; the `TEMPLATE_VERSION` constant in `brief.py` | §0.6.10 |
+
+**PROPOSED — MATERIAL, as listed for review on 2026-09-24.** *Superseded by the resolutions
+that follow this table, and kept as the record of what was reviewed.*
+
+| # | Detail | Where | Why it is material |
+|---|---|---|---|
+| **MP1** | **Representation of the new payload sections**: the keys `support_evidence` and `commercial_evidence`; their entry shapes; each ticket's evidence fields (`created_at`, `priority`, `category`, `resolved_at`) and each deal's (`is_active`, `stage`, `probability`, `amount`, `currency`); the derivation records (`fact`, `value`, `rule`, `ticket_ids`, and `lookback` and `category_counts` for S10), whose `rule` texts are hashed; the `cited_spans` entry shape `{"target", "citation"}` | §0.6.7 | Payload contents, and therefore every `payload_hash` and every approval |
+| **MP2** | **The tickets that define `ticket_span`**: those whose `created_date` lies in `[escalation_window.start, escalation_window.end]`. The alternatives — every ticket in the lookback (S3's set), or every visible ticket — agree for CUST-007 and differ for other data | §0.6.7 | Payload contents; which facts a brief states |
+| **MP3** | **The target names and exact phrase text**, each the whole sentence stating the directed fact | §0.6.8 | Rendering, and the hashed span |
+| **MP4** | **Capping before escaping, and the `" [truncated]"` marker after the closing quote** | §0.6.10 | Rendering |
+| **MP5** | **`BriefRenderError(IntelligenceError)`** as the one new exception type | §0.6.10 | Externally observable behaviour |
+| **MP6** | **Event level INFO; the `links_derived` fields; `citation_count` defined as distinct citations resolved** | §0.6.11 | Externally observable behaviour: log output |
+
+**MATERIAL — RESOLVED, 2026-09-25.**
+
+| # | Resolution | Change from the proposal | Normative text |
+|---|---|---|---|
+| **MP1** | **ACCEPTED, and made exact**: every key, nested key, JSON type and list order, the rule texts, the value domain and the hash steps | Four changes: **(a)** NM3's orders folded in; **(b)** `document_evidence` restricted to the assessment's own stamps — **DIRECTED 2026-09-25**, resolving a contradiction with §0.3.4; **(c)** S10's `ticket_ids` are every ticket it counts, not only the winning category's; **(d)** the rule texts are fixed ASCII strings, and a change to them requires a new `payload_version` | §0.6.13.1 |
+| **MP2** | **ACCEPTED as proposed**: `ticket_span` counts M3's own escalation-window population | The populations of every other ticket fact, and every edge case, are now stated | §0.6.13.2 |
+| **MP3** | **ACCEPTED as proposed**: names and whole-sentence phrases | Phrases re-verified against the committed documents; the occurrence test, the applicability test and the text's path to the narrative made exact | §0.6.13.3 |
+| **MP4** | **ACCEPTED as proposed**: cap before escaping, `" [truncated]"` after the closing quote | Verified consistent with §A22; which strings it covers, the unit of the cap and every edge case stated | §0.6.13.4 |
+| **MP5** | **ACCEPTED**: `BriefRenderError(IntelligenceError)`, the only new exception type | The existing hierarchy verified to have no equivalent; scope limited to four rendering conditions; constructor, module and propagation fixed | §0.6.13.5 |
+| **MP6** | **ACCEPTED**: level INFO; `links_derived`'s four fields; `citation_count` as distinct citations | Field order and types, the exact citation set, failed-run and logging-failure behaviour stated | §0.6.13.6 |
+
+#### 0.6.13.1 MP1 — the decision payload, exactly: **RESOLVED**
+
+**The contradiction found while finalising, and the owner's answer (DIRECTED, 2026-09-25).**
+
+- **What §0.6.7 said.** `document_evidence` held "every `LinkedDocument` that `documents_for()`
+  returns".
+- **What the frozen code does.** `documents_for()` returns every link ever persisted for the
+  customer, under every fingerprint and every linker version (`app/evidence/documents.py`;
+  `read_links` in `app/persistence/repositories/document_links.py` filters on neither stamp).
+- **Why that contradicted the plan.** §0.3.4 states that "the rows a given assessment used are
+  exactly the rows carrying its fingerprint and linker version", and §A24 makes an assessment a
+  pure function of its six inputs.
+- **What would have gone wrong.**
+  - After any snapshot change, CUST-007's payload would have carried twelve links instead of
+    six.
+  - The same scope would have hashed differently depending on the database's derivation
+    history.
+  - `(document id, basis)` would have stopped being a total order, so row order among ties could
+    have changed a hash.
+- **The resolution.** `document_evidence` carries only the links whose `layer1_fingerprint`
+  equals `scope.layer1_fingerprint` and whose `linker_version` equals `config.linker_version`.
+  Step 2's `derive_and_persist` runs first in the same transaction, so every such link exists
+  when it is read.
+- **Left unchanged.** Frozen S14 still reads every persisted link. M7 cannot change it, adds no
+  check for it, and records it in §A29.
+
+**1. Value domain (DERIVED).**
+
+- **Allowed types.** The payload is built from Python `dict` (every key a `str`), `list`, `str`,
+  `int`, `bool` and `None` only.
+- **Conversions.** Every tuple becomes a `list`. Every decimal is `decimal_text` output. Every
+  date is `date.isoformat()` text (`YYYY-MM-DD`). Every enum is its `str()` value.
+- **What fails loudly.** `canonical_json` raises `TypeError` on a `Decimal`, `date`, `datetime`
+  or `UUID`, and `ValueError` on a non-finite float, and nothing catches either (§0.6.11).
+- **Floats.** A finite `float` would serialise, so floats are excluded by construction instead:
+  no M1–M6 projection emits one, M7 creates none, and a test asserts that none occurs anywhere
+  in the payload.
+
+**2. Top level (keys DIRECTED; sources DERIVED).** Exactly these twelve keys — no other key,
+and none ever omitted:
+
+| Key | JSON type | Value |
+|---|---|---|
+| `payload_version` | integer | `1` |
+| `scope` | object | exactly `{"source_system": scope.source_system, "as_of": scope.as_of.isoformat(), "layer1_fingerprint": scope.layer1_fingerprint}` |
+| `versions` | object | exactly `{"rules": config.rules_version, "linker": config.linker_version, "policy": reconciliation.policy_version}`; `rules` and `policy` are integers, `linker` a string |
+| `customer` | object | `reconciliation.customer.to_payload()`, i.e. `{"entity": "customers", "id": <customer source_id>}` |
+| `band` | string | `contexts.commercial.band`, a `RiskBand` value; always `WATCH` or above in a brief |
+| `satisfied_rules` | array of string | `list(contexts.commercial.satisfied_rules)`, in that order, which is the band table's |
+| `signals` | object | `contexts.commercial.signals.to_payload()` (item 3) |
+| `reconciliation` | object | `reconciliation.to_payload()` (item 3) |
+| `document_evidence` | array of object | item 4 |
+| `cited_spans` | array of object | item 5; §0.6.13.3 |
+| `support_evidence` | object | item 6; §0.6.13.2 |
+| `commercial_evidence` | object | item 7 |
+
+**3. Frozen projections are embedded as they emit (DERIVED).** The following are the output of
+a frozen M1–M6 `to_payload()`:
+- `customer`, `signals` and `reconciliation`;
+- each `document_evidence` entry;
+- `escalation_window` and `escalation_path`;
+- each ticket's five `TicketFact.to_payload()` fields and each deal's four
+  `DealSignal.to_payload()` fields.
+
+M7 converts tuples to lists and adds, removes, renames and reorders nothing inside them. Their
+keys at `6919fe5` are listed below. M7's tests pin these key sets, so a drifted frozen
+projection fails a test instead of silently changing every hash.
+
+- `signals` (`SignalSet.to_payload()`, 17 keys): `open_ticket_count`, `open_high_priority_count`,
+  `high_priority_total`, `tickets_in_lookback`, `max_tickets_in_14d_window`, `sla_breach_count`,
+  `open_sla_breach_high_count`, `stale_open_ticket_count`, `active_project_count`,
+  `policy_escalation_state`, `days_since_last_ticket`, `dominant_ticket_category`,
+  `deal_under_pressure`, `active_deal_count`, `active_deals` (each `DealSignal.to_payload()`),
+  `exposure_by_currency` (currency → `money_payload`), `contract_document_ids`.
+- `reconciliation` (`Reconciliation.to_payload()`, 9 keys): `customer`, `policy_version`,
+  `ordered_positions`, `conflicts`, `resolutions`, `resolved_positions`, `dissent`, `worthiness`,
+  `ranking_key`.
+  - A position is `{function, stance, proposed_action, object_ref, rationale, evidence}`.
+  - A conflict is `{object_ref, positions}`.
+  - A resolution is `{policy_id, conflict, resolved_action, prevailing, dissent, rationale,
+    evidence}`.
+  - `worthiness` is `{band, active_deal_count, active_project_count, executive_worthy}`.
+  - `ranking_key` is `[int, int, int, str]`.
+- `Evidence.to_payload()`: `{kind, citation}`, plus `rule_id` **only** when it is not `None`.
+  This is the one place a key is omitted, and it is frozen M1 behaviour.
+- Citations: `RecordCitation` → `{"kind": "record", "entity", "id", "field"}`;
+  `DocumentCitation` → `{"kind": "document", "document_id", "start", "end"}`.
+
+**4. `document_evidence` (projection DERIVED; stamp filter DIRECTED 2026-09-25; order DERIVED).**
+
+- **Entries.** One per `LinkedDocument` that `documents_for(session, scope, customer)` returns
+  and whose link carries the assessment's own `layer1_fingerprint` and `linker_version`.
+- **Shape.** `linked.link.to_payload()`: exactly `{source, target, basis, edge_basis,
+  confidence, matched_token, evidence, source_system, layer1_fingerprint, linker_version}`.
+  `document_type` is not carried.
+- **Order.** Ascending by `(link.source.source_id, str(link.basis))`, compared as Python strings,
+  that is, by code point.
+- **Why the order is total.** With the customer and both stamps fixed, that pair *is* the link
+  table's identity key (§0.3.4), so no two entries tie.
+- **Empty** is `[]`.
+- **Expected for CUST-007 (OBSERVED, §0.3.8).** At `ACCEPTANCE_AS_OF` on a freshly built database,
+  six entries: DOC-005, DOC-006, DOC-009, each `EXACT_NAME` then `ID_TOKEN`.
+
+**5. `cited_spans` (shape DERIVED from D-M7-B8; order formerly NM3).**
+
+- **Entries.** One per applicable target (§0.6.13.3), exactly `{"target": <name>, "citation":
+  DocumentCitation.to_payload()}`.
+- **No phrase text.** The target name stands for the phrase, and the target table is part of
+  `payload_version` 1 (item 12).
+- **Order.** Ascending by `target`.
+- **Empty.** `[]` when no target applies.
+
+**6. `support_evidence` (content DIRECTED; representation as marked).** Exactly six keys:
+
+```
+"support_evidence": {
+  "tickets":            [TICKET, ...],
+  "escalation_window":  {"start": "YYYY-MM-DD", "end": "YYYY-MM-DD", "count": int} | null,
+  "ticket_span":        SPAN | null,
+  "backlog_ticket_ids": [str, ...],
+  "escalation_path":    {EscalationPath.to_payload()},
+  "derivations":        [DERIVATION, DERIVATION, DERIVATION, DERIVATION, DERIVATION]
+}
+```
+
+- **`tickets`**: one TICKET per `TicketFact` in `contexts.support.tickets`, ascending by `id`. A
+  TICKET has exactly seven keys:
+  - the five of `TicketFact.to_payload()`: `id`, `priority` (string or null), `category` (string
+    or null), `is_open`, `breaches_sla`;
+  - `created_date`: `utc_date(created_at).isoformat()`, from §0.6.5's authorised read;
+  - `evidence`: four `Evidence(CANONICAL_FACT, RecordCitation("support_tickets", id,
+    field)).to_payload()`, for `field` in exactly the order `created_at`, `priority`,
+    `category`, `resolved_at`.
+- **`escalation_window`**: `CustomerSignals.escalation_window.to_payload()`, or `null` when M3
+  reports no window.
+- **`ticket_span`**: a SPAN is exactly `{"ticket_ids": [str, ...], "ticket_count": int,
+  "first_ticket_date": "YYYY-MM-DD", "last_ticket_date": "YYYY-MM-DD", "ticket_span_days": int,
+  "rule": <text>}`, or `null`. §0.6.13.2 fixes its population and arithmetic.
+- **`backlog_ticket_ids`**: `list(CustomerSignals.backlog_ticket_ids)`, in M3's order, which is
+  ascending by ticket id.
+- **`escalation_path`**: `escalation_path(session, scope, customer).to_payload()`, exactly its
+  seven keys `customer`, `account_owner`, `account_owner_manager`, `open_tickets`, `assignees`,
+  `assignee_managers` and `edges`, in M2's orders.
+- **`derivations`**: exactly five DERIVATIONs, in this order: `open_ticket_count`,
+  `open_high_priority_count`, `high_priority_total`, `open_sla_breach_high_count`,
+  `dominant_ticket_category`.
+  - A count DERIVATION is exactly `{"fact": <name>, "value": int, "rule": <text>, "ticket_ids":
+    [str, ...]}`.
+  - The S10 DERIVATION is exactly `{"fact": "dominant_ticket_category", "value": str | null,
+    "rule": <text>, "lookback": {"start": "YYYY-MM-DD", "end": "YYYY-MM-DD"}, "category_counts":
+    {<category>: int, ...}, "ticket_ids": [str, ...]}`.
+
+**The rules for each derivation's fields:**
+
+- **`value`** is the same-named field of `contexts.commercial.signals` (§0.6.4).
+- **`ticket_ids`** are the `tickets` entries the rule **counts**, ascending by id.
+  **Revision (AUTHORED).** For S10 that is every ticket whose category is counted, not only the
+  winning category's. `category_counts` states every category's count, and each count needs its
+  tickets. For CUST-007 it is all five tickets, not TKT-073, TKT-075 and TKT-080 alone.
+- **`lookback`** is `closed_window(scope.as_of, config.lookback_days)`, each end `isoformat()`.
+- **`category_counts`** has one entry per category with at least one counted ticket, and no zero
+  entries. It is `{}` when no ticket is counted.
+- **Checks (DERIVED, DR14).** Any failure below raises `ContractViolationError`:
+  - for every count, `value == len(ticket_ids)`;
+  - for S10, `sum(category_counts.values()) == len(ticket_ids)`;
+  - for S10, the recomputed winner equals `value`, which is `null` exactly when
+    `category_counts` is empty.
+
+**Rule texts (AUTHORED).** Each `rule` is exactly the string below.
+- **Form.** Every string is ASCII, written over the payload's own field names, and hashed.
+- **Where they live.** They are constants in `payload.py`.
+- **`'high'`** is M3's `HIGH_PRIORITY`, compared exactly and case-sensitively (DR22).
+
+| Record | `rule`, byte for byte |
+|---|---|
+| `open_ticket_count` | `count of tickets where is_open` |
+| `open_high_priority_count` | `count of tickets where is_open and priority == 'high'` |
+| `high_priority_total` | `count of tickets where priority == 'high'` |
+| `open_sla_breach_high_count` | `count of tickets where is_open and priority == 'high' and breaches_sla` |
+| `dominant_ticket_category` | `most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order` |
+| `ticket_span` | `tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days` |
+
+**7. `commercial_evidence` (content DIRECTED; representation AUTHORED at proposal, now
+accepted).** Exactly one key:
+
+```
+"commercial_evidence": {"deals": [DEAL, ...]}
+```
+
+- **Entries.** One DEAL per `DealSignal` in `contexts.commercial.signals.active_deals`.
+- **Order.** Ascending by `id`.
+- **Shape.** Exactly five keys:
+  - the four of `DealSignal.to_payload()`: `id`, `stage`, `probability` (decimal text) and
+    `amount` (`{"amount": <decimal text>, "currency": <ISO code>}`);
+  - `evidence`: five `Evidence(CANONICAL_FACT, RecordCitation("deals", id,
+    field)).to_payload()`, for `field` in exactly the order `is_active`, `stage`, `probability`,
+    `amount`, `currency`.
+- **Empty.** `[]` when the customer has no active deal.
+
+**8. Absence and emptiness (DERIVED).**
+
+- **Keys.** M7 omits no key it defines.
+- **`null`.** An absent value is JSON `null`, and only where item 2, 6 or 7 allows it:
+  `escalation_window`, `ticket_span`, a ticket's `priority` or `category`, and the S10 `value`.
+  The frozen projections' own nulls are emitted as they are.
+- **Empty collections.** An empty collection is `[]` or `{}`, never `null`.
+- **No placeholders.** An absence is never written as `""` or `0`.
+
+**9. Enums, decimals and money (DERIVED).**
+
+- **Enums.** Every enum value is its `str()` value. The frozen projections emit them
+  (`function`, `stance`, `proposed_action`, `kind`, `basis`, `edge_basis`, `confidence`,
+  `resolved_action`, `worthiness.band`, an edge's `edge`). M7 writes only `band`, which it copies
+  from the context as a string.
+- **Decimals.** Every decimal is `decimal_text` output. M7 creates no decimal of its own.
+- **Money.** Every monetary value is `money_payload`'s `{"amount", "currency"}`. DEAL-001, as
+  OBSERVED, is `"probability": "90"` and `"amount": {"amount": "5361.44", "currency": "USD"}`.
+
+**10. Identifiers (DERIVED).**
+
+- **Excluded.** No database UUID, no `risk_*` id, no `customer_id` column value and no run id is
+  in the payload. Every identifier is a Layer 1 `source_id` or a configuration id.
+- **Included.** `as_of`, `layer1_fingerprint` and `source_system` are in `scope`. `source_system`
+  and `layer1_fingerprint` also appear in every `document_evidence` entry, and `source_system`
+  in every `escalation_path` edge, as the frozen projections emit them.
+
+**11. Canonical form and hash (DIRECTED; the steps stated exactly).**
+
+1. `text = canonical_json(payload)`: M1's function, unchanged, which is `json.dumps(payload,
+   sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)`.
+   - Every object's keys are sorted, at every depth, by Python string order.
+   - Every array keeps the order stated above and is never re-sorted.
+   - Non-ASCII characters are written as themselves.
+2. `payload_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()`: 64 lowercase hex
+   characters.
+3. The payload is stored as `risk_briefs.decision_payload` and the digest as `payload_hash`.
+   Re-verification (§0.6.6) applies steps 1–2 to the stored JSONB read back.
+
+**12. Version (value DIRECTED; bump rule AUTHORED).** `payload_version` is `1`.
+- **What forces version 2.** Any change to this subsection: a key, a shape, an order, a rule
+  text, or a target's name, document or phrase (§0.6.13.3).
+- **Frozen projections.** They can change only through an M1–M6 change, which is outside M7.
+
+#### 0.6.13.2 MP2 — which tickets each ticket fact counts: **RESOLVED**
+
+**The `ticket_span` selection (ACCEPTED as proposed; DERIVED from frozen M3).** `ticket_span`
+counts the `tickets` entries whose `created_date` `d` satisfies `escalation_window.start <= d <=
+escalation_window.end`. That is **M3's own window population**, not a second one:
+
+- M3's `max_window` counts, within `[start, end]`, the lookback-restricted creation dates of the
+  tickets `compute_signals` sees (`app/intelligence/windows.py`, `sliding_windows`).
+- Every window is anchored on a date inside the lookback and ends no later than `as_of`, so
+  `[start, end]` lies wholly inside the lookback, and the lookback restriction removes nothing
+  from it.
+- The tickets `compute_signals` sees are exactly `contexts.support.tickets`. Both are M2's
+  `neighbourhood` tickets minus those with a NULL `created_at` or created after `as_of` (M3
+  `_tickets`, M5 `ticket_facts`; §0.4.2 pins the two).
+- So the selected set has `escalation_window.count` members by construction. DR16's check can
+  fail only if the database changed between the two reads.
+
+**Arithmetic (DERIVED; DR15, DR16).**
+
+- `ticket_ids`: the selected ids, ascending.
+- `ticket_count = len(ticket_ids)`. It must equal `escalation_window.count`, or
+  `ContractViolationError` is raised.
+- `first_ticket_date` and `last_ticket_date`: the smallest and largest `created_date` of the
+  selected tickets, as `YYYY-MM-DD`.
+- **`ticket_span_days = (last_ticket_date - first_ticket_date).days`**, with ASCII `-` as in the
+  rule text. This is the number of days elapsed between two dates, not an inclusive count of
+  calendar dates: 08-18 to 08-27 is **9**, never 10.
+- `rule`: §0.6.13.1's text.
+
+**Every ticket fact's population (DERIVED from M3's definitions).** A ticket is *visible*
+exactly as M3 and M5 define it: in M2's neighbourhood, with a non-NULL `created_at` on or before
+`as_of`. `tickets` is the visible tickets.
+
+| Fact | Tickets counted | Frozen source |
+|---|---|---|
+| `ticket_count`, `first_ticket_date`, `last_ticket_date`, `ticket_span_days` | `tickets` with `escalation_window.start <= created_date <= escalation_window.end` | M3 `max_window` |
+| `open_ticket_count` (S1) | `tickets` with `is_open` | M3 `_assemble`: over every visible ticket |
+| `open_high_priority_count` (S2) | `tickets` with `is_open and priority == 'high'` | same |
+| `high_priority_total` (S2b) | `tickets` with `priority == 'high'`: **not** limited to the window or the lookback | same |
+| `open_sla_breach_high_count` (S8) | `tickets` with `is_open and priority == 'high' and breaches_sla` | same |
+| `dominant_ticket_category` (S10) | `tickets` with a non-empty `category` and `lookback.start <= created_date <= lookback.end` | M3 `_dominant_category` |
+
+**Edge cases (DERIVED; OBSERVED where marked).**
+
+| Case | Result |
+|---|---|
+| No visible ticket | `tickets` is `[]`; `escalation_window` and `ticket_span` are `null`; every count is `0` with `ticket_ids` `[]`; S10's `value` is `null`, `category_counts` `{}` and `ticket_ids` `[]`. Unreachable in a brief: every band rule above `NONE` needs a ticket |
+| Visible tickets, none in the lookback | `escalation_window` is `null`, so `ticket_span` is `null`: no burst is stated, and none is invented. The narrative states the absence (DR24) |
+| One ticket in the window | `ticket_count` 1, `first_ticket_date == last_ticket_date`, `ticket_span_days` 0. OBSERVED at `ACCEPTANCE_AS_OF`: CUST-025 (TKT-063, 2026-07-10) and CUST-036 (TKT-078, 2026-08-24) |
+| Several tickets with one `created_at`, or one UTC date | Each counts once, and ids stay ascending. A shared date is simply both the first and the last date where that applies |
+| A visible ticket the authorised read does not return, or returns with a NULL `created_at` | `CitationResolutionError` naming the ticket: the brief fails rather than inventing the span (OPEN-M7-3) |
+| A `created_at` that `utc_date` refuses, i.e. a naive `datetime` | M1's `ContractViolationError`, propagated unchanged. Unreachable through the ORM, whose column is `DateTime(timezone=True)`. `assessment.py` adds no type check of its own |
+| A customer ticket M3 and M5 exclude: NULL `created_at`, or created after `as_of` | Not visible, so absent from `tickets` and from every fact. This is M3's rule and §0.2.2's recorded gap, not a brief failure: the read is given only visible ids (§0.6.5) |
+| A visible ticket outside the window | Listed in `tickets` with its own date and citations. It is absent from `ticket_span` and cannot move `first_ticket_date`, `last_ticket_date` or `ticket_span_days` |
+| `ticket_count` ≠ `escalation_window.count` | `ContractViolationError` (DR16) |
+
+**The window is never the span.** The window is carried beside the span and is never substituted
+for it. CUST-007's window is `[2026-08-18, 2026-08-31]`: 14 dates, count 5. Its span is 5
+tickets from 2026-08-18 to 2026-08-27: **9** days.
+
+#### 0.6.13.3 MP3 — the three cited-span targets: **RESOLVED**
+
+**The targets (names and phrases ACCEPTED as proposed).**
+
+| Target | Document | Phrase — exact, ASCII, one whole sentence | Length | OBSERVED span |
+|---|---|---|---|---|
+| `DOC_003_ESCALATION_RULE` | DOC-003 | `Customers raising three or more tickets within 14 days are escalated to their account owner.` | 92 | `[238, 330)` |
+| `DOC_006_TERM_AND_NOTICE` | DOC-006 | `Term: 36 months, renewing annually unless either party gives 90 days' written notice.` | 85 | `[153, 238)` |
+| `DOC_009_DEAL_LINKAGE` | DOC-009 | `The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them.` | 95 | `[238, 333)` |
+
+**Verified against the committed documents (OBSERVED, 2026-09-25).** The phrases are supported
+by the repository, and none was invented.
+
+- **How the text was rebuilt.** The citable text `title + "\n" + body_text` of each document was
+  rebuilt from `data/demo/documents.csv` exactly as Layer 1 stores it:
+  - the CSV connector reads with `newline=""`, so the body's embedded newlines survive;
+  - D1 trims `title` (`coerce_string`);
+  - D1 preserves `body_text` byte for byte (`coerce_text`).
+- **Each phrase occurs exactly once**, at the span shown.
+- **Every character is ASCII.** DOC-006's apostrophe is U+0027, and DOC-009's dash is U+002D; a
+  typographic apostrophe or dash would not match.
+- **Spans are test expectations only**, re-measured against the database. No offset appears in
+  code (DIRECTED).
+
+**Why whole sentences.** Each §A27.3 fact is stated by exactly one sentence of its document.
+- The whole sentence quotes the fact with its own qualifiers, such as "within 14 days" and
+  "unless either party gives 90 days' written notice".
+- It is neither a fragment cut to fit nor an arbitrary offset.
+- It needs no rule for where a sentence ends, because the phrase itself is fixed text.
+
+**Matching (rule DIRECTED; algorithm DERIVED).** `t` is the named document's citable text, built
+with M4's `citable_text` from the row §0.6.5 reads in `scope.source_system`.
+
+1. `start = t.find(phrase)`. `-1` means **zero matches**.
+2. Otherwise, `t.find(phrase, start + 1) != -1` means **more than one match**. Because the
+   second search starts one character after the first match, an overlapping second occurrence
+   counts too.
+3. Otherwise the phrase occurs **exactly once**, at `start`.
+
+Matching is exact and case-sensitive: no normalisation, case folding, whitespace collapsing or
+regular expression. "First occurrence" is **not** a rule here: exactly one occurrence is
+required, deliberately unlike M4's linker (§0.6.8).
+
+**Failures (DIRECTED).** Each of these raises M4's `CitationResolutionError`, naming the target
+and the document, and the run fails:
+- the document has no row in `scope.source_system`;
+- zero matches, including a NULL `body_text` whose title does not contain the phrase;
+- more than one match;
+- the resolved text is not equal to the phrase.
+
+There is no substitute span, no whole-document quote and no fallback.
+
+**Applicability (DERIVED; DR7, made exact).** A target applies **iff** its document D is cited
+under `reconciliation` or `document_evidence`: some citation there is `{"kind": "record",
+"entity": "documents", "id": D}` or `{"kind": "document", "document_id": D}`. A target that does
+not apply is neither searched for nor an error.
+- **CUST-007:** all three apply. DOC-003 and DOC-009 are cited by CONF-001's resolution
+  evidence, and DOC-006 (and DOC-009 again) by the customer's own-stamp links.
+- **CUST-025 and CUST-036:** none applies.
+
+**Representation.** `{"target": <name>, "citation": {"kind": "document", "document_id": D,
+"start": start, "end": start + len(phrase)}}` in `cited_spans`, ascending by target
+(§0.6.13.1 item 5).
+
+**How the span text reaches the narrative.** In step 9:
+1. `assessment.py` resolves each `cited_spans` citation with M4's `resolve_document_citation`,
+   as part of §0.6.9's resolution.
+2. It requires the resolved text to equal the phrase.
+3. It passes `brief.py` a mapping from target name to resolved text. The mapping's keys must be
+   exactly the payload's targets (§0.6.13.5).
+4. `brief.py` renders each text through §0.6.13.4's `quote_span`, with the document id and
+   `[start, end)` taken from the payload's citation.
+
+Nothing else carries the text.
+
+**When the source document changes (DERIVED).**
+- **Why the snapshot moves.** `title` and `body_text` are business fields, so any edit to either
+  changes the document's `record_hash`, and so `layer1_fingerprint`. The next run is a new scope
+  and a new assessment, and the phrase is located afresh.
+- **Moved sentence.** The span and the hash change with it.
+- **Removed or duplicated sentence.** The run raises.
+- **Stored briefs.** A brief already stored keeps its payload, span and fingerprint. It is never
+  rewritten.
+
+**Resolvable in production (DERIVED).**
+- **At generation.** M7 resolves every span against Layer 1 inside the run's transaction, before
+  the brief is written (§0.6.9).
+- **After generation.** The stored `layer1_fingerprint` identifies the snapshot the span belongs
+  to. Equal fingerprints mean equal `source_id` and `record_hash` for every row, so the same span
+  resolves to the same phrase.
+- **Against a later snapshot.** Re-verifying a stored brief against a later snapshot is M8's to
+  specify.
+
+**Version.** The target table is part of `payload_version` 1 (§0.6.13.1 item 12).
+
+#### 0.6.13.4 MP4 — quoting, the cap and the marker: **RESOLVED**
+
+**Consistent with §A22 (verified).** §A22 caps "resolved span text" at 500 characters, escapes
+it with `json.dumps(text, ensure_ascii=False)`, and marks a longer span with a fixed marker. The
+proposal does exactly that, in that order, and there is no contradiction. Two properties hold
+only in this order:
+- **Cap, then escape.** Capping after escaping could cut an escape sequence in half, leaving a
+  dangling `\` or a broken `\uXXXX`. Capping first cannot.
+- **Marker outside the quotes.** Document text cannot forge the marker. A ` [truncated]` inside
+  a document is rendered inside the quotes.
+
+**The rule (cap DIRECTED; marker ACCEPTED; details DERIVED).** Every document-derived string the
+narrative renders passes through exactly this behaviour. The helper and marker names are
+non-material:
+
+```
+MAX_QUOTED_SPAN_CHARS = 500
+TRUNCATION_MARKER = " [truncated]"
+
+def quote_span(text: str) -> str:
+    if len(text) <= MAX_QUOTED_SPAN_CHARS:
+        return json.dumps(text, ensure_ascii=False)
+    return json.dumps(text[:MAX_QUOTED_SPAN_CHARS], ensure_ascii=False) + TRUNCATION_MARKER
+```
+
+| Question | Answer |
+|---|---|
+| Which text is capped | A cited span's resolved text (§0.6.13.3). Also each `document_evidence` entry's `matched_token`, if the template renders it. These are the only document-derived strings a brief holds (§0.6.7). No other string passes through `quote_span`, and no other string is capped |
+| The unit of the cap | Python `str` length: Unicode code points of the resolved, **unescaped** text. Not UTF-8 bytes, grapheme clusters or rendered characters |
+| Whether 500 includes the marker | No. 500 counts source characters only; the marker adds 12 more |
+| Truncation before or after escaping | Before. The kept prefix is then escaped, so the rendered string can exceed 500 characters: two quotes, any escapes, and the marker |
+| The marker | Exactly `" [truncated]"`: U+0020 followed by `[truncated]`, all ASCII. It comes immediately after the closing quote, outside the JSON string |
+| Exactly 500 characters | Rendered whole, with no marker |
+| 501 characters or more | The first 500 code points, escaped, then the marker |
+| Empty text | `""`, with no marker. Unreachable: a `DocumentCitation` span is non-empty (M1), and a resolved target must equal its non-empty phrase |
+| Multibyte characters | Each code point counts once, whatever its UTF-8 width. A cut never splits a code point, so the output is valid UTF-8, and `ensure_ascii=False` writes non-ASCII characters as themselves. A cut can split a grapheme cluster, such as a base character and its combining mark, or an emoji sequence. This is deterministic, and §A29 records it |
+| Escaping | Exactly `json.dumps(..., ensure_ascii=False)`: `"` becomes `\"`, `\` becomes `\\`, and each control character below U+0020 becomes its JSON escape: `\b`, `\f`, `\n`, `\r` and `\t` for those five, and `\u00xx` (lowercase hex) for every other one |
+| Offsets | The citation's `start` and `end` index M4's **original citable text**, never the escaped or truncated rendering. The narrative prints them as `[start, end)` beside the document id, the full span even when the text is truncated. The cap never touches the payload |
+
+#### 0.6.13.5 MP5 — `BriefRenderError`: **RESOLVED**
+
+**The existing hierarchy, verified at `6919fe5`.**
+
+- M1: `IntelligenceError`, with `ContractViolationError`, `CurrencyMismatchError`,
+  `ScopeResolutionError` and `FingerprintMismatchError` (`app/intelligence/errors.py`).
+- M2: `RelationshipError(IntelligenceError)`, with `RelationshipContractError` and
+  `UnknownCustomerError`.
+- M6: `ReconciliationError(IntelligenceError)`, with `UnresolvableConflictError`.
+- Deployment faults, deliberately **not** `IntelligenceError`: `IntelligenceConfigError` and its
+  M6 subclass `DecisionConfigError`.
+- M4: `CitationResolutionError(Exception)` and `UnciteableLinkError(Exception)`.
+
+**Why none of them fits.**
+- `ContractViolationError` means a contract object was built in a state its invariants forbid.
+- `CitationResolutionError` means evidence cannot be read back from Layer 1.
+- The two config errors mean the risk rules, the catalogue or the policy is broken, and
+  `DecisionConfigError`'s contract names its two files.
+
+A template that names a placeholder the renderer does not supply is none of these, and neither
+is a payload value the template cannot format. Reusing any of them would misclassify the
+failure, and M8 would map it to the wrong remedy. **`BriefRenderError` is not redundant.** It
+is the only exception type M7 adds.
+
+**The contract.**
+
+- **Module:** `app/decisions/brief.py`. It is not re-exported by `app/decisions/__init__.py`,
+  which re-exports nothing of M7 (§0.6.2).
+- **Inheritance:** `BriefRenderError(IntelligenceError)`. It is a runtime Layer 2 failure, as
+  `ReconciliationError` is.
+- **Constructor (AUTHORED):** the message only, like `ContractViolationError` and
+  `ReconciliationError`. There are no extra fields.
+- **Message (AUTHORED):** it names the template file, and the placeholder or the payload path,
+  such as `commercial_evidence.deals[0].amount.amount`. It never contains document text or a
+  payload value.
+- **Cause:** it is raised with `raise BriefRenderError(...) from exc`, so the original exception
+  stays attached.
+
+**Raised by `brief.py` for exactly these four conditions, and no others:**
+
+1. The template file cannot be read, or is not valid UTF-8.
+2. `Template.substitute` fails. Either a placeholder has no value (`KeyError`), or the template
+   holds an invalid placeholder (`ValueError`). `string.Template` parses at substitution time,
+   so this is also the only template-parsing failure.
+3. A payload value the narrative needs is missing, or is not of the JSON type §0.6.13.1 states.
+   This includes an `amount` that `Decimal` cannot parse or that is not finite.
+4. The span-text mapping's keys are not exactly the payload's `cited_spans` targets, or a span
+   text is not a `str`.
+
+`brief.py` catches only the exceptions these conditions raise. It has no bare `except` and no
+`except Exception`.
+
+**These propagate unchanged, and are never wrapped:**
+- **Payload construction:** `ContractViolationError`, including every derivation and
+  `ticket_span` check, and whatever M1's serialisers raise (`ContractViolationError`,
+  `TypeError` or `ValueError`).
+- **Citations:** `CitationResolutionError`, for every citation, target and ticket-date failure.
+  This is M4's type, as D-M7-B9 directs.
+- **Other milestones:** every M1–M6 exception.
+- **The database:** every repository or SQLAlchemy error.
+- **Logging:** anything `log_event` raises.
+
+**When it is raised.** `BriefRenderError` arises in step 9, before `insert_brief`. The caller's
+rollback therefore also removes the assessment and position rows written earlier in the run
+(§0.6.3).
+
+#### 0.6.13.6 MP6 — the events: **RESOLVED**
+
+**Common to every event (channel DIRECTED; level ACCEPTED; the rest DERIVED).**
+
+- **Channel:** `log_event(logger, logging.INFO, name, **fields)` from `app.core.logging`, with
+  `logger = logging.getLogger(__name__)` in `assessment.py`, that is `app.decisions.assessment`.
+  This is Layer 1's pattern (`app/ingestion/orchestrator.py`).
+- **Level:** INFO for all five, as for ingestion's run events. M7 emits no DEBUG, WARNING or
+  ERROR event. A failure is an exception the run propagates, and it logs nothing of its own
+  (Timing, below).
+- **Field types:** `str`, `int` or `bool` only. No field is `None`, a date object, an enum or a
+  collection. `as_of` is passed as `scope.as_of.isoformat()`, and enums as `str()`.
+- **Field order:** the order in the table. It is the order `log_event`'s text message renders,
+  so a log line is byte-stable apart from the formatter's own timestamp.
+- **G2:** every field name was checked against G2's credential-name pattern
+  (`tests/unit/test_g2_security_boundary.py`, `SENSITIVE_NAME`) and against `log_event`'s
+  reserved names, and matches neither.
+
+| Event | Fields, in order | Cardinality |
+|---|---|---|
+| `vs01.scope_resolved` | `source_system: str`, `as_of: str` (`YYYY-MM-DD`), `layer1_fingerprint: str`, `as_of_source: str` (`EXPLICIT` or `MAX_TICKET_CREATED_AT`) | one per run |
+| `vs01.links_derived` | `source_system: str`, `layer1_fingerprint: str`, `linker_version: str`, `inserted: int`, which is `derive_and_persist`'s return (the rows actually inserted, `0` on a re-run) | one per run |
+| `vs01.conflict_detected` | `customer: str` (the customer's `source_id`), `object_ref: str`, `policy_id: str`, `policy_version: int` | one per `ConflictResolution`, for every customer, briefed or not |
+| `vs01.conflict_resolved` | `customer: str`, `object_ref: str`, `policy_id: str`, `policy_version: int`, `resolved_action: str` (an `ActionId` value) | one per `ConflictResolution`, immediately after its `conflict_detected` |
+| `vs01.brief_generated` | `customer: str`, `payload_hash: str`, `citation_count: int`, `created: bool` (`insert_brief`'s flag) | one per brief, i.e. per customer with band `WATCH` or above |
+
+**`citation_count` (ACCEPTED definition, made exact).** The number of **distinct** citations in
+the brief's payload.
+- **Which values:** every value under a key named `citation`, at any depth.
+- **What makes two the same:** equal `canonical_json` strings (§0.6.9). A citation that occurs
+  more than once counts once.
+- **Relation to resolution:** it is exactly the set §0.6.9 resolves, so it equals the number of
+  resolutions performed.
+- **Not citations:** entity references not under a `citation` key, such as `customer` and
+  `escalation_path`'s endpoints and edges.
+- **On a re-run:** step 9 runs whether or not the brief already exists, so a re-run computes the
+  same count.
+
+**Order (DERIVED).**
+1. `scope_resolved`.
+2. `links_derived`.
+3. For each customer in `order_reconciliations()` order:
+   - for each resolution, in `Reconciliation.resolutions` order (ascending `object_ref`), its
+     `conflict_detected` and then its `conflict_resolved`;
+   - then that customer's `brief_generated`, if it has a brief.
+
+A customer with neither a resolution nor a brief emits nothing.
+
+**Timing (DERIVED).** The events are emitted in step 11: after every write of steps 2–10 has
+succeeded for every customer, and before the run returns.
+- **Before the caller's commit.** The run never commits, so every event comes first. A line can
+  therefore describe a run the caller then rolls back (§A29).
+- **A run that raises emits no event at all**, not even `scope_resolved`, because every event
+  waits for step 11. Only whoever handles the exception logs the failure, never M7. For a
+  request, that is the API's existing `request_failed` event (`app/api/errors.py`).
+
+**Re-runs (DERIVED).** Every run emits its whole sequence, including an identical re-run. There,
+`links_derived.inserted` is `0`, and every `brief_generated` has `created` `false` with an
+identical `payload_hash` and `citation_count`. Lines are not de-duplicated across runs.
+
+**If logging fails (DERIVED from the standard library and `log_event`).** M7 neither catches
+nor retries around `log_event`.
+- **Handler errors.** A failure inside a handler is absorbed by the standard library's
+  `Handler.handleError`. The line is lost, and the run's result is unaffected.
+- **Errors from `log_event` itself.** `log_event` raises only `ValueError`, for a reserved field
+  name, which M7's fixed names cannot trigger. Were one to propagate, it would fail the run, and
+  the caller's rollback would leave nothing durable.
+
+**Never logged (DIRECTED).**
+- Document text or a span's text, an email address, a money amount, a timestamp field or a
+  rationale.
+- Any payload value other than the identifiers, versions, counts, flags and hash in the table.
+- **No counter** is incremented or added (DR13).
+
+**Still deferred (DIRECTED).** `vs01.signals_computed` and `vs01.band_assigned` stay deferred.
+`vs01.decision_recorded` is M8's.
+
+#### 0.6.13.7 What a reviewer should read first — every AUTHORED element
+
+Everything in §0.6.13.1–§0.6.13.6 not listed here is DIRECTED, DERIVED or OBSERVED. These are
+the genuine choices made while finalising:
+
+1. **The six rule texts** (§0.6.13.1 item 6). Their wording is a choice; that they are fixed,
+   ASCII and hashed follows from MP1.
+2. **S10's `ticket_ids` are every counted ticket** (§0.6.13.1 item 6). The proposal listed only
+   the winning category's tickets. This changes §0.6.15 criterion 15a from {073, 075, 080} to
+   {073, 075, 076, 079, 080}.
+3. **The `payload_version` bump rule** (§0.6.13.1 item 12).
+4. **The field sets and citation field orders** of TICKET, DEAL and SPAN, as proposed on
+   2026-09-24 and accepted here.
+5. **Whole sentences as phrases** (§0.6.13.3), as proposed and accepted.
+6. **`BriefRenderError`'s message-only constructor**, and a message that carries no document text
+   or payload value (§0.6.13.5).
+7. **Citations resolved in ascending wire-form order** (§0.6.9), so the first failure named is
+   deterministic.
+
+**No MP item needed a contract the repository could not support.** The one contradiction found
+while finalising was put to the owner and answered, and is recorded above as DIRECTED
+(§0.6.13.1).
+
+---
+
+### 0.6.14 Open decisions — all four RESOLVED, 2026-09-24
+
+Each was found by checking a directed decision against the frozen code, and each was resolved by
+the milestone owner on 2026-09-24. **The resolutions are DIRECTED and authoritative.** The finding
+is kept so the reason for each resolution survives.
+
+**OPEN-M7-1 — `risk_positions.confidence`: RESOLVED — removed.**
+
+- **Finding.** D-M7-B5 listed a `confidence` column, but the frozen `Position`
+  (`app/intelligence/contract.py:505`) has no confidence field. The only confidence in M1 is
+  `LinkConfidence`, on a `DerivedLink`.
+- **Resolution.** `risk_positions` has exactly `id`, `assessment_id`, `ordinal`, `function`,
+  `object_ref`, `proposed_action`, `stance`, `rationale` and `citations`. No confidence value is
+  derived or manufactured.
+- **Applied in** §0.6.5 and §A18.
+
+**OPEN-M7-2 — the facts §A27.3 needs beyond the M6 seam: RESOLVED — carried in the hashed
+payload.**
+
+- **Finding.** D-M7-B4 authorised reading the escalation window, the backlog ids and the
+  escalation path, but D-M7-B7's keys had no place for them, and D-M7-B10 forbids rendering a fact
+  outside the payload.
+- **Resolution.** An explicit payload section holds the deterministic escalation and support
+  evidence: the escalation window, the ticket count and span, the backlog ticket ids and the
+  escalation path. Field names follow M1/M3 terminology. The payload is the narrative's
+  authoritative source, and the narrative never queries or derives these facts after the payload
+  is built.
+- **Applied in** §0.6.7's `support_evidence`, §0.6.4 and §0.6.10; exact form §0.6.13.1 (MP1).
+
+**OPEN-M7-3 — "5 tickets in a 9-day span": RESOLVED — derived from the tickets' own dates;
+§A27.3 unchanged.**
+
+- **Finding.** CUST-007's tickets were created on 2026-08-18, 08-20, 08-23, 08-25 and 08-27
+  (OBSERVED). M3's `escalation_window` is `[2026-08-18, 2026-08-31]`, 14 dates. No M1–M6 output
+  carried the last ticket's date.
+- **Resolution.**
+  - §A27.3 stands as written, and is **not** reinterpreted as the 14-day window.
+  - M7 reads the relevant tickets' `created_at` through an explicitly authorised read path, and
+    derives `first_ticket_date`, `last_ticket_date`, `ticket_span_days` and `ticket_count`.
+  - For CUST-007 that is 08-18 through 08-27: a **9-day** span of 5 tickets.
+  - `escalation_window` remains a separate concept and is never substituted for the span.
+  - If the tickets cannot be resolved, the brief fails rather than inventing the value.
+- **Applied in** §0.6.5's read, §0.6.7's `ticket_span` (with DR15, DR16 and the material item MP2 of
+  §0.6.13, resolved in §0.6.13.2), §0.6.9, §0.6.11 and §A27.
+
+**OPEN-M7-4 — what "cites, each resolvably" requires: RESOLVED — evidence-level provenance.**
+
+- **Finding.** Four §A27.3 facts had no field-level citation in any M1–M6 output: the
+  high-priority total (TKT-073's `priority` is never cited), the dominant category (only TKT-079's
+  `category` is), "USD 5,361.44" (the Sales position cites `is_active`, `stage` and `probability`
+  only), and the 9-day span.
+- **Resolution.** Every fact in §A27.3's narrative must have a deterministic provenance path:
+  - existing M1–M6 citation mechanisms are reused;
+  - a fact derived from source records is represented by those source facts in the hashed
+    payload, together with its derivation;
+  - no fake citation is created, and no source field is claimed that does not exist;
+  - "resolvably" is not weakened.
+- **Applied in** §0.6.7's `support_evidence.tickets` and `.derivations`, `commercial_evidence`,
+  and the provenance map; also §0.6.9 and §A27; exact form §0.6.13.1 (MP1) and §0.6.13.3 (MP3).
+
+**No open decision remains.** On 2026-09-24, M7 implementation was gated only on review of
+§0.6.13's six **material** PROPOSED items. Those were RESOLVED on 2026-09-25 (§0.6.13.1–§0.6.13.6),
+and so was the one contradiction finalising them exposed: `document_evidence`'s stamp filter,
+DIRECTED in §0.6.13.1. No specification item gates implementation any longer, and it begins only
+on the owner's instruction.
+
+---
+
+### 0.6.15 M7 scope and acceptance
+
+#### M7 IN-SCOPE
+
+1. `app/decisions/assessment.py`, `payload.py` and `brief.py`, and `app/decisions/templates/`
+   (§0.6.2).
+2. The three models and their registration, the repositories and the three Layer 1 reads —
+   including the authorised ticket `created_at` read — and the second additive migration (§0.6.5).
+3. The run (§0.6.3), with the reads of §0.6.4; the payload and hash, including
+   `support_evidence`, `commercial_evidence` and the §A27.3 provenance map (§0.6.7, exactly as
+   §0.6.13.1 and §0.6.13.2 state); the cited spans (§0.6.8; §0.6.13.3); citation resolution
+   (§0.6.9); the narrative, quoting rule and golden file (§0.6.10; §0.6.13.4); `BriefRenderError`
+   (§0.6.13.5); and the events (§0.6.11; §0.6.13.6).
+4. `tests/unit/test_m7_boundary.py`, M7's unit and integration tests, and T-M7-1…T-M7-5.
+
+#### M7 OUT-OF-SCOPE
+
+- Computing worthiness or either order; re-deciding any conflict (§0.5.1).
+- `approval.py`, `brief_decisions`, routes, and any change to `app/api/` (**M8**).
+- `make verify-vs01`, the e2e scenario, §A26's canonical fixtures, the mutation audit (**M9**).
+- `vs01.signals_computed`, `vs01.band_assigned`, `vs01.decision_recorded`.
+- Any model, embedding or retrieval (§A13).
+- Any change to M1–M6 source, Layer 1 behaviour or `data/`.
+- Any test evolution beyond T-M7-1…T-M7-5.
+- Settling §0.3.7 #9, `documents_for()`'s own order.
+
+#### M7 acceptance criteria — expected outcomes, stated before the tests are written
+
+These are binary, at `ACCEPTANCE_AS_OF = 2026-09-18` over the clean full-dataset path, unpinned
+unless a row says otherwise. **The measured counts come from §0.5's measurements** and are
+reported, not accommodated, if M7 measures differently (§0.3.8).
+
+| # | Criterion | Expected outcome |
+|---|---|---|
+| 1 | **Run contract** | The §0.6.3 signature. `derive_and_persist` runs exactly once, before any context is built. The run names none of §0.6.2's never-called functions and never commits or rolls back |
+| 2 | **Pinned run** | A pinned run over a changed snapshot raises `FingerprintMismatchError`, and nothing is written |
+| 3 | **Assessments** | 50 rows. CUST-007 has band `CRITICAL`, `executive_worthy` true, `signals` equal to its contexts' projection with S14 `["DOC-006"]`, `ranking_key` `[-3, -3, -5, "CUST-007"]`, `rules_version` 1 and `linker_version` `"1"`. CUST-007 is the only worthy customer |
+| 4 | **Positions** | 15 rows over 10 assessments, each in `ordered_positions` order by `ordinal`. CUST-007's six match §0.5.7's table. The table has exactly the nine columns of §0.6.5, and **no `confidence` column** |
+| 5 | **Briefs** | Exactly 3: CUST-007, CUST-025 and CUST-036, each with `policy_version` 1, `template_version` `"1"` and status `DRAFT` |
+| 6 | **Re-run** | Identical results with `created=False`, identical hashes, and 0 rows inserted in every table (§A25 test 12, §A27.8) |
+| 7 | **Identity** | A synthetic ticket yields new assessments (§A25 test 13), and each new brief's `document_evidence` holds only links stamped with the new fingerprint, although the old fingerprint's links remain in the table (§0.6.13.1). A `rules_version` or `linker_version` change yields a new row. A policy change adds a brief under the same assessment and leaves positions untouched. A template-only change keeps the hash and reads the existing brief without updating it |
+| 8 | **Payload and hash** | §0.6.13.1's structure exactly: twelve top-level keys; every nested key set, the frozen projections' included; every list in its stated order; every `rule` byte-identical to §0.6.13.1's table; no float and no database id anywhere. CUST-007's `document_evidence` is six own-stamp links, DOC-005, DOC-006 and DOC-009, each `EXACT_NAME` then `ID_TOKEN`. The hash includes and excludes exactly what §0.6.7 states; the hash is re-verified from the stored JSONB; the hash is identical across two processes under different `PYTHONHASHSEED`s. `brief.py` provably reads nothing outside the payload and the resolved span texts |
+| 9 | **Cited spans** | CUST-007 has all three targets, at spans equal to the re-measured expectation, each resolving to its phrase exactly. A missing phrase, a duplicated phrase (an overlapping second occurrence included), an absent document and a resolved text that differs from the phrase each raise `CitationResolutionError`, with no fallback (§0.6.13.3). No target applies to CUST-025 or CUST-036 |
+| 10 | **Citation resolution** | Every citation of every brief resolves. A planted unresolvable citation raises `CitationResolutionError`, and nothing is durable |
+| 11 | **Narrative** | Golden bytes; `USD 5,361.44`; the absence lines (DR24); `brief.py` provably reads nothing but its inputs. §0.6.13.4 is proved on fixtures: 500 characters render whole with no marker; 501 give 500 plus `" [truncated]"` after the closing quote; a multibyte character at the cut counts once and is never split; `"`, `\` and a newline are escaped; a document containing ` [truncated]` renders it inside its quotes; the printed `[start, end)` is the citation's full span. Each of §0.6.13.5's four conditions raises `BriefRenderError`, with the original exception as its cause |
+| 12 | **Events** | For the corpus run, §0.6.13.6 exactly: every event INFO, with its fields in their stated order and types. The sequence is `scope_resolved`, `links_derived`, one `conflict_detected`/`conflict_resolved` pair for CUST-007 over DEAL-001 under `CONF-001`, then `brief_generated` for CUST-007, CUST-025 and CUST-036 in that order. A re-run emits the same sequence with `inserted` 0 and `created` false. A run that raises emits nothing. No field carries document text, an email or an amount |
+| 13 | **Failures** | The DEAL-037 edit raises `UnresolvableConflictError`, and nothing is durable after the rollback. Every exception propagates unwrapped, except the four rendering conditions of §0.6.13.5, which become `BriefRenderError` |
+| 14 | **DOC-005 leave-out** | With DOC-005 deleted from the isolated database, the band, every signal, the escalation state and the resolution are byte-identical (§A25 test 4) |
+| 15 | **§A27.3 / §A27.5** | Every §A27.5 item is present. Every §A27.3 fact is present, and each one's provenance path in §0.6.7's map resolves |
+| 15a | **Support and commercial evidence (CUST-007)** | Expected values are OBSERVED from `data/demo/`, to be re-measured on the database.<br>• `tickets` — TKT-073 (2026-08-18, high, performance, not open), TKT-075 (08-20, high, performance, open), TKT-076 (08-23, high, integration, open), TKT-079 (08-25, medium, billing, open), TKT-080 (08-27, high, performance, open).<br>• `escalation_window` — `{2026-08-18, 2026-08-31, 5}`.<br>• `ticket_span` — 5 tickets {073, 075, 076, 079, 080}, 2026-08-18 to 2026-08-27, **9** days, with §0.6.13.1's `rule`: present, and distinct from the window.<br>• `derivations` — open 4 {075, 076, 079, 080}; open high-priority 3 {075, 076, 080}; high-priority total 4 {073, 075, 076, 080}; open high-priority breaches 3 {075, 076, 080}; dominant `performance`, counts `{billing: 1, integration: 1, performance: 3}`, over {073, 075, 076, 079, 080}, the lookback `[2026-06-21, 2026-09-18]`. *Revised 2026-09-25 (MP1): the proposal listed {073, 075, 080}, only the winning category's tickets.*<br>• `backlog_ticket_ids` — `[]`.<br>• `escalation_path` — EMP-007 → EMP-002; assignees EMP-017, EMP-018, EMP-020, EMP-021 → EMP-004 (Part B M2).<br>• `commercial_evidence` — DEAL-001 `negotiation`, `"90"`, `{"amount": "5361.44", "currency": "USD"}`, with its five citations.<br>A ticket with a missing or NULL `created_at` raises `CitationResolutionError`, and a disagreeing derivation raises `ContractViolationError` |
+| 15b | **Support evidence (CUST-025, CUST-036)** | OBSERVED from `data/demo/` on 2026-09-25, to be re-measured on the database. They exercise MP2's one-ticket case (§0.6.13.2).<br>• CUST-025 — window `{2026-07-10, 2026-07-23, 1}`; span 1 ticket {063}, 2026-07-10 to 2026-07-10, **0** days; backlog `[TKT-039]`; dominant `billing`, counts `{billing: 1, onboarding: 1}` over {063, 072}, the tie going to the smaller name.<br>• CUST-036 — window `{2026-08-24, 2026-09-06, 1}`; span 1 ticket {078}, **0** days; backlog `[]`; dominant `performance` over {078}.<br>Neither brief has a cited span or a `document_evidence` entry |
+| 16 | **Boundary** | Every row of §0.6.2, each scan with a companion. The re-scoped M6 scans are equally strict |
+| 17 | **Frozen M1–M6** | Byte-identical, as §0.6's status box states. Tests are changed only by T-M7-1…T-M7-3. The fingerprint is still `1d891b0b…` |
+| 18 | **Regression** | Suite green; `app/` coverage **100%**; no new ruff or mypy finding; secret scan **0**; **one** migration head, which is M7's; README per T-M7-4/5 |
+
+**The tooling gate is unchanged:** M7 does not close until `pytest`, `ruff` and `mypy` have
+actually been **run** and their results reported.
 
 ---
 
@@ -3417,17 +5110,65 @@ and the generator raises.
 
 **Absence is stated, never omitted.** CUST-007 has no active project; the brief says so.
 
+**Amended 2026-09-24 by §0.6, which is authoritative where this section is coarser.**
+
+- **The payload** is exactly §0.6.7's twelve keys: `payload_version`, `scope`, `versions`,
+  `customer`, `band`, `satisfied_rules`, `signals`, `reconciliation`, `document_evidence`,
+  `cited_spans`, `support_evidence` and `commercial_evidence`. It is hashed as
+  `sha256(canonical_json(payload).encode("utf-8"))`. Every nested key, type, order and rule
+  text is §0.6.13.1's (MP1, resolved 2026-09-25). `document_evidence` carries only the links
+  stamped with the assessment's own fingerprint and linker version.
+- **Every §A27.3 fact has a provenance path in the payload** (§0.6.14 OPEN-M7-4, resolved).
+  Stored fields are cited directly. A fact derived from records — the high-priority total, the
+  dominant category, the 9-day ticket span — is carried with its source facts and its
+  deterministic derivation, never with a fabricated citation (§0.6.7's map).
+- **"Both positions" above is v2 wording.** The payload carries **every** position through M6's
+  `Reconciliation` projection, together with the conflict, the resolution and its policy id, the
+  dissent and the resolved positions (§0.5.7).
+- **Scope and versions are hashed.** `as_of`, `source_system`, `layer1_fingerprint` and the rules,
+  linker and policy versions are all in the payload, so an approval cannot move to another
+  snapshot or date.
+- **The narrative** is rendered with `string.Template` from the payload and the resolved text of
+  its cited spans, **and nothing else** (§0.6.10). The quoted spans are §0.6.8's three named
+  targets (MP3, §0.6.13.3). Every document-derived string is quoted by §0.6.13.4's rule (MP4),
+  and a rendering failure raises `BriefRenderError` (MP5, §0.6.13.5).
+- **Citations.** The generator resolves every citation through §0.6.9 and raises
+  `CitationResolutionError` on the first that does not resolve.
+- **Briefs** are generated for band ≥ `WATCH` only (§0 defect 11; §0.6.3).
+- **Every narrative section has a payload source.** The escalation-path, chronic-backlog and
+  risk-state sections render `support_evidence`, and the commercial section renders `signals` and
+  `commercial_evidence` (§0.6.14 OPEN-M7-2, resolved). The narrative never queries or derives a
+  fact after the payload is built (§0.6.10).
+
 ### A18. Persistence — new tables only, additive revision from `8bfd73b6af60`
 
 | Table | Key columns |
 |---|---|
 | `document_customer_links` | `document_id` FK, `customer_id` FK, `basis`, `matched_token`, `match_start`, `match_end`, `linker_version`, `layer1_fingerprint`; **unique** `(document_id, customer_id, basis, linker_version, layer1_fingerprint)` |
-| `risk_assessments` | `customer_id` FK, `as_of`, `source_system`, `layer1_fingerprint`, `rules_version`, `band`, `satisfied_rules` JSONB, `signals` JSONB, `executive_worthy`; **unique** `(customer_id, as_of, source_system, layer1_fingerprint, rules_version)` |
-| `risk_positions` | `assessment_id` FK, `function`, `stance`, `proposed_action`, `rationale`, `citations` JSONB |
-| `risk_briefs` | `assessment_id` FK, `policy_version`, `template_version`, `decision_payload` JSONB, `payload_hash`, `narrative` TEXT, `status` `DRAFT`; **unique** `(assessment_id, payload_hash)` |
+| `risk_assessments` | `customer_id` FK (`SET NULL`), `as_of`, `source_system`, `layer1_fingerprint`, `rules_version`, `linker_version`, `band`, `satisfied_rules` JSONB, `signals` JSONB, `executive_worthy`, `ranking_key` JSONB; **unique** `(customer_id, as_of, source_system, layer1_fingerprint, rules_version, linker_version)` |
+| `risk_positions` | `assessment_id` FK (`CASCADE`), `ordinal`, `function`, `stance`, `proposed_action`, `object_ref`, `rationale`, `citations` JSONB; **unique** `(assessment_id, function, object_ref, proposed_action)`. **No `confidence` column**: the frozen `Position` has none (§0.6.14 OPEN-M7-1, resolved) |
+| `risk_briefs` | `assessment_id` FK (`CASCADE`), `policy_version`, `template_version`, `decision_payload` JSONB, `payload_hash`, `narrative` TEXT, `status` default `DRAFT`; **unique** `(assessment_id, payload_hash)` |
 | `brief_decisions` | `brief_id` FK, `payload_hash`, `actor`, `decision`, `note`, `decided_at`, `supersedes_id` nullable. **Append-only** |
 
 Canonical tables are untouched; downgrade drops only these five.
+
+**Amended 2026-09-24 by §0.6.5 and §0.6.6.** The three M7 rows above are now §0.6.5's, and
+§0.6.5 holds their full column, nullability, FK, index and repository contract, as §0.3.10.3
+does for the link table. `risk_briefs.decision_payload` holds exactly §0.6.13.1's payload (MP1),
+and `payload_hash` is that payload's digest by §0.6.13.1 item 11.
+
+- **The assessment key gained `linker_version`.** §A24 already made an assessment a function of
+  it, and S14 — held inside `signals` — changes with it. Under v2's key
+  `(customer_id, as_of, source_system, layer1_fingerprint, rules_version)`, a linker bump would
+  have read back an assessment carrying a stale S14.
+- **`policy_version` is deliberately not in the assessment key.** Neither the assessment row nor
+  its positions depend on it, so a policy change appends a brief under the same assessment.
+- **`ranking_key` persists M6's order verbatim**, for M8 to consume without recomputing it.
+- **`risk_positions`** gained `ordinal` and `object_ref`, plus an identity key. `object_ref` is
+  the required frozen `Position` field that conflicts are defined over (§0.4.1).
+- **No M7 table has a timestamp column.**
+- **Migration chain.** M7's migration chains after `c4a1e97d5b02`, the head M4 left; this
+  section's title names the first additive revision's parent.
 
 **`document_customer_links` identity and re-derivation, decided 2026-09-21 (§0.3.4).** The key
 holds exactly the inputs that can change a link: `basis` (the grain, §0.3.3), plus the two stamps
@@ -3481,13 +5222,31 @@ text, customer email or monetary value in any log line.
 the `Reconciliation` M6 returns, not by M6, whose modules are pure (§0.5.1 D-M6-B1) — the same
 deferral M3 made for its two events.
 
+**Amended 2026-09-24 by §0.6.11 D-M7-B11.**
+
+- **The run emits five events:** `vs01.scope_resolved`, `vs01.links_derived`,
+  `vs01.conflict_detected`, `vs01.conflict_resolved` and `vs01.brief_generated`. §0.6.11 fixes
+  their fields and order. They are emitted after the run's writes succeed and before it returns,
+  and one conflict pair is emitted per resolution.
+- **Exactly (MP6, resolved 2026-09-25; §0.6.13.6).**
+  - All five events are INFO. M7 emits no WARNING or ERROR event, and a run that raises emits
+    nothing.
+  - Fields are `str`, `int` or `bool`, in a fixed order.
+  - `citation_count` is the number of distinct citations in the brief's payload, compared by
+    `canonical_json`.
+- **`vs01.signals_computed` and `vs01.band_assigned` remain deferred**, since no frozen contract
+  requires them. `vs01.decision_recorded` is M8's.
+- **No counter:** none of the existing counters describes an assessment run, so none is
+  incremented.
+- **Logging is not transactional:** a line may describe a run the caller then rolls back.
+
 ### A22. Security
 
 | Concern | Control |
 |---|---|
 | Prompt injection | **Structurally impossible** — no model, no prompt. A named reason for the templated design |
-| Document text as instruction | Rendered only as quoted, length-capped, escaped evidence with id and span. The linker never treats body text as configuration |
-| Customer-scope leakage | A brief for X contains no other customer's identifiers — tested |
+| Document text as instruction | Rendered only as quoted, length-capped, escaped evidence with id and span. The linker never treats body text as configuration. **Cap and escaping, 2026-09-24 (§0.6.10):** at most `MAX_QUOTED_SPAN_CHARS = 500` characters of resolved span text, escaped with `json.dumps(text, ensure_ascii=False)`. A longer span renders its first 500 characters and a fixed truncation marker, and its citation still carries the full span. **Exactly (MP4, 2026-09-25; §0.6.13.4):** 500 counts code points before escaping and excludes the marker. The marker is `" [truncated]"`, placed after the closing quote, where document text cannot forge it. The rule covers every document-derived string a brief renders, `matched_token` included, and printed offsets always index the original citable text |
+| Customer-scope leakage | A brief for X contains no other customer's identifiers — tested. **From M7 (§0.6.7, §0.6.8):** `support_evidence` and `commercial_evidence` carry only X's own visible tickets and active deals. `document_evidence` carries only X's links under the assessment's own stamps (§0.6.13.1). A quoted span is included only when its document is already cited in X's payload |
 | Analyst scope | Enforced by construction (§A14), not by convention |
 | No executor | Static test over the **transitive** import graph of `app/intelligence`, `app/relationships`, `app/evidence`, `app/analysts`, `app/decisions`: no outbound HTTP/SMTP/source-write path. The same test pins the §A9 dependency direction — `app/relationships` must not import `app/evidence`. Named exemptions use the I1 mechanism, each justified, and a test removes an exemption that is no longer needed |
 | Approver identity | Recorded but **asserted, not verified** — there is no authentication. A documented prerequisite for any future executor |
@@ -3525,6 +5284,36 @@ rather than resolved by inventing a third state.
   separators, normalised `Decimal`, UTC ISO-8601) over the decision payload with timestamps and
   `template_version` excluded.
 - No `now()`, no randomness, no dict-ordering or locale dependence.
+
+**Amended 2026-09-24 by §0.6.6 and §0.6.7.**
+
+- **The hash.** `payload_hash` is
+  `sha256(canonical_json(payload).encode("utf-8")).hexdigest()`: 64 lowercase hex characters, over
+  §0.6.7's payload.
+  - **It includes:** `as_of`, `source_system`, `layer1_fingerprint`, the rules, linker and policy
+    versions, and all approval-relevant evidence — including `support_evidence` and
+    `commercial_evidence`, with the source facts and derivations behind §A27.3.
+  - **It excludes:** database ids, timestamps, `template_version` and narrative prose.
+  - **Exactly (MP1, 2026-09-25; §0.6.13.1).**
+    - The value domain, every key and list order, the rule texts and the hash steps are fixed
+      there, so two implementations cannot differ.
+    - `document_evidence` holds only the links stamped with the assessment's own fingerprint
+      and linker version, as §0.3.4 requires, so the payload does not depend on which earlier
+      snapshots the database has seen.
+    - The one exception is S14 inside `signals`: frozen M5 builds it from every persisted link
+      (§A29).
+- **Ticket dates** in `support_evidence` follow the date rule above: each is
+  `utc_date(created_at)`. The 9-day span is elapsed days between the first and last of those
+  dates, derived from them and never from a clock. It is taken over the tickets inside M3's
+  escalation window (MP2, §0.6.13.2).
+- **Persisted identity.** The first bullet's six inputs identify the run's whole output, but they
+  split across tables:
+  - an assessment **row** is keyed by `(customer, as_of, source_system, layer1_fingerprint,
+    rules_version, linker_version)`;
+  - `policy_version` selects the **brief**, not the assessment.
+- **Collisions.** A key collision is trusted and read back. It is never compared, never updated
+  and never rejected.
+- **Money** in the narrative is formatted without a locale: `USD 5,361.44` (§0.6.10).
 
 ### A25. Evaluation
 
@@ -3570,6 +5359,10 @@ does); a document and a customer in a **second `source_system`**, to prove a lin
 one, following M2's `other_demo` precedent; and a document naming a customer id that exists in no
 `customers` row.
 
+**M7, 2026-09-24 (§0.6.12).** M7's tests mutate only the isolated test database — inserting one
+synthetic ticket, deleting DOC-005, or reusing M6's DEAL-037 edit — and add local unit fixtures of
+their own. They never touch `data/`. This section's canonical fixture package remains **M9's**.
+
 ### A27. Acceptance criteria (binary)
 
 1. `make verify-vs01` exits 0 against a running stack whose database was built by the **clean full-dataset path** (§A28): all 233 canonical rows across all 7 entity types, evaluated at `ACCEPTANCE_AS_OF = 2026-09-18`.
@@ -3583,6 +5376,25 @@ one, following M2's `other_demo` precedent; and a document naming a customer id 
 8. Two runs give an identical `payload_hash` and insert no rows; changing the Layer 1 snapshot produces a new assessment.
 9. Approval writes one decision row; a second on the same hash is refused without `supersedes_id`; rejection is recorded; nothing is executable.
 10. Regression: full Layer 1 suite passes unchanged; `app/` coverage stays 100%; ruff 69; mypy 9; secret scan 0.
+
+**Resolved 2026-09-24 (§0.6.14).** Criterion 3 stands **as written**, and two of its parts are
+now specified:
+
+- **"5 tickets in a 9-day span"** (OPEN-M7-3). The span is derived from the tickets' own
+  `created_at` dates, read through M7's authorised read path: for CUST-007, 5 tickets from
+  2026-08-18 to 2026-08-27, which is 9 days. It is **not** M3's 14-day `escalation_window`
+  (2026-08-18 to 2026-08-31), which the payload carries beside it as a separate fact. If the
+  tickets cannot be resolved, the brief fails. **Resolved 2026-09-25 (MP2, §0.6.13.2):** the
+  span counts exactly the tickets inside M3's escalation window. The high-priority total counts
+  every visible ticket, and the dominant category counts the lookback's categorised tickets.
+- **"cites, each resolvably"** (OPEN-M7-4) is **evidence-level**. Every listed fact has a
+  deterministic provenance path in the hashed payload (§0.6.7's map):
+  - a stored field is cited directly;
+  - a derived fact is carried with its source facts and derivation;
+  - no fake citation is created, and "resolvably" is not weakened.
+
+  **Resolved 2026-09-25 (MP1, MP3).** The exact payload form is §0.6.13.1. The three document
+  facts are the named whole-sentence targets of §0.6.13.3, each cited as one exact span.
 
 ### A28. Demo (~5 minutes, no network, no key, no model)
 
@@ -3617,7 +5429,23 @@ exists in the demo dataset**; the band is a policy artefact, not a probability;
 approver identity is asserted, not authenticated; the dataset is synthetic, 233 rows;
 `employees.organization_id` remains NULL; **document stewardship is not modelled** —
 `documents.owner_source_id` exists in Layer 1 but VS-01 exposes no `document_owned_by` edge
-(§A9), so "which employee owns this document" is not answerable through the relationship model.
+(§A9), so "which employee owns this document" is not answerable through the relationship model;
+**M7's log events are not transactional** — a line may describe an assessment run the caller then
+rolled back (§0.6.11); **a key collision is trusted** — a code change that alters an assessment's
+or a brief's content without bumping `rules_version`, `linker_version`, `policy_version` or the
+payload is read back rather than detected (§0.6.6); **a brief's escalation path lists open
+tickets by M2's `status` rule**, whereas its signals decide "open" by M3's resolution-date rule
+(§0.4.2, evidence 3). The two agree on the demo dataset at `ACCEPTANCE_AS_OF`, and can disagree
+for an `as_of` at which a ticket's `status` and its resolution date differ (§0.6.7);
+**S14 depends on derivation history** — frozen M5 builds `contract_document_ids` from every
+link `documents_for()` has ever persisted for the customer, under any fingerprint or linker
+version (`app/analysts/context.py`, `app/evidence/documents.py`). A contract document that named
+the customer only in an earlier snapshot therefore stays in S14, and in the brief's `signals`,
+although the brief's own `document_evidence` carries only the current stamps' links
+(§0.6.13.1). No such case exists on a freshly built database, and M7 adds no check for it;
+**a truncated quote is cut by code point**, so a quoted span longer than 500 characters can
+lose part of a grapheme cluster at the cut. The cut is deterministic, and no committed target
+is long enough to be cut (§0.6.13.4).
 
 ### A30. Reusable foundations this slice establishes
 
@@ -4127,34 +5955,64 @@ approval.
 
 **Before.** A reconciled result exists only in memory.
 
+**Status: SPECIFIED, NOT STARTED.** §0.6 records twelve directed decisions, D-M7-B1…B12.
+§0.6.14's four open items were all **RESOLVED** on 2026-09-24. §0.6.13's six material items,
+MP1–MP6, were **RESOLVED** on 2026-09-25, with normative wording in §0.6.13.1–§0.6.13.6, and
+so was the one contradiction finalising them exposed (§0.6.13.1). **No specification item gates
+implementation any longer; it begins only on the owner's instruction.**
+
 **Change.** `app/decisions/assessment.py` (**the assessment run** — §0.4.3 assigns it the
 production call to `derive_and_persist()`, once per run per scope, before any context is built,
 inside the caller's transaction), `app/decisions/payload.py` (the hashed decision payload),
 `app/decisions/brief.py` (narrative rendering), `app/decisions/templates/`, models for
 `risk_assessments`, `risk_positions` and `risk_briefs`, their repositories, and the **second
 additive migration**. `risk_positions` takes **one row per `Position`**, so several rows per
-function per assessment are normal (§0.4.1) — the table already carries no unique constraint
-(§A18). **M7 consumes M6's `Reconciliation` (§0.5.7) and computes neither worthiness nor
-ordering**: `risk_assessments.executive_worthy` is `Reconciliation.worthiness.executive_worthy`,
-`risk_briefs.policy_version` is `Reconciliation.policy_version`, and assessments are listed in
-`order_reconciliations()` order (§0.5.1). The run also emits §A21's `vs01.conflict_detected` and
-`vs01.conflict_resolved` from that result.
+function per assessment are normal (§0.4.1). §0.6.5 adds an identity key over `(assessment_id,
+function, object_ref, proposed_action)`, which bounds identical positions only. **M7 consumes M6's
+`Reconciliation` (§0.5.7) and computes neither worthiness nor ordering**:
+`risk_assessments.executive_worthy` is `Reconciliation.worthiness.executive_worthy`,
+`risk_briefs.policy_version` is `Reconciliation.policy_version`, and `Reconciliation.ranking_key`
+is persisted verbatim so that assessments are listed in `order_reconciliations()` order without
+recomputation (§0.5.1, §0.6.6). The run also emits §A21's `vs01.conflict_detected` and
+`vs01.conflict_resolved` from that result, alongside `vs01.scope_resolved`,
+`vs01.links_derived` and `vs01.brief_generated` (§0.6.11).
 
-**Tests.** Payload hash excludes timestamps and `template_version` — changing a template does
-**not** change the hash, changing a fact **does**; hash identical across two processes;
-uniqueness including `layer1_fingerprint`; **fingerprint sensitivity** — one extra ingested
-ticket yields a new assessment rather than the stale one; re-run inserts nothing; absence stated
-(CUST-007 has no project); citation resolution across every generated brief; the **DOC-005
-leave-out test** in-process against a dedicated test database; a golden file for the CUST-007
-brief at `ACCEPTANCE_AS_OF`.
+**Decisions this milestone is built on — §0.6, directed 2026-09-24, and not to be settled again
+in passing:**
+
+| Decision | Covers |
+|---|---|
+| D-M7-B1 | Test evolution T-M7-1…T-M7-5 and `tests/unit/test_m7_boundary.py` |
+| D-M7-B2 | The boundary: `assessment.py` is the only impure M7 module; `payload.py` and `brief.py` are pure; `__init__.py` re-exports nothing of M7 |
+| D-M7-B3 | `run_assessment(session, *, as_of, source_system, customer_source_id, expected_fingerprint, config, policy)` and its sequence, pinned only when a fingerprint is supplied |
+| D-M7-B4 | Reads beyond the M6 seam, with the contexts authoritative; with OPEN-M7-3, the authorised ticket `created_at` read |
+| D-M7-B5 | The schema and repositories; with OPEN-M7-1, **no `confidence` column** |
+| D-M7-B6 | Identity with `linker_version`; policy changes append briefs; collisions are trusted; `ranking_key` persisted |
+| D-M7-B7 | The payload and its hash; with OPEN-M7-2 and OPEN-M7-4, `support_evidence`, `commercial_evidence` and evidence-level provenance for every §A27.3 fact. Exact form: MP1 (§0.6.13.1), including own-stamp `document_evidence`; ticket populations: MP2 (§0.6.13.2) |
+| D-M7-B8 | Three named cited-span targets, resolved uniquely or raised. Exact targets and matching: MP3 (§0.6.13.3) |
+| D-M7-B9 | Production citation resolution |
+| D-M7-B10 | `string.Template` plain text, JSON escaping, the 500-character cap, `template_version` `"1"`, money format, the golden file. Exact quoting: MP4 (§0.6.13.4); `BriefRenderError`: MP5 (§0.6.13.5) |
+| D-M7-B11 | Events and failure semantics. Exact events: MP6 (§0.6.13.6) |
+| D-M7-B12 | Fixtures |
+
+**Tests.** §0.6.15's criteria. They include the original list: the payload hash excludes
+timestamps and `template_version`, so changing a template does **not** change the hash while
+changing a fact **does**; the hash is identical across two processes; uniqueness including
+`layer1_fingerprint` and `linker_version`; **fingerprint sensitivity**, where one extra ingested
+ticket yields a new assessment rather than the stale one, run unpinned; re-run inserts nothing;
+absence stated (CUST-007 has no project); citation resolution across every generated brief; the
+**DOC-005 leave-out test** in-process against a dedicated test database; and the golden file
+`tests/golden/vs01_cust007_brief.txt` for the CUST-007 brief at `ACCEPTANCE_AS_OF`.
 
 **After.** A brief is reproducible, diffable and approvable.
 
-**Acceptance.** The CUST-007 brief matches the golden file byte-for-byte and contains every item
-of §A27.3 and §A27.5.
+**Acceptance.** The CUST-007 brief matches the golden file byte-for-byte. It contains every item
+of §A27.3 — each with its provenance path in the payload, and the 9-day ticket span distinct from
+the 14-day escalation window — and every item of §A27.5. §0.6.15's criteria are met.
 
 **Non-goals.** Approval; API; UI; computing worthiness or ordering, or re-deciding any conflict
-(M6, §0.5.1).
+(M6, §0.5.1); `vs01.signals_computed` and `vs01.band_assigned`; §A26's canonical fixtures (M9);
+any change to M1–M6 source; any test evolution beyond T-M7-1…T-M7-5.
 
 ---
 
