@@ -1,0 +1,59 @@
+# =============================================================================
+# The VS-01 action catalogue (plan §A16, §0.4.1, §0.5.2 D-M6-B2).
+#
+# Loaded and validated by app/decisions/policy.py. A DECLARATIVE VOCABULARY:
+# for every action the system may ever name, who may propose it, what kind of
+# object it contests, and which way it pulls. It declares no precondition and
+# no threshold. §A16's three numbers stay M5 code, as named constants in
+# app/analysts/base.py, and M5 remains the only thing that decides whether an
+# action is proposed. This file is what M6 checks those proposals against.
+#
+# Exactly one entry per ActionId, no more and no fewer. `function` is null for
+# NO_ACTION and only for it: §A16 leaves its "Proposed by" column empty, and
+# neither analyst emits it. `object` is the canonical entity type the action's
+# Position.object_ref names.
+#
+# There is no semantic version here. The conflict policy is validated against
+# this file, so its policy_version covers both: bump it in conflict_policy.yaml
+# whenever a change here can alter a conflict, a resolution or a dissent.
+# =============================================================================
+
+version: 1
+
+actions:
+  - id: ESCALATE_TO_ACCOUNT_OWNER_PER_SLA
+    function: SUPPORT
+    object: customers
+    stance: NEUTRAL
+
+  - id: SCHEDULE_EXECUTIVE_SPONSOR_CALL
+    function: SUPPORT
+    object: customers
+    stance: NEUTRAL
+
+  - id: ASSIGN_DEDICATED_SUPPORT_OWNER
+    function: SUPPORT
+    object: customers
+    stance: NEUTRAL
+
+  # The contested pair. Stance is load-bearing only here, where it is what
+  # makes the opposition legible to a reader of the brief (§0.4.1).
+  - id: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED
+    function: SUPPORT
+    object: deals
+    stance: RESTRAIN
+
+  - id: REVIEW_INVOICE_DISPUTE
+    function: SUPPORT
+    object: support_tickets
+    stance: NEUTRAL
+
+  - id: ACCELERATE_DEAL_CLOSE
+    function: SALES
+    object: deals
+    stance: ADVANCE
+
+  - id: NO_ACTION
+    function: null
+    object: customers
+    stance: NEUTRAL

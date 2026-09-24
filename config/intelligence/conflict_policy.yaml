@@ -1,0 +1,44 @@
+# =============================================================================
+# The VS-01 conflict policy (plan §A15, §0.5.12).
+#
+# Loaded and validated by app/decisions/policy.py, against the action
+# catalogue beside it. Two positions conflict when they propose, over the same
+# object, a pair of actions some rule's `between` declares incompatible. The
+# rule then decides which prevails, and the other is preserved as dissent -
+# never averaged away, never deleted.
+#
+# A rule applies only when every `when` condition holds. A detected conflict
+# whose rule does not apply is UNRESOLVABLE and the run fails (§0.5.5): there
+# is no default winner and no partial assessment.
+#
+# No two rules may name the same pair, so every detected conflict has exactly
+# one candidate rule. There is no `scope` key: a rule's scope is always one
+# object identity, and both of its actions must contest the same catalogue
+# object type, so CONF-001 is a same-deal rule by construction.
+# =============================================================================
+
+# The file format. Read by the loader and nowhere else.
+version: 1
+
+# THE version of the decision configuration - this file and the action
+# catalogue it is validated against. It is carried unchanged into every
+# reconciliation, and it is part of an assessment's identity (§A24), so a
+# policy change yields a new brief rather than silently overwriting the old
+# conclusion. Bump it whenever a change to either file can alter a detected
+# conflict, a resolution, the resolved positions or the dissent.
+policy_version: 1
+
+conflicts:
+  - id: CONF-001
+    between: [ACCELERATE_DEAL_CLOSE, PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED]
+    resolve_to: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED
+    when:
+      support_band_at_least: ELEVATED
+      open_sla_breach_high_count_at_least: 1
+    # Cited structurally, by document id: DOC-003 states the escalation
+    # policy, and DOC-009 records the customer tying the deal to the tickets.
+    because_documents: [DOC-003, DOC-009]
+    rationale: >
+      An active support-policy escalation outranks deal acceleration on the same
+      account, and the customer has explicitly linked the deal decision to
+      resolution of the open tickets.

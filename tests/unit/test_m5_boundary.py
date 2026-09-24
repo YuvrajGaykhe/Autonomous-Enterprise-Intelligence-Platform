@@ -233,17 +233,30 @@ def test_no_module_reaches_for_infrastructure_vs01_does_not_use(forbidden):
 @pytest.mark.parametrize("forbidden", sorted(FORBIDDEN_DOWNSTREAM))
 def test_no_module_imports_the_decision_layer(forbidden):
     """
-    §0.4.5: M5 is upstream of M6 and M7. app.decisions does not exist yet, so
-    this assertion is what keeps it from arriving by accident.
+    §0.4.5: M5 is upstream of M6 and M7. app.decisions exists from M6 on and
+    imports this package, so an import back would close a cycle; this
+    assertion is what keeps one from arriving by accident.
     """
     for name, tree in _modules():
         for module in _imported_modules(tree):
             assert not module.startswith(forbidden), f"{name}: {module}"
 
 
-def test_the_decision_layer_does_not_exist_yet():
-    """M5 ends before M6 begins; the scan above would otherwise read as moot."""
-    assert not (REPO / "app" / "decisions").exists()
+def test_the_decision_layer_exists_so_the_scan_above_is_not_moot():
+    """
+    §0.5.3 T-M6-2 replaced the M5-era assertion that app/decisions did not
+    exist. It does now, so the scan above guards a real package: it must be
+    importable, and the scan must flag an import of it. What the package may
+    contain is test_m6_boundary.py's to assert.
+    """
+    assert (REPO / "app" / "decisions" / "__init__.py").is_file()
+    assert importlib.import_module("app.decisions").reconcile
+    tree = ast.parse("from app.decisions import reconcile\n")
+    assert any(
+        module.startswith(forbidden)
+        for module in _imported_modules(tree)
+        for forbidden in FORBIDDEN_DOWNSTREAM
+    )
 
 
 @pytest.mark.parametrize("directory", UPSTREAM_DIRS)

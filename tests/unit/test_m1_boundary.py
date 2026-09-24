@@ -53,7 +53,7 @@ M3_MODULES = {
 ALLOWED_LAYER2_IMPORTS = {"app.relationships"}
 #: The Layer 2 packages permitted to import M1's foundation. Extended when a
 #: milestone legitimately becomes a consumer, never relaxed to a substring.
-LAYER2_PACKAGES = ("app/relationships/", "app/evidence/", "app/analysts/")
+LAYER2_PACKAGES = ("app/relationships/", "app/evidence/", "app/analysts/", "app/decisions/")
 #: Session methods that would write. The package reads; the caller owns the
 #: transaction, matching the repository convention.
 FORBIDDEN_WRITES = {"commit", "rollback", "add", "add_all", "flush", "delete", "merge",
@@ -191,17 +191,17 @@ def test_every_read_of_a_canonical_table_is_explicitly_ordered():
 def test_only_the_relationship_model_depends_on_the_foundation():
     """
     The planned DAG, asserted from M1's side: app.intelligence is read by
-    app.relationships (M2), app.evidence (M4) and app.analysts (M5), and by
-    nothing else yet.
+    app.relationships (M2), app.evidence (M4), app.analysts (M5) and
+    app.decisions (M6), and by nothing else yet.
 
     Before M2 this asserted no importer at all, because M1's rollback was
     deleting the package. M2 is the first planned consumer (plan A9: the
     EdgeBasis vocabulary is M1's and is not redeclared), so the assertion
     names it rather than being relaxed: an importer that is not one of the
     named packages still fails the build, and so does an M2 module that stops
-    importing M1. M4 was added the same way (§0.3.9 T2) and M5 the same way
-    again (§0.4.4 T-M5-1) -- the tuple is **extended**, never relaxed to a
-    substring or a prefix check.
+    importing M1. M4 was added the same way (§0.3.9 T2), M5 the same way
+    again (§0.4.4 T-M5-1) and M6 once more (§0.5.3 T-M6-1) -- the tuple is
+    **extended**, never relaxed to a substring or a prefix check.
     """
     importers = []
     for directory in ("app", "scripts", "migrations", "docker"):
