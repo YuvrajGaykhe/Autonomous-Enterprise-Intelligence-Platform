@@ -6,7 +6,8 @@ v2.4 2026-09-21, M4 decision resolution (§0.3) ·
 v2.5 2026-09-21, M4 boundary clarification (§0.3.11) ·
 v2.6 2026-09-22, M5 re-specification — six blockers closed (§0.4) ·
 v2.7 2026-09-22, M5 second-pass review — three §0.4 defects closed (§0.4.9) ·
-v2.8 2026-09-24, M5 recorded complete; M6 specification — eight gaps closed (§0.5)**
+v2.8 2026-09-24, M5 recorded complete; M6 specification — eight gaps closed (§0.5) ·
+v2.9 2026-09-24, M6 closure**
 
 **Status as of 2026-09-24 — per milestone, not per document:**
 
@@ -18,7 +19,7 @@ v2.8 2026-09-24, M5 recorded complete; M6 specification — eight gaps closed (�
 | **M3** — signal engine and risk band | **COMPLETE** | `app/intelligence/{windows,signals,bands}.py` and the populated band table in `config/intelligence/risk_rules.yaml`; `tests/unit/test_m3_{windows,bands,boundary}.py` and `tests/integration/test_m3_signals.py`; commit `34486eb`; closure §0.2 |
 | **M4** — evidence and citations | **COMPLETE** | `app/evidence/`, `app/persistence/models/document_customer_link.py`, `app/persistence/repositories/document_links.py`, migration `c4a1e97d5b02` chained after `8bfd73b6af60` (one head); `tests/unit/test_m4_{linker,signals,boundary}.py` and `tests/integration/test_m4_{evidence,migration}.py`; commit `65eb462`, specification `42f9eeb`, correction `0b017e2`. D-1…D-6 (§0.3), the four gate blockers (§0.3.10) and the three boundary contradictions (§0.3.11) all closed; T1–T5 (§0.3.9) performed. `with_contract_documents` is defined, exported and proved, and **called by nothing in M4** |
 | **M5** — analysts and positions | **COMPLETE** | `app/analysts/` — `context.py` (the one factory, and the only module permitted a `Session`), `base.py`, `support_risk.py`, `commercial.py`; `tests/unit/test_m5_{analysts,context,boundary}.py`, `tests/unit/m5_support.py` and `tests/integration/test_m5_contexts.py`; specification `6a8d413` (§0.4, nine decisions D-M5-B1…B9), implementation `d48c970`, and `6158f81`, which closed §0.4.8 criterion 15's first clause (a two-currency context, CUST-042) that `d48c970` had left unasserted — **all sixteen criteria are now asserted**. Measured at `6158f81`: **5163** tests (unit 4166, contract 185, integration 732, e2e 80), `app/` coverage **100%** (5937 statements), ruff 69, mypy 9, secret scan 0, **one** migration head `c4a1e97d5b02` and **no** new migration. Only T-M5-1 and T-M5-2 were needed; T-M5-3/T-M5-4 authorised a re-quote that no count required. `app/intelligence/`, `app/relationships/`, `app/evidence/` and `app/persistence/` byte-identical to `65eb462` |
-| **M6** — conflict detection and reconciliation | **PLANNED — specified 2026-09-24, not started** | Nothing implemented: `app/decisions/` does not exist. A readiness audit against `6158f81` found M6 blocked on specification in eight places; all eight are closed in **§0.5**, which — like §0.4 — **is an authorisation** for the test and README evolution it names (T-M6-1…T-M6-4, §0.5.3) and for nothing wider. §0.5.14 fixes M6's scope and its twenty-one acceptance criteria |
+| **M6** — conflict detection and reconciliation | **COMPLETE** | `app/decisions/` — `policy.py`, `conflicts.py`, `reconciler.py` and the initialiser, exactly; `config/intelligence/{action_catalogue,conflict_policy}.yaml`; `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py`, `tests/unit/m6_support.py` and `tests/integration/test_m6_reconciliation.py`; specification `1d1ee59` (§0.5, eleven decisions D-M6-B1…B11), implementation `fd3a7e0`. All twenty-one §0.5.14 criteria asserted; only T-M6-1…T-M6-3 were needed. Measured at `fd3a7e0`: **5533** tests (unit 4518, contract 185, integration 750, e2e 80), 0 skipped, `app/` coverage **100%** (6347 statements), ruff 69, mypy 9, secret scan 0 over 292 files, **one** migration head `c4a1e97d5b02` and **no** new migration. `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`. Closure notes: Part B M6 |
 | **M7–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for any of them. §0.4.3 records one **forward** decision M7 must honour: the assessment run owns the production call to `derive_and_persist()`. §0.5.1 records another: M7 **persists** M6's worthiness and ordering and computes neither |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
@@ -4070,6 +4071,52 @@ rationale; any persistence, payload hash, narrative, route or approval (M7, M8);
 call to `derive_and_persist` (M7); §A21's log events (the run's, §0.5.1); moving or copying
 §A16's thresholds (§0.5.2); any change to M1–M5 or Layer 1; any test evolution beyond
 T-M6-1…T-M6-4.
+
+**CLOSED — commit `fd3a7e0`, 2026-09-24** (specification `1d1ee59`). Every §0.5 expectation was
+met as stated, with nothing adjusted after measurement: CUST-007 reconciles to §0.5.7's table
+exactly; the corpus holds **one** conflict and raises for no customer; **15** positions across ten
+customers, **14** resolved; **only CUST-007** is executive-worthy; the order of all fifty is
+§0.5.9's measured order. Baselines: suite **5533** (unit 4518, contract 185, integration 750,
+e2e 80), `app/` coverage **100%** (6347 statements, `app/decisions/` 410), ruff **69**, mypy
+**9**, secret scan **0** over 292 files, one head, no migration — so M6 added no finding. The
+ordered reconciliations of all fifty customers hash identically in two processes with different
+hash seeds over independently rebuilt databases.
+
+Five things a reader must carry forward:
+
+1. **The repeated-key check composes, it does not load.** §0.5.12 row 10 is implemented by
+   walking `yaml.compose(text, Loader=yaml.SafeLoader)` nodes before `yaml.safe_load`, because
+   G2's `test_no_code_executes_or_unsafely_deserializes_content` forbids any `yaml.load(...)`
+   call in `app/` — including one with a `SafeLoader` subclass. Do not "simplify" it into a
+   custom loader.
+2. **§0.5.5 is demonstrated on real rows, not only on fixtures.** Promoting CUST-036's
+   `qualification` deal DEAL-037 to `negotiation` at 90% makes Support pause and Sales accelerate
+   one deal at band `WATCH`, and `reconcile()` raises naming CONF-001's failing band condition
+   (`test_a_real_conflict_conf_001_does_not_apply_to_raises`). That is the exact shape §A29
+   records, one data edit away from the committed dataset.
+3. **Targeted mutation check over `app/decisions/`: 33 of 35 killed**, stable over two runs, run
+   with the ad-hoc harness convention of §0.2.4 (not committed). The first run found one real gap —
+   no test separated S8 from S4 as the `when` input — closed by
+   `test_the_breach_condition_reads_s8_and_nothing_else`. The two survivors are **proved
+   equivalent** and kept as explicit statements of D-M6-B10 and D-M6-B9: dropping the
+   different-function test in `detect_conflicts` (a declared pair always spans two catalogue
+   functions, and every position is checked against its catalogue function first), and iterating
+   objects in dict insertion order rather than `sorted()` (positions arrive `SALES` before
+   `SUPPORT`, and every conflicted object carries a `SALES` position, so insertion order happens to
+   be ascending — which D-M6-B9 forbids relying on). The first would stop being equivalent if a
+   catalogue let one function propose both actions of a pair; the second if a third `Function`
+   were added.
+4. **The public surface is exactly §0.5.7's list**, pinned by
+   `test_the_public_surface_is_exactly_the_declared_one`. `checked_positions`,
+   `position_identity` and `resolution_evidence` are module-level helpers, importable from their
+   modules and deliberately not re-exported.
+5. **The M1/M5 write scan counts any `.add()` call**, so `app/decisions/` collects with lists,
+   never `set.add`. The scan was kept strict rather than taught an exception.
+
+**Still M7's, recorded not hidden:** persisting `executive_worthy` and `policy_version`; emitting
+§A21's `vs01.conflict_detected` and `vs01.conflict_resolved` from the `Reconciliation`; the
+production `derive_and_persist()` call (§0.4.3); rendering the quoted spans of DOC-003 and DOC-009
+under §A22's cap.
 
 ---
 
