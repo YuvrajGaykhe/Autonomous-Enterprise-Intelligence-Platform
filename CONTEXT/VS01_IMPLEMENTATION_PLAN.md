@@ -10,7 +10,8 @@ v2.8 2026-09-24, M5 recorded complete; M6 specification — eight gaps closed (�
 v2.9 2026-09-24, M6 closure ·
 v2.10 2026-09-24, M7 specification — twelve directed decisions, and four open items resolved
 (§0.6) ·
-v2.11 2026-09-25, M7 material items MP1–MP6 resolved with normative wording (§0.6.13)**
+v2.11 2026-09-25, M7 material items MP1–MP6 resolved with normative wording (§0.6.13) ·
+v2.12 2026-09-25, M7 closure**
 
 **Status as of 2026-09-25 — per milestone, not per document:**
 
@@ -23,7 +24,7 @@ v2.11 2026-09-25, M7 material items MP1–MP6 resolved with normative wording (�
 | **M4** — evidence and citations | **COMPLETE** | `app/evidence/`, `app/persistence/models/document_customer_link.py`, `app/persistence/repositories/document_links.py`, migration `c4a1e97d5b02` chained after `8bfd73b6af60` (one head); `tests/unit/test_m4_{linker,signals,boundary}.py` and `tests/integration/test_m4_{evidence,migration}.py`; commit `65eb462`, specification `42f9eeb`, correction `0b017e2`. D-1…D-6 (§0.3), the four gate blockers (§0.3.10) and the three boundary contradictions (§0.3.11) all closed; T1–T5 (§0.3.9) performed. `with_contract_documents` is defined, exported and proved, and **called by nothing in M4** |
 | **M5** — analysts and positions | **COMPLETE** | `app/analysts/` — `context.py` (the one factory, and the only module permitted a `Session`), `base.py`, `support_risk.py`, `commercial.py`; `tests/unit/test_m5_{analysts,context,boundary}.py`, `tests/unit/m5_support.py` and `tests/integration/test_m5_contexts.py`; specification `6a8d413` (§0.4, nine decisions D-M5-B1…B9), implementation `d48c970`, and `6158f81`, which closed §0.4.8 criterion 15's first clause (a two-currency context, CUST-042) that `d48c970` had left unasserted — **all sixteen criteria are now asserted**. Measured at `6158f81`: **5163** tests (unit 4166, contract 185, integration 732, e2e 80), `app/` coverage **100%** (5937 statements), ruff 69, mypy 9, secret scan 0, **one** migration head `c4a1e97d5b02` and **no** new migration. Only T-M5-1 and T-M5-2 were needed; T-M5-3/T-M5-4 authorised a re-quote that no count required. `app/intelligence/`, `app/relationships/`, `app/evidence/` and `app/persistence/` byte-identical to `65eb462` |
 | **M6** — conflict detection and reconciliation | **COMPLETE** | `app/decisions/` — `policy.py`, `conflicts.py`, `reconciler.py` and the initialiser, exactly; `config/intelligence/{action_catalogue,conflict_policy}.yaml`; `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py`, `tests/unit/m6_support.py` and `tests/integration/test_m6_reconciliation.py`; specification `1d1ee59` (§0.5, eleven decisions D-M6-B1…B11), implementation `fd3a7e0`. All twenty-one §0.5.14 criteria asserted; only T-M6-1…T-M6-3 were needed. Measured at `fd3a7e0`: **5533** tests (unit 4518, contract 185, integration 750, e2e 80), 0 skipped, `app/` coverage **100%** (6347 statements), ruff 69, mypy 9, secret scan 0 over 292 files, **one** migration head `c4a1e97d5b02` and **no** new migration. `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`. Closure notes: Part B M6 |
-| **M7** — brief assembly, hashing and persistence | **SPECIFIED — not started** | §0.6, recorded against `6919fe5`: twelve directed decisions, D-M7-B1…B12, and §0.6.14's four open items, all RESOLVED on 2026-09-24. §0.6.13's six material items, MP1–MP6, were **RESOLVED on 2026-09-25**, with normative wording in §0.6.13.1–§0.6.13.6. **No specification item gates implementation any longer; it begins only on the owner's instruction.** Nothing is implemented: no M7 module, table, migration or test exists. The forward decisions of §0.4.3 (the run owns the production `derive_and_persist()` call) and §0.5.1 (M7 persists M6's worthiness and ordering and computes neither) stand |
+| **M7** — brief assembly, hashing and persistence | **COMPLETE** | `app/decisions/` — `assessment.py`, `payload.py`, `brief.py` and `templates/brief.txt`; `app/persistence/models/risk_{assessment,position,brief}.py`, `app/persistence/repositories/{risk_assessments,citation_reads}.py`, migration `66eddc6b7136` chained after `c4a1e97d5b02` (one head); `tests/unit/test_m7_{payload,brief,boundary}.py`, `tests/unit/m7_support.py`, `tests/integration/test_m7_{assessment,migration,persistence}.py` and the golden file `tests/golden/vs01_cust007_brief.txt`; specification `5f19144` (§0.6: D-M7-B1…B12, MP1–MP6), implementation `1efea45`. Every §0.6.15 criterion is asserted, criterion 11 under the Q1 = A reading recorded in Part B; T-M7-1…T-M7-4 were used, and T-M7-5 was not needed. Measured at `1efea45`: **5962** tests (unit 4813, contract 185, integration 884, e2e 80), 0 skipped, `app/` coverage **100%** (7022 statements), ruff 69, mypy 9, secret scan 0 over 292 tracked files, **one** migration head `66eddc6b7136`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`; `app/persistence/` changed only by the additive registration. Closure notes: Part B M7 |
 | **M8–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for either |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
@@ -5955,11 +5956,12 @@ approval.
 
 **Before.** A reconciled result exists only in memory.
 
-**Status: SPECIFIED, NOT STARTED.** §0.6 records twelve directed decisions, D-M7-B1…B12.
-§0.6.14's four open items were all **RESOLVED** on 2026-09-24. §0.6.13's six material items,
-MP1–MP6, were **RESOLVED** on 2026-09-25, with normative wording in §0.6.13.1–§0.6.13.6, and
-so was the one contradiction finalising them exposed (§0.6.13.1). **No specification item gates
-implementation any longer; it begins only on the owner's instruction.**
+**Status: COMPLETE — implementation `1efea45`, 2026-09-25.** §0.6 records twelve
+directed decisions, D-M7-B1…B12. §0.6.14's four open items were all **RESOLVED** on 2026-09-24.
+§0.6.13's six material items, MP1–MP6, were **RESOLVED** on 2026-09-25, with normative wording
+in §0.6.13.1–§0.6.13.6, and so was the one contradiction finalising them exposed (§0.6.13.1).
+Implementation began on the owner's instruction on 2026-09-25. Its decisions and its
+closure are recorded at the end of this block.
 
 **Change.** `app/decisions/assessment.py` (**the assessment run** — §0.4.3 assigns it the
 production call to `derive_and_persist()`, once per run per scope, before any context is built,
@@ -6013,6 +6015,75 @@ the 14-day escalation window — and every item of §A27.5. §0.6.15's criteria 
 **Non-goals.** Approval; API; UI; computing worthiness or ordering, or re-deciding any conflict
 (M6, §0.5.1); `vs01.signals_computed` and `vs01.band_assigned`; §A26's canonical fixtures (M9);
 any change to M1–M6 source; any test evolution beyond T-M7-1…T-M7-5.
+
+**Implementation decisions, recorded before closure — 2026-09-25.** Implementation is complete
+and verified on top of `5f19144`, and committed as `1efea45`. The closure record below carries these
+four forward. None of them changes a directed decision. Each one says how §0.6's text is read
+where the text alone does not settle the code.
+
+1. **Q1 = A: `BriefRenderError` has a cause only where an exception exists (owner decision).**
+   It is raised `from exc` where one of §0.6.13.5's conditions comes from an actual exception:
+   - `OSError` or `UnicodeDecodeError` reading the template (condition 1);
+   - `KeyError` or `ValueError` from `substitute` (condition 2);
+   - `InvalidOperation` from `Decimal` (condition 3).
+
+   A failed check has no underlying exception, so it has no cause, and none is manufactured.
+   This covers a missing value, a wrong JSON type and a non-finite amount (condition 3). It also
+   covers span texts whose keys are not the payload's targets, or whose value is not a `str`
+   (condition 4). §0.6.13.5's *Cause* bullet and criterion 11's "with the original exception as
+   its cause" apply where an original exception exists. Their text is left unchanged.
+2. **`build_payload` checks its spans rather than trusting them.** The `spans` mapping must name
+   exactly the applicable targets of §0.6.13.3: `sorted(spans)` must equal the names from
+   `applicable_targets(reconciliation, links)`. A missing applicable target raises
+   `ContractViolationError`, and so does an extra one. This is payload construction, so the error
+   propagates unwrapped (§0.6.13.5). The run locates spans for exactly those targets, so the
+   check cannot fire on a production run. It stops the pure function from stating a
+   `cited_spans` list that its own citations contradict. Proved by
+   `test_the_spans_must_be_exactly_the_applicable_targets`.
+3. **Ticket dates reach `payload.py` as `CalendarDate`, a passive protocol.** §0.6.2 forbids
+   `datetime` in `payload.py`. `CalendarDate` is a `typing.Protocol` with two methods,
+   `isoformat()` and `toordinal()`, and it is not `runtime_checkable`. The module never
+   constructs, parses or validates a date. The run passes the `datetime.date` values that
+   `utc_date` returns. The window test compares ISO text, which orders chronologically.
+   `ticket_span_days` is `last.toordinal() - first.toordinal()`, which for a calendar date is
+   exactly DR15's `(last_ticket_date - first_ticket_date).days`. Proved on same-day, adjacent,
+   month, year and leap-day cases by `test_the_span_is_the_elapsed_days_between_its_two_dates`,
+   and on id order by `test_the_span_ends_are_the_earliest_and_latest_dates_whatever_the_id_order`.
+4. **§0.6.2's M1 row grants `payload.py` modules, not a closed list of names.** The row permits
+   five M1 modules: contract, scope, config, errors and timeutil. The names in `payload.py`'s cell
+   are what it chiefly uses, not an allow-list. `payload.py` imports `Scope` and
+   `RiskRulesConfig`, which are the row's scope and config. It also imports contract types,
+   `canonical_json`, `ContractViolationError` and `closed_window`. It never calls `decimal_text`
+   or `money_payload` itself, because the frozen `to_payload()` projections already serialise
+   money. `test_m7_boundary.py` scans at this module level.
+
+**CLOSED — commit `1efea45`, 2026-09-25** (specification `5f19144`). Every §0.6.15
+expectation was met as measured, with nothing adjusted after measurement.
+
+- **Assessments and briefs.** 50 assessments. CUST-007 is `CRITICAL` and the only
+  executive-worthy customer. 15 positions over 10 assessments. Exactly 3 briefs, for CUST-007,
+  CUST-025 and CUST-036, each with `policy_version` 1, `template_version` `"1"` and `DRAFT`.
+- **Payload hashes.** CUST-007 `e93c29cf…c946`, CUST-025 `08c99ced…8770`, CUST-036
+  `a6240ac1…b637`, identical across two processes with different hash seeds. CUST-007's payload
+  holds 36 distinct citations, and every one resolves.
+- **Golden file.** The owner reviewed and approved the CUST-007 narrative on 2026-09-25. It is
+  pinned as `tests/golden/vs01_cust007_brief.txt`: 12474 bytes, sha256 `87d13986…9dce`. Two
+  wording corrections were approved before pinning, without a `template_version` change, because
+  version 1 had never been stored durably. The opening sentence no longer claims a citation for
+  every fact, and section 7's absence line states exactly its condition. The golden tests compare
+  raw bytes and fail on a one-byte change. Rendering inside the run issues no SQL.
+- **Boundary.** `tests/unit/test_m7_boundary.py` asserts §0.6.2 independently of the M6 file:
+  144 tests, every scan with a companion. Ten forbidden changes to the real sources, made one at
+  a time, were each caught.
+- **Regression.** 5962 tests (unit 4813, contract 185, integration 884, e2e 80), 0 skipped.
+  `app/` coverage 100% (7022 statements). ruff 69, mypy 9, secret scan 0, one head
+  `66eddc6b7136`: M7 added no finding. The fingerprint is still `1d891b0b…`. No mutation audit
+  was run, because the audit is M9's (§0.6.15).
+
+**Recorded, not M7's:** `pyproject.toml` requires `sqlalchemy>=2.0.0`, so a fresh install now
+resolves SQLAlchemy 2.1.0. Under 2.1 the repository's bare `postgresql://` URLs select psycopg 3,
+which is not a dependency, and Layer 1's API tests fail to collect. §0.6.10 keeps
+`pyproject.toml` unchanged, so this is a separate issue, to be settled after M7.
 
 ---
 
