@@ -1,0 +1,55 @@
+VS-01 RISK BRIEF: ${customer}
+
+This narrative is a view of the decision payload and is not hashed. An approval
+binds to the payload's hash. Its facts come only from the payload and the
+resolved text of its cited spans, with citations and rules shown where they
+apply rather than beside every fact. Headings, labels, absence lines and the
+limitations are fixed template text.
+
+1. IDENTITY
+${identity}
+
+2. RISK STATE AND WHY
+${risk_state}
+
+3. EVIDENCE
+${evidence}
+
+4. COMMERCIAL CONTEXT (PER CURRENCY)
+${commercial}
+
+5. CONFLICT AND HOW IT WAS RESOLVED
+${conflict}
+
+6. RECORDED DISSENT
+${dissent}
+
+7. POLICY AND CONTRACT CONTEXT
+${policy}
+
+8. CHRONIC BACKLOG
+${backlog}
+
+9. RECOMMENDED ACTIONS
+${actions}
+
+10. ESCALATION PATH
+${escalation}
+
+11. LIMITATIONS
+- Deterministic rules only: no language model, embedding or prompt produced any
+  part of this brief.
+- The band is a policy artefact, not a probability of churn.
+- Business days follow a Monday-to-Friday rule with no holiday calendar.
+- Money is stated per currency. No exchange rate is applied, so no cross-currency
+  total exists.
+- Document links are derived by exact identifier and exact name matching only. A
+  document that concerns the customer without naming it is linked to no one.
+- The escalation path lists open tickets by their status, while the signals
+  decide whether a ticket is open by its resolution date as of the evaluation
+  date.
+- Quoted document text is escaped and capped at 500 characters; a longer quote
+  is cut there and marked as truncated after its closing quote. Offsets index
+  the document's citable text: its title, a newline, then its body.
+- Approver identity is recorded, not authenticated, and nothing in this brief is
+  executed.

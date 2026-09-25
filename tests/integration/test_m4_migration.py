@@ -116,7 +116,8 @@ def test_the_m4_revision_chains_after_the_b1_schema():
     revision = script.get_revision(M4_REVISION)
 
     assert revision.down_revision == PREVIOUS_HEAD
-    assert list(script.get_heads()) == [M4_REVISION]
+    (head,) = script.get_heads()
+    assert M4_REVISION in [step.revision for step in script.walk_revisions("base", head)]
 
 
 def test_the_previous_head_has_no_link_table(at_previous_head):
@@ -132,7 +133,7 @@ def test_the_previous_head_has_no_link_table(at_previous_head):
 def test_upgrading_adds_only_the_link_table(at_previous_head, migration_url):
     before = _tables(at_previous_head)
 
-    _run(migration_url, command.upgrade, "head")
+    _run(migration_url, command.upgrade, M4_REVISION)
 
     assert _tables(at_previous_head) - before == {LINK_TABLE}
 

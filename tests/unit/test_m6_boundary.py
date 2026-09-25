@@ -47,9 +47,20 @@ M6_MODULES = {
     "app/decisions/reconciler.py",
 }
 
-#: M7's and M8's named modules (Part B). None may exist while M6 is the
-#: milestone, and no M6 module may name one.
-LATER_MODULES = ("assessment", "payload", "brief", "templates", "approval")
+#: M7's three modules (§0.6.2). They sit beside M6's in app/decisions/, and
+#: every scan below still covers M6's four modules only (§0.6.1 T-M7-1 (a)).
+M7_MODULES = {
+    "app/decisions/assessment.py",
+    "app/decisions/payload.py",
+    "app/decisions/brief.py",
+}
+
+#: M8's named module (Part B). It may not exist while M7 is the milestone.
+LATER_MODULES = ("approval",)
+
+#: Every module named after M6 (Part B). No M6 module may import one, M7's
+#: included (§0.6.1 T-M7-1 (d)).
+POST_M6_MODULES = ("assessment", "payload", "brief", "templates", "approval")
 
 #: The two configuration files M6 adds.
 M6_CONFIG = ("config/intelligence/action_catalogue.yaml",
@@ -83,8 +94,8 @@ ORM_MODELS = {mapper.class_.__name__ for mapper in Base.registry.mappers}
 
 
 def _modules():
-    for path in sorted(DECISIONS_DIR.rglob("*.py")):
-        yield path.relative_to(REPO).as_posix(), ast.parse(path.read_text(encoding="utf-8"))
+    for name in sorted(M6_MODULES):
+        yield name, ast.parse((REPO / name).read_text(encoding="utf-8"))
 
 
 def _imported_modules(tree: ast.AST) -> set[str]:
@@ -142,11 +153,16 @@ def _code(tree: ast.AST) -> str:
 def test_the_decision_layer_is_exactly_m6s_four_modules():
     """A scan that silently matches nothing proves nothing, and a fifth module is unauthorised."""
     assert {name for name, _ in _modules()} == M6_MODULES
+    assert {
+        path.relative_to(REPO).as_posix() for path in DECISIONS_DIR.rglob("*.py")
+    } == M6_MODULES | M7_MODULES
 
 
 def test_the_public_surface_is_exactly_the_declared_one():
     """§0.5.7's public API, no more: helpers stay importable from their modules only."""
     decisions = importlib.import_module("app.decisions")
+    for submodule in ("assessment", "payload", "brief"):
+        importlib.import_module(f"app.decisions.{submodule}")
 
     assert sorted(decisions.__all__) == sorted([
         "ActionCatalogue", "CatalogueEntry", "ConflictPolicy", "ConflictRule",
@@ -156,7 +172,8 @@ def test_the_public_surface_is_exactly_the_declared_one():
         "reconcile", "order_reconciliations", "Reconciliation", "Worthiness",
     ])
     assert {name for name in vars(decisions) if not name.startswith("_")} == set(
-        decisions.__all__) | {"conflicts", "policy", "reconciler"}
+        decisions.__all__) | {"conflicts", "policy", "reconciler", "assessment", "payload",
+                              "brief"}
 
 
 @pytest.mark.parametrize("name", LATER_MODULES)
@@ -171,7 +188,7 @@ def test_the_decision_configuration_exists_beside_the_risk_rules(path):
     assert (REPO / "config" / "intelligence" / "risk_rules.yaml").is_file()
 
 
-@pytest.mark.parametrize("name", LATER_MODULES)
+@pytest.mark.parametrize("name", POST_M6_MODULES)
 def test_no_m6_module_imports_a_later_milestone(name):
     for module_name, tree in _modules():
         for module in _imported_modules(tree):

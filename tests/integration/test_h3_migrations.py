@@ -52,6 +52,9 @@ OPERATIONAL_TABLES = (
 #: indexes are unaltered by any of them.
 LAYER2_TABLES = (
     "document_customer_links",
+    "risk_assessments",
+    "risk_positions",
+    "risk_briefs",
 )
 EXPECTED_TABLES = frozenset(CANONICAL_TABLES + OPERATIONAL_TABLES + LAYER2_TABLES)
 

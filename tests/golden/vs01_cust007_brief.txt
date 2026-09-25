@@ -1,0 +1,230 @@
+VS-01 RISK BRIEF: CUST-007
+
+This narrative is a view of the decision payload and is not hashed. An approval
+binds to the payload's hash. Its facts come only from the payload and the
+resolved text of its cited spans, with citations and rules shown where they
+apply rather than beside every fact. Headings, labels, absence lines and the
+limitations are fixed template text.
+
+1. IDENTITY
+Customer: CUST-007
+Source system: csv_demo
+As of: 2026-09-18
+Layer 1 fingerprint: 1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00
+Versions: payload 1, rules 1, linker 1, policy 1
+
+2. RISK STATE AND WHY
+Band: CRITICAL
+Satisfied band rules: R-CRIT-001, R-ELEV-001, R-ELEV-002, R-WATCH-001, R-WATCH-002, R-WATCH-003
+Executive-worthy: yes (band CRITICAL, active deal count 1, active project count 0)
+Signals:
+- S1 open_ticket_count: 4
+- S2 open_high_priority_count: 3
+- S2b high_priority_total: 4
+- S3 tickets_in_lookback: 5
+- S4 max_tickets_in_14d_window: 5
+- S5 policy_escalation_state: true
+- S6 days_since_last_ticket: 22
+- S7 sla_breach_count: 5
+- S8 open_sla_breach_high_count: 3
+- S9 stale_open_ticket_count: 0
+- S10 dominant_ticket_category: performance
+- S11 active_deal_count: 1
+- S13 active_project_count: 0
+- S15 deal_under_pressure: true
+Escalation window: 2026-08-18 to 2026-08-31, ticket count 5
+Ticket span: a 9-day span from 2026-08-18 to 2026-08-27, ticket count 5: TKT-073, TKT-075, TKT-076, TKT-079, TKT-080
+  rule: tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days
+Derivations:
+- open_ticket_count = 4, counting TKT-075, TKT-076, TKT-079, TKT-080
+  rule: count of tickets where is_open
+- open_high_priority_count = 3, counting TKT-075, TKT-076, TKT-080
+  rule: count of tickets where is_open and priority == 'high'
+- high_priority_total = 4, counting TKT-073, TKT-075, TKT-076, TKT-080
+  rule: count of tickets where priority == 'high'
+- open_sla_breach_high_count = 3, counting TKT-075, TKT-076, TKT-080
+  rule: count of tickets where is_open and priority == 'high' and breaches_sla
+- dominant_ticket_category = performance, counting TKT-073, TKT-075, TKT-076, TKT-079, TKT-080; category counts billing 1, integration 1, performance 3; lookback 2026-06-21 to 2026-09-18
+  rule: most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order
+
+3. EVIDENCE
+Tickets:
+- TKT-073: created 2026-08-18, priority high, category performance, open no, breaches SLA yes
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-073 created_at
+  - CANONICAL_FACT record support_tickets TKT-073 priority
+  - CANONICAL_FACT record support_tickets TKT-073 category
+  - CANONICAL_FACT record support_tickets TKT-073 resolved_at
+- TKT-075: created 2026-08-20, priority high, category performance, open yes, breaches SLA yes
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-075 created_at
+  - CANONICAL_FACT record support_tickets TKT-075 priority
+  - CANONICAL_FACT record support_tickets TKT-075 category
+  - CANONICAL_FACT record support_tickets TKT-075 resolved_at
+- TKT-076: created 2026-08-23, priority high, category integration, open yes, breaches SLA yes
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-076 created_at
+  - CANONICAL_FACT record support_tickets TKT-076 priority
+  - CANONICAL_FACT record support_tickets TKT-076 category
+  - CANONICAL_FACT record support_tickets TKT-076 resolved_at
+- TKT-079: created 2026-08-25, priority medium, category billing, open yes, breaches SLA yes
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-079 created_at
+  - CANONICAL_FACT record support_tickets TKT-079 priority
+  - CANONICAL_FACT record support_tickets TKT-079 category
+  - CANONICAL_FACT record support_tickets TKT-079 resolved_at
+- TKT-080: created 2026-08-27, priority high, category performance, open yes, breaches SLA yes
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-080 created_at
+  - CANONICAL_FACT record support_tickets TKT-080 priority
+  - CANONICAL_FACT record support_tickets TKT-080 category
+  - CANONICAL_FACT record support_tickets TKT-080 resolved_at
+Document links (this snapshot and linker version only):
+- DOC-005 names CUST-007 by EXACT_NAME, HIGH confidence, matching "Meridian Textiles"
+  evidence:
+  - DERIVED_RELATIONSHIP document DOC-005 [171, 188)
+- DOC-005 names CUST-007 by ID_TOKEN, HIGH confidence, matching "CUST-007"
+  evidence:
+  - DERIVED_RELATIONSHIP document DOC-005 [190, 198)
+- DOC-006 names CUST-007 by EXACT_NAME, HIGH confidence, matching "Meridian Textiles"
+  evidence:
+  - DERIVED_RELATIONSHIP document DOC-006 [28, 45)
+- DOC-006 names CUST-007 by ID_TOKEN, HIGH confidence, matching "CUST-007"
+  evidence:
+  - DERIVED_RELATIONSHIP document DOC-006 [113, 121)
+- DOC-009 names CUST-007 by EXACT_NAME, HIGH confidence, matching "Meridian Textiles"
+  evidence:
+  - DERIVED_RELATIONSHIP document DOC-009 [23, 40)
+- DOC-009 names CUST-007 by ID_TOKEN, HIGH confidence, matching "CUST-007"
+  evidence:
+  - DERIVED_RELATIONSHIP document DOC-009 [76, 84)
+Cited spans:
+- DOC_003_ESCALATION_RULE: DOC-003 [238, 330), quoted in section 7
+- DOC_006_TERM_AND_NOTICE: DOC-006 [153, 238), quoted in section 7
+- DOC_009_DEAL_LINKAGE: DOC-009 [238, 333), quoted in section 7
+
+4. COMMERCIAL CONTEXT (PER CURRENCY)
+Active deals:
+- DEAL-001: stage negotiation, probability 90%, amount USD 5,361.44
+  evidence:
+  - CANONICAL_FACT record deals DEAL-001 is_active
+  - CANONICAL_FACT record deals DEAL-001 stage
+  - CANONICAL_FACT record deals DEAL-001 probability
+  - CANONICAL_FACT record deals DEAL-001 amount
+  - CANONICAL_FACT record deals DEAL-001 currency
+Exposure by currency (S12):
+- USD 5,361.44
+Active projects (S13): none. CUST-007 has no active project.
+
+5. CONFLICT AND HOW IT WAS RESOLVED
+- Conflict over DEAL-001:
+  - SALES ADVANCE ACCELERATE_DEAL_CLOSE
+  - SUPPORT RESTRAIN PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED
+  Resolved by policy CONF-001 (policy version 1): PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED prevails, as SUPPORT proposed
+  Rationale: An active support-policy escalation outranks deal acceleration on the same account, and the customer has explicitly linked the deal decision to resolution of the open tickets.
+  evidence:
+  - CANONICAL_FACT record documents DOC-003 body_text
+  - CANONICAL_FACT record documents DOC-009 body_text
+
+6. RECORDED DISSENT
+- Overruled by CONF-001: SALES ADVANCE ACCELERATE_DEAL_CLOSE on DEAL-001
+  Rationale: DEAL-001 for CUST-007 is in negotiation at 90.00%, at or above the 80% threshold for acceleration.
+  evidence:
+  - CANONICAL_FACT record deals DEAL-001 is_active
+  - CANONICAL_FACT record deals DEAL-001 stage
+  - CANONICAL_FACT record deals DEAL-001 probability
+
+7. POLICY AND CONTRACT CONTEXT
+Cited spans:
+- DOC_003_ESCALATION_RULE, DOC-003 [238, 330): "Customers raising three or more tickets within 14 days are escalated to their account owner."
+- DOC_006_TERM_AND_NOTICE, DOC-006 [153, 238): "Term: 36 months, renewing annually unless either party gives 90 days' written notice."
+- DOC_009_DEAL_LINKAGE, DOC-009 [238, 333): "The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them."
+Contract documents (S14): DOC-006
+
+8. CHRONIC BACKLOG
+Chronic backlog tickets: none
+A chronic backlog ticket is reported here and never drives the band.
+
+9. RECOMMENDED ACTIONS
+- SUPPORT NEUTRAL ASSIGN_DEDICATED_SUPPORT_OWNER on CUST-007
+  Rationale: CUST-007 has 3 open high-priority tickets past their SLA target, at or above the threshold of 2 for a dedicated owner.
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-075 created_at
+  - CANONICAL_FACT record support_tickets TKT-075 priority
+  - CANONICAL_FACT record support_tickets TKT-075 resolved_at
+  - CANONICAL_FACT record support_tickets TKT-076 created_at
+  - CANONICAL_FACT record support_tickets TKT-076 priority
+  - CANONICAL_FACT record support_tickets TKT-076 resolved_at
+  - CANONICAL_FACT record support_tickets TKT-080 created_at
+  - CANONICAL_FACT record support_tickets TKT-080 priority
+  - CANONICAL_FACT record support_tickets TKT-080 resolved_at
+- SUPPORT NEUTRAL ESCALATE_TO_ACCOUNT_OWNER_PER_SLA on CUST-007
+  Rationale: CUST-007 is in the policy escalation state: 5 tickets in a 14-day window meets the threshold of 3.
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-073 created_at
+  - CANONICAL_FACT record support_tickets TKT-075 created_at
+  - CANONICAL_FACT record support_tickets TKT-076 created_at
+  - CANONICAL_FACT record support_tickets TKT-079 created_at
+  - CANONICAL_FACT record support_tickets TKT-080 created_at
+- SUPPORT NEUTRAL SCHEDULE_EXECUTIVE_SPONSOR_CALL on CUST-007
+  Rationale: CUST-007 is in the policy escalation state and has at least one active deal, so the account warrants an executive sponsor.
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-073 created_at
+  - CANONICAL_FACT record support_tickets TKT-075 created_at
+  - CANONICAL_FACT record support_tickets TKT-076 created_at
+  - CANONICAL_FACT record support_tickets TKT-079 created_at
+  - CANONICAL_FACT record support_tickets TKT-080 created_at
+- SUPPORT RESTRAIN PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED on DEAL-001
+  Rationale: DEAL-001 is in negotiation while CUST-007 has 3 open high-priority SLA breaches, so the deal push should pause until they are resolved.
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-075 created_at
+  - CANONICAL_FACT record support_tickets TKT-075 priority
+  - CANONICAL_FACT record support_tickets TKT-075 resolved_at
+  - CANONICAL_FACT record support_tickets TKT-076 created_at
+  - CANONICAL_FACT record support_tickets TKT-076 priority
+  - CANONICAL_FACT record support_tickets TKT-076 resolved_at
+  - CANONICAL_FACT record support_tickets TKT-080 created_at
+  - CANONICAL_FACT record support_tickets TKT-080 priority
+  - CANONICAL_FACT record support_tickets TKT-080 resolved_at
+  - CANONICAL_FACT record deals DEAL-001 stage
+- SUPPORT NEUTRAL REVIEW_INVOICE_DISPUTE on TKT-079
+  Rationale: TKT-079 is an open ticket categorised 'billing' for CUST-007, so the invoice dispute needs review.
+  evidence:
+  - CANONICAL_FACT record support_tickets TKT-079 category
+  - CANONICAL_FACT record support_tickets TKT-079 resolved_at
+
+10. ESCALATION PATH
+Account owner: EMP-007
+Account owner's manager: EMP-002
+Open tickets (by status): TKT-075, TKT-076, TKT-079, TKT-080
+Assignees of open tickets: EMP-018, EMP-021, EMP-017, EMP-020
+Assignees' managers: EMP-004
+Edges:
+- customer_owned_by: CUST-007 -> EMP-007 (SOURCE_KEY_JOIN, customers.owner_source_id)
+- employee_reports_to: EMP-007 -> EMP-002 (SOURCE_KEY_JOIN, employees.manager_source_id)
+- employee_reports_to: EMP-017 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)
+- employee_reports_to: EMP-018 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)
+- employee_reports_to: EMP-020 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)
+- employee_reports_to: EMP-021 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)
+- ticket_assigned_to: TKT-075 -> EMP-018 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)
+- ticket_assigned_to: TKT-076 -> EMP-021 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)
+- ticket_assigned_to: TKT-079 -> EMP-017 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)
+- ticket_assigned_to: TKT-080 -> EMP-020 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)
+
+11. LIMITATIONS
+- Deterministic rules only: no language model, embedding or prompt produced any
+  part of this brief.
+- The band is a policy artefact, not a probability of churn.
+- Business days follow a Monday-to-Friday rule with no holiday calendar.
+- Money is stated per currency. No exchange rate is applied, so no cross-currency
+  total exists.
+- Document links are derived by exact identifier and exact name matching only. A
+  document that concerns the customer without naming it is linked to no one.
+- The escalation path lists open tickets by their status, while the signals
+  decide whether a ticket is open by its resolution date as of the evaluation
+  date.
+- Quoted document text is escaped and capped at 500 characters; a longer quote
+  is cut there and marked as truncated after its closing quote. Offsets index
+  the document's citable text: its title, a newline, then its body.
+- Approver identity is recorded, not authenticated, and nothing in this brief is
+  executed.
