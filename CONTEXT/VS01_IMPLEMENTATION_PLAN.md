@@ -11,7 +11,9 @@ v2.9 2026-09-24, M6 closure ·
 v2.10 2026-09-24, M7 specification — twelve directed decisions, and four open items resolved
 (§0.6) ·
 v2.11 2026-09-25, M7 material items MP1–MP6 resolved with normative wording (§0.6.13) ·
-v2.12 2026-09-25, M7 closure**
+v2.12 2026-09-25, M7 closure ·
+v2.13 2026-09-25, M8 specification — twenty directed decisions, ten contradictions and four review
+items resolved (§0.7)**
 
 **Status as of 2026-09-25 — per milestone, not per document:**
 
@@ -25,7 +27,8 @@ v2.12 2026-09-25, M7 closure**
 | **M5** — analysts and positions | **COMPLETE** | `app/analysts/` — `context.py` (the one factory, and the only module permitted a `Session`), `base.py`, `support_risk.py`, `commercial.py`; `tests/unit/test_m5_{analysts,context,boundary}.py`, `tests/unit/m5_support.py` and `tests/integration/test_m5_contexts.py`; specification `6a8d413` (§0.4, nine decisions D-M5-B1…B9), implementation `d48c970`, and `6158f81`, which closed §0.4.8 criterion 15's first clause (a two-currency context, CUST-042) that `d48c970` had left unasserted — **all sixteen criteria are now asserted**. Measured at `6158f81`: **5163** tests (unit 4166, contract 185, integration 732, e2e 80), `app/` coverage **100%** (5937 statements), ruff 69, mypy 9, secret scan 0, **one** migration head `c4a1e97d5b02` and **no** new migration. Only T-M5-1 and T-M5-2 were needed; T-M5-3/T-M5-4 authorised a re-quote that no count required. `app/intelligence/`, `app/relationships/`, `app/evidence/` and `app/persistence/` byte-identical to `65eb462` |
 | **M6** — conflict detection and reconciliation | **COMPLETE** | `app/decisions/` — `policy.py`, `conflicts.py`, `reconciler.py` and the initialiser, exactly; `config/intelligence/{action_catalogue,conflict_policy}.yaml`; `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py`, `tests/unit/m6_support.py` and `tests/integration/test_m6_reconciliation.py`; specification `1d1ee59` (§0.5, eleven decisions D-M6-B1…B11), implementation `fd3a7e0`. All twenty-one §0.5.14 criteria asserted; only T-M6-1…T-M6-3 were needed. Measured at `fd3a7e0`: **5533** tests (unit 4518, contract 185, integration 750, e2e 80), 0 skipped, `app/` coverage **100%** (6347 statements), ruff 69, mypy 9, secret scan 0 over 292 files, **one** migration head `c4a1e97d5b02` and **no** new migration. `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`. Closure notes: Part B M6 |
 | **M7** — brief assembly, hashing and persistence | **COMPLETE** | `app/decisions/` — `assessment.py`, `payload.py`, `brief.py` and `templates/brief.txt`; `app/persistence/models/risk_{assessment,position,brief}.py`, `app/persistence/repositories/{risk_assessments,citation_reads}.py`, migration `66eddc6b7136` chained after `c4a1e97d5b02` (one head); `tests/unit/test_m7_{payload,brief,boundary}.py`, `tests/unit/m7_support.py`, `tests/integration/test_m7_{assessment,migration,persistence}.py` and the golden file `tests/golden/vs01_cust007_brief.txt`; specification `5f19144` (§0.6: D-M7-B1…B12, MP1–MP6), implementation `1efea45`. Every §0.6.15 criterion is asserted, criterion 11 under the Q1 = A reading recorded in Part B; T-M7-1…T-M7-4 were used, and T-M7-5 was not needed. Measured at `1efea45`: **5962** tests (unit 4813, contract 185, integration 884, e2e 80), 0 skipped, `app/` coverage **100%** (7022 statements), ruff 69, mypy 9, secret scan 0 over 292 tracked files, **one** migration head `66eddc6b7136`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`; `app/persistence/` changed only by the additive registration. Closure notes: Part B M7 |
-| **M8–M9** | **PLANNED** | Nothing implemented; no package, table, route or test exists for either |
+| **M8** — API and the human approval boundary | **SPECIFIED — not started** | §0.7, recorded 2026-09-25 against `b2d588d`: the ten contradictions X1–X10 and OPEN-M8-1…OPEN-M8-20 resolved as directed, the test evolution T-M8-1…T-M8-10, and the four review items of §0.7.18, answered by the owner the same day. **No specification item gates implementation any longer; it begins only on the owner's instruction, after §0.7 is committed on its own.** Nothing is implemented: no M8 module, table, migration, route or test exists |
+| **M9** — acceptance, evaluation and hardening | **PLANNED** | Nothing implemented; no script, fixture package or test exists |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -4457,6 +4460,827 @@ actually been **run** and their results reported.
 
 ---
 
+## 0.7 M8 specification decisions — pre-implementation, 2026-09-25
+
+M7 closed at `b2d588d` (specification `5f19144`, implementation `1efea45`). A read-only readiness
+audit run against `b2d588d` before M8 began found M8 **blocked on specification, not on code**, as
+M7 was at `6919fe5`. Part B's M8 block names modules, a table, six routes and a list of tests in
+about twenty lines; §A18, §A19, §A21 and §A22 give column lists, route notes and one event name;
+§0.6 deferred seven items to M8 by name; and M8's own text contradicts ten committed assertions
+and statements. The milestone owner directed the resolutions below on 2026-09-25. This section
+records them, and the consequences each one forces.
+
+> **Status of this section.** Like §0.4, §0.5 and §0.6, this section **is an authorisation**. It
+> covers X1–X10 (§0.7.1), OPEN-M8-1…OPEN-M8-20 (§0.7.3), the four review items of §0.7.18 and
+> the test evolution T-M8-1…T-M8-10 (§0.7.12), and nothing wider.
+>
+> - **2026-09-25.** The owner directed X1–X10 and OPEN-M8-1…OPEN-M8-20. Recording them against
+>   the committed code exposed four review items, which the owner answered the same day
+>   (§0.7.18).
+>
+> **M8 is fully specified.** Implementation has not started. It begins only on the owner's
+> instruction, after this section is committed on its own, as §0.5 (`1d1ee59`) and §0.6
+> (`5f19144`) were.
+>
+> **M1–M7 remain frozen.** Verified at `b2d588d`: nothing under `app/`, `config/`, `migrations/`
+> or `tests/` differs from `1efea45`; `tests/golden/vs01_cust007_brief.txt` has sha256
+> `87d1398661b0c30037ddc33e9acfd36db321ac9d0a36e04eadc3be9039ea9dce`; the one migration head is
+> `66eddc6b7136`; `TEMPLATE_VERSION` is `"1"`. M8 **adds** one Layer 2 module, one model, two
+> repositories, one migration and one route module, and makes only the additive Layer 1 edits
+> §0.7.15 lists. It changes no M1–M7 behaviour.
+
+**Classification**, as in §0.6. **DIRECTED** means decided by the milestone owner on 2026-09-25.
+**DERIVED** means forced by frozen code or by a committed convention, which is named.
+**OBSERVED** means measured on the repository at `b2d588d` on 2026-09-25. **PROPOSED** means a
+name or a detail the directed decisions need but do not fix; it stands unless replaced, and
+replacing it reopens nothing.
+
+---
+
+### 0.7.1 The ten contradictions — X1–X10: RESOLVED (DIRECTED)
+
+| # | Contradiction, verified at `b2d588d` | Resolution |
+|---|---|---|
+| **X1** | Part B M8: "existing F1/F2 contract tests still pass unchanged". `tests/unit/test_f1_openapi.py:53` pins the exact published operation set, `tests/integration/test_h4_api_contract.py:259` pins "exactly one non-GET operation", and `tests/integration/test_g2_secret_canary.py:63` pins the route path-parameter names. Six routes cannot be added with all three unchanged | Existing F1/F2 behaviour stays authoritative. **No existing test may be modified except through an explicitly authorised evolution, T-M8-1…T-M8-10**, and every existing test keeps passing. No unrelated weakening or replacement is permitted: no test is weakened, no parameter set is emptied to make a test pass, and no protection is removed |
+| **X2** | §0.6.2: no module outside `app/decisions/` imports M7, enforced by `tests/unit/test_m6_boundary.py:198` and `tests/unit/test_m7_boundary.py:809`. The assessment route must call `run_assessment` | Exactly **`app/api/v1/risk.py`** may import the M7 assessment API and M8's `approval` (OPEN-M8-18). Not the `app.api` package and not `app.api.v1`: one file, named |
+| **X3** | `tests/unit/test_m6_boundary.py:179` forbids `app/decisions/approval.py` from existing, and the inventory tests at `test_m6_boundary.py:153` and `test_m7_boundary.py:778` admit no eighth module | T-M8-1 and T-M8-2 evolve the inventories and the importer rules. No other M1–M7 module may import `approval` or any API code |
+| **X4** | `tests/integration/test_m7_migration.py:163` pins the sole head to `66eddc6b7136` | M8 adds exactly one migration, `down_revision = "66eddc6b7136"`. T-M8-3 turns the pin into an explicitly authorised chain assertion that still requires exactly one head |
+| **X5** | Part B M8 says the no-executor test runs over "all four packages"; §A22 and §0.4.5 name five | **Five**: `app.intelligence`, `app.relationships`, `app.evidence`, `app.analysts`, `app.decisions`. "Four" is stale wording from before `app/analysts/` existed. `app.relationships` still must not import `app.evidence` |
+| **X6** | §A19's decision body is `actor`, `decision`, `note`, `payload_hash`; §A27.9 and Part B M8 require `supersedes_id` | The body carries `actor`, `decision`, `note`, `payload_hash` and `supersedes_id`, with `extra="forbid"`. `decision` ∈ {`APPROVED`, `REJECTED`}. `supersedes_id` is null only for a brief's first decision |
+| **X7** | §A18's `decided_at` against §A24's "no `now()`", M7's "no timestamp column" (§0.6.5) and the no-clock scans | An injectable clock is **authorised at the API boundary only**. The route obtains the decision time through an overridable clock dependency; `app/decisions/approval.py` receives `decided_at` as an argument and reads no clock. This is the one exception, scoped to this one column |
+| **X8** | §A19: "`200` returning the existing assessment for a repeat". `run_assessment` returns one `AssessmentResult` per customer, each with its own `created` flag | `201` **iff** at least one returned `AssessmentResult` has `created == True`; otherwise `200`. Creation is **never** inferred from `brief_id` or `payload_hash`. The response keeps M7's ranking order |
+| **X9** | §0.6.5: `risk_briefs.status` values other than `DRAFT` "are M8's". Writing one would UPDATE an M7 row, which §0.6.6 and M7's append-or-read repositories forbid | `risk_briefs.status` is **never updated**. Decision state is a separate, derived API field, `decision_status` ∈ {`PENDING`, `APPROVED`, `REJECTED`} (OPEN-M8-8), never conflated with the persisted `status` |
+| **X10** | §A27.10: "full Layer 1 suite passes unchanged" | Read as X1 is: the full suite stays green, no existing test is modified except through T-M8-1…T-M8-10, and no unrelated regression, weakening or replacement is acceptable. M7 read the same sentence the same way for T-M7-1…T-M7-5 |
+
+### 0.7.2 What §0.6 deferred to M8, and how each item is closed
+
+| §0.6 text | Closed by |
+|---|---|
+| §0.6.2: "M8's routes will need their own authorised evolution" | X2; OPEN-M8-18; T-M8-1 (c) and T-M8-2 (b) |
+| §0.6.5: `status` — "any other value is M8's" | X9; OPEN-M8-8. **No other value is ever written** |
+| §0.6.6: "Which brief an API presents is M8's decision" | OPEN-M8-14: every brief of the assessment, in a deterministic order; no current-brief selector |
+| §0.6.6: reproducing §A15's order from the stored key, "including comparing its `source_id` component by code point", is "M8's to specify" | OPEN-M8-13; §0.7.8's ordering tuple |
+| §0.6.13.3: "Re-verifying a stored brief against a later snapshot is M8's to specify" | OPEN-M8-7, which **specifies it as not performed in M8**. §0.6.13.3's *at generation* and *after generation* properties are M7's and are untouched. Its *against a later snapshot* clause is **not satisfied** by M8; it is **deliberately deferred** (§0.7.7) |
+| §0.6.13.5: a misclassified failure means "M8 would map it to the wrong remedy" | OPEN-M8-12: `BriefRenderError` and every other unmapped failure become `500 INTERNAL_ERROR`, and the operator tells them apart by the exception class name the existing `request_failed` event logs |
+| §0.6.11 and §0.6.13.6: "`vs01.decision_recorded` is M8's" | OPEN-M8-10; §0.7.10 |
+
+### 0.7.3 OPEN-M8-1…OPEN-M8-20: RESOLVED 2026-09-25 (DIRECTED)
+
+Each is a formal M8 decision. The section named holds its normative detail.
+
+| # | Decision | Detail |
+|---|---|---|
+| OPEN-M8-1 | Test evolution is exactly T-M8-1…T-M8-10, and nothing else | §0.7.12 |
+| OPEN-M8-2 | The no-executor test is a **static first-party transitive import closure** from the five packages, with named third-party exemptions in the I1 style and a companion proving a stale exemption fails. A runtime import closure is **not** used: SQLAlchemy and Pydantic already pull in `socket`, `ssl` and `email` (OBSERVED) | §0.7.11 |
+| OPEN-M8-3 | The decision time comes from an overridable clock dependency at the route; `approval.py` is clock-free and receives `decided_at` (X7) | §0.7.7, §0.7.8 |
+| OPEN-M8-4 | Append-only twice over: insert-only repository semantics **and** a database trigger that rejects UPDATE and DELETE on `brief_decisions`. Migration-level `op.execute` is authorised for this trigger and its function only, and for no other behaviour | §0.7.5, §0.7.6 |
+| OPEN-M8-5 | `brief_id → risk_briefs` and `supersedes_id → brief_decisions` are both `RESTRICT`: a decided brief cannot disappear through a cascade | §0.7.5 |
+| OPEN-M8-6 | One linear chain per brief: the first decision supersedes nothing; every later decision supersedes the current head of the same brief; no fork, and no superseding a non-current decision. The database enforces referential existence, one first decision per brief and no fork; the application validates same-brief and current-head. No composite FK (Q-M8-2) | §0.7.5, §0.7.7 |
+| OPEN-M8-7 | A decision operates on the **immutable stored brief** identified by `brief_id` and `payload_hash`. Approval never regenerates or mutates a historical brief. Later-snapshot revalidation is **deliberately deferred**, as a scope decision | §0.7.7 |
+| OPEN-M8-8 | `risk_briefs.status` is immutable. `decision_status` is derived: no decision → `PENDING`; head `APPROVED` → `APPROVED`; head `REJECTED` → `REJECTED` | §0.7.7 |
+| OPEN-M8-9 | `decision` ∈ {`APPROVED`, `REJECTED`}; `actor` 1–255 characters and never validated as an email address; `note` optional and bounded; request schemas `extra="forbid"` | §0.7.5, §0.7.8 |
+| OPEN-M8-10 | `vs01.decision_recorded` with exactly `payload_hash`, `decision` and `supersedes`; never actor, note, email, document text or money; timing consistent with §0.6.13.6 | §0.7.10 |
+| OPEN-M8-11 | `POST /risk/assessments` takes `{as_of, source_system, customer_source_id}` and returns M7's results in ranking order, `201`/`200` per X8. Concurrent identical requests collapse to the existing persisted result | §0.7.8 |
+| OPEN-M8-12 | Six M8 error codes. An unresolvable customer or scope named in the POST body is `422`; `404` is reserved for missing path resources (Q-M8-1). Everything else is `500 INTERNAL_ERROR` unless an existing mapping already applies. Messages are fixed | §0.7.9 |
+| OPEN-M8-13 | An exact ordering tuple with explicit casts and `COLLATE "C"`, reconstructing M6's `ranking_key` order, tie-broken by id | §0.7.8 |
+| OPEN-M8-14 | Assessment detail returns **every** brief of the assessment. There is no hidden current-brief selector, and the API never silently selects one of several immutable briefs | §0.7.8 |
+| OPEN-M8-15 | Brief detail returns the stored payload as an opaque object, plus `payload_hash`, `narrative` and the stored payload's citations. Nothing is re-resolved or regenerated during a GET. No credential-shaped typed field is published | §0.7.8 |
+| OPEN-M8-16 | Every M8 read lives in `app/persistence/repositories/risk_queries.py`. GETs use `read_snapshot`; POSTs use an explicit write session and transaction owned by the route | §0.7.6, §0.7.8 |
+| OPEN-M8-17 | `approval.py` is an impure application operation, like `assessment.py`: clock-free, HTTP-free, random-source-free, not re-exported through `app/decisions/__init__.py`, and imported only by the authorised route | §0.7.4 |
+| OPEN-M8-18 | Only `app/api/v1/risk.py` imports the authorised Layer 2 and M7 operations | §0.7.4 |
+| OPEN-M8-19 | README changes are limited to route documentation, error-code documentation and test counts, plus the two corrections Q-M8-3 adds: the stale "one write" statement, and the statement that approval is a governance record, not a security or authentication control. The VS-01 end-to-end scenario is M9's | §0.7.14 |
+| OPEN-M8-20 | TestClient integration tests prove assess → brief → approve; the dedicated `tests/e2e/test_vs01_scenario.py` remains M9's | §0.7.13 |
+
+---
+
+### 0.7.4 Inventory and the M8 dependency boundary (OPEN-M8-16, OPEN-M8-17, OPEN-M8-18)
+
+**New files — exactly these.** Module, type and function names are PROPOSED unless marked.
+
+| File | Role |
+|---|---|
+| `app/decisions/approval.py` (DIRECTED) | records and reads decisions; impure, like `assessment.py` |
+| `app/persistence/models/brief_decision.py` | the `BriefDecision` model |
+| `app/persistence/repositories/brief_decisions.py` (DIRECTED) | insert only |
+| `app/persistence/repositories/risk_queries.py` (DIRECTED) | every M8 read |
+| `migrations/versions/<revision>_m8_brief_decisions.py` | the third additive migration |
+| `app/api/v1/risk.py` (DIRECTED) | the six routes |
+| the six test files of §0.7.13 | |
+
+**Direction.** `risk.py → approval → {brief_decisions, risk_queries}`; `risk.py → assessment` (M7);
+`risk.py → risk_queries`; `approval → payload` (M7, for `payload_hash` only). Never the reverse:
+no M1–M7 module, no repository and no model imports `approval`, `risk.py` or anything under
+`app.api`.
+
+**`app/decisions/approval.py` may import exactly:**
+
+| From | Names |
+|---|---|
+| the standard library | `__future__`, `logging`, `dataclasses`, `enum`, `collections.abc`, `typing`; `datetime.datetime` and `uuid.UUID` as types only |
+| `sqlalchemy.orm` | `Session`, as a type |
+| `app.persistence.repositories.brief_decisions` | `insert_decision`, `NewDecision` |
+| `app.persistence.repositories.risk_queries` | `get_brief`, `decisions_for` |
+| `app.decisions.payload` (M7) | `payload_hash` only: the hash is M7's function, never restated |
+| `app.intelligence.errors` (M1) | `IntelligenceError`, `ContractViolationError` |
+| `app.core.logging` | `log_event` |
+
+It may **not**:
+- import anything else, including `assessment`, `brief`, the four M6 modules, any ORM model,
+  `app.core.database`, `app.api`, `app.ingestion` or `app.connectors`;
+- call a clock name (`now`, `today`, `utcnow`, `utcfromtimestamp`, `fromtimestamp`, `time`,
+  `monotonic`, `perf_counter`) or import `time`;
+- call a `uuid` generator, or import `random` or `secrets`;
+- call a session method (`commit`, `rollback`, `begin`, `begin_nested`, `close`, `flush`, `add`,
+  `add_all`, `delete`, `merge`, `execute`), because it reads and writes through its repositories
+  only;
+- contain a `try` statement.
+
+It has exactly one `log_event` call site. `app/decisions/__init__.py` is **unchanged**, so it
+re-exports nothing of M8, as it re-exports nothing of M7 (§0.6.2).
+
+**`app/api/v1/risk.py` may import exactly:** `fastapi`; `sqlalchemy.orm` (`Session`,
+`sessionmaker`); from the standard library `datetime`, `http`, `uuid` and `collections.abc`;
+`app.api.dependencies` (`get_sessions`, `read_snapshot`); `app.api.errors` (`ApiError`,
+`ErrorCode`, `ErrorResponse`); `app.api.v1.schemas` (the M8 models); `app.decisions.assessment`
+(`run_assessment`); `app.decisions.approval`; `app.decisions.payload` (`payload_citations`);
+`app.persistence.repositories.risk_queries`; `app.relationships` (`UnknownCustomerError`); and
+`app.intelligence` (`ScopeResolutionError`, `RiskBand`), the last authorised by T-M8-10.
+It reads the clock at exactly one site (§0.7.8), catches only named exception types (the F1 rule,
+`tests/unit/test_f1_boundary.py:83`), never logs, never names an ORM model or
+`app.core.database`, and never calls `commit` or `rollback` itself.
+
+**`app/api/v1/schemas.py`** gains the M8 models and imports no Layer 2 package, so it stays
+outside every importer whitelist. Where a response needs M8's vocabulary, it declares a mirrored
+`StrEnum` and a test pins it equal to `approval.py`'s. *DERIVED from F2's precedent:* `EntityType`
+is pinned against `ENTITY_MODELS` the same way (`tests/unit/test_f2_entities_openapi.py:52`).
+
+**Repositories stay below Layer 2** (D-M4-B2, §0.6.5). They import no `app.intelligence`,
+`app.evidence`, `app.analysts` or `app.decisions` module, name no domain type, return plain
+`NamedTuple` rows or scalars, and obey the E1 rules (`tests/unit/test_e1_boundary.py`): no
+transaction, no textual SQL, no `.text` attribute, no logging.
+
+### 0.7.5 Persistence — `brief_decisions` (OPEN-M8-4, -5, -6, -9; X4)
+
+| Column | Type | Null | Grounding |
+|---|---|---|---|
+| `id` | `UUID`, `pk_brief_decisions` | NOT NULL | the key convention of every Layer 1, M4 and M7 model; generated by the repository with `uuid4`, as M7's ids are |
+| `brief_id` | `UUID` FK → `risk_briefs.id`, **`ondelete="RESTRICT"`** | NOT NULL | OPEN-M8-5; indexed by `ix_brief_decisions_brief_id` |
+| `payload_hash` | `String(64)` | NOT NULL | the brief's hash the decision is bound to (strategy §9.2) |
+| `actor` | `String(255)` | NOT NULL | OPEN-M8-9; stored exactly as supplied; asserted, never verified |
+| `decision` | `String(50)` | NOT NULL | `APPROVED` or `REJECTED`, enforced by the request schema and by `approval.py`. No CHECK constraint: the repository has none (OBSERVED), and M7's `band` has none |
+| `note` | `String(2000)` | **NULL** | OPEN-M8-9; the bound, 2000 characters, is PROPOSED |
+| `decided_at` | `DateTime(timezone=True)` | NOT NULL | X7; always supplied by the caller, with **no ORM default and no server default** |
+| `supersedes_id` | `UUID` FK → `brief_decisions.id`, **`ondelete="RESTRICT"`** | **NULL** | OPEN-M8-5, OPEN-M8-6; a self-FK |
+
+**Indexes and constraints:**
+- `ix_brief_decisions_brief_id` on `(brief_id)`.
+- `uq_brief_decisions_first_decision`: a **unique** index on `(brief_id) WHERE supersedes_id IS
+  NULL`, so a brief has at most one first decision.
+- `uq_brief_decisions_one_successor`: a **unique** index on `(supersedes_id) WHERE supersedes_id
+  IS NOT NULL`, so a decision has at most one successor and no fork can be written. It is also
+  the index of the `supersedes_id` FK.
+- The FK names follow `NAMING_CONVENTION`: `fk_brief_decisions_brief_id_risk_briefs` and
+  `fk_brief_decisions_supersedes_id_brief_decisions`.
+
+**What the application validates, because the constraints above do not express it:** that a
+predecessor belongs to the same brief, that it is the current head, that a later decision names a
+predecessor at all, that the request's `payload_hash` equals the stored brief's, and that the
+stored payload re-hashes to it (§0.7.7).
+
+**The self-FK stays plain (Q-M8-2).** The database enforces referential existence through the
+self-FK, and the single-first-decision and no-fork rules through the two partial unique indexes,
+including under concurrency. Same-brief and current-head are `approval.py`'s (§0.7.7, step 5). A
+composite FK `(supersedes_id, brief_id) → (id, brief_id)` is **not** introduced. If
+implementation evidence ever shows one is required, that is reported and stops the phase; it is
+never added in passing.
+
+**No `ProvenanceMixin`, no `source_system` column, no cascade.** `decided_at` is the only
+timestamp column in any VS-01 table, and X7 is its authority. M7's "no timestamp column" rule
+(§0.6.5) still governs M7's three tables.
+
+**The trigger.** The decision is DIRECTED; the SQL is DERIVED; the names are PROPOSED. It is
+row-level and fires `BEFORE UPDATE OR DELETE`:
+
+```sql
+CREATE FUNCTION brief_decisions_append_only() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'brief_decisions is append-only' USING ERRCODE = 'restrict_violation';
+END;
+$$;
+CREATE TRIGGER brief_decisions_append_only BEFORE UPDATE OR DELETE ON brief_decisions
+    FOR EACH ROW EXECUTE FUNCTION brief_decisions_append_only();
+```
+
+- SQLSTATE `23001` reaches SQLAlchemy as `IntegrityError`.
+- `EXECUTE FUNCTION` needs PostgreSQL 11 or later; the stack runs `postgres:16-alpine` (OBSERVED).
+- **TRUNCATE is not blocked.** `tests/conftest.py` truncates every registered table between
+  tests, and a statement-level TRUNCATE trigger would break it. §0.7.17 records the limitation.
+
+**The migration.**
+- One revision, with `down_revision = "66eddc6b7136"`.
+- Upgrade creates, in order: the table with its PK and FKs, the three indexes, the function, the
+  trigger. Downgrade drops, in order: the trigger, the function, the indexes, the table — exactly
+  what upgrade created.
+- It is the repository's **first `op.execute` DDL**, authorised for this function and this
+  trigger only. Every other object is created through `op.create_table` and `op.create_index`, as
+  M4's and M7's are.
+- It imports nothing from `app`. No existing migration is edited. The history keeps exactly one
+  head, which is M8's.
+
+**The model.** `BriefDecision` in `app/persistence/models/brief_decision.py`, with column comments
+as M7's models have them, and `postgresql_where` on its two partial indexes. It is registered in
+`app/persistence/models/__init__.py` by the additive pattern M4 and M7 used; the docstring's model
+count moves from 16 to 17. That is the one authorised edit to that file.
+
+### 0.7.6 Repositories (OPEN-M8-4, OPEN-M8-16)
+
+**`app/persistence/repositories/brief_decisions.py` is insert only.** It has no update, no delete
+and no read.
+- `NewDecision(NamedTuple)`: `brief_id`, `payload_hash`, `actor`, `decision`, `note`,
+  `decided_at`, `supersedes_id`.
+- `insert_decision(session, row: NewDecision) -> uuid.UUID | None` runs `INSERT … ON CONFLICT DO
+  NOTHING RETURNING id` with **no conflict target**, and returns `None` when the row was skipped.
+  PostgreSQL then skips a row that would violate any unique constraint or unique index, partial
+  ones included; Phase 2 proves it for both partial indexes. A lost race is therefore a return
+  value, not an aborted transaction. *DERIVED from M7's `ON CONFLICT` pattern (§0.6.5), whose
+  `insert_*` functions also return ids; nothing catches an `IntegrityError`.*
+
+**`app/persistence/repositories/risk_queries.py` holds every M8 read.** Each function takes a
+caller-owned session and uses SQLAlchemy expressions only.
+
+| Function | Returns | Order |
+|---|---|---|
+| `get_brief(session, brief_id)` | `StoredBrief \| None`: every `risk_briefs` column | — |
+| `decisions_for(session, brief_id)` | `list[StoredDecision]` | `id`; `approval.py` rebuilds the chain |
+| `list_assessments(session, *, as_of, band, executive_worthy, limit, offset)` | `QueryPage[AssessmentListing]`, reusing `run_queries.QueryPage`; `total` does not depend on the page | §0.7.8's ordering tuple |
+| `brief_ids_for(session, assessment_ids)` | `dict[UUID, list[UUID]]`, from one grouped query | the brief order below |
+| `get_assessment(session, assessment_id)` | `StoredAssessment \| None`; `customer_source_id` through an **outer** join to `customers`, NULL when `customer_id` was set NULL | — |
+| `positions_for(session, assessment_id)` | `list[StoredPosition]` | `ordinal` |
+| `briefs_for(session, assessment_id)` | `list[BriefReference]` | `policy_version`, then `payload_hash COLLATE "C"`, then `id` |
+
+### 0.7.7 `approval.py` — recording and reading decisions (OPEN-M8-3, -6, -7, -8, -9, -10)
+
+**Types.** The names are PROPOSED, except `DecisionRecord`, which is §A30's.
+
+```
+class Decision(StrEnum):        APPROVED, REJECTED
+class DecisionStatus(StrEnum):  PENDING, APPROVED, REJECTED
+class HashConflict(StrEnum):    REQUEST_HASH_MISMATCH, STORED_PAYLOAD_MISMATCH
+class DecisionConflict(StrEnum): SUPERSEDES_REQUIRED, PREDECESSOR_NOT_ON_BRIEF,
+                                 PREDECESSOR_NOT_HEAD, CONCURRENT_DECISION
+
+@dataclass(frozen=True)
+class DecisionRecord:
+    id: UUID
+    brief_id: UUID
+    payload_hash: str
+    actor: str
+    decision: Decision
+    note: str | None
+    decided_at: datetime
+    supersedes_id: UUID | None
+
+class ApprovalError(IntelligenceError)
+class UnknownBriefError(ApprovalError)
+class PayloadHashConflictError(ApprovalError)   # .reason: HashConflict
+class DecisionConflictError(ApprovalError)      # .reason: DecisionConflict
+
+MAX_ACTOR_CHARS = 255
+MAX_NOTE_CHARS = 2000
+```
+
+`ApprovalError` subclasses M1's `IntelligenceError`, as `ReconciliationError` and
+`BriefRenderError` do. Each error's message is fixed per class and reason, and never contains the
+actor, the note, payload text or an email address.
+
+**`record_decision(session, *, brief_id, payload_hash, actor, decision, note, supersedes_id,
+decided_at) -> DecisionRecord`.** The steps run in this order, and the first failure raises:
+
+0. **Arguments.** `decided_at` is timezone-aware; `1 <= len(actor) <= 255`; `note` is `None` or
+   `len(note) <= 2000`. Otherwise `ContractViolationError`. The route cannot reach this, because
+   its schema and its clock guarantee all three, so it would surface as `500`.
+1. **The brief.** `get_brief` returns `None` → `UnknownBriefError`.
+2. **The request's hash.** `payload_hash != brief.payload_hash` →
+   `PayloadHashConflictError(REQUEST_HASH_MISMATCH)`.
+3. **The stored payload.** `app.decisions.payload.payload_hash(brief.decision_payload) !=
+   brief.payload_hash` → `PayloadHashConflictError(STORED_PAYLOAD_MISMATCH)`. The stored JSONB
+   re-hashes to its own column, as §0.6.6's hash re-verification established.
+4. **The history.** `history = decision_history(session, brief_id)`; the head is `history[-1]`,
+   if there is one.
+5. **Supersession.**
+   - A head exists and `supersedes_id is None` → `DecisionConflictError(SUPERSEDES_REQUIRED)`.
+   - `supersedes_id` is not the id of a decision in `history` → `PREDECESSOR_NOT_ON_BRIEF`. This
+     covers a missing id, another brief's decision, and any `supersedes_id` on a brief that has no
+     decision yet.
+   - `supersedes_id` is in `history` but is not the head → `PREDECESSOR_NOT_HEAD`. This is how a
+     fork, and the superseding of a non-current decision, is refused.
+6. **The insert.** `insert_decision(...)` returns `None` →
+   `DecisionConflictError(CONCURRENT_DECISION)`: a concurrent transaction committed the brief's
+   first decision, or a successor to the same head, first.
+7. **The event** (§0.7.10).
+8. **Return** the `DecisionRecord`.
+
+A decision may supersede one with the same value, such as `APPROVED` after `APPROVED`; nothing
+forbids it. `approval.py` neither opens nor ends a transaction: the caller owns both.
+
+**`decision_history(session, brief_id) -> tuple[DecisionRecord, ...]`.** A missing brief raises
+`UnknownBriefError`. Otherwise it returns the chain from the first decision (`supersedes_id`
+NULL) to the head, following each decision's successor. **The chain, not `decided_at`, is the
+authoritative order.** Rows that do not form one linear chain from one first decision raise
+`ContractViolationError`; the constraints and step 5 make that unreachable, except by writing
+around `approval.py`.
+
+**`decision_status(history) -> DecisionStatus`** (OPEN-M8-8): `PENDING` for an empty history,
+otherwise the head's decision.
+
+**OPEN-M8-7 — what a decision is bound to, and its relationship to §0.6.13.3.**
+- A decision operates on the **immutable stored brief** identified by `brief_id` and
+  `payload_hash`. Step 2 validates the request's hash against the stored brief's, and step 3 the
+  stored payload against that hash.
+- Approval never regenerates, re-renders, re-resolves or mutates a brief, an assessment or a
+  position, and never writes any M7 row.
+- The brief's payload carries its own `scope.layer1_fingerprint`, `scope.as_of` and versions
+  (§0.6.13.1), so a decision is bound to the snapshot its brief was computed from.
+- **Later-snapshot revalidation is explicitly deferred.** M8 does not compare a stored brief with
+  the current Layer 1 snapshot, and never refuses a decision because the snapshot has since moved.
+  This is a deliberate scope decision, not an accidental omission.
+- **Relationship to §0.6.13.3.** That section left "re-verifying a stored brief against a later
+  snapshot" for M8 to specify. §0.7 specifies it as **not performed in M8**. §0.6.13.3's clause is
+  therefore **resolved by deferral, not satisfied**. No milestone currently owns it; §0.7.17
+  records it as a known limitation, and any later owner needs its own decision.
+
+### 0.7.8 The six routes (OPEN-M8-11, -13, -14, -15, -16; X6, X8)
+
+The router is `APIRouter(prefix="/risk", tags=["risk"])`, included last in
+`app/api/v1/router.py`. The path parameters are `{assessment_id}` and `{brief_id}` (PROPOSED).
+§A19 writes `{id}`; the README check collapses any `{name}` to one form
+(`tests/unit/test_i2_readme.py:185`), so both spellings match.
+
+| # | Method and path | Parameters / body | Success | Documented errors | Session |
+|---|---|---|---|---|---|
+| 1 | `POST /api/v1/risk/assessments` | body `AssessmentRunRequest` | **201** iff some result has `created`, else **200**; `AssessmentRunResponse` | 422 `CUSTOMER_NOT_FOUND`, 422 `SCOPE_UNRESOLVED`, 422 `INVALID_REQUEST`, 500 | write, route-owned |
+| 2 | `GET /api/v1/risk/assessments` | query `as_of: date`, `band: RiskBand`, `executive_worthy: bool`, each optional, combined with AND, exact match; `limit` 1–500, default 50; `offset` 0–2³¹−1, default 0 | 200 `AssessmentListResponse` | 422 | `read_snapshot` |
+| 3 | `GET /api/v1/risk/assessments/{assessment_id}` | path UUID | 200 `AssessmentDetailResponse` | 404 `ASSESSMENT_NOT_FOUND`, 422 | `read_snapshot` |
+| 4 | `GET /api/v1/risk/briefs/{brief_id}` | path UUID | 200 `BriefResponse` | 404 `BRIEF_NOT_FOUND`, 422 | `read_snapshot` |
+| 5 | `POST /api/v1/risk/briefs/{brief_id}/decision` | path UUID; body `DecisionRequest` | **201** `DecisionResponse` | 404 `BRIEF_NOT_FOUND`, 409 `PAYLOAD_HASH_CONFLICT`, 409 `DECISION_CONFLICT`, 422 `INVALID_REQUEST`, 500 | write, route-owned |
+| 6 | `GET /api/v1/risk/briefs/{brief_id}/decisions` | path UUID | 200 `DecisionHistoryResponse` | 404 `BRIEF_NOT_FOUND`, 422 | `read_snapshot` |
+
+- Every operation documents its 422 as `ErrorResponse`, so FastAPI never advertises
+  `HTTPValidationError` (`tests/unit/test_f1_openapi.py`), and every documented error references
+  `ErrorResponse`.
+- The application's title and version are unchanged.
+- No other route is added: no executor route, no authentication and no UI.
+
+**Requests.** Both use `model_config = ConfigDict(extra="forbid")`, as `IngestionRunRequest` does.
+
+| Model | Field | Rule |
+|---|---|---|
+| `AssessmentRunRequest` | `as_of` | `date \| None`, **required and nullable**: `null` asks for §A5's fallback explicitly. *DERIVED from §0.6.3, which makes `as_of` a required keyword because acceptance always names the date* |
+| | `source_system` | `str`, 1–100 characters, default `"csv_demo"` |
+| | `customer_source_id` | `str \| None`, 1–255 characters, default `null`, meaning the whole scope |
+| `DecisionRequest` | `actor` | `str`, 1–255 characters, recorded exactly as supplied, **not** validated as an email address |
+| | `decision` | `RiskDecision`: `APPROVED` or `REJECTED` |
+| | `note` | `str \| None`, at most 2000 characters, default `null` |
+| | `payload_hash` | `str`, matching `^[0-9a-f]{64}$` |
+| | `supersedes_id` | `UUID \| None`, default `null`; null only for a brief's first decision (X6) |
+
+The assessment request carries no expected fingerprint: the API runs **unpinned**, as M7's own
+tests do, and the pinned run stays M9's (§0.6.3). No route accepts rules, linker or policy
+overrides; the configuration files decide them (§A7).
+
+**Responses.** The names are PROPOSED.
+- **`AssessmentRunResponse`**: `items`, a list of `{assessment_id, created, brief_id,
+  payload_hash}`, one per `AssessmentResult`, in `run_assessment`'s order, which is
+  `order_reconciliations()` order. There is no `Location` header, because the response names
+  several resources.
+- **`AssessmentListResponse`**: `{items, total, limit, offset}`, F2's page shape. Each item has
+  `id`, `customer_source_id`, `as_of`, `source_system`, `layer1_fingerprint`, `rules_version`,
+  `linker_version`, `band`, `executive_worthy`, `ranking_key` and `brief_ids`. *`brief_ids` is
+  DERIVED from §A28, whose demo goes from this list straight to a brief.*
+- **`AssessmentDetailResponse`**: the item fields without `brief_ids`, plus:
+  - `satisfied_rules`, a list of strings, and `signals`, an object;
+  - `positions`, each `{ordinal, function, stance, proposed_action, object_ref, rationale,
+    citations}`, with `citations` a list of objects, ordered by `ordinal`;
+  - `briefs`: **every** brief of the assessment, each `{id, policy_version, template_version,
+    payload_hash}`, in `briefs_for` order. There is no current-brief flag and no selection
+    (OPEN-M8-14): with several immutable briefs and no timestamp, nothing identifies one as
+    current.
+- **`BriefResponse`**:
+  - `id` and `assessment_id`;
+  - `status`: the stored M7 column, always `DRAFT` and never updated;
+  - `decision_status`: derived, `PENDING`, `APPROVED` or `REJECTED`;
+  - `policy_version`, `template_version` and `payload_hash`;
+  - `payload`: **an opaque object**;
+  - `narrative`;
+  - `citations`: `[citation.to_payload() for citation in payload_citations(payload)]`, the stored
+    payload's own distinct citations in ascending wire order (§0.6.9). These are the "stored
+    citations": they are read out of the stored payload, not resolved against Layer 1.
+
+  Nothing is re-resolved, re-rendered or re-hashed at request time. *The payload is opaque
+  because typing it in OpenAPI would publish `document_evidence[].matched_token`, which G2's
+  credential-name scan rejects (`tests/unit/test_g2_security_boundary.py:186`, pattern `token`).
+  DERIVED.*
+- **`DecisionResponse`**: the `DecisionRecord` fields.
+- **`DecisionHistoryResponse`**: `{items}` in chain order, first to head. It is not paginated;
+  a brief's history is a short chain.
+
+**Ordering of route 2 (OPEN-M8-13).** Built from SQLAlchemy expressions, with no textual SQL and
+no reliance on JSONB's implicit ordering. Every key is ascending except `as_of`:
+
+```
+as_of DESC,
+source_system COLLATE "C",
+layer1_fingerprint COLLATE "C",
+rules_version,
+linker_version COLLATE "C",
+CAST(ranking_key ->> 0 AS INTEGER),     -- minus the band rank
+CAST(ranking_key ->> 1 AS INTEGER),     -- minus S8
+CAST(ranking_key ->> 2 AS INTEGER),     -- minus S4
+(ranking_key ->> 3) COLLATE "C",        -- source_id, by code point
+id
+```
+
+- The first five keys group the rows by scope and versions.
+- Within one group, keys 6–9 reproduce `order_reconciliations()` exactly. `ranking_key` is
+  `(−band rank, −S8, −S4, source_id)` (`app/intelligence/bands.py:183`), and Python compares
+  strings by code point, which `COLLATE "C"` matches.
+- `id` is the final, stable tie-break.
+- Pagination bounds and shape are F2's: default 50, maximum 500, maximum offset 2³¹−1.
+
+**Transactions and the clock (OPEN-M8-3, OPEN-M8-16).**
+- **GET routes** read through `read_snapshot(sessions)`, a read-only REPEATABLE READ snapshot.
+- **Each POST** runs its domain call as `with sessions() as session, session.begin(): …`, inside a
+  `try` whose `except` clauses are outside the `with`.
+  - An exception therefore leaves the `with` first, which rolls the transaction back, and only
+    then is it mapped to `ApiError(...) from None`. An unmapped exception propagates to the
+    existing handler.
+  - Success commits when the `with` exits. The route never calls `commit()` or `rollback()`
+    itself. Nothing a failed request wrote is durable (§A23).
+- **The clock.** `risk.py` defines `_utc_now() -> datetime`, returning `datetime.now(UTC)` (the
+  precedents are `app/api/v1/sources.py:109` and the orchestrator's `clock=` parameter), and
+  `get_clock() -> Callable[[], datetime]`, returning `_utc_now`.
+  - Route 5 takes `clock: Callable[[], datetime] = Depends(get_clock)` and calls `clock()` exactly
+    once, before its transaction. The value is `decided_at`.
+  - Tests replace the dependency through `app.dependency_overrides[get_clock]`. Every test that
+    records a decision through route 5 overrides it, and every `approval.py` test passes a fixed
+    `decided_at`, so no test depends on the wall clock.
+  - This is the only clock read M8 adds. There is no database timestamp default.
+- **Concurrency.** Concurrent identical `POST /risk/assessments` requests collapse to one
+  persisted result set. M7's `ON CONFLICT DO NOTHING` inserts make the second transaction wait on
+  the first's rows and then read them back (§0.6.6, §A23), so the second answers `200`.
+
+### 0.7.9 Error mapping (OPEN-M8-12)
+
+Six new `ErrorCode` members, added to `app/api/errors.py`. Messages are fixed; `details` is
+`null` or `{"reason": <a fixed reason name>}`. Nothing is interpolated.
+
+| Code | Status | Message (PROPOSED) | `details` | Raised when |
+|---|---|---|---|---|
+| `ASSESSMENT_NOT_FOUND` | 404 | "risk assessment does not exist" | `null` | `get_assessment` returns `None` |
+| `BRIEF_NOT_FOUND` | 404 | "risk brief does not exist" | `null` | `get_brief` returns `None`, or `UnknownBriefError` |
+| `CUSTOMER_NOT_FOUND` | 422 | "customer is not in the assessment scope" | `null` | M2's `UnknownCustomerError` from `run_assessment` |
+| `SCOPE_UNRESOLVED` | 422 | "as_of is null and the scope has no support ticket to resolve it from" | `null` | M1's `ScopeResolutionError` from `run_assessment` |
+| `PAYLOAD_HASH_CONFLICT` | 409 | "payload_hash does not match the brief's decision payload" | `{"reason": HashConflict}` | `PayloadHashConflictError` |
+| `DECISION_CONFLICT` | 409 | "the decision does not extend the brief's decision history" | `{"reason": DecisionConflict}` | `DecisionConflictError` |
+
+- **Body values against path resources (Q-M8-1).** A customer or a scope that route 1's body
+  names but that cannot be resolved is `422`, as an unknown source in an ingestion body already is
+  (`tests/integration/test_h4_api_contract.py:223`). `404` is reserved for a missing path
+  resource: an assessment or a brief.
+- **Existing mappings still apply:** `INVALID_REQUEST` (422) for request validation, and
+  `NOT_FOUND` and `METHOD_NOT_ALLOWED` for unknown routes and verbs.
+- **Everything else is `500 INTERNAL_ERROR`,** through the existing handler, which logs
+  `request_failed` with the exception's class name only (`app/api/errors.py`). That covers
+  `UnresolvableConflictError`, `ReconciliationError`, `CitationResolutionError`,
+  `BriefRenderError`, `ContractViolationError`, `IntelligenceConfigError`, `DecisionConfigError`
+  and every database error. The distinct remedy §0.6.13.5 asks for is kept for the operator, in
+  that class name, and hidden from the client, as Layer 1 hides every system failure.
+- No error body carries document text, an email address, a money amount, a submitted value or
+  exception text. Every mapping happens after the rollback (§0.7.8).
+
+### 0.7.10 The event — `vs01.decision_recorded` (OPEN-M8-10)
+
+- **Channel and level:** `log_event(logger, logging.INFO, "vs01.decision_recorded", …)`, with
+  `logger = logging.getLogger(__name__)` in `approval.py`, as M7 emits its events (§0.6.13.6).
+- **Fields, in this order:** `payload_hash: str`; `decision: str`, `APPROVED` or `REJECTED`;
+  `supersedes: bool`, which is `supersedes_id is not None`. None of the three is reserved by
+  `log_event` or matches G2's credential-name pattern (OBSERVED).
+- **Never logged:** the actor, the note, an email address, document text, a money amount, a
+  timestamp or any id.
+- **Timing, consistent with §0.6.13.6:**
+  - exactly once per recorded decision, after `insert_decision` returns an id and before
+    `record_decision` returns, so before the route's transaction commits;
+  - a refused decision, failing at any of steps 0–6, emits nothing;
+  - logging is not transactional: if the commit then fails, the line describes a decision that is
+    not durable (§0.7.17);
+  - `approval.py` neither catches nor retries around `log_event`.
+- **No other event, and no counter,** as in §0.6.11. The routes emit nothing of their own;
+  `run_assessment` still emits its five M7 events, unchanged.
+
+### 0.7.11 The no-executor boundary (OPEN-M8-2; X5; §A22)
+
+`tests/unit/test_m8_boundary.py` holds it. Each check is a scan function over a `{module name:
+source text}` mapping, so it runs both on the real tree and on small synthetic reintroductions,
+M7's `REINTRODUCTIONS` pattern.
+
+1. **Roots:** every `.py` file under `app/intelligence/`, `app/relationships/`, `app/evidence/`,
+   `app/analysts/` and `app/decisions/`.
+2. **Closure:** follow first-party (`app.*`) imports statically.
+   - `import a.b.c` is an edge to `a`, `a.b` and `a.b.c`.
+   - `from a.b import c` is an edge to `a` and `a.b`, and to `a.b.c` when that is a module.
+   - Relative imports are resolved against the importing package.
+   - Third-party and standard-library modules are **not** traversed.
+3. **Check 1 — forbidden first-party modules:** the closure contains no `app.connectors*`,
+   `app.core.security`, `app.api*` or `app.ingestion*`.
+4. **Check 2 — forbidden outbound modules:** no module in the closure directly imports `httpx`,
+   `requests`, `aiohttp`, `urllib3`, `urllib.request`, `http.client`, `smtplib`, `socket`, `ssl`,
+   `ftplib` or `xmlrpc`, or a submodule of one. `from X import Y` is checked as both `X` and
+   `X.Y`, so `from urllib import request` and `from http import client` are caught.
+5. **Check 3 — named exemptions:** every third-party top-level package the closure imports
+   directly — neither `app`, nor `__future__`, nor in `sys.stdlib_module_names` — is in
+
+   ```
+   THIRD_PARTY_EXEMPTIONS = frozenset({"sqlalchemy", "pydantic", "pydantic_settings", "yaml"})
+   ```
+
+   Each entry is justified in the comment above it, in the format of G2's `SUBPROCESS_MODULES`
+   and `HTTP_CLIENT_MODULES` (`tests/unit/test_g2_security_boundary.py:32` and `:39`), which is
+   the I1 named-exemption mechanism. Naming a package is what admits it: its internals are not
+   scanned.
+6. **Check 4 — no stale exemption:** every exemption is imported by at least one module in the
+   closure, as G2's `test_no_module_is_exempted_from_a_boundary_it_does_not_need`
+   (`tests/unit/test_g2_security_boundary.py:71`) requires of its own exemptions.
+7. **Check 5 — §A9's direction:** the closure from the `app/relationships/` roots alone contains
+   no `app.evidence*`.
+
+**Measured on 2026-09-25 (OBSERVED).**
+- The closure is the five packages plus `app.core.{config,database,logging}`,
+  `app.normalization.*`, `app.persistence.*` and `app.schemas.canonical.*`.
+- Its third-party set is exactly the four exemptions, and every check passes.
+- A runtime closure of each of the five packages contains `socket`, `ssl` and `email`, pulled in
+  through SQLAlchemy and Pydantic. That is why OPEN-M8-2 rules a runtime closure out: runtime
+  transitive imports inside third-party dependencies are **not** executor violations, and the test
+  never imports a module to see what it loads.
+
+**Companions.** Each runs through the same functions, and each must be caught:
+- a leaf importing `httpx`;
+- `from urllib import request`;
+- `from http import client`;
+- a leaf importing a first-party helper that imports `app.connectors.registry`, a two-hop path;
+- an unexempted third-party package (`boto3`);
+- an exemption that no closure module imports;
+- an `app.relationships` module reaching `app.evidence` through one hop.
+
+`app/api/v1/risk.py` is **outside** the five packages, so this test does not scan it. Through
+`app.api.dependencies` it legitimately reaches Layer 1's connector machinery, which is the
+situation §0 defect 10 describes.
+
+### 0.7.12 Test evolution — T-M8-1…T-M8-10: specified and authorised (OPEN-M8-1; X1, X3, X4, X10)
+
+The governing rule is §0.4.4's, unchanged: **extend, move, re-scope or replace only the obsolete
+assertion, and never weaken the surrounding test.** Test names are kept, as T-M7-1 kept M6's.
+
+| # | Test / file | Exact assertion affected | Authorised evolution | What stays frozen |
+|---|---|---|---|---|
+| **T-M8-1** | `tests/unit/test_m6_boundary.py` | `:153`, the second assertion `== M6_MODULES \| M7_MODULES`; `:179`, `test_no_later_milestone_module_exists` over `LATER_MODULES = ("approval",)`; `:198`, `assert importers == []`; `:161`, the public surface | **(a)** `:153`: the right-hand side becomes `M6_MODULES \| M7_MODULES \| M8_MODULES`, with `M8_MODULES = {"app/decisions/approval.py"}`. **(b)** `:179`: `LATER_MODULES` and its parametrisation are **replaced, never emptied**. An empty parameter set is collected as a skip, which would break the zero-skip baseline. The replacement is one unparametrised test asserting that the only directory under `app/decisions/` other than `__pycache__` is `templates`. That keeps the original's guard against an `approval/` package directory and generalises it to every name, while `.py` files stay guarded by (a). The collected count is unchanged. **(c)** `:198`: `assert importers == ["app/api/v1/risk.py"]`. **(d)** `:161`: also import `app.decisions.approval` before comparing, and add `approval` to the expected set | Every scan over the four M6 modules; `POST_M6_MODULES` and `:192`, which still forbid any M6 module importing `approval`; `__all__`; the module docstring |
+| **T-M8-2** | `tests/unit/test_m7_boundary.py` | `:778`, the seven-module inventory; `:809`, `_m7_importers(paths) == []` | **(a)** `:778`: add `DECISIONS_DIR / "approval.py"`. **(b)** `:809`: the set of importer labels, each being an entry's text before its first `:`, equals exactly `{"app/api/v1/risk.py"}` | `assert paths`; the companion at `:819`; `GRANTS`; `ALLOWED_EDGES`; `:851`, the fresh-interpreter load |
+| **T-M8-3** | `tests/integration/test_m7_migration.py` | `:163`, `list(script.get_heads()) == [M7_REVISION]` | Exactly one head, and `M7_REVISION` lies on the down-revision chain from that head to base: T-M7-2's form | The down-revision assertion; every test that upgrades to `M7_REVISION` |
+| **T-M8-4** | `tests/integration/test_h3_migrations.py` | `:53`, `LAYER2_TABLES` | Add `"brief_decisions"` | Set equality; downgrade to empty |
+| **T-M8-5** | `tests/integration/test_h4_api_contract.py` | `:57`, `THE_ONE_WRITE_OPERATION`, asserted at `:259`; the skip at `:266`; `:316`, the paginated routes; `:80`, `_concrete` | **(a)** `WRITE_OPERATIONS` is exactly `("POST", "/api/v1/ingestion/runs")`, `("POST", "/api/v1/risk/assessments")` and `("POST", "/api/v1/risk/briefs/{brief_id}/decision")`; `:259` asserts `non_get == sorted(WRITE_OPERATIONS)`; docstring item 3 names the three. **(b)** `:266` skips only when `(verb, path) in WRITE_OPERATIONS`, so every GET route still receives its 405 checks and no GET is treated as a write. **(c)** `:316` gains `/api/v1/risk/assessments`. **(d)** `_concrete` also substitutes `{assessment_id}` and `{brief_id}` | Every other assertion, including `test_the_ingestion_route_accepts_no_other_write_verb` |
+| **T-M8-6** | `tests/unit/test_f1_openapi.py` | `:53`, the exact operation set | Add `M8_RISK_OPERATIONS`, the six of §0.7.8, to the union | The title and version test; the envelope and 422 sweeps |
+| **T-M8-7** | `tests/integration/test_g2_secret_canary.py` | `:63`, `ROUTE_PARAMETERS`; `:155`, `_get_paths` | Add `assessment_id` and `brief_id`. `_get_paths` gains two explicit branches: assessment ids from `GET /api/v1/risk/assessments`'s `items`, plus `MISSING_ID`; brief ids from those items' `brief_ids`, plus `MISSING_ID`. The generic branch becomes `entity_id`-only | `len(names) <= 1`; every canary and every channel |
+| **T-M8-8** | `README.md`, checked by `tests/unit/test_i2_readme.py` | `:192`, every route documented; `:225`, every `ErrorCode` documented; `:247`, the counts | README content only (§0.7.14). `test_i2_readme.py` needs **no** code change, because its assertions read the README against OpenAPI and `ErrorCode`; none is made | I2's mechanism; the totals agree with the per-layer sum |
+| **T-M8-9** | `README.md`'s lint quotes, checked at `tests/unit/test_i2_readme.py:279` | "69 findings", "9 errors" | Re-quote only an observed value that genuinely moves (§0.3.11 D-M4-B4) | No finding suppressed; no test weakened or skipped |
+| **T-M8-10** | `tests/unit/test_m1_boundary.py` | `:56`, `LAYER2_PACKAGES` | **Required whenever** `risk.py` directly imports an `app.intelligence` module, as it will (below). Then add exactly `"app/api/v1/risk.py"`, a file, never `app/api/` | The non-vacuity guard; the prefix scan |
+
+**On T-M8-10's condition (DERIVED).** OPEN-M8-12's `422 SCOPE_UNRESOLVED` catches
+`ScopeResolutionError`, and route 2's `band` filter is typed `RiskBand`. Both are exported only by
+`app.intelligence`, so the condition will be met and T-M8-10 is required. No artificial
+alternative architecture is introduced to avoid this authorised evolution: re-exporting either
+name through `app/decisions/` would disguise the import, which M7 rejected for `TYPE_CHECKING`
+(Part B M7).
+
+**Path corrections (OBSERVED).** The owner's instructions of 2026-09-25 named
+`tests/integration/test_f1_openapi.py` and `tests/unit/test_g2_secret_canary.py`. The committed
+files are `tests/unit/test_f1_openapi.py` and `tests/integration/test_g2_secret_canary.py`, as the
+table states.
+
+**Measured, so that nothing is implied.**
+- `tests/unit/test_m7_boundary.py:1091` names the frozen Layer 1 and M4 models only, so
+  `brief_decisions.brief_id → risk_briefs` does not fail it.
+- `tests/conftest.py`, and the table-count helpers at
+  `tests/integration/test_m6_reconciliation.py:145`, `tests/integration/test_m7_persistence.py:126`
+  and `tests/integration/test_m7_assessment.py:121`, iterate `Base.metadata` and compare before
+  with after. `brief_decisions` joins them with zero
+  rows and changes no comparison.
+- `tests/unit/test_e1_boundary.py`, `tests/unit/test_f1_boundary.py` and the G2 scans cover M8's
+  repositories and route automatically, and must pass **unchanged**.
+- `tests/unit/test_b1_models.py` checks by intersection, and
+  `tests/integration/test_m4_migration.py` upgrades to `"head"` but inspects the link table only.
+
+**Anything not in T-M8-1…T-M8-10 is not authorised.** An eleventh contradiction is reported, and
+implementation stops.
+
+### 0.7.13 New tests
+
+| File | What it proves |
+|---|---|
+| `tests/integration/test_m8_migration.py` | **Chain:** `down_revision` `66eddc6b7136`, one head, M8's; the control that M7's head has no `brief_decisions`. **Upgrade:** adds exactly one table, one function and one trigger (`pg_trigger`: row-level, BEFORE, UPDATE and DELETE, enabled; `pg_proc`); exact columns, types and nullability, with only `note` and `supersedes_id` nullable and `decided_at` timezone-aware; both FKs `RESTRICT`; each FK indexed; both partial unique indexes with their `WHERE` clauses (`pg_indexes.indexdef`); no other table changed. **Downgrade:** removes the table, the function and the trigger exactly. Upgrade, downgrade and upgrade again repeats. The migration imports nothing from `app` |
+| `tests/integration/test_m8_approval.py` | **Append-only:** a flushed ORM attribute change, a Core `update()` and a Core `delete()` each raise `IntegrityError` carrying `brief_decisions is append-only`; deleting a decided brief, or its assessment, is refused by the FK. **Partial indexes:** a second first decision and a second successor are each skipped by `insert_decision`, which returns `None`. **Decisions:** first `APPROVED`; first `REJECTED`; a successor naming the head; each of the four `DecisionConflict` reasons; both `HashConflict` reasons, the stored payload being altered in the isolated test database; step 0's three refusals. **Concurrency:** two first decisions, and two successors of one head, in two sessions. The first transaction holds until `pg_stat_activity` shows the second waiting on a lock, then commits; exactly one row exists and the loser raises `CONCURRENT_DECISION`. **History:** chain order; a non-linear history raises; `decision_status` for an empty history and for `APPROVED` and `REJECTED` heads. **Event:** once per recorded decision, INFO, with its fields exactly and in order; nothing on a refusal; canary actor and note strings in no captured log line |
+| `tests/unit/test_m8_api_schemas.py` | Without a database: `extra` fields refused; every bound; the hash pattern; `as_of` required but nullable; the mirrored enums equal `Decision` and `DecisionStatus`; the OpenAPI shapes of the six operations, including the opaque `payload` |
+| `tests/integration/test_m8_api.py` | **Route 1, over the corpus at `ACCEPTANCE_AS_OF`:** the first call answers `201`, with results in the order a direct `run_assessment` returns and M7's measured hashes (CUST-007 `e93c29cf…c946`, CUST-025 `08c99ced…8770`, CUST-036 `a6240ac1…b637`); a repeat answers `200` with identical results and zero rows inserted in every table; one synthetic ticket gives `201` and new rows; two concurrent identical requests, from two TestClients behind a barrier, give one persisted result set and the statuses `{200, 201}`. **Failures:** each §0.7.9 code, status and fixed message; M6's DEAL-037 edit gives `500`, with every table's count unchanged. **Routes 2–6:**<br>• each filter; `as_of=2026-09-18&executive_worthy=true` gives exactly CUST-007;<br>• the order equals `order_reconciliations()`, including on a fixture where code-point order and locale order differ; pagination;<br>• CUST-007's detail, with six positions by `ordinal` and its brief references;<br>• route 4: `canonical_json(payload)` equals the stored `decision_payload`'s, its SHA-256 equals `payload_hash`, `narrative` is byte-identical to `tests/golden/vs01_cust007_brief.txt`, the 36 citations equal the payload's wire list, `status` is `DRAFT` before and after decisions, and `decision_status` is `PENDING` until it follows the head;<br>• route 5 with an overridden clock: `decided_at` equals the injected value; a `REJECTED` decision changes `brief_decisions` by one row and every other table by none;<br>• document-text and email canaries in no error body.<br>**§A28's flow**, replayed through TestClient: assess, list, brief, reject, history, re-run |
+| `tests/integration/test_m8_api_contract.py` | Discovered from OpenAPI and scoped to `/api/v1/risk`: exactly six operations; a request id on every response; the envelope on every error; `405` with `Allow` for write verbs on GET-only risk paths, for PUT, PATCH and DELETE on the two POST paths, and for GET on `/decision`; every documented error references `ErrorResponse` |
+| `tests/unit/test_m8_boundary.py` | §0.7.4 and §0.7.11 in full: the inventory; `approval.py`'s and `risk.py`'s import rows as closed worlds; the clock scan, with the single `_utc_now` site in `risk.py` and none in `approval.py`; no id generator or random source in `approval.py`; `approval.py` writes only through its repositories, holds no `try`, and has one event call site with its three keywords in order; only `risk.py` imports `approval`; `approval` is not re-exported, and importing `app.decisions` does not load it; M8's repositories import no Layer 2 package, name no domain type, contain no `update` or `delete` construct, own no transaction and do not log; `brief_decisions.py` contains no read; `BriefDecision` is not a `ProvenanceMixin`; the no-executor checks 1–5 with every companion. Every scan has a companion, and code is scanned with docstrings stripped, using M4's `_code()` |
+
+### 0.7.14 README (OPEN-M8-19; T-M8-8, T-M8-9)
+
+M8's README changes are limited to:
+- **route documentation:**
+  - six rows in the *API Usage Examples* table, in its existing columns;
+  - the *Serve* row of the *Architecture* table (README line 42), which says "Read-only routes
+    plus the one write, `POST /ingestion/runs`". M8 makes that false, so the cell is corrected
+    to name the three writes: `POST /ingestion/runs`, `POST /risk/assessments` and
+    `POST /risk/briefs/{brief_id}/decision` (Q-M8-3);
+- **error-code documentation:** six rows in the *Error responses* table;
+- **the governance statement** (Q-M8-3; strategy §9.3; §A22): one bullet in *API limitations*.
+  It states that a brief decision records an asserted, unauthenticated actor; that the approval
+  boundary is a governance record, not a security or authentication control; that anyone who can
+  reach the API can run an assessment and record a decision; and that authentication is a
+  prerequisite for any future executor. *Known Limitations*, which
+  `test_the_readme_calls_layer_1_a_prototype_and_lists_its_limits` reads, is not edited;
+- **test counts:** the four per-layer counts and both "`N` tests in four layers" totals, set to the
+  collected values;
+- the lint quotes, under T-M8-9 only.
+
+Both corrections are M8's and are not deferred to M9. There is no VS-01 scenario, demo narrative
+or architecture rewrite: those remain M9's.
+
+### 0.7.15 Frozen and allowed paths
+
+| Path | M8 may | Anchor, or scope of the change |
+|---|---|---|
+| The six new source files and the six new test files of §0.7.4 and §0.7.13 | create | as specified |
+| `app/api/errors.py` | edit, additively | six `ErrorCode` members only |
+| `app/api/v1/schemas.py` | edit, additively | the M8 models and mirrored enums only |
+| `app/api/v1/router.py` | edit, additively | one import and one `include_router` |
+| `app/persistence/models/__init__.py` | edit, additively | one registration and its docstring count |
+| `README.md` | edit | §0.7.14 only |
+| The T-M8-1…T-M8-10 test files | edit | exactly as §0.7.12 states |
+| `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | edit | this section now; the status table, Part B M8 and §A29 at closure |
+| `app/intelligence/`, `app/relationships/`, `app/evidence/` | **frozen** | `65eb462` |
+| `app/analysts/` | **frozen** | `d48c970` |
+| `app/decisions/{__init__,policy,conflicts,reconciler}.py`; `config/`, including `config/intelligence/` | **frozen** | `fd3a7e0` |
+| `app/decisions/{assessment,payload,brief}.py`; `app/decisions/templates/`; `app/persistence/models/risk_{assessment,position,brief}.py`; `app/persistence/repositories/{risk_assessments,citation_reads}.py`; `migrations/versions/66eddc6b7136_m7_risk_assessments_positions_briefs.py` | **frozen** | `1efea45` |
+| Every other migration; `migrations/env.py`; `alembic.ini` | **frozen** | `b2d588d` |
+| Every other file under `app/`, including Layer 1's `main.py`, `api/{dependencies,connectors,request_id,ingestion_errors}.py`, `api/v1/{entities,health,ingestion,metrics,sources}.py`, `core/`, `connectors/`, `ingestion/`, `normalization/`, `validation/`, `schemas/`, `observability/` and the other models and repositories | **frozen** | `b2d588d` |
+| `tests/golden/` (sha256 `87d1398661b0c30037ddc33e9acfd36db321ac9d0a36e04eadc3be9039ea9dce`); `data/`; `pyproject.toml`; `Dockerfile`; `docker-compose.yml`; `Makefile`; `scripts/` | **frozen** | `b2d588d` |
+| Every test not named in T-M8-1…T-M8-10 | **frozen** | `b2d588d` |
+| `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` | **never touched and never staged** | the owner's uncommitted change |
+
+**`pyproject.toml` and SQLAlchemy 2.1.** M8 adds no dependency, so nothing in M8 touches
+`pyproject.toml`. Its unbounded `sqlalchemy>=2.0.0` remains the pre-existing, out-of-scope issue
+Part B M7 records. M8 is verified in the repository's `.venv`, on SQLAlchemy 2.0.54.
+
+### 0.7.16 Implementation order and gates
+
+**No phase begins until this section is reviewed and committed on its own.** Phase 1 opens by
+re-measuring the M7 baseline: 5962 passed, 0 failed, 0 skipped; `app/` coverage 100% over 7022
+statements; ruff 69; mypy 9; secret scan 0; one head, `66eddc6b7136`; the golden file's sha256;
+every frozen path byte-identical to its anchor.
+
+| Phase | Work | Tests, and the T-M8 evolutions applied |
+|---|---|---|
+| 1 | `BriefDecision`, its registration, and the migration with its trigger | `test_m8_migration.py`; the append-only, FK and partial-index persistence tests, through Core inserts; T-M8-3 and T-M8-4, the boundary evolution this phase forces |
+| 2 | `brief_decisions.py`; `risk_queries.get_brief` and `risk_queries.decisions_for`, the two reads `approval.py` needs; `approval.py` | `test_m8_approval.py`; T-M8-1 (a) (b) (d) and T-M8-2 (a), since `approval.py` now exists |
+| 3 | The rest of `risk_queries.py`: the assessment and brief reads, and route 2's deterministic ordering | Integration tests of ordering, filters, pagination and brief and assessment retrieval, at the repository level |
+| 4 | `schemas.py`; the `ErrorCode` members; `risk.py` with its clock dependency, transaction ownership and error mapping; `router.py` | Route behaviour in `test_m8_api.py`; `test_m8_api_schemas.py`; T-M8-1 (c), T-M8-2 (b), T-M8-5, T-M8-6, T-M8-7 and T-M8-10, since `risk.py` now exists |
+| 5 | Contract and boundary tests; HTTP assess → brief → approve; the README | `test_m8_boundary.py`; `test_m8_api_contract.py`; the rest of `test_m8_api.py`; T-M8-8. Ad-hoc forbidden edits to the real sources, one at a time, each of which must be caught (M7's precedent) |
+| 6 | Full regression | The suite, coverage, ruff, mypy, the secret scan, the head check, the frozen-path diffs, the golden file and M7's three payload hashes; T-M8-9 if a lint count moved. Then **stop**, and report for commit approval |
+
+*Sequencing notes (DERIVED).*
+- Phase 2 creates `risk_queries.py` with only the two reads `approval.py` calls, because
+  OPEN-M8-16 places every read there and Phase 2 needs them. Phase 3 adds the rest.
+- Phase 3's "read APIs" are the repository reads. The routes are `risk.py`'s, in Phase 4.
+- Phase 1's "boundary evolution" is T-M8-3 and T-M8-4, the evolutions a new migration forces.
+
+**Gate rule** (Q-M8-4). Each T-M8 evolution is applied in the phase whose change first
+contradicts it, as the table shows, so no phase leaves a test broken that it could fix, and
+unrelated failures never accumulate. The only intentional temporary failures are the authorised
+README documentation and count checks, each until T-M8-8 in Phase 5:
+- `test_the_test_counts_the_readme_quotes_are_the_counts`, from Phase 1 onwards. M7 carried the
+  same single failure until its end.
+- `test_every_published_route_is_documented` and
+  `test_every_published_api_error_code_is_documented`, from Phase 4 onwards, because the directed
+  order places the README in Phase 5.
+
+Any other failure stops the phase. Every gate also runs the frozen-path diff, and checks that
+`git status` shows only M8's change set and the owner's strategy document.
+
+Nothing is staged, committed, pushed, amended or rebased without the owner's explicit approval,
+and no commit carries an attribution trailer. **Proposed commits:**
+1. `M8: finalize specification`: this section only.
+2. `M8: implement the risk API and the human approval boundary`: the approved file list, staged
+   by explicit path only.
+3. `docs: close M8 implementation plan`.
+
+### 0.7.17 Known limitations, to be carried into §A29 at closure
+
+- **Later-snapshot revalidation is not performed** (OPEN-M8-7). A stored brief can be decided on
+  after Layer 1 has moved on; the decision stays bound to the brief's own recorded snapshot.
+- **Append-only covers UPDATE and DELETE statements.** TRUNCATE, and privileged DDL such as
+  disabling the trigger, are outside it. The approval record is a governance record, not a
+  security control (strategy §9.3).
+- **Approver identity is asserted, not authenticated** (§A22, §A29; unchanged).
+- **`decided_at` is the API process's wall clock.** The supersession chain, not `decided_at`,
+  orders a brief's history.
+- **`vs01.decision_recorded` is not transactional,** as M7's events are not (§0.6.11).
+- **A policy-only change answers `200`** (X8). It adds a new brief under an existing assessment,
+  with every `created` false. The frozen `AssessmentResult` carries no brief-creation flag, and X8
+  forbids inferring one.
+
+### 0.7.18 Review items — Q-M8-1…Q-M8-4: RESOLVED 2026-09-25 (DIRECTED)
+
+Recording the directed decisions against the committed code exposed four items, each following
+from the decisions themselves rather than a new design question. The owner answered all four on
+2026-09-25. **The resolutions are authoritative.** The finding is kept so the reason for each
+resolution survives.
+
+| # | Finding | Resolution |
+|---|---|---|
+| **Q-M8-1** | OPEN-M8-12 first directed `404` for an unknown customer. The API's documented convention is that a value named in a **POST body** that matches nothing is `422`, and only a missing **path** resource is `404` (`tests/integration/test_h4_api_contract.py:223`). `customer_source_id` arrives in route 1's body | **`422 CUSTOMER_NOT_FOUND`** for an unresolvable customer, and `422 SCOPE_UNRESOLVED` for an unresolvable scope, when either is supplied in the POST body. `404` is reserved for missing path resources. Applied in §0.7.3, §0.7.8 and §0.7.9 |
+| **Q-M8-2** | OPEN-M8-6 said both that the database enforces what it can express declaratively and that the application validates same-brief. A composite self-FK could declare same-brief | **A plain self-FK on `supersedes_id`.** `approval.py` verifies that `supersedes_id` belongs to the same brief, that it is the current head, and that no fork is possible. The database enforces referential existence, and the no-fork and concurrent-first-decision rules through §0.7.5's partial unique indexes. No composite FK is introduced unless implementation evidence shows it is required, which is then reported. Applied in §0.7.3 and §0.7.5 |
+| **Q-M8-3** | README line 42 says the API serves "Read-only routes plus the one write, `POST /ingestion/runs`", which M8 makes false. Strategy §9.3 says the documentation "must say" the approval boundary is a governance record, not a security control. OPEN-M8-19 limited M8's README edits to routes, error codes and counts | **Both are corrected in M8, and neither is deferred to M9:** the *Serve* cell names the three writes, and one *API limitations* bullet states that approval is a governance record, not a security or authentication control. Applied in §0.7.3 and §0.7.14 |
+| **Q-M8-4** | The directed order places the README in Phase 5, after Phase 4 adds the routes, so Phase 4 could not pass cleanly | **Each authorised evolution moves into the phase where its test first breaks. Unrelated failing tests never accumulate.** The only intentional temporary failures are the authorised README documentation and count checks, until the README phase. Applied in §0.7.16 |
+
+### 0.7.19 M8 scope and acceptance
+
+#### M8 IN-SCOPE
+
+1. `app/decisions/approval.py` (§0.7.4, §0.7.7).
+2. `brief_decisions`: the model, its registration, and the third additive migration with its
+   trigger (§0.7.5).
+3. `brief_decisions.py` and `risk_queries.py` (§0.7.6).
+4. `app/api/v1/risk.py`: the six routes, the schemas, the six error codes, router registration and
+   the clock dependency (§0.7.8, §0.7.9).
+5. `vs01.decision_recorded` (§0.7.10).
+6. The no-executor boundary and `tests/unit/test_m8_boundary.py` (§0.7.11).
+7. T-M8-1…T-M8-10, the tests of §0.7.13, and the README changes of §0.7.14.
+
+#### M8 OUT-OF-SCOPE
+
+- Authentication or authorisation of any kind (§A22; a prerequisite for any future executor).
+- Any executor, outbound client, notification or execution capability.
+- A frontend (§A20).
+- Later-snapshot revalidation (OPEN-M8-7).
+- Updating `risk_briefs.status`, or any other M7 row.
+- `make verify-vs01`, `scripts/vs01_acceptance.py`, `tests/e2e/test_vs01_scenario.py`, §A26's
+  fixtures, the mutation audit and the README's VS-01 section (**M9**).
+- Any change to M1–M7 source or behaviour, `pyproject.toml`, `data/` or `tests/golden/`.
+- Any test evolution beyond T-M8-1…T-M8-10.
+
+#### M8 acceptance criteria — expected outcomes, stated before the tests are written
+
+These are binary, at `ACCEPTANCE_AS_OF = 2026-09-18` over the clean full-dataset path, and
+unpinned. A measurement that differs is **reported, not accommodated** (§0.3.8).
+
+| # | Criterion | Expected outcome |
+|---|---|---|
+| 1 | **One migration head** | Exactly one head, M8's, whose `down_revision` is `66eddc6b7136` |
+| 2 | **One new table** | Upgrade adds exactly `brief_decisions`, its one function and its one trigger; downgrade removes exactly them |
+| 3 | **Append-only, twice over** | The repository has no update, delete or read; the database rejects UPDATE and DELETE, through the ORM and through Core |
+| 4 | **First decision** | Its `supersedes_id` is null; a second null on the same brief is refused |
+| 5 | **Later decisions** | Each requires a `supersedes_id` naming the current head of the same brief |
+| 6 | **No fork** | A second successor of one decision is refused, sequentially and concurrently |
+| 7 | **Payload hash validated** | A request hash that differs from the stored brief's gives `409 PAYLOAD_HASH_CONFLICT` and no row |
+| 8 | **Stored payload re-hashes** | A stored payload that does not re-hash to its column gives `409` and no row; route 4's payload re-hashes to its `payload_hash` |
+| 9 | **Rejection persists** | A `REJECTED` decision is a durable row and heads the history |
+| 10 | **No status UPDATE** | `risk_briefs.status` is `DRAFT` before and after every decision; no M8 code writes any `risk_briefs` row |
+| 11 | **Deterministic derived state** | `decision_status` is `PENDING`, or the head's decision, computed from the chain alone |
+| 12 | **One row per decision** | Route 5 changes `brief_decisions` by exactly one row and every other table by none |
+| 13 | **No partial state** | Every failing request leaves every table's row count unchanged |
+| 14 | **No executor** | Checks 1–5 of §0.7.11 pass over the five packages |
+| 15 | **Stale exemptions fail** | The stale-exemption companion is caught, and so is every other companion |
+| 16 | **Six operations** | OpenAPI publishes exactly the six risk operations of §0.7.8, and no other new one |
+| 17 | **No leakage in errors** | Every M8 error body carries a fixed message and no document text, email, money, submitted value or exception text |
+| 18 | **Clean events** | `vs01.decision_recorded` carries exactly `payload_hash`, `decision` and `supersedes`; no log line carries an actor, note, email, document text or money |
+| 19 | **Layer 1 stays green** | The full suite passes, changed only by T-M8-1…T-M8-10 |
+| 20 | **Coverage and tools** | `app/` coverage 100%; ruff 69, or re-quoted under T-M8-9 with no new finding of M8's; mypy 9; secret scan 0 |
+| 21 | **Golden file** | `tests/golden/vs01_cust007_brief.txt` byte-identical (sha256 `87d13986…9dce`); `TEMPLATE_VERSION` `"1"`; M7's three payload hashes unchanged; the fingerprint still `1d891b0b…` |
+| 22 | **M1–M7 frozen** | Every frozen path of §0.7.15 byte-identical to its anchor |
+| 23 | **No frontend** | No UI; OpenAPI `/docs` only |
+| 24 | **No authentication** | No authentication or authorisation code; the actor is recorded as supplied |
+| 25 | **No execution** | No route, module or dependency performs or schedules an action |
+| 26 | **Assessment POST** | `201` on the first run; `200` on a repeat, with identical results and no new rows; concurrent identical requests converge on one persisted result set |
+| 27 | **Reads** | The filters, §0.7.8's exact ordering, every brief listed, and route 4's golden narrative and 36 citations for CUST-007 |
+| 28 | **Clock** | `approval.py` reads no clock; `decided_at` equals the injected clock's value; no test depends on the wall clock |
+| 29 | **Body values and path resources** | An unresolvable customer or scope in route 1's body gives `422`; a missing assessment or brief in a path gives `404` |
+| 30 | **README** | The six routes and six error codes are documented; the *Serve* cell names the three writes; *API limitations* states that approval is a governance record, not a security or authentication control; every I2 test passes |
+
+**The tooling gate is unchanged:** M8 does not close until `pytest`, `ruff` and `mypy` have
+actually been **run** and their results reported.
+
+---
+
 ## Part A — Specification
 
 ### A1. Business objective
@@ -6093,6 +6917,16 @@ which is not a dependency, and Layer 1's API tests fail to collect. §0.6.10 kee
 real and unbypassable.
 
 **Before.** The slice is reachable only from Python.
+
+**Status: SPECIFIED, NOT STARTED — §0.7, 2026-09-25.** §0.7 governs
+wherever this block is coarser. In particular:
+- the no-executor test covers **five** packages, not four (X5);
+- the decision body carries `supersedes_id` (X6);
+- `decided_at` comes from a clock injected at the route, and `approval.py` reads none (X7);
+- "existing F1/F2 contract tests still pass unchanged" reads as X1 does, with T-M8-1…T-M8-10 the
+  only test evolution.
+
+Implementation begins only on the owner's instruction, after §0.7 is committed on its own.
 
 **Change.** `app/decisions/approval.py` (append-only decisions bound to `payload_hash`), the
 `brief_decisions` model and **third additive migration**, `app/api/v1/risk.py` (six routes),
