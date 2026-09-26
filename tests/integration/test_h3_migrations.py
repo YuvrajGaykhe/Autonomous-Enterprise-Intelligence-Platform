@@ -55,6 +55,7 @@ LAYER2_TABLES = (
     "risk_assessments",
     "risk_positions",
     "risk_briefs",
+    "brief_decisions",
 )
 EXPECTED_TABLES = frozenset(CANONICAL_TABLES + OPERATIONAL_TABLES + LAYER2_TABLES)
 

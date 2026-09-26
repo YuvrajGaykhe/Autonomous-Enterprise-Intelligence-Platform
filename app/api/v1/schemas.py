@@ -7,9 +7,9 @@ Routes never return ORM objects; every response is one of these models.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
 
@@ -385,3 +385,176 @@ class IngestionMetricsResponse(BaseModel):
     totals: IngestionMetrics
     sources: list[SourceIngestionMetrics]
     process: ProcessIngestionMetrics
+
+
+# ---------------------------------------------------------------------------
+# Risk assessments, briefs and decisions (VS-01 M8, §0.7.8)
+#
+# This module imports no Layer 2 package. Where a model needs M8's decision
+# vocabulary it declares a mirrored enum, which a test pins equal to
+# app.decisions.approval's. `band` is the stored band name, a plain string.
+# ---------------------------------------------------------------------------
+
+
+class RiskDecision(StrEnum):
+    """What a decision says about a brief. Mirrors app.decisions.approval.Decision."""
+
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class RiskDecisionStatus(StrEnum):
+    """A brief's derived decision state. Mirrors app.decisions.approval.DecisionStatus."""
+
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class AssessmentRunRequest(BaseModel):
+    """Assess every customer in scope, or the one named, and persist the results.
+
+    as_of is required and may be null, which asks for the scope's fallback
+    date explicitly. The run is unpinned: no expected fingerprint is taken,
+    and no rules, linker or policy override is accepted.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    as_of: date | None
+    source_system: str = Field(default="csv_demo", min_length=1, max_length=100)
+    customer_source_id: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class AssessmentRunItem(BaseModel):
+    """One customer's result: its assessment, whether this run created it, and its brief."""
+
+    assessment_id: uuid.UUID
+    created: bool
+    brief_id: uuid.UUID | None
+    payload_hash: str | None
+
+
+class AssessmentRunResponse(BaseModel):
+    """One item per customer assessed, in ranking order."""
+
+    items: list[AssessmentRunItem]
+
+
+class AssessmentFields(BaseModel):
+    """An assessment's stored columns. customer_source_id is null once its customer is gone."""
+
+    id: uuid.UUID
+    customer_source_id: str | None
+    as_of: date
+    source_system: str
+    layer1_fingerprint: str
+    rules_version: int
+    linker_version: str
+    band: str
+    executive_worthy: bool
+    ranking_key: tuple[int, int, int, str]
+
+
+class AssessmentListItem(AssessmentFields):
+    """An assessment and the ids of every brief generated for it."""
+
+    brief_ids: list[uuid.UUID]
+
+
+class AssessmentListResponse(BaseModel):
+    """One limit/offset page: newest as_of first, then by scope and versions, then by
+    ranking key, then by id."""
+
+    items: list[AssessmentListItem]
+    total: int
+    limit: int
+    offset: int
+
+
+class AssessmentPosition(BaseModel):
+    """One position a function stated, as stored, with its evidence."""
+
+    ordinal: int
+    function: str
+    stance: str
+    proposed_action: str
+    object_ref: str
+    rationale: str
+    citations: list[dict[str, Any]]
+
+
+class AssessmentBrief(BaseModel):
+    """One brief of an assessment. None is current: every brief is listed."""
+
+    id: uuid.UUID
+    policy_version: int
+    template_version: str
+    payload_hash: str
+
+
+class AssessmentDetailResponse(AssessmentFields):
+    """An assessment with its satisfied rules, signals, positions by ordinal and every brief."""
+
+    satisfied_rules: list[str]
+    signals: dict[str, Any]
+    positions: list[AssessmentPosition]
+    briefs: list[AssessmentBrief]
+
+
+class BriefResponse(BaseModel):
+    """A stored brief, read back as written: nothing is re-rendered or re-resolved.
+
+    status is the stored column and is never updated; decision_status is
+    derived from the brief's decision history. payload is the stored decision
+    payload as an opaque object, and citations are the payload's own distinct
+    citations in ascending wire order.
+    """
+
+    id: uuid.UUID
+    assessment_id: uuid.UUID
+    status: str
+    decision_status: RiskDecisionStatus
+    policy_version: int
+    template_version: str
+    payload_hash: str
+    payload: dict[str, Any]
+    narrative: str
+    citations: list[dict[str, Any]]
+
+
+class DecisionRequest(BaseModel):
+    """Record a human decision on a stored brief.
+
+    actor is recorded exactly as supplied; it is asserted, never
+    authenticated, and never validated as an email address. supersedes_id is
+    null only for the brief's first decision, and otherwise names its current
+    head.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor: str = Field(min_length=1, max_length=255)
+    decision: RiskDecision
+    note: str | None = Field(default=None, max_length=2000)
+    payload_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    supersedes_id: uuid.UUID | None = None
+
+
+class DecisionResponse(BaseModel):
+    """One recorded decision."""
+
+    id: uuid.UUID
+    brief_id: uuid.UUID
+    payload_hash: str
+    actor: str
+    decision: RiskDecision
+    note: str | None
+    decided_at: datetime
+    supersedes_id: uuid.UUID | None
+
+
+class DecisionHistoryResponse(BaseModel):
+    """A brief's decisions in chain order, first to head."""
+
+    items: list[DecisionResponse]

@@ -777,7 +777,8 @@ def test_every_m7_file_exists_and_is_scanned(path):
 
 def test_the_decision_layer_is_exactly_m6_and_m7s_seven_modules():
     """§0.6.1 T-M7-1 (b), asserted from M7's side: no other .py file anywhere under app/decisions/."""
-    assert set(DECISIONS_DIR.rglob("*.py")) == {*M6_MODULES, *M7_MODULES.values()}
+    assert set(DECISIONS_DIR.rglob("*.py")) == {
+        *M6_MODULES, *M7_MODULES.values(), DECISIONS_DIR / "approval.py"}
 
 
 def test_the_templates_directory_holds_the_one_template_as_utf8_text():
@@ -813,7 +814,7 @@ def test_nothing_outside_the_package_imports_m7():
              if not path.is_relative_to(DECISIONS_DIR)]
 
     assert paths
-    assert _m7_importers(paths) == []
+    assert {entry.split(":", 1)[0] for entry in _m7_importers(paths)} == {"app/api/v1/risk.py"}
 
 
 @pytest.mark.parametrize("source", [

@@ -39,7 +39,7 @@ the others:
 | Validate | `app/validation/` | Pydantic canonical schemas plus `config/validation/quality_gate.yaml`: each record is accepted or quarantined with structured findings |
 | Persist | `app/persistence/` | Upsert on `(source_system, source_entity, source_id)`; `ingestion_runs`, `ingestion_errors`, `ingestion_cursors` |
 | Orchestrate | `app/ingestion/orchestrator.py` | One transaction per fetched page; run status, counts and checkpoints (see [Ingestion Orchestration](#ingestion-orchestration-e1)) |
-| Serve | `app/api/v1/` | Read-only routes plus the one write, `POST /ingestion/runs` (see [API Usage Examples](#api-usage-examples)) |
+| Serve | `app/api/v1/` | Read-only routes plus three writes: `POST /ingestion/runs`, `POST /risk/assessments` and `POST /risk/briefs/{brief_id}/decision` (see [API Usage Examples](#api-usage-examples)) |
 | Observe | `app/core/logging.py`, `app/observability/` | Structured events keyed by run id, in-process counters, `GET /metrics/ingestion` |
 | Guard | `app/core/security.py` | The read-only same-origin HTTP client and the import-file checks every connector goes through |
 
@@ -915,6 +915,12 @@ served at `/docs` and the schema at `/openapi.json`. The examples assume the API
 | GET | `/api/v1/entities/{entity_type}` | Canonical records (`source_system`, `limit`, `offset`) | `200` |
 | GET | `/api/v1/entities/{entity_type}/{id}` | One canonical record by canonical id | `200` |
 | GET | `/api/v1/metrics/ingestion` | Operational ingestion metrics, in total and per source | `200` |
+| POST | `/api/v1/risk/assessments` | Run a risk assessment (`as_of`, `source_system`, `customer_source_id`) | `201` if any result was created · `200` if none was |
+| GET | `/api/v1/risk/assessments` | List risk assessments (`as_of`, `band`, `executive_worthy`, `limit`, `offset`) | `200` |
+| GET | `/api/v1/risk/assessments/{assessment_id}` | One assessment, its positions and every one of its briefs | `200` |
+| GET | `/api/v1/risk/briefs/{brief_id}` | One stored brief: its payload, narrative, citations and decision status | `200` |
+| POST | `/api/v1/risk/briefs/{brief_id}/decision` | Record an `APPROVED` or `REJECTED` decision on a brief | `201` |
+| GET | `/api/v1/risk/briefs/{brief_id}/decisions` | A brief's decision history, from its first decision to its head | `200` |
 
 `entity_type` is one of `organizations`, `employees`, `customers`, `deals`, `projects`,
 `support_tickets` or `documents`.
@@ -1117,6 +1123,12 @@ client-supplied `X-Request-ID` of 1–64 characters `[A-Za-z0-9._-]` is reused):
 | `UNSUPPORTED_OPTION` | 422 | `dry_run: true` was requested |
 | `INVALID_INGESTION_REQUEST` | 422 | E1 rejected the request for this source (e.g. entities it does not provide) |
 | `ENTITY_NOT_FOUND` | 404 | No record of that entity type has the id (`details` names the `entity_type`) |
+| `ASSESSMENT_NOT_FOUND` | 404 | The risk assessment does not exist |
+| `BRIEF_NOT_FOUND` | 404 | The risk brief does not exist |
+| `CUSTOMER_NOT_FOUND` | 422 (`POST` body) | The customer `POST /risk/assessments` names is not in the assessment scope |
+| `SCOPE_UNRESOLVED` | 422 (`POST` body) | `as_of` is `null` and the scope has no support ticket to resolve it from |
+| `PAYLOAD_HASH_CONFLICT` | 409 | `payload_hash` does not match the brief's decision payload (`details.reason` says which check failed) |
+| `DECISION_CONFLICT` | 409 | The decision does not extend the brief's history: `supersedes_id` must name its current head (`details.reason`) |
 | `INTERNAL_ERROR` | 500 | Unexpected failure; the message is generic and details are never exposed |
 
 Rejected requests (`422`, `SOURCE_MISCONFIGURED`) create no run. A system failure during a run
@@ -1126,6 +1138,10 @@ returns `500 INTERNAL_ERROR` after E1 has marked the run `FAILED`.
 
 - **No authentication or authorization**: Layer 1 is a prototype, and anyone who can reach the
   API can start runs. Deploy it only on a trusted network.
+- **Approval is a governance record**: a brief decision records the actor exactly as the request
+  asserts it, unauthenticated. The approval boundary is a governance record, not a security or
+  authentication control, and anyone who can reach the API can run an assessment and record a
+  decision. Authentication is a prerequisite for any future executor.
 - **Synchronous runs**: `POST /ingestion/runs` holds the request open for the whole run. There is
   no server-side timeout, and a client disconnect does not cancel the run.
 - **No dry run and full mode only**: E1 has neither dry-run semantics nor incremental sync.
@@ -1159,14 +1175,14 @@ Run everything:
 make test
 ```
 
-`make test` runs `pytest` over `tests/`, which is 5962 tests in four layers
+`make test` runs `pytest` over `tests/`, which is 6438 tests in four layers
 (spec Section 15). The layers differ in what they need, so select them by path:
 
 | Layer | Command | Tests | Needs |
 |---|---|---|---|
-| Unit | `pytest tests/unit` | 4813 | nothing |
+| Unit | `pytest tests/unit` | 5054 | nothing |
 | Connector contract | `pytest tests/contract` | 185 | nothing |
-| Database integration | `pytest tests/integration` | 884 | PostgreSQL |
+| Database integration | `pytest tests/integration` | 1119 | PostgreSQL |
 | End-to-end | `pytest tests/e2e` | 80 | PostgreSQL |
 
 The unit and contract layers run with no database at all: the contract suite
@@ -1274,7 +1290,7 @@ dataset, step A–C reports how many records it found and steps E–F report `NO
 | Validation | The bad fixture produces structured errors and quarantine | `validation`: `PARTIAL_SUCCESS`, structured errors readable at `GET /ingestion/runs/{id}/errors`, and every non-rejected fixture row still queryable |
 | API | Canonical records are queryable with pagination | `api_query`: `limit`/`offset` are echoed, `total` is stable across pages and pages do not overlap |
 | Safety | No source write operations are executed | `read_only`: all 14 committed source files are byte-identical (SHA-256) after the scenario. Structurally: no connector exposes a write method, no connector module names a mutating HTTP verb, and the live mock source records only `GET` (`tests/contract/`) |
-| Tests | All required automated tests pass | `make test` — 5962 tests in four layers; or `make verify-layer1 ARGS="--with-tests"` |
+| Tests | All required automated tests pass | `make test` — 6438 tests in four layers; or `make verify-layer1 ARGS="--with-tests"` |
 | Reproducibility | A clean rebuild reproduces the same demo behaviour | Step O: `make docker-down && make docker-build && make docker-up`, then run the command again. The dataset regenerates byte-identically, canonical ids are UUID5 of the source identity, and record hashes cover normalized business fields only |
 | Documentation | The README enables a new developer to run Layer 1 | [Prerequisites](#prerequisites) → [Environment Setup](#environment-setup) → [Running with Docker Compose](#running-with-docker-compose) or [Running Locally](#running-locally-without-docker) → [Ingestion Commands](#ingestion-commands) → [API Usage Examples](#api-usage-examples) → [Test Commands](#test-commands) |
 

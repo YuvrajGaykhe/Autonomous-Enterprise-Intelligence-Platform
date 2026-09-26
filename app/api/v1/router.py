@@ -10,6 +10,7 @@ from app.api.v1.entities import router as entities_router
 from app.api.v1.health import router as health_router
 from app.api.v1.ingestion import router as ingestion_router
 from app.api.v1.metrics import router as metrics_router
+from app.api.v1.risk import router as risk_router
 from app.api.v1.sources import router as sources_router
 
 api_router = APIRouter(prefix="/api/v1")
@@ -18,3 +19,4 @@ api_router.include_router(sources_router)
 api_router.include_router(ingestion_router)
 api_router.include_router(entities_router)
 api_router.include_router(metrics_router)
+api_router.include_router(risk_router)

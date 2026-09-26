@@ -167,7 +167,8 @@ def test_the_m7_revision_chains_after_m4_and_is_the_single_head():
     script = ScriptDirectory.from_config(_alembic_config("postgresql://unused/unused"))
 
     assert script.get_revision(M7_REVISION).down_revision == PREVIOUS_HEAD
-    assert list(script.get_heads()) == [M7_REVISION]
+    (head,) = script.get_heads()
+    assert M7_REVISION in [step.revision for step in script.walk_revisions("base", head)]
 
 
 def test_m4s_head_has_no_m7_table(at_previous_head):

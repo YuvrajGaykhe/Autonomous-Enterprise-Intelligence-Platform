@@ -15,10 +15,12 @@ The cross-route contract:
 2. Envelope      every failure has the one documented error shape, with a
                  stable code and a fixed message; framework text, database
                  text and connector text never reach the client.
-3. Read-only     the API publishes exactly one non-GET operation (starting
-                 an ingestion run). Every other route refuses every write
-                 verb with 405 and an Allow header (Section 14: Layer 1
-                 takes no external action and exposes no source mutation).
+3. Read-only     the API publishes exactly three non-GET operations:
+                 starting an ingestion run, running a risk assessment and
+                 recording a decision on a risk brief (§0.7.12 T-M8-5).
+                 Every other route refuses every write verb with 405 and an
+                 Allow header (Section 14: Layer 1 takes no external action
+                 and exposes no source mutation).
 4. Pagination    every paginated route bounds limit and offset identically,
                  echoes them, and reports a total that does not depend on
                  the slice (Section 10).
@@ -53,8 +55,13 @@ T0 = datetime(2026, 9, 16, 9, 0, tzinfo=UTC)
 
 WRITE_VERBS = ("POST", "PUT", "PATCH", "DELETE")
 
-#: The only operation the API publishes that is not a GET (spec Section 10).
-THE_ONE_WRITE_OPERATION = ("POST", "/api/v1/ingestion/runs")
+#: The only operations the API publishes that are not a GET: spec Section 10's,
+#: and M8's two (§0.7.8, §0.7.12 T-M8-5).
+WRITE_OPERATIONS = (
+    ("POST", "/api/v1/ingestion/runs"),
+    ("POST", "/api/v1/risk/assessments"),
+    ("POST", "/api/v1/risk/briefs/{brief_id}/decision"),
+)
 
 ENTITY_TYPES = ("organizations", "employees", "customers", "deals",
                 "projects", "support_tickets", "documents")
@@ -82,6 +89,8 @@ def _concrete(path: str, run_id: str | None = None, entity_id: str | None = None
     return (path
             .replace("{run_id}", run_id or str(uuid.uuid4()))
             .replace("{entity_id}", entity_id or str(uuid.uuid4()))
+            .replace("{assessment_id}", str(uuid.uuid4()))
+            .replace("{brief_id}", str(uuid.uuid4()))
             .replace("{source}", "csv_demo"))
 
 
@@ -252,21 +261,21 @@ def test_every_error_code_the_api_can_return_is_declared(client, spec):
 
 
 # ---------------------------------------------------------------------------
-# 3. The API is read-only apart from starting a run
+# 3. The API is read-only apart from its three write operations
 # ---------------------------------------------------------------------------
 
 
 def test_the_api_publishes_exactly_one_non_get_operation(spec):
-    """Spec Section 10: only POST /ingestion/runs may change server state."""
+    """Spec Section 10 and §0.7.8: only the three write operations may change server state."""
     non_get = [(method, path) for method, path in _published(spec) if method != "GET"]
-    assert non_get == [THE_ONE_WRITE_OPERATION]
+    assert non_get == sorted(WRITE_OPERATIONS)
 
 
 @pytest.mark.parametrize("verb", WRITE_VERBS)
 def test_every_read_route_refuses_every_write_verb(client, spec, verb, ingested):
     """A write verb on a read route is 405 with an Allow header, not 404 or 500."""
     for method, path in _published(spec):
-        if method != "GET" or (verb, path) == THE_ONE_WRITE_OPERATION:
+        if method != "GET" or (verb, path) in WRITE_OPERATIONS:
             continue
         response = client.request(verb, _concrete(path, run_id=str(ingested.run_id)))
         assert response.status_code == 405, f"{verb} {path}"
@@ -317,7 +326,8 @@ def test_the_paginated_routes_are_the_expected_ones(spec):
     """Guards the parameterization below against silently covering nothing."""
     assert _paginated(spec) == sorted(
         [f"/api/v1/entities/{entity}" for entity in ENTITY_TYPES]
-        + ["/api/v1/ingestion/runs", "/api/v1/ingestion/runs/{run_id}/errors"]
+        + ["/api/v1/ingestion/runs", "/api/v1/ingestion/runs/{run_id}/errors",
+           "/api/v1/risk/assessments"]
     )
 
 

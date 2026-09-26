@@ -50,9 +50,20 @@ F2_ENTITY_OPERATIONS = {
 F2_METRICS_OPERATIONS = {("get", "/api/v1/metrics/ingestion")}
 
 
+# M8 adds the six risk operations of §0.7.8 (§0.7.12 T-M8-6).
+M8_RISK_OPERATIONS = {
+    ("post", "/api/v1/risk/assessments"),
+    ("get", "/api/v1/risk/assessments"),
+    ("get", "/api/v1/risk/assessments/{assessment_id}"),
+    ("get", "/api/v1/risk/briefs/{brief_id}"),
+    ("post", "/api/v1/risk/briefs/{brief_id}/decision"),
+    ("get", "/api/v1/risk/briefs/{brief_id}/decisions"),
+}
+
+
 def test_exactly_the_f1_and_f2_operations_are_published(spec):
     assert {(method, path) for method, path, _ in _operations(spec)} == \
-        F1_OPERATIONS | F2_ENTITY_OPERATIONS | F2_METRICS_OPERATIONS
+        F1_OPERATIONS | F2_ENTITY_OPERATIONS | F2_METRICS_OPERATIONS | M8_RISK_OPERATIONS
 
 
 def test_api_metadata(spec):
@@ -89,6 +100,13 @@ def test_success_responses_reference_named_models(spec):
         ("get", "/api/v1/ingestion/runs/{run_id}"): ("200", "IngestionRunResponse"),
         ("get", "/api/v1/ingestion/runs/{run_id}/errors"): ("200", "ErrorListResponse"),
         ("get", "/api/v1/metrics/ingestion"): ("200", "IngestionMetricsResponse"),
+        # T-M8-6 (b): §0.7.8's six risk operations.
+        ("post", "/api/v1/risk/assessments"): ("201", "AssessmentRunResponse"),
+        ("get", "/api/v1/risk/assessments"): ("200", "AssessmentListResponse"),
+        ("get", "/api/v1/risk/assessments/{assessment_id}"): ("200", "AssessmentDetailResponse"),
+        ("get", "/api/v1/risk/briefs/{brief_id}"): ("200", "BriefResponse"),
+        ("post", "/api/v1/risk/briefs/{brief_id}/decision"): ("201", "DecisionResponse"),
+        ("get", "/api/v1/risk/briefs/{brief_id}/decisions"): ("200", "DecisionHistoryResponse"),
     }
     for entity, (page, record) in {
         "organizations": ("OrganizationListResponse", "OrganizationCanonical"),

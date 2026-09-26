@@ -60,7 +60,7 @@ AUTH_VARIABLE = "G2_CANARY_REST_AUTH"
 UNREACHABLE_DB = f"postgresql://g2_probe:{DB_CANARY}@127.0.0.1:9/g2_unreachable"
 REST_ENTITIES = ("organizations", "employees", "customers", "deals")
 SOURCES = ("csv_demo", "rest_mock", "odoo_mock", "broken_config", "crashing")
-ROUTE_PARAMETERS = {"source", "run_id", "entity_id"}
+ROUTE_PARAMETERS = {"source", "run_id", "entity_id", "assessment_id", "brief_id"}
 MISSING_ID = str(uuid.UUID(int=0))
 EXPECTED_EVENTS = ("run_finished", "entity_failed", "record_rejected", "connector_health_check_failed",
                    "source_misconfigured", "request_failed", "retry_scheduled")
@@ -166,7 +166,16 @@ def _get_paths(client: TestClient, run_ids: list[str]) -> tuple[list[str], int]:
             paths += [template.replace("{source}", source) for source in SOURCES]
         elif names == ["run_id"]:
             paths += [template.replace("{run_id}", run_id) for run_id in [*run_ids, MISSING_ID]]
+        elif names == ["assessment_id"]:
+            assessments = client.get("/api/v1/risk/assessments").json()["items"]
+            ids = [item["id"] for item in assessments] + [MISSING_ID]
+            paths += [template.replace("{assessment_id}", assessment_id) for assessment_id in ids]
+        elif names == ["brief_id"]:
+            assessments = client.get("/api/v1/risk/assessments").json()["items"]
+            ids = [brief_id for item in assessments for brief_id in item["brief_ids"]] + [MISSING_ID]
+            paths += [template.replace("{brief_id}", brief_id) for brief_id in ids]
         else:
+            assert names == ["entity_id"], template
             listing = client.get(template.rsplit("/", 1)[0]).json()["items"]
             ids = [item["id"] for item in listing] + [MISSING_ID]
             paths += [template.replace("{entity_id}", entity_id) for entity_id in ids]

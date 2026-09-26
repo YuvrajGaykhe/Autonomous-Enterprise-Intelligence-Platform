@@ -55,8 +55,9 @@ M7_MODULES = {
     "app/decisions/brief.py",
 }
 
-#: M8's named module (Part B). It may not exist while M7 is the milestone.
-LATER_MODULES = ("approval",)
+#: M8's one module (§0.7.4). Like M7's, it sits beside M6's in app/decisions/,
+#: and every scan below still covers M6's four modules only (§0.7.12 T-M8-1 (a)).
+M8_MODULES = {"app/decisions/approval.py"}
 
 #: Every module named after M6 (Part B). No M6 module may import one, M7's
 #: included (§0.6.1 T-M7-1 (d)).
@@ -155,13 +156,13 @@ def test_the_decision_layer_is_exactly_m6s_four_modules():
     assert {name for name, _ in _modules()} == M6_MODULES
     assert {
         path.relative_to(REPO).as_posix() for path in DECISIONS_DIR.rglob("*.py")
-    } == M6_MODULES | M7_MODULES
+    } == M6_MODULES | M7_MODULES | M8_MODULES
 
 
 def test_the_public_surface_is_exactly_the_declared_one():
     """§0.5.7's public API, no more: helpers stay importable from their modules only."""
     decisions = importlib.import_module("app.decisions")
-    for submodule in ("assessment", "payload", "brief"):
+    for submodule in ("assessment", "payload", "brief", "approval"):
         importlib.import_module(f"app.decisions.{submodule}")
 
     assert sorted(decisions.__all__) == sorted([
@@ -173,13 +174,22 @@ def test_the_public_surface_is_exactly_the_declared_one():
     ])
     assert {name for name in vars(decisions) if not name.startswith("_")} == set(
         decisions.__all__) | {"conflicts", "policy", "reconciler", "assessment", "payload",
-                              "brief"}
+                              "brief", "approval"}
 
 
-@pytest.mark.parametrize("name", LATER_MODULES)
-def test_no_later_milestone_module_exists(name):
-    assert not (DECISIONS_DIR / f"{name}.py").exists()
-    assert not (DECISIONS_DIR / name).exists()
+def test_no_later_milestone_module_exists():
+    """
+    §0.7.12 T-M8-1 (b): the only directory under app/decisions/, bytecode
+    caches aside, is templates/. That keeps the guard against an approval/
+    package and extends it to every name; .py files stay guarded by the
+    inventory above.
+    """
+    directories = {
+        path.relative_to(DECISIONS_DIR).as_posix() for path in DECISIONS_DIR.rglob("*")
+        if path.is_dir() and "__pycache__" not in path.parts
+    }
+
+    assert directories == {"templates"}
 
 
 @pytest.mark.parametrize("path", M6_CONFIG)
@@ -209,7 +219,7 @@ def test_nothing_outside_the_package_imports_it():
             if any(module.startswith("app.decisions") for module in _imported_modules(tree)):
                 importers.append(path.relative_to(REPO).as_posix())
 
-    assert importers == []
+    assert importers == ["app/api/v1/risk.py"]
 
 
 def test_the_importer_scan_would_catch_an_upstream_import():
