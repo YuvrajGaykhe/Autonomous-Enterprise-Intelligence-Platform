@@ -27,7 +27,7 @@ items resolved (§0.7)**
 | **M5** — analysts and positions | **COMPLETE** | `app/analysts/` — `context.py` (the one factory, and the only module permitted a `Session`), `base.py`, `support_risk.py`, `commercial.py`; `tests/unit/test_m5_{analysts,context,boundary}.py`, `tests/unit/m5_support.py` and `tests/integration/test_m5_contexts.py`; specification `6a8d413` (§0.4, nine decisions D-M5-B1…B9), implementation `d48c970`, and `6158f81`, which closed §0.4.8 criterion 15's first clause (a two-currency context, CUST-042) that `d48c970` had left unasserted — **all sixteen criteria are now asserted**. Measured at `6158f81`: **5163** tests (unit 4166, contract 185, integration 732, e2e 80), `app/` coverage **100%** (5937 statements), ruff 69, mypy 9, secret scan 0, **one** migration head `c4a1e97d5b02` and **no** new migration. Only T-M5-1 and T-M5-2 were needed; T-M5-3/T-M5-4 authorised a re-quote that no count required. `app/intelligence/`, `app/relationships/`, `app/evidence/` and `app/persistence/` byte-identical to `65eb462` |
 | **M6** — conflict detection and reconciliation | **COMPLETE** | `app/decisions/` — `policy.py`, `conflicts.py`, `reconciler.py` and the initialiser, exactly; `config/intelligence/{action_catalogue,conflict_policy}.yaml`; `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py`, `tests/unit/m6_support.py` and `tests/integration/test_m6_reconciliation.py`; specification `1d1ee59` (§0.5, eleven decisions D-M6-B1…B11), implementation `fd3a7e0`. All twenty-one §0.5.14 criteria asserted; only T-M6-1…T-M6-3 were needed. Measured at `fd3a7e0`: **5533** tests (unit 4518, contract 185, integration 750, e2e 80), 0 skipped, `app/` coverage **100%** (6347 statements), ruff 69, mypy 9, secret scan 0 over 292 files, **one** migration head `c4a1e97d5b02` and **no** new migration. `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`. Closure notes: Part B M6 |
 | **M7** — brief assembly, hashing and persistence | **COMPLETE** | `app/decisions/` — `assessment.py`, `payload.py`, `brief.py` and `templates/brief.txt`; `app/persistence/models/risk_{assessment,position,brief}.py`, `app/persistence/repositories/{risk_assessments,citation_reads}.py`, migration `66eddc6b7136` chained after `c4a1e97d5b02` (one head); `tests/unit/test_m7_{payload,brief,boundary}.py`, `tests/unit/m7_support.py`, `tests/integration/test_m7_{assessment,migration,persistence}.py` and the golden file `tests/golden/vs01_cust007_brief.txt`; specification `5f19144` (§0.6: D-M7-B1…B12, MP1–MP6), implementation `1efea45`. Every §0.6.15 criterion is asserted, criterion 11 under the Q1 = A reading recorded in Part B; T-M7-1…T-M7-4 were used, and T-M7-5 was not needed. Measured at `1efea45`: **5962** tests (unit 4813, contract 185, integration 884, e2e 80), 0 skipped, `app/` coverage **100%** (7022 statements), ruff 69, mypy 9, secret scan 0 over 292 tracked files, **one** migration head `66eddc6b7136`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`; `app/persistence/` changed only by the additive registration. Closure notes: Part B M7 |
-| **M8** — API and the human approval boundary | **SPECIFIED — not started** | §0.7, recorded 2026-09-25 against `b2d588d`: the ten contradictions X1–X10 and OPEN-M8-1…OPEN-M8-20 resolved as directed, the test evolution T-M8-1…T-M8-10, and the four review items of §0.7.18, answered by the owner the same day. **No specification item gates implementation any longer; it begins only on the owner's instruction, after §0.7 is committed on its own.** Nothing is implemented: no M8 module, table, migration, route or test exists |
+| **M8** — API and the human approval boundary | **COMPLETE** | `app/decisions/approval.py`; `app/api/v1/risk.py` (the six routes of §0.7.8), with additive changes to `app/api/v1/schemas.py`, `app/api/v1/router.py` and `app/api/errors.py` (six error codes); `app/persistence/models/brief_decision.py`, `app/persistence/repositories/{brief_decisions,risk_queries}.py`, migration `070e4968a497` chained after `66eddc6b7136` (one head); `tests/unit/test_m8_{boundary,api_schemas}.py` and `tests/integration/test_m8_{api,api_contract,approval,migration}.py`; specification `0f88921` (§0.7: X1–X10, OPEN-M8-1…OPEN-M8-20, Q-M8-1…Q-M8-4), implementation `88771d2`. Every §0.7.19 criterion is asserted, by tests, gate measurements or structural evidence. T-M8-1…T-M8-8 and T-M8-10 were used, and T-M8-9 was not needed. Measured at the Phase 6 gate, on the tree committed as `88771d2`: **6438** tests (unit 5054, contract 185, integration 1119, e2e 80), 0 skipped, `app/` coverage **100%** (7456 statements), ruff 69, mypy 9, secret scan 0 over 322 files, **one** migration head `070e4968a497`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`, M7's modules, models, repositories and migration to `1efea45`; `app/persistence/` and `app/api/` changed only as §0.7.15 allows. Closure notes: Part B M8 |
 | **M9** — acceptance, evaluation and hardening | **PLANNED** | Nothing implemented; no script, fixture package or test exists |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
@@ -6270,7 +6270,16 @@ although the brief's own `document_evidence` carries only the current stamps' li
 (§0.6.13.1). No such case exists on a freshly built database, and M7 adds no check for it;
 **a truncated quote is cut by code point**, so a quoted span longer than 500 characters can
 lose part of a grapheme cluster at the cut. The cut is deterministic, and no committed target
-is long enough to be cut (§0.6.13.4).
+is long enough to be cut (§0.6.13.4); **later-snapshot revalidation is not performed**
+(OPEN-M8-7) — a stored brief can be decided on after Layer 1 has moved on. The decision stays
+bound to the brief's own recorded snapshot (§0.7.17); **append-only covers UPDATE and DELETE
+statements** — TRUNCATE, and privileged DDL such as disabling the trigger, are outside it. The
+approval record is a governance record, not a security control (strategy §9.3; §0.7.17);
+**`decided_at` is the API process's wall clock** — the supersession chain, not `decided_at`,
+orders a brief's history (§0.7.17); **`vs01.decision_recorded` is not transactional**, as M7's
+events are not (§0.6.11; §0.7.17); **a policy-only change answers `200`** (X8) — it adds a new
+brief under an existing assessment, with every `created` false. The frozen `AssessmentResult`
+carries no brief-creation flag, and X8 forbids inferring one (§0.7.17).
 
 ### A30. Reusable foundations this slice establishes
 
@@ -6918,7 +6927,7 @@ real and unbypassable.
 
 **Before.** The slice is reachable only from Python.
 
-**Status: SPECIFIED, NOT STARTED — §0.7, 2026-09-25.** §0.7 governs
+**Status: COMPLETE — implementation `88771d2`, 2026-09-27.** §0.7 governs
 wherever this block is coarser. In particular:
 - the no-executor test covers **five** packages, not four (X5);
 - the decision body carries `supersedes_id` (X6);
@@ -6926,7 +6935,8 @@ wherever this block is coarser. In particular:
 - "existing F1/F2 contract tests still pass unchanged" reads as X1 does, with T-M8-1…T-M8-10 the
   only test evolution.
 
-Implementation begins only on the owner's instruction, after §0.7 is committed on its own.
+Implementation began on the owner's instruction on 2026-09-25, after §0.7 was committed on its
+own as `0f88921`. Its decisions and its closure are recorded at the end of this block.
 
 **Change.** `app/decisions/approval.py` (append-only decisions bound to `payload_hash`), the
 `brief_decisions` model and **third additive migration**, `app/api/v1/risk.py` (six routes),
@@ -6946,6 +6956,103 @@ if an outbound client is introduced anywhere in the transitive graph.
 
 **Non-goals.** Authentication (documented as a prerequisite for any future executor); execution;
 a frontend.
+
+**Implementation decisions, recorded before closure — 2026-09-27.** Implementation is complete
+and verified on top of `0f88921`, and committed as `88771d2`. The closure record below carries
+these seven forward. Each is an owner ruling. None of them changes a directed decision or §0.7's
+text. Each one says how §0.7 is applied where its text alone does not settle the code or the phase
+order.
+
+1. **`brief_decisions.py` landed in Phase 1, not Phase 2 (owner decision, 2026-09-25).**
+   §0.7.16's phase table places `app/persistence/repositories/brief_decisions.py` in Phase 2. The
+   implementation loop placed it in Phase 1, with its persistence and boundary proof: the
+   persistence part of `test_m8_approval.py` and the persistence section of `test_m8_boundary.py`.
+   This is an ordering deviation only, and the contract is unchanged. The Phase 1 files were not
+   moved to satisfy the phase-order wording.
+2. **The model package's docstring stays internally consistent (owner decision, 2026-09-25).**
+   §0.7.15 allows `app/persistence/models/__init__.py` "one registration and its docstring count".
+   Following the M4/M7 precedent, the model count (16 → 17), the Layer 2 table count (4 → 5) and
+   the named inventory, which gains `BriefDecision (VS-01 M8)`, are kept consistent with one
+   another.
+3. **T-M8-6 (b): F1's closed success-model map lists the six risk operations (owner ruling,
+   2026-09-26).** `tests/unit/test_f1_openapi.py::test_success_responses_reference_named_models`
+   loops over every published operation against a closed `expected` map, so the six §0.7.8 routes
+   raised `KeyError`. T-M8-6's row names only the operation set at `:53`. The owner authorised the
+   break as part of T-M8-6, and it was resolved by adding exactly six entries to `expected`:
+   - `POST /api/v1/risk/assessments`: `201`, `AssessmentRunResponse`;
+   - `GET /api/v1/risk/assessments`: `200`, `AssessmentListResponse`;
+   - `GET /api/v1/risk/assessments/{assessment_id}`: `200`, `AssessmentDetailResponse`;
+   - `GET /api/v1/risk/briefs/{brief_id}`: `200`, `BriefResponse`;
+   - `POST /api/v1/risk/briefs/{brief_id}/decision`: `201`, `DecisionResponse`;
+   - `GET /api/v1/risk/briefs/{brief_id}/decisions`: `200`, `DecisionHistoryResponse`.
+
+   The loop, the closed-map behaviour, the assertion and every existing entry are unchanged.
+4. **Q1: `risk.py`'s closed import row admits `__future__` → {annotations} (owner ruling,
+   2026-09-26).** §0.7.4's row for `risk.py` omits `__future__`, which `approval.py`'s row lists.
+   `risk.py`, like every route module under `app/api`, begins with
+   `from __future__ import annotations`. The grant is admitted as the API layer's
+   compiler-directive allowance, consistent with `approval.py`'s §0.7.4 allowance and with the
+   convention across `app/api`'s route modules. `risk.py` is not changed. `test_m8_boundary.py`'s
+   grant for `risk.py` encodes the ruling.
+5. **Q2: Phase 4 mutant 63 is behaviourally equivalent, and no new rule is added (owner ruling,
+   2026-09-26).** The mutant makes route 5, `record_brief_decision`, pre-check the payload hash
+   itself through `risk_queries.get_brief`. No §0.7 rule forbids that. Under the contract it is
+   equivalent:
+   - it reads the same brief and hash information through `risk_queries.get_brief`;
+   - it produces the same `409` error body on a mismatch;
+   - it creates no decision row;
+   - it emits no `vs01.decision_recorded` event;
+   - under §0.7.8's UTC clock contract, it makes no observable timing distinction relevant to the
+     specified behaviour.
+
+   No boundary rule forbids the pre-check, and the production code is not changed to eliminate
+   the mutant. §0.7 gains no structural constraint. The mutation accounting records it as an
+   equivalent mutant, apart from mutations that violate an explicit §0.7 rule.
+6. **Q3: closed import worlds use the stricter module reading (owner ruling, 2026-09-26).** In
+   the closed import worlds of `approval.py` and `risk.py`, `from X import Y` is judged as `X.Y`
+   whenever `X.Y` resolves to a module, which is §0.7.11's module-resolution convention. A grant
+   of `X` does not grant its submodules. `http` therefore admits `HTTPStatus` but not
+   `from http import client`, and `http.client` would need its own grant. First-party imports use
+   the `from` form, which is M7's convention. No production import was changed to fit the reading.
+7. **Q4: `risk.py` handles exactly §0.7.9's five exceptions (owner ruling, 2026-09-26).**
+   `test_m8_boundary.py` pins the explicitly handled set to `UnknownCustomerError`,
+   `ScopeResolutionError`, `UnknownBriefError`, `PayloadHashConflictError` and
+   `DecisionConflictError`. Every other exception is left to the existing 500 handler. This is an
+   additive M8 boundary contract. F1's rule is unchanged and still forbids bare and broad
+   `except`.
+
+**CLOSED — commit `88771d2`, 2026-09-27** (specification `0f88921`). §0.7.16's Phase 6 gate
+passed on 2026-09-27.
+
+- **Surface.** OpenAPI publishes exactly the six risk operations of §0.7.8, with six new
+  `ErrorCode` members. The README's changes are §0.7.14's alone (T-M8-8):
+  - the six routes and six error codes are documented;
+  - the *Serve* cell names the three writes;
+  - *API limitations* states that approval is a governance record, not a security or
+    authentication control;
+  - the counts are updated.
+
+  *Known Limitations* is unchanged, and every I2 test passes.
+- **Tests.** The six files of §0.7.13 hold 476 tests:
+  - `test_m8_boundary.py`, 191, with every scan paired with a companion;
+  - `test_m8_api_schemas.py`, 50;
+  - `test_m8_api.py`, 74, including §A28's flow;
+  - `test_m8_api_contract.py`, 20;
+  - `test_m8_approval.py`, 121;
+  - `test_m8_migration.py`, 20.
+- **Forbidden edits.** Seventy forbidden changes to the real sources, made one at a time
+  (§0.7.16, Phase 5), were each caught. That took 145 executions: 70 mutants × 2 passes, plus
+  5 reruns. There were 0 survivors and 0 malformed mutants, and every file was restored and
+  hash-verified.
+- **Regression.** 6438 tests (unit 5054, contract 185, integration 1119, e2e 80), 0 failed and
+  0 skipped. `app/` coverage is 100% (7456 statements). ruff 69, with the same findings as
+  `0f88921`; mypy 9; secret scan 0; one head, `070e4968a497`. M8 added no finding.
+  - The golden file is byte-identical (sha256 `87d13986…9dce`), and `TEMPLATE_VERSION` is `"1"`.
+  - M7's three payload hashes are unchanged, and the fingerprint is still `1d891b0b…`.
+  - Every §0.7.15 frozen path is byte-identical to its anchor.
+  - The mutation audit remains M9's (§0.7.19).
+- **Known limitations.** §0.7.17's limitations are carried into §A29. Its approver-identity item
+  was already there and is unchanged.
 
 ---
 
