@@ -46,6 +46,7 @@ REQUIRED_SECTIONS = (
     "Test Commands",
     "Layer 1 Acceptance Checklist",
     "Known Limitations",
+    "VS-01 Customer Risk and Executive Escalation",
 )
 
 
@@ -132,7 +133,8 @@ def test_every_make_target_the_readme_names_exists():
 def test_every_script_the_readme_names_exists():
     named = set(re.findall(r"scripts/([a-z0-9_]+\.py)", README))
 
-    assert named >= {"seed_demo.py", "ingest_demo.py", "verify_layer1.py"}
+    assert named >= {"seed_demo.py", "ingest_demo.py", "verify_layer1.py",
+                     "vs01_acceptance.py"}
     for script in sorted(named):
         assert (REPO / "scripts" / script).is_file()
 
@@ -166,6 +168,7 @@ def _options_table(heading: str) -> set[str]:
     ("Layer 1 Acceptance Checklist", "verify_layer1"),
     ("Ingestion Commands", "ingest_demo"),
     ("Demo Dataset", "seed_demo"),
+    ("VS-01 Customer Risk and Executive Escalation", "vs01_acceptance"),
 ])
 def test_each_script_documents_exactly_the_options_it_accepts(heading, script):
     accepted = {f"--{name.replace('_', '-')}"

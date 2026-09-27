@@ -1995,3 +1995,73 @@ def sessionmaker_stub():
     from sqlalchemy.orm import sessionmaker
 
     return sessionmaker()
+
+
+# ---------------------------------------------------------------------------
+# The README's VS-01 section (§0.8.11) against the script
+# ---------------------------------------------------------------------------
+
+
+README = (REPO / "README.md").read_text(encoding="utf-8")
+VS01_HEADING = "VS-01 Customer Risk and Executive Escalation"
+#: What a default run prints for each check: A27.10 needs --with-tests.
+DEFAULT_OUTCOMES = {**{label: "PASS" for label, _ in EXPECTED_CHECKS},
+                    "A27.10": "SKIPPED", "A28.citations": "OPERATOR"}
+
+
+def _vs01_section() -> str:
+    return README.split(f"\n## {VS01_HEADING}\n", 1)[1].split("\n## ", 1)[0]
+
+
+def _example() -> list[str]:
+    return [line for line in _vs01_section().splitlines() if line.startswith("verify-vs01: ")]
+
+
+def test_the_readme_example_is_the_scripts_checks_in_order_as_it_formats_them():
+    example = _example()
+    prefix = len(str(Check("", "", Outcome.PASS, "")))
+
+    assert len(example) == len(EXPECTED_CHECKS) + 1
+    for line, (label, name) in zip(example, EXPECTED_CHECKS, strict=False):
+        outcome = Outcome(DEFAULT_OUTCOMES[label])
+        assert line == str(Check(label, name, outcome, line[prefix:])), line
+    assert example[-1] == "verify-vs01: 10 passed, 0 failed, 1 skipped, 1 operator"
+
+
+def test_the_readme_example_quotes_the_scripts_constants():
+    lines = {line.split()[1]: line for line in _example()[:-1]}
+
+    assert f"head {vs01.EXPECTED_HEAD}" in lines["A27.1"]
+    assert ", ".join(f"{entity} {vs01.CANONICAL_COUNTS[entity]}"
+                     for entity in vs01.ENTITY_TYPES) in lines["A27.1"]
+    assert f"{vs01.DEMO_ROWS} fetched, 0 rejected" in lines["A27.1"]
+    assert f"pinned {PIN[:8]} matched" in lines["A27.1b"]
+    assert (f"payload_hash {vs01.MERIDIAN_HASH[:8]}; narrative equals the golden file "
+            f"({len(vs01.GOLDEN.read_bytes())} bytes)") in lines["A27.3"]
+    assert f"{vs01.MERIDIAN_CITATIONS} citations" in lines["A27.3"]
+    assert lines["A27.7"].endswith(f"{vs01.A25_PROOF_COUNT} passed: A25 tests 1-14 and 13b")
+    assert lines["A27.10"].endswith("not run; pass --with-tests")
+    for target in vs01.HAND_CITATIONS:
+        document, start, end, phrase = vs01.CITED_SPANS[target]
+        assert f'{document} [{start}, {end}) reads "{phrase}"' in lines["A28.citations"]
+
+
+def test_the_readme_check_table_lists_every_check_in_order():
+    table = _vs01_section().split("| Check | Name | Passes when |", 1)[1].split("\n\n", 1)[0]
+    rows = re.findall(r"^\| ([A-Z0-9.a-z]+) \| `([a-z_]+)` \|", table, re.MULTILINE)
+
+    assert tuple(rows) == EXPECTED_CHECKS
+
+
+def test_the_readme_quotes_the_baselines_and_defaults_the_script_holds():
+    from app.core.config import Settings
+
+    section = _vs01_section()
+
+    assert f"({vs01.RUFF_FINDINGS} and {vs01.MYPY_ERRORS}:" in section
+    assert f"`{vs01.EXPECTED_HEAD}`" in section
+    assert f"(default {vs01.DEFAULT_TIMEOUT:g})" in section
+    assert f"`{Settings.model_fields['postgres_db'].default}{vs01.ACCEPTANCE_SUFFIX}`" in section
+    assert "`scripts/vs01_acceptance.py`" in section or "scripts/vs01_acceptance.py" in section
+    for pin in ("<2.1", "0.16.7", "2.3.1"):
+        assert pin not in section, "pyproject.toml is the one copy of the pins (R-M9-3)"

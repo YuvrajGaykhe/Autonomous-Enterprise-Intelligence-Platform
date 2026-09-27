@@ -709,3 +709,122 @@ and the token quoted in `ID_TOKEN` links and citations.
 
 **M1 may begin.** It is the first milestone of `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` Part B and
 creates only `app/intelligence/` foundations — no signals, no persistence, no API.
+
+---
+
+## 19. Phase Record — M9 (VS-01 acceptance, evaluation and hardening)
+
+**Scope.** M9 turns VS-01 into one reproducible command and proves its claims rather than
+asserting them. It changes no production code, configuration or migration. It adds:
+
+- the acceptance command `make verify-vs01` (`scripts/vs01_acceptance.py`);
+- the §A26 fixture package (`tests/fixtures/vs01/`);
+- the §A25 proof corpus and its one missing proof;
+- the end-to-end scenario test;
+- the mutation audit and the tests it found missing;
+- three dependency pins;
+- the README's VS-01 section.
+
+Layer 1 and M1–M8 behaviour are frozen: every file under `app/`, `config/`, `migrations/`,
+`data/` and `tests/golden/`, and the Docker files, are byte-identical to their anchors.
+
+### 19.1 Specification
+
+`CONTEXT/VS01_IMPLEMENTATION_PLAN.md` §0.8 is M9's authoritative specification, committed alone as
+`79f8d9e` ("M9: finalize specification"). It resolves:
+
+- three contradictions with frozen tests:
+  - K1, the pinned run: one named Layer 2 importer, `scripts/vs01_acceptance.py`;
+  - K2, G2's exemptions: one named module;
+  - K3: §A27.10 means regression against the authorised evolved test baseline;
+- twelve ambiguities, A1–A12;
+- six review items, R-M9-1…R-M9-6:
+  - R-M9-1: an isolated acceptance database, and no fallback to the development stack;
+  - R-M9-2: A27.9 before A27.8, and A27.8 as the last write;
+  - R-M9-3: `pyproject.toml` is authoritative for three pins;
+  - R-M9-4: M9-owned fixture proofs;
+  - R-M9-5: the binary mutation rule;
+  - R-M9-6: A27.9's M8 semantics.
+
+The test evolution is exactly T-M9-1…T-M9-5.
+
+### 19.2 Implementation milestones
+
+| Commit | Phase | What it adds |
+|---|---|---|
+| `7a410a5` | 2 | `M9: add the VS-01 fixture package` — `tests/fixtures/vs01/` (manifest, loader and guard, five delta directories) and `tests/integration/test_vs01_fixtures.py` (71) |
+| `c50ecb4` | 3 | `M9: pin the dependencies acceptance depends on` — `sqlalchemy>=2.0.0,<2.1`, `ruff==0.16.7`, `mypy==2.3.1` in `pyproject.toml` |
+| `a801ce7` | 3 | `M9: add the VS-01 acceptance command` — the script, `make verify-vs01`, `tests/unit/test_vs01_acceptance.py`, T-M9-1…T-M9-3 |
+| `5c05f68` | 4 | `M9: prove the VS-01 scenario end to end` — `tests/e2e/test_vs01_scenario.py` (5) |
+| `e643d27` | 5 | `M9: close the §A25 scope-leakage gap` — T-M9-4; the §A25 test 10 proof `tests/integration/test_vs01_a25_closure.py` |
+| `0769441` | 6 | `M9: close the mutation audit's test gaps` — `tests/integration/test_vs01_mutation_closure.py` (23) |
+| — | 7 | `M9: document the VS-01 slice` — the README's VS-01 section, T-M9-5, this record |
+
+### 19.3 Verification — each gate
+
+Every gate ran the full suite with the lint caches outside the repository, and measured `app/`
+coverage, ruff, mypy, the secret scan (tracked and untracked files), the head, the frozen-path diff
+and the strategy document's diff. Each gate is green:
+
+- 0 failed and 0 skipped;
+- coverage 100% over 7456 statements;
+- ruff 69, the same finding set as `2b6deb3`;
+- mypy 9;
+- secret scan 0;
+- one head, `070e4968a497`;
+- the golden file `87d13986…9dce`;
+- the strategy diff `94e4e5b2…`.
+
+| Gate | Tests (unit / contract / integration / e2e) |
+|---|---|
+| Phase 1 baseline (`79f8d9e`) | 6438 (5054 / 185 / 1119 / 80) |
+| Phase 2 (`7a410a5`) | 6509 (5054 / 185 / 1190 / 80) |
+| Phase 3 (`a801ce7`) | 6737 (5282 / 185 / 1190 / 80): the full run measured 6736, and the unit and contract layers were re-run (5467) after the falsifiability check added one unit test |
+| Phase 4 (`5c05f68`) | 6742 (5282 / 185 / 1190 / 85) |
+| Phase 5 (`e643d27`) | 6743 (5282 / 185 / 1191 / 85) |
+| Phase 6 (`0769441`) | 6766 (5282 / 185 / 1214 / 85) |
+
+Live runs of `make verify-vs01` in the developer `.venv` are development checks, not evidence of
+record. Each exited 0 with 10 `PASS`, A27.10 `SKIPPED` and A28.citations `OPERATOR`. Around each
+one, the development database (`8bfd73b6af60`, 233 rows) kept its revision and every table's row
+count. §A25 test 10's clause "which include all 4 inactive ones" was asserted by no mapped test;
+Phase 5 added the proof, and the corpus is now 31 node ids, collecting 44 tests.
+
+### 19.4 Mutation result (§0.8.12, R-M9-5)
+
+The audit used 274 mutants, fixed before the first run (sha256 `995517d0…d8cd8a`). The harness is
+the ad-hoc textual one. For every mutant:
+
+- the anchor matched exactly once;
+- one mutant was applied at a time;
+- pytest `-x` ran the target's kill set: its milestone's unit and integration files, then the §A25
+  corpus;
+- `PYTHONDONTWRITEBYTECODE` was set, with a per-mutant `PYTHONPYCACHEPREFIX`;
+- the file was restored and its sha256 checked against its Phase 1 value.
+
+The environment was the developer `.venv`: Python 3.11.5, SQLAlchemy 2.0.54, pytest 9.1.1, on the
+suite's own `_test` database.
+
+| Target | Mutants | Killed | Killed by a newly authorised test | Equivalent | Malformed |
+|---|---|---|---|---|---|
+| Signal engine (`signals.py`, `windows.py`, the signal inputs of `risk_rules.yaml`) | 87 | 65 | 14 | 8 | 0 |
+| Risk-band table (`bands.py`, the band table) | 58 | 54 | 4 | 0 | 0 |
+| Conflict policy (`conflict_policy.yaml`, `policy.py`, `conflicts.py`, `reconciler.py`) | 97 | 93 | 2 | 2 | 0 |
+| Linker (`linker.py`) | 32 | 25 | 3 | 4 | 0 |
+| **Total** | **274** | **237** | **23** | **14** | **0** |
+
+No mutant was killed only under a named condition. The 23 new tests are in
+`tests/integration/test_vs01_mutation_closure.py`, and each fails on its mutant. The gaps they close
+are:
+
+- closed-window boundaries;
+- DOC-003's medium target and its three-ticket threshold, at their exact values;
+- documented orders;
+- band rows no demo customer sits on alone;
+- zero thresholds the loaders must accept;
+- public projections, and configuration arguments no production caller passes;
+- an empty needle.
+
+Each of the 14 equivalent mutants has a written proof, recorded verbatim in Part B M9's closure
+block. **No survivor exposed a production defect**, and after the audit every target file's sha256
+equals its Phase 1 value.

@@ -1175,12 +1175,12 @@ Run everything:
 make test
 ```
 
-`make test` runs `pytest` over `tests/`, which is 6766 tests in four layers
+`make test` runs `pytest` over `tests/`, which is 6771 tests in four layers
 (spec Section 15). The layers differ in what they need, so select them by path:
 
 | Layer | Command | Tests | Needs |
 |---|---|---|---|
-| Unit | `pytest tests/unit` | 5282 | nothing |
+| Unit | `pytest tests/unit` | 5287 | nothing |
 | Connector contract | `pytest tests/contract` | 185 | nothing |
 | Database integration | `pytest tests/integration` | 1214 | PostgreSQL |
 | End-to-end | `pytest tests/e2e` | 85 | PostgreSQL |
@@ -1205,7 +1205,7 @@ prefer the path for that layer.
 | Unit | Field mapping, type coercion, identifier generation, record hashing, validation rules, configuration loading, pagination helpers, and the fail-loud guards behind each |
 | Connector contract | One suite run against all three real connectors over the same demo dataset: shared interface, agreement between `capabilities()` and `list_entities()`, deterministic pagination, `get_entity` round-trips, a shared failure vocabulary, and read-only behaviour proved by method names, static inspection and the live mock-source's request log |
 | Database integration | Migrations (single head, empty database to head, model/schema parity, reversible and repeatable), constraints (source identity uniqueness, provenance NOT NULL, foreign keys and their delete rules), upsert by source identity, and run tracking |
-| End-to-end | Demo source to ingestion to PostgreSQL to API query, entirely over HTTP; repeated ingestion without duplicate canonical identities; failure recovery for malformed rows, connector and network failures, database failures and partial batches; and the acceptance scenario of [`make verify-layer1`](#layer-1-acceptance-checklist) |
+| End-to-end | Demo source to ingestion to PostgreSQL to API query, entirely over HTTP; repeated ingestion without duplicate canonical identities; failure recovery for malformed rows, connector and network failures, database failures and partial batches; the acceptance scenario of [`make verify-layer1`](#layer-1-acceptance-checklist); and the VS-01 scenario of [`make verify-vs01`](#vs-01-customer-risk-and-executive-escalation) |
 
 ### Related checks
 
@@ -1213,11 +1213,12 @@ prefer the path for that layer.
 make lint           # ruff over app/ tests/, mypy over app/
 make secret-scan    # scan tracked files for committed secrets
 make verify-layer1  # the acceptance scenario against a running stack
+make verify-vs01    # the VS-01 acceptance scenario on its own database
 ```
 
 `make lint` exits non-zero: it reports the project's known lint and type debt rather than
-suppressing it (see [Known Limitations](#known-limitations)). `make secret-scan` and
-`make verify-layer1` exit `0` when they pass.
+suppressing it (see [Known Limitations](#known-limitations)). `make secret-scan`,
+`make verify-layer1` and `make verify-vs01` exit `0` when they pass.
 
 Line coverage of `app/` is 100%:
 
@@ -1290,12 +1291,184 @@ dataset, step A–C reports how many records it found and steps E–F report `NO
 | Validation | The bad fixture produces structured errors and quarantine | `validation`: `PARTIAL_SUCCESS`, structured errors readable at `GET /ingestion/runs/{id}/errors`, and every non-rejected fixture row still queryable |
 | API | Canonical records are queryable with pagination | `api_query`: `limit`/`offset` are echoed, `total` is stable across pages and pages do not overlap |
 | Safety | No source write operations are executed | `read_only`: all 14 committed source files are byte-identical (SHA-256) after the scenario. Structurally: no connector exposes a write method, no connector module names a mutating HTTP verb, and the live mock source records only `GET` (`tests/contract/`) |
-| Tests | All required automated tests pass | `make test` — 6766 tests in four layers; or `make verify-layer1 ARGS="--with-tests"` |
+| Tests | All required automated tests pass | `make test` — 6771 tests in four layers; or `make verify-layer1 ARGS="--with-tests"` |
 | Reproducibility | A clean rebuild reproduces the same demo behaviour | Step O: `make docker-down && make docker-build && make docker-up`, then run the command again. The dataset regenerates byte-identically, canonical ids are UUID5 of the source identity, and record hashes cover normalized business fields only |
 | Documentation | The README enables a new developer to run Layer 1 | [Prerequisites](#prerequisites) → [Environment Setup](#environment-setup) → [Running with Docker Compose](#running-with-docker-compose) or [Running Locally](#running-locally-without-docker) → [Ingestion Commands](#ingestion-commands) → [API Usage Examples](#api-usage-examples) → [Test Commands](#test-commands) |
 
 Steps N and O are the two the command does not perform for you: N needs its own database and runs
 only with `--with-tests`, and a script cannot tear down and rebuild the stack it is talking to.
+
+---
+
+## VS-01 Customer Risk and Executive Escalation
+
+VS-01 is the first Layer 2 vertical slice. It reads Layer 1's canonical records for one source
+system and decides, deterministically and with a citation for every fact, which customer needs
+executive attention and why. On the demo dataset that is CUST-007 (Meridian Textiles): a burst of
+escalating support tickets on an account whose main deal is in late negotiation, where Sales and
+Support propose opposite actions and a versioned conflict policy decides between them. The slice
+ends at a human decision on a drafted brief; nothing is executed. The design, the decisions behind
+it and its acceptance criteria are in `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` (Part A, and section
+0.8 for this acceptance command). Its six routes are listed in
+[API Usage Examples](#api-usage-examples).
+
+### What it needs
+
+A reachable PostgreSQL: `make docker-up`, or only the database with
+`docker compose up -d postgres`. The command reads the server's address and credentials from
+`DATABASE_URL` or `POSTGRES_*`, as the application does, and **never uses the development
+database** named there: it does not read, migrate, seed or write it, and it needs no running API
+container.
+
+### Running the acceptance command
+
+```bash
+make verify-vs01                        # every check except the regression gate
+make verify-vs01 ARGS="--with-tests"    # also the full suite, ruff, mypy and the secret scan
+```
+
+`make verify-vs01` runs `python scripts/vs01_acceptance.py`. Each run drops and recreates its own
+acceptance database, `<database>_vs01` (`ai_ceo_layer1_vs01` on the default settings), through
+the server's `postgres` maintenance database, migrates it to the single head, and serves the real
+application from the working tree on a loopback port the operating system assigns. Every check
+then observes that application over HTTP. The database is left in place for inspection and is
+replaced by the next run; after A27.8 its snapshot is no longer the clean one, so it is never the
+starting point of another run. Two runs against one server at the same time are not supported.
+
+Options (pass through `ARGS="..."` with make):
+
+| Option | Purpose |
+|---|---|
+| `--with-tests` | Also run A27.10: the full test suite with coverage, ruff, mypy and the secret scan |
+| `--timeout SECONDS` | Per-request and server-start timeout (default 180) |
+
+Exit status: `0` no executed check failed (`SKIPPED` and `OPERATOR` do not fail), `1` a check
+failed, `2` the scenario could not run: invalid arguments or logging settings, an installed
+SQLAlchemy (or, with `--with-tests`, ruff or mypy) outside the version `pyproject.toml` declares,
+an acceptance database name the guard refuses, an unreachable PostgreSQL, a failed recreation or
+migration, or a server that did not start. The command never falls back to the development stack
+or database. The report goes to stdout; the run's log events go to stderr in the usual
+`LOG_FORMAT`.
+
+The report is deterministic. It carries counts, source ids, hashes, versions and fixed names, and
+no run id, timestamp, duration or port, so two runs print the same lines. On the default settings
+it reports:
+
+```
+verify-vs01: A27.1         clean_dataset        PASS      sqlalchemy 2.0.54; head 070e4968a497; organizations 1, employees 24, customers 50, deals 44, projects 22, support_tickets 80, documents 12; 233 fetched, 0 rejected: SUCCESS then NOOP
+verify-vs01: A27.1b        pinned_fingerprint   PASS      pinned 1d891b0b matched; deliberate mismatch refused, 0 rows written; 50 assessments, 3 briefs
+verify-vs01: A27.2         single_escalation    PASS      50 assessments; CUST-007 alone is CRITICAL and executive-worthy
+verify-vs01: A27.3         brief_facts          PASS      payload_hash e93c29cf; narrative equals the golden file (12474 bytes); the 10 facts of A27.3; 36 citations
+verify-vs01: A27.4         no_active_project    PASS      no active project, in the payload and the narrative
+verify-vs01: A27.5         conflict_and_dissent PASS      CONF-001 over DEAL-001: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED wins; ACCELERATE_DEAL_CLOSE dissents with 3 citations
+verify-vs01: A27.6         citations_resolve    PASS      80 distinct citations across 50 assessments and 3 briefs resolve; 3 cited spans read back exactly
+verify-vs01: A27.9         approval_boundary    PASS      REJECTED recorded; a second decision without supersedes_id refused (409 SUPERSEDES_REQUIRED); APPROVED supersedes it; history of 2 in chain order; status DRAFT; append-only held; 3 writes, 6 risk operations
+verify-vs01: A27.8         determinism          PASS      re-run 200: identical hashes, 0 rows; one extra ticket: pinned run refused, unpinned run 201 with 50 new assessments
+verify-vs01: A27.7         named_tests          PASS      44 passed: A25 tests 1-14 and 13b
+verify-vs01: A27.10        regression           SKIPPED   not run; pass --with-tests
+verify-vs01: A28.citations hand_citations       OPERATOR  operator step: in data/demo/documents.csv, confirm DOC-003 [238, 330) reads "Customers raising three or more tickets within 14 days are escalated to their account owner."; DOC-009 [238, 333) reads "The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them."; DOC-003 states the escalation rule, and DOC-009 ties DEAL-001 to the tickets
+verify-vs01: 10 passed, 0 failed, 1 skipped, 1 operator
+```
+
+With `--with-tests`, A27.10 reports the passed count, `app/` coverage, the ruff and mypy finding
+counts with their versions (69 and 9: baseline counts measured with the pinned tools, a
+no-regression gate rather than a claim that those findings are acceptable), the secret scan's 0
+findings and the head `070e4968a497`.
+
+### The checks
+
+The checks run in this order. A27.9 decides on the brief before A27.8 changes the snapshot, and
+A27.8 is the last check that writes. A check that needs an earlier one's result names it when it
+fails, so one failure hides no other.
+
+| Check | Name | Passes when |
+|---|---|---|
+| A27.1 | `clean_dataset` | The empty acceptance database is at the one head; `POST /api/v1/ingestion/runs` with no entity filter answers `SUCCESS` with 233 fetched and 0 rejected, then `NOOP`; the seven canonical counts are 1, 24, 50, 44, 22, 80 and 12 |
+| A27.1b | `pinned_fingerprint` | A deliberately mismatched fingerprint is refused before anything is written; the run pinned to the fingerprint in `config/intelligence/risk_rules.yaml` then assesses all 50 customers and writes 3 briefs |
+| A27.2 | `single_escalation` | 50 assessments; CUST-007 alone is `CRITICAL` and executive-worthy |
+| A27.3 | `brief_facts` | CUST-007's brief has the measured payload hash, a narrative byte-identical to `tests/golden/vs01_cust007_brief.txt`, status `DRAFT`, decision status `PENDING`, 36 citations and the ten facts of §A27.3 |
+| A27.4 | `no_active_project` | The payload and the narrative both state that CUST-007 has no active project |
+| A27.5 | `conflict_and_dissent` | One conflict over DEAL-001, resolved by CONF-001 at policy version 1 for `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED`, with `ACCELERATE_DEAL_CLOSE` kept as dissent with its three citations |
+| A27.6 | `citations_resolve` | Every citation of every assessment and brief resolves against the records the API serves, and the three cited spans read back their exact phrases |
+| A27.9 | `approval_boundary` | `REJECTED` is recorded; a second decision without `supersedes_id` is refused with `409 DECISION_CONFLICT` and writes nothing; `APPROVED` superseding it is recorded; the history is the two in chain order; the brief stays `DRAFT`; the table refuses `UPDATE` and `DELETE`; the API publishes exactly three writes and six risk routes |
+| A27.8 | `determinism` | The identical re-run answers `200` with identical hashes and writes nothing; after one extra ticket (`tests/fixtures/vs01/unresolved_ticket/`) the pinned run is refused and the unpinned route answers `201` with 50 new assessments |
+| A27.7 | `named_tests` | The §A25 proof corpus, the named tests 1–14 and 13b including `doc005_leave_out`, passes with nothing failed or skipped |
+| A27.10 | `regression` | Only with `--with-tests`: the full suite passes with nothing skipped, `app/` coverage is 100%, ruff and mypy report their baseline counts, the secret scan reports 0 and there is one head |
+| A28.citations | `hand_citations` | Always `OPERATOR`: the two citations a person reads, below |
+
+### The hand check
+
+A27.6 has already proved that the two spans resolve; what a script cannot judge is whether they
+say what the brief claims. Open `data/demo/documents.csv`, find DOC-003 and DOC-009, and confirm
+that the phrase the `A28.citations` line prints occurs in that document verbatim and means what the
+brief uses it for: DOC-003 states the escalation rule (three or more tickets within 14 days), and
+DOC-009 records the customer tying the DEAL-001 decision to resolving the open tickets.
+
+### The demo against the development stack
+
+The plan's five-minute demo (§A28) runs against the development stack instead. Its database must
+come from the clean full-dataset path: an empty database, `make migrate`, then `make ingest-demo`
+with no `--entities` filter, giving 233 rows over seven entity types. Do not prepare it with
+`make verify-layer1`: that ingests five entity types and then the malformed fixture, which is not
+the pinned snapshot, so the result is not the assessment VS-01 specifies. `make docker-up`
+rebuilds the API image, so it serves the risk routes.
+
+```bash
+make docker-up
+make migrate
+make ingest-demo
+curl -X POST http://localhost:8000/api/v1/risk/assessments -H 'Content-Type: application/json' -d '{"as_of": "2026-09-18"}'
+curl 'http://localhost:8000/api/v1/risk/assessments?executive_worthy=true'
+```
+
+Then read the brief (`GET /api/v1/risk/briefs/{brief_id}`), verify the two citations by hand,
+record a decision with `POST /api/v1/risk/briefs/{brief_id}/decision`, read the history with
+`GET /api/v1/risk/briefs/{brief_id}/decisions`, re-run the assessment (identical hash, nothing
+new), and run `pytest -k doc005_leave_out`. **A recorded decision is permanent** in whichever
+database it is written to: the decision table is append-only, so a demo decision stays in the
+development database. `make verify-vs01` records its decisions only in its own acceptance
+database.
+
+### Reproducibility
+
+- `pyproject.toml` is the one source of the three versions acceptance depends on: SQLAlchemy's
+  upper bound and the exact ruff and mypy versions. The command reads the declared specifiers
+  from it and refuses (exit `2`) an environment outside them. A27.1 reports the resolved
+  SQLAlchemy version, and A27.10 the ruff and mypy versions.
+- The acceptance run of record is made in a freshly installed environment, not in an existing
+  developer `.venv`:
+
+```bash
+python3 -m venv /path/to/fresh-venv
+source /path/to/fresh-venv/bin/activate
+pip install -e ".[dev]"
+python scripts/vs01_acceptance.py --with-tests
+```
+
+- `make install` builds `.venv` from the same declared configuration, which `make verify-vs01`
+  then uses.
+
+### VS-01 limitations
+
+- The command serves the application from the working tree, on a loopback socket, against its own
+  database. It does not exercise the Docker image, which is checked separately.
+- Whether the two hand citations mean what the brief claims is a human judgement; the command
+  proves only that they resolve.
+- One run at a time: every run replaces the acceptance database and leaves it behind, and the
+  database a run leaves is disposable.
+- Dependency determinism is partial: three dependency lines are pinned, and there is no lock file.
+- The synthetic dataset has one source system and 233 rows. Document links are derived by name
+  and id matching, not backed by provenance, so a document that concerns a customer without naming
+  it is linked to no one. There is no FX and so no cross-currency total, and business days have no
+  holiday calendar.
+- A band is a policy artefact, not a probability. The approver's identity is asserted, not
+  authenticated. A stored brief is not revalidated against a later snapshot, and append-only
+  covers `UPDATE` and `DELETE` statements only: the decision record is a governance record, not a
+  security control.
+- The mutation audit covers four targets: the signal engine, the risk-band table, the conflict
+  policy and the linker. Every other module relies on its milestone's tests.
+
+The full list is in the plan's §A29.
 
 ---
 
