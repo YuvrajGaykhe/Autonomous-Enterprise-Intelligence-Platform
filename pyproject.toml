@@ -16,7 +16,7 @@ dependencies = [
     "uvicorn[standard]>=0.29.0",
 
     # Database
-    "sqlalchemy>=2.0.0",
+    "sqlalchemy>=2.0.0,<2.1",
     "alembic>=1.13.0",
     "psycopg2-binary>=2.9.9",
 
@@ -47,8 +47,8 @@ dev = [
 
     # Code quality
     "black>=24.4.0",
-    "ruff>=0.4.0",
-    "mypy>=1.10.0",
+    "ruff==0.16.7",
+    "mypy==2.3.1",
 
     # Type stubs
     "types-python-dateutil",
