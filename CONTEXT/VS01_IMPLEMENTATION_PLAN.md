@@ -13,9 +13,11 @@ v2.10 2026-09-24, M7 specification — twelve directed decisions, and four open 
 v2.11 2026-09-25, M7 material items MP1–MP6 resolved with normative wording (§0.6.13) ·
 v2.12 2026-09-25, M7 closure ·
 v2.13 2026-09-25, M8 specification — twenty directed decisions, ten contradictions and four review
-items resolved (§0.7)**
+items resolved (§0.7) ·
+v2.14 2026-09-27, M9 specification — three contradictions, twelve ambiguities and six review items
+resolved (§0.8)**
 
-**Status as of 2026-09-25 — per milestone, not per document:**
+**Status as of 2026-09-27 — per milestone, not per document:**
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -28,7 +30,7 @@ items resolved (§0.7)**
 | **M6** — conflict detection and reconciliation | **COMPLETE** | `app/decisions/` — `policy.py`, `conflicts.py`, `reconciler.py` and the initialiser, exactly; `config/intelligence/{action_catalogue,conflict_policy}.yaml`; `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py`, `tests/unit/m6_support.py` and `tests/integration/test_m6_reconciliation.py`; specification `1d1ee59` (§0.5, eleven decisions D-M6-B1…B11), implementation `fd3a7e0`. All twenty-one §0.5.14 criteria asserted; only T-M6-1…T-M6-3 were needed. Measured at `fd3a7e0`: **5533** tests (unit 4518, contract 185, integration 750, e2e 80), 0 skipped, `app/` coverage **100%** (6347 statements), ruff 69, mypy 9, secret scan 0 over 292 files, **one** migration head `c4a1e97d5b02` and **no** new migration. `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`. Closure notes: Part B M6 |
 | **M7** — brief assembly, hashing and persistence | **COMPLETE** | `app/decisions/` — `assessment.py`, `payload.py`, `brief.py` and `templates/brief.txt`; `app/persistence/models/risk_{assessment,position,brief}.py`, `app/persistence/repositories/{risk_assessments,citation_reads}.py`, migration `66eddc6b7136` chained after `c4a1e97d5b02` (one head); `tests/unit/test_m7_{payload,brief,boundary}.py`, `tests/unit/m7_support.py`, `tests/integration/test_m7_{assessment,migration,persistence}.py` and the golden file `tests/golden/vs01_cust007_brief.txt`; specification `5f19144` (§0.6: D-M7-B1…B12, MP1–MP6), implementation `1efea45`. Every §0.6.15 criterion is asserted, criterion 11 under the Q1 = A reading recorded in Part B; T-M7-1…T-M7-4 were used, and T-M7-5 was not needed. Measured at `1efea45`: **5962** tests (unit 4813, contract 185, integration 884, e2e 80), 0 skipped, `app/` coverage **100%** (7022 statements), ruff 69, mypy 9, secret scan 0 over 292 tracked files, **one** migration head `66eddc6b7136`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`; `app/persistence/` changed only by the additive registration. Closure notes: Part B M7 |
 | **M8** — API and the human approval boundary | **COMPLETE** | `app/decisions/approval.py`; `app/api/v1/risk.py` (the six routes of §0.7.8), with additive changes to `app/api/v1/schemas.py`, `app/api/v1/router.py` and `app/api/errors.py` (six error codes); `app/persistence/models/brief_decision.py`, `app/persistence/repositories/{brief_decisions,risk_queries}.py`, migration `070e4968a497` chained after `66eddc6b7136` (one head); `tests/unit/test_m8_{boundary,api_schemas}.py` and `tests/integration/test_m8_{api,api_contract,approval,migration}.py`; specification `0f88921` (§0.7: X1–X10, OPEN-M8-1…OPEN-M8-20, Q-M8-1…Q-M8-4), implementation `88771d2`. Every §0.7.19 criterion is asserted, by tests, gate measurements or structural evidence. T-M8-1…T-M8-8 and T-M8-10 were used, and T-M8-9 was not needed. Measured at the Phase 6 gate, on the tree committed as `88771d2`: **6438** tests (unit 5054, contract 185, integration 1119, e2e 80), 0 skipped, `app/` coverage **100%** (7456 statements), ruff 69, mypy 9, secret scan 0 over 322 files, **one** migration head `070e4968a497`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`, M7's modules, models, repositories and migration to `1efea45`; `app/persistence/` and `app/api/` changed only as §0.7.15 allows. Closure notes: Part B M8 |
-| **M9** — acceptance, evaluation and hardening | **PLANNED** | Nothing implemented; no script, fixture package or test exists |
+| **M9** — acceptance, evaluation and hardening | **SPECIFIED — not started** | §0.8, recorded 2026-09-27 against `2b6deb3`: the three contradictions K1–K3 and the twelve ambiguities A1–A12 resolved as directed, the test evolution T-M9-1…T-M9-5, and the six review items R-M9-1…R-M9-6 of §0.8.17, answered by the owner the same day. **No specification item gates implementation any longer; it begins only on the owner's instruction, after §0.8 is committed on its own.** Nothing is implemented: no script, fixture package or test exists |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -5278,6 +5280,889 @@ unpinned. A measurement that differs is **reported, not accommodated** (§0.3.8)
 
 **The tooling gate is unchanged:** M8 does not close until `pytest`, `ruff` and `mypy` have
 actually been **run** and their results reported.
+
+---
+
+## 0.8 M9 specification decisions — pre-implementation, 2026-09-27
+
+M8 closed at `2b6deb3` (specification `0f88921`, implementation `88771d2`), and `origin/main` is at
+the same commit. A read-only takeover audit run against `2b6deb3` on 2026-09-27 found M9 **blocked
+on specification, not on code**, as M7 and M8 were. Part B's M9 block, byte-identical since v2
+(`c4496c7`), names three files, a fixture set, a README section, a context record and a mutation
+audit in about twenty lines. It has no allowed-path table, no test-evolution list, no phase order
+and no commit plan. Two of its requirements contradict frozen tests (K1, K2), and §A27.10's
+wording contradicts both (K3). The audit also listed twelve ambiguities (A1–A12). The milestone
+owner directed the resolutions below on 2026-09-27. This section records them, and the
+consequences each one forces.
+
+> **Status of this section.** Like §0.4–§0.7, this section **is an authorisation**. It covers
+> K1–K3 (§0.8.1), A1–A12 (§0.8.2), the test evolution T-M9-1…T-M9-5 (§0.8.9) and the review
+> items R-M9-1…R-M9-6 (§0.8.17), and nothing wider. **§0.8 governs M9's implementation. Part B
+> M9 stays the milestone's high-level description (A1) and is not edited;** where it is coarser,
+> §0.8 governs.
+>
+> - **2026-09-27.** The owner directed K1–K3 and A1–A12. Recording them against the committed
+>   code exposed six material details, which the owner reviewed and resolved the same day
+>   (R-M9-1…R-M9-6, §0.8.17).
+>
+> **M9 is fully specified. Implementation has not started.** It begins only on the owner's
+> instruction, after this section is committed on its own, as §0.5 (`1d1ee59`), §0.6
+> (`5f19144`) and §0.7 (`0f88921`) were.
+>
+> **M1–M8 remain frozen.** Verified at `2b6deb3` on 2026-09-27: every §0.7.15 anchor is
+> byte-identical; `tests/golden/vs01_cust007_brief.txt` has sha256
+> `87d1398661b0c30037ddc33e9acfd36db321ac9d0a36e04eadc3be9039ea9dce`; the one migration head is
+> `070e4968a497`; `TEMPLATE_VERSION` is `"1"`. **M9 changes no production code, no configuration
+> and no migration.** It adds an acceptance command, a fixture package, tests and documentation,
+> pins three dependency lines (§0.8.8), and evolves exactly the assertions of T-M9-1…T-M9-5.
+
+**Classification**, as in §0.7. **DIRECTED** means decided by the milestone owner on 2026-09-27.
+**DERIVED** means forced by frozen code or by a committed convention, which is named.
+**OBSERVED** means measured on the repository or the local stack at `2b6deb3` on 2026-09-27.
+**PROPOSED** means a name or a detail the directed decisions need but do not fix; it stands
+unless replaced, and replacing it reopens nothing. The six material details were put to the
+owner as R-M9-1…R-M9-6 and are now DIRECTED (§0.8.17). Every PROPOSED item left is a name, a
+constant, a format or a layout detail.
+
+---
+
+### 0.8.1 K1–K3: RESOLVED (DIRECTED)
+
+| # | Contradiction, verified at `2b6deb3` | Resolution |
+|---|---|---|
+| **K1** | §0.4.3's sequence names "M9's acceptance script" as a caller that opens a session and resolves the scope with `expected_fingerprint`; §0.6.3 has M9 supply `default_risk_rules().pinned_fingerprint(source_system)`; §0.7.8 keeps "the pinned run" M9's; §A27.1b requires a mismatch to fail "rather than producing an assessment". But X2 and OPEN-M8-18 let only `app/api/v1/risk.py` import the run, and three frozen scans over `app/`, `scripts/`, `migrations/` and `docker/` enforce it: `tests/unit/test_m1_boundary.py:192` (through `LAYER2_PACKAGES`, `:56`), `tests/unit/test_m6_boundary.py:208` (`:222`) and `tests/unit/test_m7_boundary.py:810` (`:817`). The API is unpinned and carries no expected fingerprint (§0.7.8) | **Option (a).** `scripts/vs01_acceptance.py` is authorised as the one named Layer 2 importer outside `app/`, for the pinned acceptance run only, with the closed import set of §0.8.4. It calls the real run, `run_assessment(…, expected_fingerprint=default_risk_rules().pinned_fingerprint("csv_demo"))`. `run_assessment` resolves the scope before it derives or writes anything (OBSERVED, `app/decisions/assessment.py`), so a mismatch raises `FingerprintMismatchError` first. The command rolls the transaction back and fails A27.1b. **There is no unpinned fallback:** when the pinned run fails, no check substitutes an unpinned run for it. T-M9-1 is the minimum evolution of the three scans. No other script, and no package, gains Layer 2 access. `app.decisions.approval` stays importable by `risk.py` alone: `tests/unit/test_m8_boundary.py:1608` is unchanged |
+| **K2** | The command must drive the running VS-01 HTTP surface (§A27.1, §A28) and run verification commands (Part B M9 *Tests*; §A28's `pytest -k doc005_leave_out`). `tests/unit/test_g2_security_boundary.py` admits exactly two subprocess modules (`:32`) and two HTTP-client modules (`:39`), scanned over `app/` and `scripts/` (`:81`, `:103`). Part B freezes "G2 security behaviour" | **The minimum G2 evolution: one named module.** `scripts/vs01_acceptance.py` joins `HTTP_CLIENT_MODULES` (T-M9-2) and `SUBPROCESS_MODULES` (T-M9-3). Nothing else in G2 changes: not the forbidden calls, not the forbidden modules, not the `shell=True` refusal, not the stale-exemption rule. No other module gains an exemption. The command's HTTP client talks only to the loopback server the command itself starts, and its subprocesses are exactly the fixed argument lists of §0.8.4 |
+| **K3** | §A27.10: "full Layer 1 suite passes unchanged", while K1, K2 and A3 force test changes | **§A27.10 means full regression against the M9-authorised evolved test baseline, not zero test-file changes.** Three classes are kept apart. **Frozen behaviour:** every production module, configuration file, migration, data file and golden file stays byte-identical to its §0.8.13 anchor, and every pre-existing test keeps passing. **Authorised contract evolution:** exactly T-M9-1…T-M9-5, each applied as §0.8.9 states. **Unrelated regression:** anything else that fails, is skipped or changes. It is never accepted, and it stops the phase. The pre-M9 baseline is measured in Phase 1 (§0.8.14) and compared at every gate. M8 read §A27.10 the same way (X10) |
+
+### 0.8.2 A1–A12: RESOLVED (DIRECTED)
+
+| # | Decision | Detail |
+|---|---|---|
+| A1 | §0.8 is M9's authoritative implementation specification. Part B M9 remains the high-level description and is not edited, except that closure appends its record after the existing text | this section; §0.8.18 |
+| A2 | The canonical §A26 fixture package lives at `tests/fixtures/vs01/`. `data/demo/` is never modified. Existing immutable fixtures are reused where the specification already defines them, and only the missing material is added | §0.8.7 |
+| A3 | The existing §A25 tests are the authoritative proof corpus. They are mapped and run as a named corpus, never rewritten to gather them. Missing proof is added only where a criterion is not covered. Test 9's gap is closed by T-M9-4: source id, name or email | §0.8.6 |
+| A4 | `make verify-vs01` is the canonical, reviewer-facing acceptance command, in `scripts/verify_layer1.py`'s Check/Outcome/Report pattern. It runs the named checks itself. The full regression is a separate gate, which the command runs on request (`--with-tests`) | §0.8.4, §0.8.5 |
+| A5 | The command never reads or writes a persistent development database. Every run recreates its own acceptance database, migrates it to the current head, builds the clean state and runs from it. Append-only decision rows therefore never accumulate across runs, and every run starts from the same state | §0.8.4 |
+| A6 | `README.md` gains one dedicated VS-01 section. The Layer 1 documentation is not rewritten, and *Known Limitations* is not edited. Only the VS-01 section, the counts M9 makes stale and the command references M9 makes stale change | §0.8.11 |
+| A7 | The M9 phase record is appended to `CONTEXT/AI_CEO_PROJECT_CONTEXT.md` as a new section. Historical records and unrelated stale lines are not edited | §0.8.11 |
+| A8 | The mutation audit covers the signal engine, the risk-band table, the conflict policy and the linker, in the concrete files of §0.8.12, with the existing ad-hoc textual harness. There is no numeric threshold: every non-equivalent mutant is killed, and no survivor is unexplained | §0.8.12 |
+| A9 | One commit per meaningful milestone, following M5–M8. Part B's "one commit per milestone" is not read as one M9 commit. No commit is made without explicit approval | §0.8.15 |
+| A10 | The repository has no lock or pin mechanism (OBSERVED). §0.8.8 authorises the minimum pins, makes `pyproject.toml` authoritative and says how the pins are enforced (R-M9-3). A fresh, rebuilt environment is part of the Phase 8 gate. The command runs against the current migration head, never the stale pre-M8 image | §0.8.8 |
+| A11 | Each check is named for its §A27 criterion, `A27.1` … `A27.10`, with `A27.1b` kept. Each has a criterion name, a pass condition, one line of observed evidence and a failure explanation | §0.8.5 |
+| A12 | Every deterministic citation property is checked automatically (A27.6). The human reading of §A28's two citations is an explicit `OPERATOR` check, and the README says exactly what the reviewer inspects | §0.8.5, §0.8.11 |
+
+---
+
+### 0.8.3 M9 scope
+
+#### M9 IN-SCOPE
+
+1. The acceptance command: `scripts/vs01_acceptance.py` and `make verify-vs01` (§0.8.4, §0.8.5).
+2. The fixture package, `tests/fixtures/vs01/` (§0.8.7).
+3. The §A25 proof corpus: its mapping, its execution and T-M9-4 (§0.8.6).
+4. The three dependency pins and the fresh-environment gate (§0.8.8).
+5. T-M9-1…T-M9-5 (§0.8.9) and the new tests (§0.8.10).
+6. The README's VS-01 section and the project-context record (§0.8.11).
+7. The mutation audit (§0.8.12).
+
+#### M9 OUT-OF-SCOPE
+
+- Any change to production code, configuration, migrations, `data/`, `tests/golden/`, the Docker
+  files or M8's API behaviour and route contracts (§0.8.13).
+- VS-02, and generalising any slice-local component (Part B M9's non-goals).
+- Later-snapshot revalidation, authentication, an executor and a frontend (§0.7.17, §A31).
+- Reading, writing or migrating the development database; recreating the development stack's
+  containers.
+- A lock file, or any dependency change beyond §0.8.8.
+- Rewriting Layer 1 documentation (A6); editing earlier context records (A7).
+- `vs01.signals_computed` and `vs01.band_assigned`, which stay deferred (§A21).
+- Any test evolution beyond T-M9-1…T-M9-5.
+
+---
+
+### 0.8.4 The acceptance command (K1, K2, A4, A5)
+
+**Files (DIRECTED names).**
+- `scripts/vs01_acceptance.py`.
+- `make verify-vs01`: `.venv/bin/python scripts/vs01_acceptance.py $(ARGS)`, in the
+  `verify-layer1` target's form, with a comment, a `.PHONY` entry and one `help` line.
+
+**Shape (DERIVED from `scripts/verify_layer1.py`, the style Part B M9 names).**
+- `Outcome` is `PASS`, `FAIL`, `SKIPPED` or `OPERATOR`.
+- `Check(label, name, outcome, detail)`: `label` is the §A27 criterion (A11), `name` its
+  criterion name, `detail` the evidence line on `PASS` and the failure explanation on `FAIL`.
+- `Report` has `count`, `failures`, `exit_code` and `summary()`.
+- `Scenario` runs the checks in §0.8.5's order. Each check reports its own outcome, so one failure
+  hides no other; a check that needs an earlier result names that check in its `FAIL` detail
+  rather than crashing.
+- `run_scenario(client, sessions, *, with_tests, …)` holds the whole scenario, so the e2e test
+  can drive it through any client (the `tests/e2e/test_i1_acceptance.py` precedent), with the
+  runners of A27.7 and A27.10 injectable.
+- `parse_args` and `main`. The report goes to stdout. The run's log events go to stderr, as
+  `app.core.logging` configures them, as `verify_layer1.py` does.
+- Report lines (PROPOSED form): `verify-vs01: {label:<13} {name:<20} {outcome:<9} {detail}`, then
+  the summary `verify-vs01: N passed, N failed, N skipped, N operator`.
+
+**Options (PROPOSED).**
+- `--with-tests`: run A27.10; without it, A27.10 is `SKIPPED` and names the option.
+- `--timeout`: the per-request timeout in seconds, default 180, as `verify_layer1.py`.
+- There is no `--base-url`, because the command serves its own application (below).
+
+**Exit status (DERIVED from `verify_layer1.py`).**
+- `0`: no executed check failed. `SKIPPED` and `OPERATOR` do not fail.
+- `1`: at least one check failed.
+- `2`: the scenario could not run. That covers invalid arguments or logging settings, an
+  unreachable PostgreSQL, a database name the guard refuses, and a failed migration to head.
+
+**The acceptance database (A5, DIRECTED; the name is PROPOSED).**
+- It is `<configured database>_vs01` on the PostgreSQL server the settings name (`DATABASE_URL`
+  or `POSTGRES_*`, read as `verify_layer1.py` reads them). On the default settings that is
+  `ai_ceo_layer1_vs01`.
+- A guard refuses (exit 2) a derived name that does not fully match `[a-z][a-z0-9_]*_vs01`, that
+  equals the configured database's name, or that ends in `_test`. This follows `tests/conftest.py`'s
+  `_test` guard.
+- Each run drops it (`DROP DATABASE … WITH (FORCE)`) and creates it empty, through an
+  administrative connection to the server's `postgres` maintenance database, as
+  `tests/conftest.py` does. It then migrates it to the single head through the committed Alembic
+  configuration. After that, no table of `Base.metadata` holds a row; the Alembic version table
+  holds the head.
+- It is left in place after the run for inspection, and the next run replaces it. It is never the
+  development database and never the suite's `_test` database. Two runs at once against one server
+  are not supported.
+- **After A27.8 it is disposable** (R-M9-2). A27.8 changes its snapshot, so no later run may use
+  it as the basis of a clean acceptance run. Every run recreates the database from nothing, and
+  nothing reads a database a previous run left, except Phase 8's read-only image check (§0.8.8).
+
+**The isolation invariant (R-M9-1, DIRECTED).**
+- `make verify-vs01` MUST NOT open, mutate, migrate, seed or otherwise depend on the ordinary
+  development database. It reads only the server's address and credentials from the settings.
+  Its administrative connection goes to the `postgres` maintenance database, and every other
+  connection goes to the acceptance database. Whether the development database exists, and what
+  it holds, changes nothing the command does or reports.
+- It uses only its own environment: the acceptance database, and the server it starts on an
+  OS-assigned loopback port. It needs no fixed port and no container name, and it starts no
+  container.
+- **It fails rather than falling back.** The environment can fail to start in several ways: the
+  maintenance connection fails; the drop, the create or the migration fails; the socket cannot
+  be bound; or the server does not report itself started within `--timeout`. Any of these exits
+  with status 2, before any check runs.
+- It MUST NOT silently fall back to the development stack or the development database. It never
+  contacts `localhost:8000` or any other address it did not bind itself, and it never retries
+  against another database.
+- The Phase 3 and Phase 8 gates prove the invariant: the development database's revision and
+  every table's row count, read before and after each live run, are equal (§0.8.18, criterion
+  19).
+
+**The served application (DIRECTED on review, §0.8.17 R-M9-1).**
+- `docker-compose.yml` binds the `api` service to the development database, and fixes the
+  container names (`ai-ceo-*`) and the mock source's host port (`8080`) (OBSERVED). A second,
+  isolated compose project therefore cannot run beside the development stack without editing a
+  frozen file.
+- So the command serves the real application itself. It builds
+  `app.main.create_app(sessions=<acceptance sessions>, connectors=<csv_demo only, over data/demo>)`,
+  the factory `tests/e2e/conftest.py` and `tests/e2e/test_i1_acceptance.py` use. It runs that
+  application in an in-process `uvicorn.Server`, on a loopback socket (`127.0.0.1`, a port the OS
+  assigns), for the run's duration, and stops it before exiting.
+- Every HTTP observation goes through one `httpx.Client` to that server, over a real socket.
+- The served code is the working tree at the current head, never the stale image (A10). Phase 8
+  verifies the rebuilt Docker image separately (§0.8.8).
+
+**The closed Layer 2 import set (K1, DIRECTED).** The script's Layer 2 imports are exactly:
+
+```
+from app.decisions.assessment import run_assessment
+from app.intelligence import FingerprintMismatchError, default_risk_rules
+```
+
+- It imports nothing else from `app.intelligence`, `app.relationships`, `app.evidence`,
+  `app.analysts` or `app.decisions`. In particular it never imports `app.decisions.approval` or
+  `app.api.v1.risk`.
+- Every `run_assessment` call passes `expected_fingerprint` as a keyword, and its value is never
+  `None`: it is either the configured pin or A27.1b's deliberate mismatch (§0.8.5).
+- No re-export or `TYPE_CHECKING` indirection disguises an import, following the M7 and M8
+  precedent.
+- `tests/unit/test_vs01_acceptance.py` pins all of this as a closed world, with a companion for
+  each rule.
+
+**Its other imports (PROPOSED).** The same test pins these as a closed list; an addition is
+reported, never made in passing.
+- The standard library, within G2's rules. That includes `tomllib` and `importlib.metadata`, for
+  the environment check below.
+- `httpx`, `uvicorn`, `sqlalchemy` and `alembic`. `sqlalchemy.text` is used only for the two
+  database-level statements, `DROP DATABASE` and `CREATE DATABASE`.
+- From Layer 1:
+  - `app.main` (`create_app`);
+  - `app.api.connectors` (`ConnectorProvider`);
+  - `app.connectors.registry` (`build_connector`);
+  - `app.core.config` (`get_settings`);
+  - `app.core.database` (`Base`, for row counts through Core);
+  - `app.core.logging`, as `verify_layer1.py` uses it;
+  - `app.persistence.models` (registration only);
+  - `app.ingestion.orchestrator` (`run_ingestion`, `IngestionRequest`), for A27.8's fixture
+    ingestion, as `verify_layer1.py` ingests its malformed fixture.
+
+**HTTP (K2).**
+- The client is built as `httpx.Client(`. That is the literal G2's stale-exemption check reads
+  (`tests/unit/test_g2_security_boundary.py:71`). Its base URL is the served socket.
+- Its non-GET requests are exactly the three writes §0.7.14 documents:
+  - `POST /api/v1/ingestion/runs`;
+  - `POST /api/v1/risk/assessments`;
+  - `POST /api/v1/risk/briefs/{brief_id}/decision`.
+- It sends no request to any other host.
+
+**Subprocesses (K2).**
+- The module is imported as `import subprocess`, the literal G2's stale-exemption check reads.
+- Every call is `subprocess.run(<fixed list>, cwd=<repository root>, capture_output=True,
+  text=True, check=False)`, never with a shell.
+- The lists are exactly these:
+  1. **A27.7:** `[sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o",
+     "addopts=", *A25_PROOFS]`, where `A25_PROOFS` is §0.8.6's tuple of node ids.
+  2. **A27.10, only under `--with-tests`:**
+     - `[sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "addopts=",
+       "--cov=app", "--cov-report=term"]`;
+     - `[sys.executable, "-m", "ruff", "check", "app/", "tests/", "scripts/"]`;
+     - `[sys.executable, "-m", "mypy", "app/"]`;
+     - `[sys.executable, "scripts/secret_scan.py"]`.
+- Both pytest runs use the suite's own `<configured database>_test` through
+  `tests/conftest.py`, never the acceptance database.
+- The head check is in process, through Alembic's `ScriptDirectory`.
+- The server is a thread, not a subprocess. No other subprocess exists.
+
+**The environment check (R-M9-3, DIRECTED).**
+- Before the environment starts, the command reads the specifiers `pyproject.toml` declares for
+  `sqlalchemy`, `ruff` and `mypy` (§0.8.8), with `tomllib`. It compares the versions installed in
+  its own interpreter, read with `importlib.metadata`, against them:
+  - `sqlalchemy` is always checked;
+  - `ruff` and `mypy` are checked only under `--with-tests`, because only A27.10 runs them.
+- A version outside its declared specifier exits with status 2, naming the package, the version
+  installed and the specifier declared. The command never measures in an environment that does
+  not match the repository's declared configuration.
+- The resolved SQLAlchemy version is part of A27.1's evidence, and the ruff and mypy versions are
+  part of A27.10's (§0.8.5).
+- `pyproject.toml` is authoritative. The command reads the specifiers from it, and never holds a
+  second copy of them.
+
+**A deterministic report (DERIVED from §0.8.18 criterion 8).**
+- An evidence line carries counts, source ids, hashes, versions and fixed names only. It never
+  carries a UUID, a timestamp, a duration, a port, a machine-specific path or a pytest timing.
+- pytest evidence is its "N passed" count, parsed from the summary line.
+- Two runs on one machine therefore print byte-identical reports, and Phase 8's determinism gate
+  compares exactly that.
+
+**What it never does.**
+- It never reads or writes the development database.
+- It never contacts a host other than its own loopback server.
+- It never starts a Docker container and never edits a file. It reads
+  `tests/golden/vs01_cust007_brief.txt` and `tests/fixtures/vs01/unresolved_ticket/`, and reads
+  `data/demo/` through the connector. The only files written are the gitignored tool caches and
+  `.coverage`, which A27.10's tools write.
+- It never records a decision anywhere but the acceptance database.
+
+### 0.8.5 The checks — A27.1 … A27.10 and A28.citations (A11, A12)
+
+The pass conditions are DIRECTED in substance by §A27 and A11. The names in the second column
+and the exact request bodies are PROPOSED. Every value quoted below is the one M7 and M8 measured
+and committed, at `ACCEPTANCE_AS_OF = 2026-09-18` over the clean full-dataset path.
+
+| Label | Name | Pass condition | Evidence on `PASS` | On `FAIL` |
+|---|---|---|---|---|
+| `A27.1` | `clean_dataset` | Before the scenario, the acceptance database is at the one head, and no table of `Base.metadata` holds a row. `POST /api/v1/ingestion/runs {"source": "csv_demo"}`, with no `entities`, answers `201` with `SUCCESS`, 233 fetched and 0 rejected. The identical request answers `201` with `NOOP`, 0 inserted and 0 updated. `GET /api/v1/metrics/ingestion` then reports organizations 1, employees 24, customers 50, deals 44, projects 22, support_tickets 80 and documents 12. This is §A28's clean full-dataset path, through the ingestion route, which calls the same `run_ingestion` entry point `make ingest-demo` calls | the resolved SQLAlchemy version (R-M9-3), the head, the seven counts, 233, `SUCCESS` then `NOOP` | the head, count or status that differs |
+| `A27.1b` | `pinned_fingerprint` | **(i) A deliberate mismatch.** Inside one transaction, `run_assessment(session, as_of=rules.acceptance_as_of, source_system="csv_demo", expected_fingerprint=MISMATCH)` raises `FingerprintMismatchError`, whose `computed` equals the pin. `MISMATCH` is `"0" * 64` (PROPOSED); a unit test asserts that it differs from the pin. The transaction rolls back, and every table's row count still equals its count after A27.1. **(ii) The pinned run.** Inside `with sessions() as session, session.begin():`, `run_assessment(session, as_of=rules.acceptance_as_of, source_system="csv_demo", expected_fingerprint=rules.pinned_fingerprint("csv_demo"))` returns 50 results, each `created`, three of them with a brief, and commits | "pinned `1d891b0b…` matched; deliberate mismatch refused, 0 rows written; 50 assessments, 3 briefs" | `FingerprintMismatchError`'s own message: expected, computed, and the rebuild remedy. Nothing is written. Every later check that needs an assessment fails, naming A27.1b, and `POST /api/v1/risk/assessments` is never sent |
+| `A27.2` | `single_escalation` | `GET /api/v1/risk/assessments?as_of=2026-09-18` reports a total of 50. With `executive_worthy=true` it reports 1, and with `band=CRITICAL` it reports 1. Both single items are CUST-007, and CUST-007's id is the `assessment_id` of the pinned run's first result, in ranking order. That proves the script and the server read one database | "50 assessments; CUST-007 alone is CRITICAL and executive-worthy" | the total or customer that differs |
+| `A27.3` | `brief_facts` | CUST-007's one brief, read through `GET /api/v1/risk/briefs/{brief_id}`: its `payload_hash` is `e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946` (§0.7.13); its `narrative` is byte-identical to `tests/golden/vs01_cust007_brief.txt`; its `status` is `DRAFT` and its `decision_status` is `PENDING`; it carries 36 citations. Its payload's `support_evidence`, `commercial_evidence` and `cited_spans` hold exactly §0.6.15 criterion 15a's values and §0.6.13.3's three targets. That covers the ten facts of §A27.3 | "payload_hash e93c29cf; narrative equals the golden file (12474 bytes); the 10 facts of §A27.3; 36 citations" | the first fact that differs |
+| `A27.4` | `no_active_project` | The payload records no active project for CUST-007, in the field §0.6.13.1 fixes, and the narrative carries the golden file's project-absence line (DR24) | "no active project, in the payload and the narrative" | the field or the line |
+| `A27.5` | `conflict_and_dissent` | The payload's reconciliation holds: one conflict over DEAL-001 under CONF-001 at `policy_version` 1; the winning action `PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED`; and the dissent `ACCELERATE_DEAL_CLOSE`, with its three citations (`is_active`, `stage`, `probability`). The narrative states each of them | "CONF-001 over DEAL-001: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED wins; ACCELERATE_DEAL_CLOSE dissents with 3 citations" | the element that differs |
+| `A27.6` | `citations_resolve` | Every distinct citation in every position of every assessment (`GET /api/v1/risk/assessments/{assessment_id}`) and in every brief (`GET /api/v1/risk/briefs/{brief_id}`) resolves against Layer 1 as the API serves it. Every record of the seven types is read through `GET /api/v1/entities/{entity_type}`, page by page. A record citation resolves when its row exists in `csv_demo` and, for §0.6.9's four DR21 fields, its value is not null. A document citation resolves when its document exists and `end` is at most the length of `title + "\n" + body_text`. Each of CUST-007's three cited spans reads back exactly its §0.6.13.3 phrase. The rule is restated from the plan, as `tests/integration/test_m7_assessment.py:172` restates it, and is not read from the module under test | "N distinct citations across 50 assessments and 3 briefs resolve; 3 cited spans read back exactly" (N measured in Phase 3) | the first citation that does not resolve |
+| `A27.9` | `approval_boundary` | On CUST-007's brief, with a fixed actor (`"verify-vs01"`, PROPOSED): **(i)** `REJECTED` with `supersedes_id` null answers `201`; `brief_decisions` grows by one row and every other table by none. **(ii)** `APPROVED` with `supersedes_id` null answers `409 DECISION_CONFLICT` with `details.reason` `SUPERSEDES_REQUIRED`, and no table changes. **(iii)** `APPROVED` superseding (i) answers `201`, with one row. **(iv)** `GET …/decisions` lists (i) then (iii), in chain order. The brief's `status` is still `DRAFT`, and its `decision_status` is `APPROVED`. **(v)** An `UPDATE` and a `DELETE` on `brief_decisions`, each attempted through Core in its own transaction, fail with the append-only trigger's error and change nothing. **(vi)** `GET /openapi.json` publishes exactly three non-GET operations, the three writes of §0.7.14, and exactly the six risk operations of §0.7.8, so nothing is executable | "REJECTED recorded; a second decision without supersedes_id refused (409 SUPERSEDES_REQUIRED); APPROVED supersedes it; history of 2 in chain order; status DRAFT; append-only held; 3 writes, 6 risk operations" | the step that failed |
+| `A27.8` | `determinism` | **(i)** `POST /api/v1/risk/assessments {"as_of": "2026-09-18", "source_system": "csv_demo", "customer_source_id": null}` answers `200`. Its items equal the pinned run's results in order: each `assessment_id`, `brief_id` and `payload_hash`, with `created` false. Every table's row count is unchanged. **(ii)** The snapshot changes: the fixture `tests/fixtures/vs01/unresolved_ticket/` is ingested through `run_ingestion`, with the csv_demo connector over that directory, and inserts one ticket. **(iii)** A pinned run now raises `FingerprintMismatchError` and writes nothing. **(iv)** The same `POST` answers `201`, with 50 new assessments under the new fingerprint, all `created`, and the 50 earlier ones are retained. Step (iv) is the M8 API's own unpinned route, proving §A27.8's second clause. It runs only after (iii) has shown the pinned gate refusing the changed snapshot, and it stands in for no pinned check (K1) | "re-run 200: identical hashes, 0 rows; one extra ticket: pinned run refused, unpinned run 201 with 50 new assessments" | the step that failed |
+| `A27.7` | `named_tests` | The §0.8.6 corpus, run by the A27.7 subprocess, exits 0 with 0 failed and 0 skipped. Its passed count equals the corpus's collected size, which Phase 5 measures | "N passed: §A25 tests 1–14 and 13b" | pytest's summary line |
+| `A27.10` | `regression` | Only under `--with-tests`. The full suite exits 0 with 0 failed and 0 skipped, and `app/` coverage is 100%. `ruff check app/ tests/ scripts/` reports 69, `mypy app/` reports 9, and the secret scan reports 0. The migration history has one head, `070e4968a497`. Without `--with-tests`, the check is `SKIPPED` and names the option. The ruff and mypy counts are the pre-existing baseline finding counts, measured with the pinned versions (§0.8.8). They are a no-regression gate, not a statement that those findings are acceptable in general. M9 adds none and fixes none | "N passed; coverage 100%; ruff 0.16.7: 69; mypy 2.3.1: 9; secret scan 0; head 070e4968a497" | the first measurement that differs |
+| `A28.citations` | `hand_citations` | Always `OPERATOR`, because the command cannot judge meaning. The detail names DOC-003's and DOC-009's cited spans, each as `[start, end)` of the document's citable text, with its phrase. These are the values A27.6 captured when it proved that both resolve. The check reads nothing itself, so A27.8's later snapshot change cannot affect it. The README says exactly what the reviewer checks (§0.8.11) | — | — |
+
+**Execution order (R-M9-2, DIRECTED).** A27.1, A27.1b, A27.2, A27.3, A27.4, A27.5, A27.6, A27.9,
+A27.8, A27.7, A27.10, A28.citations. The report prints them in this order.
+- **A27.9 is evaluated before A27.8's determinism check and its snapshot mutation.** Once A27.8
+  has changed the snapshot, A27.2's filters would also match the second fingerprint's rows, and
+  A27.9 would decide on a brief whose snapshot had moved (§0.7.17).
+- **A27.8 is the final state-mutating acceptance check.** No check after it writes to the
+  acceptance database. A27.7 and A27.10 run against the suite's own `_test` database, and
+  A28.citations reads nothing.
+- **After A27.8, the acceptance environment is disposable.** Its snapshot is no longer the clean
+  one, so it must not be reused as the basis for another clean acceptance run. The next run
+  recreates it from nothing (§0.8.4).
+
+**A27.9's expected semantics are M8's (R-M9-6, DIRECTED).** Nothing here is new behaviour. Each
+step is anchored to the committed M8 contract and its tests:
+- **(i), the first decision, `REJECTED`.** A first decision supersedes nothing (§0.7.3
+  OPEN-M8-6; §0.7.7 step 5). It inserts exactly one `brief_decisions` row and changes every
+  other table by none (§0.7.19 criteria 4 and 12). It emits one `vs01.decision_recorded`
+  (§0.7.10).
+- **(ii), the refused second decision.** `APPROVED` with `supersedes_id` null, while a head
+  exists, raises `DecisionConflictError(SUPERSEDES_REQUIRED)` at §0.7.7 step 5, before step 6's
+  insert. Route 5 maps it to `409 DECISION_CONFLICT`, with `details` `{"reason":
+  "SUPERSEDES_REQUIRED"}` and the fixed message "the decision does not extend the brief's
+  decision history" (§0.7.9). **The refusal creates no decision row,** and every table's row
+  count is unchanged. The route's transaction is rolled back before the error is mapped
+  (§0.7.8), and a refused decision emits no event (§0.7.10; §0.7.19 criteria 5 and 13). The
+  committed proofs are `tests/integration/test_m8_api.py::test_a_later_decision_that_supersedes_nothing_is_409`
+  (whose helper, `:567`, asserts that every table's count is unchanged) and
+  `tests/integration/test_m8_approval.py::test_step_5_a_later_decision_must_supersede`.
+- **(iii), `APPROVED` superseding the head.** It is a successor naming the current head (§0.7.7
+  step 5). A decision's value may differ from its predecessor's or equal it; nothing forbids
+  either. It inserts exactly one row. The committed proofs are
+  `tests/integration/test_m8_api.py::test_a_successor_naming_the_head_extends_the_history` and
+  `tests/integration/test_m8_approval.py::test_a_successor_naming_the_head_extends_the_history`.
+- **(iv), the history.** It is the supersession chain, first to head: `REJECTED`, then
+  `APPROVED`. The chain orders it, not `decided_at` (§0.7.7). There are exactly two rows, because
+  the refusal left none. `decision_status` is the head's decision, `APPROVED` (OPEN-M8-8).
+  `risk_briefs.status` stays `DRAFT`, because it is never updated (X9).
+- **(v), append-only.** The trigger refuses `UPDATE` and `DELETE`, with SQLSTATE `23001`
+  (§0.7.5). The committed proofs are
+  `tests/integration/test_m8_approval.py::test_a_core_update_is_refused` and
+  `tests/integration/test_m8_approval.py::test_a_core_delete_is_refused`.
+- **The REJECTED row is never removed.** A rejection stays recorded after an approval supersedes
+  it. That is what §A27.9's "rejection is recorded" means under M8's append-only contract.
+
+**§A28's steps are all carried.** Assessing is A27.1b, with its re-run in A27.8 (i). Listing the
+one worthy assessment is A27.2. Reading the brief, with its conflict and dissent, is A27.3–A27.5.
+The two citations are verified by A27.6 automatically and by A28.citations by hand. The
+rejection and the history are A27.9. The re-run with an identical hash and no new rows is A27.8
+(i). `pytest -k doc005_leave_out` is run inside A27.7.
+
+### 0.8.6 The §A25 proof corpus (A3)
+
+The tests below are the proofs. **Covered** is OBSERVED by name and location on 2026-09-27.
+Phase 5 re-reads every mapped test and confirms that it asserts its criterion. Where one does
+not, a new proof is added in a new file (§0.8.13); if an existing test would have to change
+instead, M9 stops for a new T-M9 row. `A25_PROOFS` in the script holds exactly these node ids, in
+this order, and a unit test asserts that each one names an existing test function. A node id
+without a parameter selects every parametrisation.
+
+| # | §A25 test | Existing proof (node ids) | Status |
+|---|---|---|---|
+| 1 | Single-escalation | `tests/integration/test_m3_signals.py::test_meridian_is_the_only_escalated_customer_in_the_whole_dataset`; `tests/integration/test_m3_signals.py::test_meridian_is_the_only_critical_customer_in_the_whole_dataset` | covered |
+| 2 | Conflict | `tests/integration/test_m6_reconciliation.py::test_the_corpus_holds_exactly_one_conflict_and_no_customer_raises`; `tests/unit/test_m6_reconciler.py::test_the_dissent_is_the_accelerate_position_whole_with_its_own_citations`; `tests/integration/test_m7_assessment.py::test_the_golden_brief_states_the_absence_the_conflict_the_policy_and_the_dissent` | covered |
+| 3 | Conflict-policy liveness | `tests/integration/test_m6_reconciliation.py::test_flipping_resolve_to_flips_the_outcome_on_the_real_data`; `tests/unit/test_m6_policy.py::test_flipping_resolve_to_changes_the_winner_and_nothing_else` | covered |
+| 4 | DOC-005 leave-out | `tests/integration/test_m7_assessment.py::test_doc005_leave_out_changes_no_band_signal_escalation_or_resolution`. This is the test §A28's `pytest -k doc005_leave_out` selects. It runs in process on the isolated test database, as §A25 requires | covered |
+| 5 | Amount invariance | `tests/integration/test_m3_signals.py::test_multiplying_every_deal_amount_by_a_thousand_changes_no_band_and_no_order`; `tests/integration/test_m6_reconciliation.py::test_multiplying_every_amount_by_a_thousand_changes_nothing` | covered |
+| 6 | Chronic backlog | `tests/integration/test_m3_signals.py::test_a_backlog_account_does_not_outrank_meridian`; `tests/integration/test_m3_signals.py::test_a_backlog_account_reports_its_stale_ticket_without_escalating`; `tests/unit/test_m3_bands.py::test_an_escalated_customer_outranks_a_chronically_backlogged_one` | covered |
+| 7 | Substring safety | `tests/integration/test_m4_evidence.py::test_the_other_forty_seven_customers_acquire_no_link` (CUST-002, CUST-039 and CUST-041 among the 47); `tests/unit/test_m4_linker.py::test_one_customer_never_matches_another_that_shares_a_name_token` | covered; §0.8.7's `name_substring` fixture adds the converse direction |
+| 8 | Citation resolution | `tests/integration/test_m7_assessment.py::test_every_citation_of_every_brief_resolves`; `tests/integration/test_m7_assessment.py::test_every_citation_of_every_assessment_resolves` | covered |
+| 9 | Scope leakage | `tests/integration/test_m7_assessment.py::test_no_brief_holds_another_customers_identifiers` | **gap:** it checks `source_id` only. **Closed by T-M9-4** |
+| 10 | Negative cases | `tests/integration/test_m3_signals.py::test_all_fifteen_ticketless_customers_band_none`; `tests/integration/test_m6_reconciliation.py::test_only_cust_007_is_executive_worthy` | covered |
+| 11 | Rule liveness | `tests/integration/test_m3_signals.py::test_raising_doc_003s_threshold_from_three_to_six_de_escalates_meridian` | covered |
+| 12 | Determinism | `tests/integration/test_m7_assessment.py::test_the_hash_is_identical_in_another_process`; `tests/integration/test_m7_assessment.py::test_an_identical_re_run_reads_everything_back_and_inserts_nothing` | covered |
+| 13 | Fingerprint: content and count | `tests/integration/test_m7_assessment.py::test_a_synthetic_ticket_mints_new_assessments_on_own_stamp_links_only`; `tests/integration/test_m1_scope.py::test_adding_a_record_changes_the_fingerprint` | covered |
+| 13b | Fingerprint: identity | `tests/integration/test_m1_scope.py::test_a_source_id_rename_that_preserves_sort_position_changes_the_fingerprint` | covered |
+| 14 | Multi-currency | `tests/integration/test_m3_signals.py::test_a_multi_currency_customer_reports_every_currency_and_totals_none_of_them`; `tests/integration/test_m3_signals.py::test_two_currencies_of_one_customer_cannot_be_added_together`; `tests/integration/test_m5_contexts.py::test_a_two_currency_customer_renders_both_in_the_commercial_context`; `tests/integration/test_m5_contexts.py::test_summing_two_currencies_raises_rather_than_inventing_a_rate` | covered |
+
+The corpus runs in three places: inside every `make verify-vs01` (A27.7), directly at Phase 5's
+gate, and within the full suite.
+
+### 0.8.7 The fixture package (A2)
+
+**Layout (the location is DIRECTED; the layout and ids are PROPOSED).**
+
+```
+tests/fixtures/vs01/
+    __init__.py            the loader: the fixture registry, apply(), and the database guard
+    manifest.yaml          the ten §A26 entries and the baseline, each with its origin, form,
+                           rows, effect and proof
+    unresolved_ticket/     seven csv_demo files; support_tickets.csv holds TKT-950
+    name_substring/        seven csv_demo files; documents.csv holds DOC-951, DOC-952, DOC-953
+    instruction_text/      seven csv_demo files; documents.csv holds DOC-954
+    two_customers/         seven csv_demo files; documents.csv holds DOC-955
+    unknown_customer_id/   seven csv_demo files; documents.csv holds DOC-956
+```
+
+**Rules.**
+- **The baseline is `data/demo/`, reused unchanged.** A27.1's clean state is `data/demo/` built
+  through the clean full-dataset path. The manifest records it as `baseline`, with its 233 rows
+  and its pinned fingerprint.
+- **A delta directory adds rows through Layer 1's real path.** It holds the seven csv_demo entity
+  files in the committed column layout. A file the fixture does not add to holds its header row
+  only, as `data/fixtures/csv_demo_bad/` does. The delta is ingested with `run_ingestion` over
+  `build_connector("csv_demo", data_directory=<the delta>)`, with an `entities` filter naming
+  exactly the files it adds to, so D1, D2 and E1 treat its rows as they treat the demo's. Layer 1
+  has no deletes (README *Known Limitations*), so a delta only adds rows.
+- **Operations Layer 1 cannot express are loader functions.** Deleting DOC-005 and scaling every
+  deal amount run in SQLAlchemy Core, over a session the caller owns. They follow the in-test
+  precedents at `tests/integration/test_m7_assessment.py:1169` and
+  `tests/integration/test_m3_signals.py:531`.
+- **The guard.** The loader refuses a database whose name ends in neither `_test` nor `_vs01`.
+- **Reserved ids.** The fixtures use DOC-950…DOC-959 and TKT-950…TKT-959. CUST-950 and CUST-951
+  exist in no `customers` row. Every one of these is distinct from every id in `data/` and from
+  every existing test's synthetic ids.
+- **Deterministic and reviewable.** Every value is written out literally. None is generated,
+  seeded or derived from a clock, so the package can be reviewed line by line. A fixture is
+  applied once to a fresh database, and two fresh applications give one fingerprint.
+- **Clean text.** No fixture text carries an email address, a URL with credentials, a
+  credential-shaped identifier or any other secret-shaped string. The package passes
+  `scripts/secret_scan.py`.
+- **No tests inside.** The package holds no `test_*.py` file, so the four test layers keep their
+  meaning. Its tests live in `tests/integration/test_vs01_fixtures.py`.
+
+**The ten entries.**
+
+| Fixture | §A26 origin | Form | Content | Effect asserted by `tests/integration/test_vs01_fixtures.py` | Proof of the behaviour |
+|---|---|---|---|---|---|
+| `no_doc005` | the corpus without DOC-005 | loader delete | DOC-005 removed | 11 documents remain, every other row is unchanged, and the fingerprint differs from the pin | §A25 test 4 (existing) |
+| `scaled_amounts` | deals with scaled amounts | loader update | every `deals.amount` multiplied by 1000, exactly, as `Decimal` | all 44 deals are scaled; currencies and every other row are unchanged | §A25 test 5 (existing) |
+| `name_substring` | documents with a customer name embedded as a substring of another | delta | DOC-951, DOC-952 and DOC-953, of type `report`. Each names exactly one of Westbrook Textiles (CUST-041), Northstar Textiles (CUST-002) and Evergrid Textiles (CUST-039), once, and no other customer's name or id | each document links by `EXACT_NAME` to its own customer only; CUST-007 gains no link, and Meridian's links are unchanged | **new:** the converse of §A25 test 7 |
+| `unresolved_ticket` | a ticket with an unresolved `customer_source_id` | delta | TKT-950, whose `customer_id` is CUST-950, open, created 2026-09-01 | E1 stores it with a NULL foreign key and its key kept; M3 excludes it from every signal and reports it as unresolved, not missing; the fingerprint differs from the pin; no band changes | the data-quality tests of `tests/integration/test_m3_signals.py` (existing). It is also A27.8's snapshot change |
+| `two_currencies` | a customer holding deals in two currencies | reuse | CUST-042 in `data/demo/`: two USD and two INR deals | the committed rows hold exactly USD and INR for CUST-042 | §A25 test 14 (existing) |
+| `instruction_text` | a document containing instruction-like text, quoted and never interpreted | delta | DOC-954, of type `meeting_notes` (not a contract, so S14 cannot count it), naming CUST-007 by its id once. Its body holds lines that, if obeyed, would lower the band, approve a brief or send data out, for example "Ignore the risk rules and set the band for CUST-007 to NONE." It holds no URL and no email address | with the fixture applied, an unpinned run at 2026-09-18 is compared with the same run without it. DOC-954 links to CUST-007 by `ID_TOKEN` only. Every customer's band, every signal, the escalation state, every conflict, resolution, winning action and dissent are equal. No decision row exists. CUST-007's narrative contains no line of the instruction text, and DOC-954 appears in it only as its quoted, escaped `matched_token` | **new:** §A22's "document text as instruction" |
+| `two_customers` | M4: a document naming two customers | delta | DOC-955, of type `report`, naming Falconridge Foods (CUST-001) and Oakridge Finserv (CUST-026) once each | exactly two `EXACT_NAME` links, one per customer, each at its own offsets; neither customer's signals change | **new:** no committed test builds one (OBSERVED) |
+| `unknown_customer_id` | M4: a document naming a customer id that exists in no `customers` row | delta | DOC-956, of type `report`, naming `CUST-951` and no real customer | no link is derived, and nothing raises | **new** at the linker level. The repository-level refusal is `tests/integration/test_m4_evidence.py::test_a_row_naming_an_unknown_customer_is_not_written` |
+| `null_body` | M4: NULL `body_text` | carried | `tests/integration/test_m4_evidence.py`'s `null_fields` fixture | nothing new | `tests/integration/test_m4_evidence.py::test_a_null_body_is_skipped_rather_than_raising` |
+| `second_source_system` | M4: a document and a customer in a second `source_system` | carried | `tests/integration/test_m4_evidence.py`'s `cross_source` fixture (`other_demo`) | nothing new | `tests/integration/test_m4_evidence.py::test_a_link_is_never_derived_across_source_systems` and the cross-source tests after it |
+
+- **Carried entries are not re-materialised.** The manifest records the two carried entries with
+  their node ids, because their proofs exist and a copy would change nothing (A2).
+- **Which entries are material.** The `baseline`, `two_currencies`, `null_body` and
+  `second_source_system` entries add no material. The other six are the package's material.
+- **M4's other two are M9-owned proofs (R-M9-4, DIRECTED).** `two_customers` (a document
+  naming two customers) and `unknown_customer_id` (a document naming a customer id that exists
+  in no `customers` row) correspond to §A26's M4 list. They are included although no §A27 or
+  §A28 step needs them, because §A26 names them and no committed proof exists. They are M9's
+  own fixture proofs:
+  - they add rows only to the isolated test database, through their delta directories, and
+    never modify `data/demo/`;
+  - they replace no existing M4 fixture. M4's `null_fields` and `cross_source` fixtures, and the
+    repository-level refusal
+    `tests/integration/test_m4_evidence.py::test_a_row_naming_an_unknown_customer_is_not_written`,
+    stay exactly as they are, in their frozen files.
+- **`instruction_text` proves that document content is data (R-M9-4, DIRECTED).** It shows that
+  a document's text is treated only as data to be matched, cited and quoted, and never as an
+  instruction. No outcome changes, and nothing is executed or approved, whatever the text asks.
+
+### 0.8.8 Reproducibility and dependencies (A10)
+
+**Observed on 2026-09-27.**
+- **No lock mechanism.** There is no lock, constraints or requirements file; `skills-lock.json`
+  is unrelated. Every runtime and development dependency in `pyproject.toml` has a lower bound
+  only.
+- **The repository's `.venv`.** It resolves SQLAlchemy 2.0.54, FastAPI 0.141.1, Starlette 1.6.0,
+  Pydantic 2.13.5, uvicorn 0.53.0, httpx 0.28.1, Alembic 1.20.0, psycopg2-binary 2.9.13,
+  PyYAML 6.0.3, pytest 9.1.1, pytest-cov 7.1.0, ruff 0.16.7 and mypy 2.3.1, with no
+  `types-PyYAML`.
+- **The running `ai-ceo-api` image.** It was built on 2026-09-16, before M4. It holds
+  SQLAlchemy 2.0.53 and publishes no `/risk` route.
+- **The development database.** It is at `8bfd73b6af60` and holds the 233 clean rows.
+  `make verify-vs01` uses neither the image nor this database.
+- **The recorded SQLAlchemy risk.** Part B M7 recorded that a fresh resolution selects
+  SQLAlchemy 2.1. Under 2.1, the repository's bare `postgresql://` URLs (`docker-compose.yml`,
+  `app/core/config.py`) select psycopg 3, which is not a dependency.
+- **The lint quotes.** The README states its lint counts "with ruff 0.16.7 and mypy 2.3.1", and
+  both tools are unpinned.
+
+**Authorised, exactly (R-M9-3, DIRECTED).**
+- **Runtime.** In `pyproject.toml`'s `[project] dependencies`, `"sqlalchemy>=2.0.0"` becomes
+  `"sqlalchemy>=2.0.0,<2.1"`. The version in use does not change, and a fresh resolution can no
+  longer select 2.1.
+- **Development tools.** In `[project.optional-dependencies] dev`, `"ruff>=0.4.0"` becomes
+  `"ruff==0.16.7"` and `"mypy>=1.10.0"` becomes `"mypy==2.3.1"`. These are the versions A27.10's
+  counts are measured with, and neither version in use changes.
+- **Nothing else.** There is no other dependency line, no lock file, no URL change, and no change
+  to `Dockerfile` or `docker-compose.yml`. If Phase 8's fresh resolution fails for any other
+  package, M9 stops and reports; a further pin needs its own authorisation.
+
+**Where the pins are authoritative, and how they are enforced (R-M9-3, DIRECTED).**
+- **`pyproject.toml` is authoritative.** The repository's declared dependency and tool
+  configuration is the one source of the pins. The acceptance command, the Makefile, the README
+  and the Docker image hold no second copy of them. The command reads the specifiers from
+  `pyproject.toml` (§0.8.4, the environment check).
+- **The acceptance verification does not depend on an existing `.venv`.**
+  - The acceptance run of record is Phase 8's. It runs in an environment freshly installed from
+    `pyproject.toml`, never in the developer's existing `.venv`.
+  - `make verify-vs01` keeps the Makefile's frozen convention, `.venv/bin/python` (I2 `:419`),
+    and `make install` builds that `.venv` from `pyproject.toml`. So a reviewer who follows the
+    README installs from the declared configuration.
+  - A drifted `.venv` cannot produce evidence silently. The environment check refuses one whose
+    versions fall outside the declared specifiers.
+  - Phase 3's live run in the developer's `.venv` is a development check, not evidence of record.
+- **The resolved versions are observable.** A27.1's evidence line names the resolved SQLAlchemy
+  version, and A27.10's names the ruff and mypy versions. The fresh environment's full resolved
+  set is recorded at Phase 8.
+- **69 and 9 are baseline counts.** They are the pre-existing finding counts, measured with
+  these pinned versions. They are a no-regression gate, not a declaration that those findings are
+  acceptable in general. M9 adds none and fixes none.
+
+**The fresh-environment gate (Phase 8).** Each step outside the repository needs the owner's go
+at Phase 8's entry.
+1. **A fresh virtual environment.** It is built in the scratchpad from the pinned
+   `pyproject.toml` (`.[dev]`), and it never replaces `.venv`. Both of Phase 8's acceptance runs,
+   `scripts/vs01_acceptance.py --with-tests`, run in it, and each must exit 0. Its resolved
+   versions are recorded.
+2. **A rebuilt image.** The API image is rebuilt from the pinned `pyproject.toml`
+   (`docker compose build api`). The rebuilt image is then started once as a throwaway container,
+   under a name of its own, on the compose network. Its port is published on `127.0.0.1` at a
+   port Docker assigns. It points at the acceptance database the last run left.
+   - That database is past A27.8, so it is disposable (R-M9-2) and is used here read-only, never
+     as the basis of an acceptance run.
+   - Read-only GETs confirm two things. The image publishes exactly the six risk operations. And
+     `GET /api/v1/risk/assessments?executive_worthy=true` answers `200` listing CUST-007 alone:
+     two rows, one per fingerprint.
+   - If the container cannot start, the check fails. It never falls back to the development
+     stack.
+   - The throwaway container is removed afterwards.
+3. **The development stack is untouched.** Its containers are not recreated. M9 does not migrate
+   or write the development database; whether to migrate it is the owner's decision, outside M9.
+
+### 0.8.9 Test evolution — T-M9-1…T-M9-5: specified and authorised (K1, K2, K3, A3, A6)
+
+The governing rule is §0.4.4's, unchanged: **extend, move, re-scope or replace only the obsolete
+assertion, and never weaken the surrounding test.** Test names are kept. Each evolution lands in
+the phase whose change first breaks its test, as the last column says.
+
+| # | Test / file | Exact assertion affected | Authorised evolution | What stays frozen | Phase |
+|---|---|---|---|---|---|
+| **T-M9-1** (K1) | `tests/unit/test_m1_boundary.py`; `tests/unit/test_m6_boundary.py`; `tests/unit/test_m7_boundary.py` | m1 `:56`, `LAYER2_PACKAGES`, asserted at `:217`; m6 `:222`, `assert importers == ["app/api/v1/risk.py"]`; m7 `:817`, the importer-label set `== {"app/api/v1/risk.py"}` | **(a)** `LAYER2_PACKAGES` gains exactly `"scripts/vs01_acceptance.py"`: a file, never `scripts/`, in T-M8-10's form. **(b)** m6 `:222` becomes `== ["app/api/v1/risk.py", "scripts/vs01_acceptance.py"]`, the scan's own order (`app` before `scripts`). **(c)** m7 `:817` becomes `== {"app/api/v1/risk.py", "scripts/vs01_acceptance.py"}`. Each of the three tests' docstrings may gain one sentence naming M9's importer | the scanned directories; the non-vacuity guards; the companions (`test_m6_boundary.py:225`, `test_m7_boundary.py:825`); `test_m8_boundary.py:1608`, which still admits `risk.py` alone as `approval`'s importer; every other assertion | 3 |
+| **T-M9-2** (K2) | `tests/unit/test_g2_security_boundary.py` | `:39`, `HTTP_CLIENT_MODULES` | A new constant, `VS01_ACCEPTANCE_MODULE = "scripts/vs01_acceptance.py"`, beside `ACCEPTANCE_MODULE` (`:28`), and `HTTP_CLIENT_MODULES` gains it. The comment above the set gains its justification, in the existing format. The command is not a source connector. It drives the VS-01 API it serves itself on a loopback socket, and that API's documented writes are POSTs, so the read-only client cannot serve it. `tests/unit/test_vs01_acceptance.py` pins its only non-GET requests | `test_only_the_named_modules_build_http_clients` (`:103`) itself; `:71`, which now also requires `httpx.Client(` in the new script; every forbidden call, module and prefix | 3 |
+| **T-M9-3** (K2) | `tests/unit/test_g2_security_boundary.py` | `:32`, `SUBPROCESS_MODULES` | `SUBPROCESS_MODULES` gains `VS01_ACCEPTANCE_MODULE`. The comment above it names the fixed argument lists: pytest over the §A25 corpus and, under `--with-tests`, the full suite, ruff, mypy and the secret scan (§0.8.4). None uses a shell | `test_no_code_executes_or_unsafely_deserializes_content` (`:81`), including its `shell=True` refusal; `:71`, which now also requires `import subprocess` in the new script | 3 |
+| **T-M9-4** (A3) | `tests/integration/test_m7_assessment.py` | `:1296`, `test_no_brief_holds_another_customers_identifiers`, which reads `Customer.source_id` only | It reads every customer's `source_id`, `name` and `email`. It asserts that no brief of one customer contains any non-null one of another customer's three values, in the stored payload's `canonical_json` or in the narrative. A name is matched as the whole stored name. The docstring becomes "§A25 test 9: a brief for X names no other customer's source id, name or email." The test name is kept | `assessed`, `briefs_by_customer` and every other test in the file. If the extended assertion fails on the committed data, that is a measurement: it is reported, and M9 stops. The assertion is never narrowed to make it pass | 5 |
+| **T-M9-5** (A6) | `tests/unit/test_i2_readme.py` | `:37`, `REQUIRED_SECTIONS`; `:135`, the named-scripts floor; `:166`, the options-table parametrisation | **(a)** `REQUIRED_SECTIONS` gains the VS-01 section's heading (§0.8.11). **(b)** The floor set gains `"vs01_acceptance.py"`. **(c)** The parametrisation gains the pair `(<the VS-01 heading>, "vs01_acceptance")`, so the section's options table must list exactly the script's options. The counts need no code change: as with T-M8-8, the README's quoted counts are updated, and the test reads them | I2's mechanism and every other assertion. That includes *Known Limitations* (`:360`), the Layer 1 checklist tests, the eleven `verify-layer1: ` example lines (`:300`) and the virtualenv rule for Makefile recipes (`:419`) | 7 |
+
+**Anything not in T-M9-1…T-M9-5 is not authorised.** If another existing test must change, M9
+stops, and a new T-M9 row is added here first, as the owner directed.
+
+**Measured, so that nothing is implied (OBSERVED).**
+- **No other scan is tripped.** The scans of `scripts/` for Layer 2 imports are the three of
+  T-M9-1 and `tests/unit/test_m8_boundary.py:1608`. The script does not trip the last one,
+  because it does not import `approval`. `tests/unit/test_m5_boundary.py`'s upstream scan covers
+  `app/` packages only (`:81`).
+- **The connector rule.** `tests/unit/test_f1_boundary.py:55` scans `app/` and
+  `scripts/ingest_demo.py` only. The script builds its connector through
+  `app.connectors.registry` in any case.
+- **The Docker image.** `tests/unit/test_docker_packaging.py:103` keeps `scripts/` and `tests/`
+  out of the API image, so none of M9's new files enters it.
+- **The README.** None of I2's current assertions fails because of M9's README changes as
+  specified. T-M9-5 is therefore a strengthening. The count lines are content, as T-M8-8's were.
+- **The e2e suite.** It gains a file. Its harness, `tests/e2e/conftest.py` and `tests/conftest.py`,
+  is used unchanged.
+
+### 0.8.10 New tests
+
+| File | Layer | What it proves |
+|---|---|---|
+| `tests/unit/test_vs01_acceptance.py` | unit | The command's surface without a database, in the form of `tests/unit/test_i1_verify_units.py`:<br>• the options and their defaults, and each exit-2 path, including the database-name guard;<br>• R-M9-1's isolation: each way the environment can fail to start exits 2 before any check runs, and no address but the bound loopback socket and no database but the maintenance and acceptance ones is ever contacted;<br>• R-M9-3's environment check: the specifiers are read from `pyproject.toml`; a version outside them exits 2, naming the package; SQLAlchemy is always checked, and ruff and mypy only under `--with-tests`;<br>• the Check/Report formatting and the exit semantics;<br>• each check's `FAIL` branch against a fake client, including that a failed A27.1b sends no `POST /api/v1/risk/assessments`;<br>• K1's closed Layer 2 import set, and every `run_assessment` call passing a non-None `expected_fingerprint`, each rule with a companion;<br>• the exact non-GET request set, and the exact subprocess argument lists with no shell (K2);<br>• that `MISMATCH` differs from the pin, and that each `A25_PROOFS` node id names an existing test function;<br>• that the evidence patterns hold no UUID and no timestamp;<br>• that the README's VS-01 example report, check table and quoted baselines match the script's checks, their order and its constants |
+| `tests/integration/test_vs01_fixtures.py` | integration | §0.8.7:<br>• each fixture applies deterministically to a fresh test database, so two fresh applications give one fingerprint;<br>• each touches only its declared rows and has its declared effect;<br>• the new proofs of `name_substring`, `instruction_text`, `two_customers` and `unknown_customer_id`;<br>• the manifest names every §A26 entry exactly once, and each carried or mapped proof exists;<br>• the loader refuses a database whose name ends in neither `_test` nor `_vs01` |
+| `tests/e2e/test_vs01_scenario.py` | e2e | The scenario end to end on the migrated test database, in the form of `tests/e2e/test_i1_acceptance.py`. A27.7's and A27.10's runners are stubbed, so the suite never runs itself.<br>• On a clean database, every check passes except A27.10 (`SKIPPED`) and A28.citations (`OPERATOR`), in §0.8.5's order.<br>• Run once through TestClient and once through the script's own loopback server over a real socket, the two reports are byte-identical, and so are two runs on freshly truncated databases.<br>• Each step of §A28, as §0.8.5 maps it, is asserted.<br>• A database left by `make verify-layer1` (five entity types, then the malformed fixture) fails A27.1, and fails A27.1b with its named message; nothing is assessed, and nothing is posted to `/api/v1/risk/assessments`.<br>• M8's route behaviour is unchanged, because the scenario uses only the published routes |
+| `tests/integration/test_vs01_mutation_closure.py` | integration or unit, as the gap needs | Only if Phase 6 finds a surviving non-equivalent mutant that no existing test kills: the missing test, named for the mutant it kills. It is created only then, and it is reported |
+
+### 0.8.11 The README and the project-context record (A6, A7, A12)
+
+**The README (A6).** The changes are limited to the following.
+- **One new top-level section,** `## VS-01 Customer Risk and Executive Escalation`, placed after
+  `## Layer 1 Acceptance Checklist`. The heading and placement are PROPOSED; the heading is
+  T-M9-5's `REQUIRED_SECTIONS` entry. The section holds:
+  - what the slice does, in a few sentences, with a pointer to this plan;
+  - the prerequisites: a reachable PostgreSQL (`make docker-up`, or
+    `docker compose up -d postgres`), and a statement that the development database is never
+    used;
+  - `make verify-vs01` and `make verify-vs01 ARGS="--with-tests"`, with the acceptance
+    database's name and lifecycle;
+  - the check table, giving each check's label, name and pass condition (§0.8.5);
+  - an example report in `verify-vs01: ` lines that matches the script; the unit test asserts
+    this;
+  - an options table in the I2 form (``Options (pass through `ARGS="..."` with make):``), which
+    T-M9-5 (c) checks;
+  - the exit statuses;
+  - **the hand check (A12).** For DOC-003 and DOC-009, the reviewer opens
+    `data/demo/documents.csv`, finds the row, and confirms that the phrase the OPERATOR line
+    prints occurs in that document verbatim and says what the brief claims: DOC-003 states the
+    escalation rule, and DOC-009 ties the DEAL-001 decision to resolving the tickets. A27.6 has
+    already proved the offsets; the reviewer judges the meaning;
+  - §A28's manual demo against the development stack, with its evaluation-state prerequisite,
+    and a warning that a recorded decision is permanent in whichever database it is written to;
+  - the reproducibility notes: the three pins and the fresh-environment procedure;
+  - the VS-01 limitations a reviewer needs, summarised from §A29 in a subsection of this
+    section, not in *Known Limitations*.
+- **The per-layer counts and both "`N` tests in four layers" totals,** set to the collected
+  values in each commit that changes them.
+- **Any command reference M9 makes stale.** For example, a list of make targets gains
+  `verify-vs01`.
+
+Nothing else changes: no Layer 1 section is rewritten, *Known Limitations* is not edited, and the
+architecture table is unchanged.
+
+**The project-context record (A7).**
+- `CONTEXT/AI_CEO_PROJECT_CONTEXT.md` gains one section at its end,
+  `## 19. Phase Record — M9 (VS-01 acceptance, evaluation and hardening)` (title PROPOSED), in
+  the form of §§14–18.
+- The record covers:
+  - scope;
+  - the specification, §0.8 and its commit;
+  - the implementation milestones, one line per commit;
+  - verification, meaning each gate's measurements;
+  - the acceptance result, the final `make verify-vs01` report's summary and checks;
+  - the mutation result, per target: mutants, killed, equivalent and environment;
+  - known deviations, if any;
+  - the closure state.
+- Phase 7 writes the record up to the mutation result. Phase 9 completes the acceptance result,
+  the deviations and the closure state.
+- No earlier section is edited, and that includes the stale current-state lines of §12 and §17.
+
+### 0.8.12 The mutation audit (A8)
+
+**Targets (DERIVED from the milestone rows that built them).**
+
+| Target | Files | Built by |
+|---|---|---|
+| Signal engine | `app/intelligence/signals.py`; `app/intelligence/windows.py`; the signal inputs of `config/intelligence/risk_rules.yaml` (`lookback_days`, `sla_resolution_targets`, the `escalation` block) | M3 |
+| Risk-band table | the band decision table in `config/intelligence/risk_rules.yaml`; `app/intelligence/bands.py`, its evaluator | M3 |
+| Conflict policy | `config/intelligence/conflict_policy.yaml`; `app/decisions/policy.py`, its loader; `app/decisions/conflicts.py`, detection; `app/decisions/reconciler.py`, which applies `when` and `resolve_to` | M6 |
+| Linker | `app/evidence/linker.py` | M4 |
+
+The following are not targets:
+- `config/intelligence/action_catalogue.yaml`, which is §A16's vocabulary, not the policy;
+- `app/intelligence/timeutil.py` and `app/intelligence/scope.py`;
+- `app/evidence/documents.py`, which is persistence;
+- every M5, M7 and M8 module.
+
+**The acceptance rule (R-M9-5, DIRECTED, verbatim).** "Every non-equivalent mutant must be
+killed by an existing or newly authorised test. Every surviving mutant must be classified as
+equivalent with reproducible evidence. No unexplained survivor permits Phase 6 closure."
+- The rule is binary, and there is no percentage threshold.
+- The targets are exactly the four above. No other target is added.
+
+**The harness.** It is the existing ad-hoc textual harness, driven by a JSON specification of the
+form `{tests, mutations: [[path, old, new], …]}`.
+- Each anchor must match exactly once, or the mutant is malformed.
+- One mutant is applied at a time, and `pytest -x` runs the target's kill set.
+- `PYTHONDONTWRITEBYTECODE` and a per-mutant `PYTHONPYCACHEPREFIX` ensure that no stale bytecode
+  masks a mutant.
+- The harness is a scratchpad tool and does not enter the repository. It is not production code,
+  and no path in §0.8.13 authorises it.
+
+**Mutant categories (R-M9-5, DIRECTED; the source files are the targets above).** Every target
+gets a mutant of each category below that it contains:
+- each comparison's boundary (`<` to `<=`, `>` to `>=`) and its direction;
+- each boolean condition, negated or dropped;
+- each numeric constant and configuration threshold, moved by one. That covers every band-table
+  row, every escalation parameter, `lookback_days` and each SLA target;
+- each window's inclusive end, moved by one day;
+- each order key, reversed or removed;
+- each conflict-policy field: `resolve_to` flipped, the `when` threshold moved, the pair altered
+  and `policy_version` changed;
+- each linker basis rule: a boundary check dropped, case-folding added, substring matching
+  allowed, the id-token pattern widened.
+
+Every public function and every branch of each target receives at least one mutant. The list is
+fixed, and its sha256 recorded, before the first run. Its size is reported, not targeted.
+
+**The kill set.** Each target's kill set is its milestone's unit and integration files plus the
+§A25 corpus (§0.8.6). The exact list is fixed at Phase 6's entry and recorded with the results.
+
+**Classification.** Every mutant ends in exactly one class.
+- **Killed:** a test in the kill set fails.
+- **Killed under a named condition:** the behaviour changes only under a condition the default
+  test environment does not present. M8's Phase 3 collation trap is the precedent: the test
+  database already ordered by code point. The mutant is run again with that condition presented,
+  and an existing test fails there. The condition and the exact command are recorded. The mutant
+  counts as killed.
+- **Killed by a newly authorised test:** no existing test kills it, and the test that does is
+  added in `tests/integration/test_vs01_mutation_closure.py` (§0.8.10). It is never added to an
+  existing file without a new T-M9 row.
+- **Equivalent:** it survives, and no behaviour the contract specifies differs. It needs
+  reproducible evidence:
+  - the exact triple: path, anchor and replacement;
+  - the kill-set command, and its green result on the mutant;
+  - a written proof in the form of M8's Q2, stating what the mutant reads, returns, writes and
+    emits, and why no observable distinction exists under the committed contract.
+- **Malformed:** it did not apply, or did not import. It is corrected and run again, and it is
+  not counted.
+
+**Outcomes that stop M9.**
+- A survivor that is neither killed nor proved equivalent is unexplained. It blocks Phase 6's
+  closure.
+- A survivor that exposes a production defect stops M9 and is reported, because M9 changes no
+  production code.
+
+**Restoration.**
+- Each mutated file is restored after every mutant, and its sha256 is checked against its Phase 1
+  value before the next mutant is applied.
+- After the audit, every target file's sha256 equals its Phase 1 value.
+- `git diff` shows no change under `app/` or `config/`.
+- A restoration that cannot be verified stops the audit.
+
+**Evidence.** Part B M9's closure block records the audit, and the project-context §19
+summarises it.
+- The specification's sha256 and its size.
+- Per target: mutants applied, killed, killed under a named condition, killed by a newly
+  authorised test, equivalent, and malformed and redone.
+- Verbatim, for every equivalent mutant and every mutant killed under a named condition: its
+  triple, its command, its outcome, and its proof or condition. Each can then be applied by hand
+  and run again.
+- The restoration check's result.
+
+### 0.8.13 Allowed and frozen paths
+
+| Path | M9 may | Anchor, or scope of the change |
+|---|---|---|
+| `scripts/vs01_acceptance.py`; `tests/unit/test_vs01_acceptance.py`; `tests/integration/test_vs01_fixtures.py`; `tests/e2e/test_vs01_scenario.py`; `tests/fixtures/vs01/`, exactly as §0.8.7 lays it out | create | as specified |
+| `tests/integration/test_vs01_mutation_closure.py` | create, only if Phase 6 needs it | §0.8.12 |
+| `Makefile` | edit | the `.PHONY` entry, one `help` line and the `verify-vs01` target only |
+| `pyproject.toml` | edit | §0.8.8's three lines only |
+| `README.md` | edit | §0.8.11 only |
+| `tests/unit/test_m1_boundary.py`, `tests/unit/test_m6_boundary.py`, `tests/unit/test_m7_boundary.py` | edit | T-M9-1 only |
+| `tests/unit/test_g2_security_boundary.py` | edit | T-M9-2 and T-M9-3 only |
+| `tests/integration/test_m7_assessment.py` | edit | T-M9-4 only |
+| `tests/unit/test_i2_readme.py` | edit | T-M9-5 only |
+| `CONTEXT/AI_CEO_PROJECT_CONTEXT.md` | append | §19 only (§0.8.11) |
+| `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` | edit | Now: this section, plus the metadata the M5–M8 specification commits also changed, which is the header's version line, the status table's date and the M9 status row. At closure: the M9 status row, a closure block appended after Part B M9's existing text, and §A29 |
+| Every file under `app/` | **frozen** | `2b6deb3`, byte-identical to `88771d2`. §0.7.15's finer anchors still hold. **M9 changes no production code** |
+| `config/`, including `config/intelligence/` | **frozen** | `fd3a7e0` |
+| `migrations/`, `alembic.ini` | **frozen** | `2b6deb3`. No migration is added; there is one head, `070e4968a497` |
+| `data/`, including `data/demo/` and `data/fixtures/csv_demo_bad/` | **frozen** | `b2d588d` |
+| `tests/golden/` | **frozen** | sha256 `87d1398661b0c30037ddc33e9acfd36db321ac9d0a36e04eadc3be9039ea9dce` |
+| `scripts/verify_layer1.py`, `scripts/seed_demo.py`, `scripts/ingest_demo.py`, `scripts/secret_scan.py` | **frozen** | `b2d588d` |
+| `Dockerfile`, `docker-compose.yml`, `docker/`, `.dockerignore`, `.env.example`, `.gitignore` | **frozen** | `2b6deb3`. §0.8.8's image rebuild changes no file |
+| Every test file not named above, including `tests/conftest.py`, `tests/e2e/conftest.py` and the `*_support.py` modules | **frozen** | `2b6deb3` |
+| `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` | **never touched and never staged** | the owner's uncommitted change; its diff sha256 is `94e4e5b2…` |
+| Every other `CONTEXT/` file | **frozen** | `2b6deb3` |
+| §0.1–§0.7, Part A except §A29 at closure, Part B M1–M8, and Part B M9's existing text | **frozen** | `2b6deb3` |
+| Any VS-02 work | out of scope | — |
+
+### 0.8.14 Baseline, regression and the gate (K3)
+
+**The pre-M9 baseline.** These are the values OBSERVED at `2b6deb3`, from M8's Phase 6 gate and
+the takeover audit. Phase 1 measures them again.
+- 6438 tests: unit 5054, contract 185, integration 1119, e2e 80; 0 failed, 0 skipped.
+- `app/` coverage 100% over 7456 statements.
+- ruff 69 (`app/ tests/ scripts/`); mypy 9 (`app/`).
+- Secret scan 0, over 325 tracked files.
+- One migration head, `070e4968a497`.
+- The golden file's sha256; `TEMPLATE_VERSION` `"1"`.
+- M7's three payload hashes: CUST-007 `e93c29cf…c946`, CUST-025 `08c99ced…8770`, CUST-036
+  `a6240ac1…b637`.
+- The fingerprint pin, `1d891b0b…`.
+- Every frozen path of §0.8.13, byte-identical to its anchor.
+- The strategy document's diff sha256, `94e4e5b2…`.
+- §0.8.8's dependency baseline: the `.venv`'s `pip freeze`, recorded with its sha256.
+
+**Every gate runs and reports the following.**
+- The full suite: counts per layer, 0 failed and 0 skipped.
+- `app/` coverage, ruff and mypy.
+- The secret scan, over the tracked files and, through `scripts/secret_scan.scan_text`, M9's
+  untracked files.
+- The head check.
+- The frozen-path diff.
+- The golden hash and the three payload hashes.
+- The strategy document's diff sha.
+- `git status`, which may show only M9's allowed paths and the strategy document.
+
+The suite runs with `RUFF_CACHE_DIR` and `MYPY_CACHE_DIR` set outside the repository, because
+I2's lint test writes caches (M8's trap).
+
+**The pass condition.**
+- Every measurement equals the baseline, with three exceptions: the test counts M9's own tests
+  add, the README quotes that match them, and the secret scan's file count.
+- Coverage stays 100% over 7456 statements, because M9 adds no production statement.
+- Any other difference stops the phase.
+- **No failure is tolerated in the interim.** Each commit updates the README counts it changes
+  (A6), so every phase ends green.
+
+### 0.8.15 Phases, gates and commits (A9)
+
+| Phase | Entry condition | Work | Exit gate | Commit, on the owner's explicit approval |
+|---|---|---|---|---|
+| **0 — Specification** | the takeover audit of 2026-09-27 | §0.8, the header's version line, the status table's date and the M9 status row, in this plan only | The self-review: only this plan changed; §0.7 and Part B M9 are byte-identical; the strategy document is untouched; nothing is staged or untracked. Then STOP for the owner's review | `M9: finalize specification`, this plan only |
+| **1 — Baseline** | commit 0 exists, and the owner says go | Measure §0.8.14's baseline. Record the dependency baseline and the observed Docker and development-database state (§0.8.8). Change no file | Every value equals §0.8.14's; otherwise STOP and report | none |
+| **2 — Fixtures** | Phase 1 is green | `tests/fixtures/vs01/`; `tests/integration/test_vs01_fixtures.py`; the README count lines | §0.8.14's gate; each §0.8.7 effect asserted; the fixture text clean under the secret scan | `M9: add the VS-01 fixture package` |
+| **3 — Acceptance script core** | commit 2 exists | First `pyproject.toml`'s three pins (§0.8.8). Then `scripts/vs01_acceptance.py`, built check by check in §0.8.5's order; `make verify-vs01`; `tests/unit/test_vs01_acceptance.py`; T-M9-1, T-M9-2 and T-M9-3, each when its test first breaks; the README count lines | The gate, plus one live `make verify-vs01` against the local PostgreSQL, run in the developer's `.venv`. That run is a development check, not evidence of record (R-M9-3). It exits 0, and every check passes except A27.10 (`SKIPPED`) and A28.citations (`OPERATOR`). The environment check accepts the installed SQLAlchemy. The isolation invariant holds (R-M9-1): the development database's revision and every table's row count, read-only before and after the run, are equal | `M9: pin the dependencies acceptance depends on` (`pyproject.toml` only), then `M9: add the VS-01 acceptance command` |
+| **4 — E2E** | commit 3 exists | `tests/e2e/test_vs01_scenario.py`; the README count lines | The gate; M8's route tests unchanged and green | `M9: prove the VS-01 scenario end to end` |
+| **5 — §A25 proof closure** | commit 4 exists | Read every mapped test and confirm its criterion (§0.8.6); T-M9-4; any missing proof, in a new file | The gate; the corpus run directly and through A27.7, with 0 failed | `M9: close the §A25 scope-leakage gap` |
+| **6 — Mutation audit** | commit 5 exists | §0.8.12, target by target | R-M9-5's rule holds: every non-equivalent mutant killed, every survivor proved equivalent with reproducible evidence, and no unexplained survivor. Every target file's sha256 equals Phase 1's. §0.8.12's evidence is recorded. Then the gate | `M9: close the mutation audit's test gaps`, only if a gap test was added |
+| **7 — Documentation** | Phase 6 has passed | The README's VS-01 section; T-M9-5; the project-context §19, up to the mutation result | The gate; every I2 test and every README-consistency test passes | `M9: document the VS-01 slice` |
+| **8 — Full acceptance** | commit 7 exists, and the owner's go for §0.8.8's environment steps | §0.8.8's fresh-environment and image checks; `scripts/vs01_acceptance.py --with-tests`, the recipe of `make verify-vs01 ARGS="--with-tests"`, run twice in the fresh environment | Both runs exit 0, every check passes except A28.citations (`OPERATOR`), and the two reports are byte-identical. The isolation invariant holds across both runs (R-M9-1). The rebuilt image's read-only check passes. The gate. The final diff audit: every file changed since `2b6deb3` is in §0.8.13's allowed set. §0.8.18's criteria | none |
+| **9 — Closure** | Phase 8 has passed | The plan's M9 status row; a closure block appended after Part B M9's existing text, giving the implementation decisions and then the CLOSED record; §A29 (§0.8.16); §19 completed | Only those paths changed. STOP | `docs: close M9 implementation plan` |
+
+**The commit rules are unchanged since M5.**
+- Nothing is staged, committed, pushed, amended or rebased without the owner's explicit
+  approval.
+- Each commit stages its files by explicit path.
+- The author and committer are the owner's identity.
+- No commit carries an attribution trailer.
+- The strategy document is never staged.
+- A push needs its own approval.
+
+### 0.8.16 Known limitations, to be carried into §A29 at closure
+
+- **The command serves its own application.** `make verify-vs01` serves the application from the
+  working tree, on a loopback socket, against its own database. It does not exercise the Docker
+  image; Phase 8 checks the rebuilt image separately.
+- **The two citations need a human.** Whether §A28's two citations mean what the brief claims is
+  a human judgement, which the command reports as `OPERATOR`. The command proves only that they
+  resolve.
+- **One run at a time.** Every run replaces the acceptance database and leaves it in place
+  afterwards, so two concurrent runs against one server collide.
+- **The database a run leaves is disposable.** After A27.8 its snapshot is no longer clean, and
+  it is never the basis of another acceptance run.
+- **Dependency determinism is partial.** Three dependency lines are pinned, and there is no lock
+  file.
+- **The mutation audit covers four targets.** Every other module relies on its milestone's tests
+  and on M7's and M8's forbidden-edit runs.
+
+### 0.8.17 Review items — R-M9-1…R-M9-6: RESOLVED 2026-09-27 (DIRECTED)
+
+Recording K1–K3 and A1–A12 against the committed code exposed six material details. Each was
+put to the owner as a proposal. The owner kept all six on 2026-09-27, with the adjustments
+recorded here. **The resolutions are authoritative.** The finding is kept, so the reason for
+each resolution survives.
+
+| # | Finding | Resolution |
+|---|---|---|
+| **R-M9-1** | §A27.1 names "a running stack", but the compose `api` service is bound to the development database and its container names and ports are fixed, so it cannot serve an isolated database without editing frozen files | `make verify-vs01` serves the real application itself, on an OS-assigned loopback socket, over its own recreated acceptance database. **It MUST NOT open, mutate, migrate, seed or otherwise depend on the ordinary development database.** It uses only its own acceptance environment. **If that environment cannot start, the command fails** with exit status 2, and it **never silently falls back to the development stack or database.** The Docker image is checked separately, in Phase 8. Applied in §0.8.4, §0.8.8, §0.8.15 and §0.8.18 |
+| **R-M9-2** | A27.8 changes the snapshot, which would disturb A27.2's filters and A27.9's brief | A27.9 is evaluated before A27.8. **A27.8 is the final state-mutating acceptance check.** After it, the acceptance environment is disposable, and it is never reused as the basis for another clean acceptance run. Applied in §0.8.4 and §0.8.5 |
+| **R-M9-3** | No lock exists, SQLAlchemy 2.1 breaks the bare URLs, and A27.10's counts depend on the tool versions | The pins are SQLAlchemy `<2.1`, ruff `0.16.7` and mypy `2.3.1`. **`pyproject.toml` is authoritative.** Acceptance verification MUST NOT depend on an existing developer `.venv`: the run of record installs from the declared configuration, and the command refuses an environment outside the declared specifiers. **The resolved SQLAlchemy version is part of the acceptance evidence.** ruff's 69 and mypy's 9 are baseline finding counts, not a declaration that those findings are acceptable in general. Applied in §0.8.4, §0.8.5 and §0.8.8 |
+| **R-M9-4** | A2 said to include M4's carried fixtures "where required by the scenario"; the scenario needs none, yet §A26 names two that have no proof | The two proofs stay: a document naming two customers, and a document naming a nonexistent customer id. **They are M9-owned fixture proofs corresponding to §A26.** They do not modify `data/demo/`, and they do not replace M4's existing fixtures. **The instruction-like document proves that document content is treated only as data, never as executable instructions.** Applied in §0.8.7 |
+| **R-M9-5** | The audit needed a binary, reproducible acceptance rule | The targets are exactly §0.8.12's four. §0.8.12 fixes the categories, the classification, the restoration and the evidence. The closure threshold is the owner's rule, verbatim: "Every non-equivalent mutant must be killed by an existing or newly authorised test. Every surviving mutant must be classified as equivalent with reproducible evidence. No unexplained survivor permits Phase 6 closure." Applied in §0.8.12 and §0.8.15 |
+| **R-M9-6** | A27.9's sequence had to rest on M8's contract, not on new behaviour | The flow is `REJECTED`, then a refused second decision, then `APPROVED`. The refused decision is M8's `409 DECISION_CONFLICT` (`SUPERSEDES_REQUIRED`). It is raised at §0.7.7 step 5, before the insert, so **it creates no decision row**, changes no table and emits no event. The history is two rows in chain order, `REJECTED` then `APPROVED`, and the rejection stays recorded. Each step cites its M8 contract clause and committed test. Applied in §0.8.5 |
+
+### 0.8.18 M9 acceptance criteria and closure
+
+M9 passes **only if every criterion below holds.** Each is binary, at
+`ACCEPTANCE_AS_OF = 2026-09-18` over the clean full-dataset path. A measurement that differs
+from an expected value is **reported, not accommodated** (§0.3.8).
+
+| # | Criterion | Evidence |
+|---|---|---|
+| 1 | Every §A27 criterion passes | Phase 8's `make verify-vs01 ARGS="--with-tests"`: A27.1…A27.10 all `PASS` |
+| 2 | A27.1b fails closed on a deliberately mismatched fingerprint | A27.1b (i); A27.8 (iii), on a genuinely changed snapshot; the e2e contamination test |
+| 3 | The clean canonical state produces the expected 233-row dataset | A27.1 |
+| 4 | Only CUST-007 is CRITICAL and executive-worthy | A27.2 |
+| 5 | The §A28 HTTP flow passes | the e2e test; A27.1b–A27.9, as §0.8.5 maps §A28's steps |
+| 6 | The two hand citations are explicit `OPERATOR` checks | A28.citations; the README's hand check |
+| 7 | All fourteen §A25 tests are green, with T-M9-4 closing test 9's identity gap | A27.7; Phase 5's gate |
+| 8 | Determinism is shown from a clean, recreated environment | two Phase 8 runs with byte-identical reports; A27.8 (i); the e2e report identity |
+| 9 | Decision history stays append-only and correctly ordered | A27.9 (iv) and (v) |
+| 10 | No executable approval, refusal or rejection path is introduced | A27.9 (vi); `tests/unit/test_m8_boundary.py`'s no-executor checks, unchanged, inside A27.10 |
+| 11 | Every authorised M9 test evolution passes | T-M9-1…T-M9-5, in the suite |
+| 12 | All frozen M1–M8 behaviour stays green | A27.10; the frozen-path diff |
+| 13 | Coverage stays at 100% | A27.10: 100% over 7456 statements |
+| 14 | ruff, mypy and the secret scan stay at baseline | A27.10: 69, 9 and 0 |
+| 15 | Exactly one migration head remains | A27.1 and A27.10: `070e4968a497` |
+| 16 | The mutation audit leaves no unexplained non-equivalent survivor: R-M9-5's rule holds | §0.8.12's evidence |
+| 17 | Every modified file is in §0.8.13's allowed set | Phase 8's diff audit |
+| 18 | Every M9 change is reproducible by a reviewer | Phase 8's fresh environment and rebuilt image; the README's procedure |
+| 19 | **Isolation (R-M9-1):** no acceptance run opens, mutates, migrates or seeds the development database, and none falls back to the development stack | The development database's revision and every table's row count, equal before and after each Phase 3 and Phase 8 run; the unit tests of the exit-2 paths |
+| 20 | **Declared environment (R-M9-3):** the run of record resolves from `pyproject.toml`, satisfies its specifiers, and reports its resolved SQLAlchemy version | Phase 8's fresh environment; the environment check; A27.1's and A27.10's evidence lines |
+
+**The tooling gate is unchanged.** M9 does not close until `pytest`, `ruff` and `mypy` have
+actually been **run** and their results reported.
+
+**Closure (Phase 9).**
+- **The status row.** The M9 row becomes COMPLETE, naming its commits and its measurements.
+- **Part B M9.** A block is appended after Part B M9's existing text. It holds the implementation
+  decisions, recorded before closure, each owner ruling made during implementation, and then a
+  CLOSED record. That record covers the acceptance command and its final report, the tests, the
+  fixture package, the mutation results per target, and the regression.
+- **§A29.** It gains §0.8.16's items.
+- **The project context.** Its §19 is completed.
+- **No version line.** The plan header gains no version line unless the owner asks for one, as
+  the owner ruled at M8's closure.
+- **Stop.** Closure stops before any commit.
 
 ---
 
