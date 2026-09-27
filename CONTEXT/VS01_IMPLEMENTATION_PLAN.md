@@ -30,7 +30,7 @@ resolved (§0.8)**
 | **M6** — conflict detection and reconciliation | **COMPLETE** | `app/decisions/` — `policy.py`, `conflicts.py`, `reconciler.py` and the initialiser, exactly; `config/intelligence/{action_catalogue,conflict_policy}.yaml`; `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py`, `tests/unit/m6_support.py` and `tests/integration/test_m6_reconciliation.py`; specification `1d1ee59` (§0.5, eleven decisions D-M6-B1…B11), implementation `fd3a7e0`. All twenty-one §0.5.14 criteria asserted; only T-M6-1…T-M6-3 were needed. Measured at `fd3a7e0`: **5533** tests (unit 4518, contract 185, integration 750, e2e 80), 0 skipped, `app/` coverage **100%** (6347 statements), ruff 69, mypy 9, secret scan 0 over 292 files, **one** migration head `c4a1e97d5b02` and **no** new migration. `app/intelligence/`, `app/relationships/`, `app/evidence/`, `app/persistence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`. Closure notes: Part B M6 |
 | **M7** — brief assembly, hashing and persistence | **COMPLETE** | `app/decisions/` — `assessment.py`, `payload.py`, `brief.py` and `templates/brief.txt`; `app/persistence/models/risk_{assessment,position,brief}.py`, `app/persistence/repositories/{risk_assessments,citation_reads}.py`, migration `66eddc6b7136` chained after `c4a1e97d5b02` (one head); `tests/unit/test_m7_{payload,brief,boundary}.py`, `tests/unit/m7_support.py`, `tests/integration/test_m7_{assessment,migration,persistence}.py` and the golden file `tests/golden/vs01_cust007_brief.txt`; specification `5f19144` (§0.6: D-M7-B1…B12, MP1–MP6), implementation `1efea45`. Every §0.6.15 criterion is asserted, criterion 11 under the Q1 = A reading recorded in Part B; T-M7-1…T-M7-4 were used, and T-M7-5 was not needed. Measured at `1efea45`: **5962** tests (unit 4813, contract 185, integration 884, e2e 80), 0 skipped, `app/` coverage **100%** (7022 statements), ruff 69, mypy 9, secret scan 0 over 292 tracked files, **one** migration head `66eddc6b7136`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`; `app/persistence/` changed only by the additive registration. Closure notes: Part B M7 |
 | **M8** — API and the human approval boundary | **COMPLETE** | `app/decisions/approval.py`; `app/api/v1/risk.py` (the six routes of §0.7.8), with additive changes to `app/api/v1/schemas.py`, `app/api/v1/router.py` and `app/api/errors.py` (six error codes); `app/persistence/models/brief_decision.py`, `app/persistence/repositories/{brief_decisions,risk_queries}.py`, migration `070e4968a497` chained after `66eddc6b7136` (one head); `tests/unit/test_m8_{boundary,api_schemas}.py` and `tests/integration/test_m8_{api,api_contract,approval,migration}.py`; specification `0f88921` (§0.7: X1–X10, OPEN-M8-1…OPEN-M8-20, Q-M8-1…Q-M8-4), implementation `88771d2`. Every §0.7.19 criterion is asserted, by tests, gate measurements or structural evidence. T-M8-1…T-M8-8 and T-M8-10 were used, and T-M8-9 was not needed. Measured at the Phase 6 gate, on the tree committed as `88771d2`: **6438** tests (unit 5054, contract 185, integration 1119, e2e 80), 0 skipped, `app/` coverage **100%** (7456 statements), ruff 69, mypy 9, secret scan 0 over 322 files, **one** migration head `070e4968a497`. `app/intelligence/`, `app/relationships/`, `app/evidence/` byte-identical to `65eb462`, `app/analysts/` to `d48c970`, the four M6 modules and `config/` to `fd3a7e0`, M7's modules, models, repositories and migration to `1efea45`; `app/persistence/` and `app/api/` changed only as §0.7.15 allows. Closure notes: Part B M8 |
-| **M9** — acceptance, evaluation and hardening | **SPECIFIED — not started** | §0.8, recorded 2026-09-27 against `2b6deb3`: the three contradictions K1–K3 and the twelve ambiguities A1–A12 resolved as directed, the test evolution T-M9-1…T-M9-5, and the six review items R-M9-1…R-M9-6 of §0.8.17, answered by the owner the same day. **No specification item gates implementation any longer; it begins only on the owner's instruction, after §0.8 is committed on its own.** Nothing is implemented: no script, fixture package or test exists |
+| **M9** — acceptance, evaluation and hardening | **COMPLETE** | `scripts/vs01_acceptance.py` and `make verify-vs01` (§0.8.4, §0.8.5); §0.8.8's three pins in `pyproject.toml`; the fixture package `tests/fixtures/vs01/`; `tests/unit/test_vs01_acceptance.py`, `tests/integration/test_vs01_{fixtures,a25_closure,mutation_closure}.py` and `tests/e2e/test_vs01_scenario.py`; the README's VS-01 section and `CONTEXT/AI_CEO_PROJECT_CONTEXT.md` §19; specification `79f8d9e` (§0.8: K1–K3, A1–A12, R-M9-1…R-M9-6), implementation `7a410a5`, `c50ecb4`, `a801ce7`, `5c05f68`, `e643d27`, `0769441` and `17de05f`. Every §0.8.18 criterion holds, criterion 17 under the owner's ratification of 2026-09-27 recorded in Part B M9: §0.8.13's table omitted `tests/integration/test_vs01_a25_closure.py`, which §0.8.6 and §0.8.15 authorise. T-M9-1…T-M9-5 were all used. The run of record (Phase 8), in a fresh environment installed from `pyproject.toml` (SQLAlchemy 2.0.54, ruff 0.16.7, mypy 2.3.1): two `--with-tests` runs, both exit 0, A27.1…A27.10 `PASS` and A28.citations `OPERATOR`, byte-identical reports; the development database's revision and row counts unchanged. **6771** tests (unit 5287, contract 185, integration 1214, e2e 85), 0 skipped, `app/` coverage **100%** (7456 statements), ruff 69, mypy 9, secret scan 0, **one** migration head `070e4968a497`. Mutation audit: 274 mutants, 237 killed by existing tests, 23 by newly authorised tests, 14 equivalent with written proofs, 0 unexplained. `app/`, `config/`, `migrations/`, `data/`, `tests/golden/` and the Docker files byte-identical to `2b6deb3`: **M9 changed no production code**. Closure notes: Part B M9 |
 
 Sections A1–A31 are specification and are **not** a record of what is built. A milestone is
 complete only when Part B says so above and a commit is named. Do not begin a milestone until the
@@ -7164,7 +7164,21 @@ approval record is a governance record, not a security control (strategy §9.3; 
 orders a brief's history (§0.7.17); **`vs01.decision_recorded` is not transactional**, as M7's
 events are not (§0.6.11; §0.7.17); **a policy-only change answers `200`** (X8) — it adds a new
 brief under an existing assessment, with every `created` false. The frozen `AssessmentResult`
-carries no brief-creation flag, and X8 forbids inferring one (§0.7.17).
+carries no brief-creation flag, and X8 forbids inferring one (§0.7.17); **`make verify-vs01`
+serves its own application** — the working tree, on a loopback socket, against its own
+recreated database. It does not exercise the Docker image, which Phase 8 checked separately
+(§0.8.16); **the two hand citations need a human** — the command proves that §A28's DOC-003 and
+DOC-009 spans resolve, and reports whether they mean what the brief claims as an `OPERATOR`
+check (§0.8.16); **one acceptance run at a time** — every run replaces `<configured
+database>_vs01` and leaves it in place, so two concurrent runs against one server collide
+(§0.8.16); **the database a run leaves is disposable** — past A27.8 its snapshot is no longer
+clean, and it is never the basis of another acceptance run (R-M9-2; §0.8.16); **dependency
+determinism is partial** — three dependency lines are pinned and there is no lock file, so a
+fresh environment resolves every other package afresh. Phase 8's resolved eight of them to newer
+versions than the developer `.venv`, each within its declared bound (§0.8.8; §0.8.16); **the
+mutation audit covers four targets** — the signal engine, the band table, the conflict policy
+and the linker. Every other module relies on its milestone's tests and on M7's and M8's
+forbidden-edit runs (§0.8.12; §0.8.16).
 
 ### A30. Reusable foundations this slice establishes
 
@@ -7964,6 +7978,410 @@ for VS-02.
 
 **Non-goals.** Starting VS-02; generalising any slice-local component before its second consumer
 exists.
+
+**Status: COMPLETE — implementation `7a410a5`…`17de05f`, 2026-09-27.** This block is appended at
+closure (§0.8.18). The text above is Part B M9's original description, byte-identical since v2
+(`c4496c7`); A1 keeps it, and §0.8 governs wherever it is coarser. §0.8 was committed on its own
+as `79f8d9e`. Implementation began on the owner's instruction on 2026-09-27 and ran in §0.8.15's
+phases:
+
+| Commit | Phase | Change |
+|---|---|---|
+| `7a410a5` | 2 | `M9: add the VS-01 fixture package`: `tests/fixtures/vs01/` and `tests/integration/test_vs01_fixtures.py` |
+| `c50ecb4` | 3 | `M9: pin the dependencies acceptance depends on`: `pyproject.toml` only (§0.8.8) |
+| `a801ce7` | 3 | `M9: add the VS-01 acceptance command`: the script, `make verify-vs01` and `tests/unit/test_vs01_acceptance.py`; T-M9-1, T-M9-2 and T-M9-3 |
+| `5c05f68` | 4 | `M9: prove the VS-01 scenario end to end`: `tests/e2e/test_vs01_scenario.py` |
+| `e643d27` | 5 | `M9: close the §A25 scope-leakage gap`: T-M9-4, and `tests/integration/test_vs01_a25_closure.py` (decision 1 below) |
+| `0769441` | 6 | `M9: close the mutation audit's test gaps`: `tests/integration/test_vs01_mutation_closure.py` |
+| `17de05f` | 7 | `M9: document the VS-01 slice`: the README's VS-01 section; T-M9-5; `CONTEXT/AI_CEO_PROJECT_CONTEXT.md` §19 up to the mutation result |
+
+Phase 1 (the baseline) and Phase 8 (the run of record) are verification phases and made no
+commit, as §0.8.15 specifies. Phase 9 is documentation closure only: this block, the status row,
+§A29 and the rest of the project-context §19. **No production code changed in any phase.**
+Nothing under `app/`, `config/`, `migrations/` or `data/` changed, and no golden file or Docker
+file. Outside tests and documentation, M9 added `scripts/vs01_acceptance.py` and the `Makefile`'s
+`verify-vs01` target, and pinned three lines of `pyproject.toml`.
+
+**Implementation decisions, recorded before closure — 2026-09-27.** Implementation is complete
+and verified on top of `79f8d9e`. The closure record below carries these four forward. None of
+them changes a directed decision, and §0.8's text is not edited. Each one says how §0.8 was
+applied where its text alone did not settle a path, a count or a gate result. Decisions 1, 2 and
+4 are owner rulings; decision 3 is a finding reported at Phase 2.
+
+1. **§0.8.13's allowed-path table omitted the file of §A25 test 10's proof (owner ratification,
+   2026-09-27).**
+   - Phase 5 re-read every mapped test against its criterion (§0.8.6). §A25 test 10 says that
+     the 15 ticketless customers "include all 4 inactive ones", and no mapped test asserted that
+     subset. `test_all_fifteen_ticketless_customers_band_none` asserts that fifteen customers
+     band `NONE`, and `test_only_cust_007_is_executive_worthy` that only CUST-007 is worthy.
+     Neither asserts that the four inactive customers are among the fifteen.
+   - §0.8.6 directs that a missing proof "is added in a new file (§0.8.13)", and §0.8.15's Phase 5
+     row lists "any missing proof, in a new file". The proof is
+     `tests/integration/test_vs01_a25_closure.py::test_the_four_inactive_customers_are_ticketless_and_yield_none_not_worthy`.
+     Over one pinned run's stored assessments, the inactive set is exactly CUST-002, CUST-013,
+     CUST-027 and CUST-034; all four are ticketless; 15 customers are ticketless; and every
+     ticketless customer is `NONE` and not worthy. It was falsified three ways on a scratch
+     database: an inactive customer given a ticket, a ticketless customer banded `WATCH`, and one
+     made worthy. No existing test changed for it. `A25_PROOFS` gained its node under test 10, so
+     the corpus is 31 node ids, collecting 44 tests.
+   - Phase 8 identified that §0.8.13's explicit allowed-path table omitted
+     `tests/integration/test_vs01_a25_closure.py`, despite §0.8.6 and §0.8.15 expressly
+     authorising a new file for a missing §A25 proof. Owner ratification on 2026-09-27 resolves
+     this internal specification omission and authorises the file for M9 closure.
+   - **§0.8.13 is clarified accordingly.** Its first row reads as including
+     `tests/integration/test_vs01_a25_closure.py`, created in Phase 5 as §0.8.6 and §0.8.15
+     direct. §0.8.13's committed text is left as `79f8d9e` recorded it, as the M7 and M8 closures
+     left §0.6 and §0.7, so the omission stays visible. Criterion 17 holds under this
+     ratification. It did not hold under §0.8.13's table as originally written, and it is not
+     recorded as having done so. The proof was not moved into another file to make the table
+     appear compliant, and no other file changed since `2b6deb3` falls outside the table.
+2. **The README's count lines are Phase 2's by §0.8.15, not by T-M9-5 (owner authorisation,
+   2026-09-27).** The owner's Phase 2 instruction excluded README edits, while §0.8.15's Phase 2
+   row lists "the README count lines". The Phase 2 gate therefore failed on exactly one
+   assertion, `tests/unit/test_i2_readme.py::test_the_test_counts_the_readme_quotes_are_the_counts`
+   (1190 integration tests collected, 1119 quoted). The owner authorised exactly three count
+   updates: the two quoted totals, `6438` → `6509`, and the integration count, `1119` → `1190`.
+   Their authority is §0.8.11, §0.8.13 and §0.8.15's row; T-M9-5 is Phase 7's
+   `test_i2_readme.py` edit. Every later phase updated only its own count lines, in the same way,
+   and every commit ended green (§0.8.14).
+3. **§0.8.7 miscounts its material entries.** It says "The other six are the package's
+   material", but its own table gives seven: the five delta directories and the two loaders,
+   `no_doc005` and `scaled_amounts`. The package follows the table. The finding was reported at
+   Phase 2, whose evidence the owner accepted, and §0.8.7's text is left unchanged.
+4. **The Phase 7 gate's third warning predates M9 (owner ruling, 2026-09-27).** Every gate from
+   Phase 1 to Phase 6 reported the two third-party deprecation warnings of M8's gate. Phase 7's
+   reported three. The third is pydantic's `UnsupportedFieldAttributeWarning`, raised inside the
+   frozen
+   `tests/integration/test_m8_api.py::test_two_concurrent_identical_requests_converge_on_one_result_set`.
+   It reproduced independently against the frozen code, in about one of five isolated runs of
+   that test alone. It is thread-timing nondeterminism that predates M9, not an M9 regression.
+   The gate results are recorded as measured, and none is rewritten.
+
+**CLOSED — 2026-09-28** (specification `79f8d9e`; implementation `7a410a5`…`17de05f`). §0.8.15's
+Phase 8 gate passed on 2026-09-27, with criterion 17 under decision 1. Every §0.8.18 criterion
+holds, by the run of record, the suite, the gate measurements or the audits below.
+
+- **The acceptance command.** `make verify-vs01` runs `scripts/vs01_acceptance.py` (§0.8.4).
+  - It recreates `<configured database>_vs01` (`ai_ceo_layer1_vs01` on the default settings)
+    through the `postgres` maintenance database, and migrates it to the one head.
+  - It serves `app.main.create_app` from an in-process uvicorn server on an OS-assigned
+    `127.0.0.1` port, and runs §0.8.5's twelve checks in R-M9-2's order.
+  - Its Layer 2 imports are exactly `run_assessment`, `FingerprintMismatchError` and
+    `default_risk_rules` (K1). It is the one module G2's HTTP-client and subprocess sets gained
+    (K2).
+  - Every `run_assessment` call carries `expected_fingerprint`. The only unpinned run is A27.8
+    (iv)'s `POST` to M8's published route, after the pinned run has refused the changed snapshot.
+  - Before anything starts, it checks the installed SQLAlchemy, and under `--with-tests` ruff and
+    mypy, against `pyproject.toml`'s specifiers (R-M9-3). If its environment cannot start, it
+    exits 2; it never falls back (R-M9-1).
+- **The run of record (Phase 8).**
+  - *Environment.* A fresh virtual environment in the scratchpad, never the developer `.venv`:
+    Python 3.11.5, with `pip install -e ".[dev]"` from the pinned `pyproject.toml`, 55 packages
+    (`pip freeze --exclude-editable` sha256 `0ddc3771…`). It resolved SQLAlchemy 2.0.54, ruff
+    0.16.7 and mypy 2.3.1. Eight unpinned packages resolved newer than in the developer `.venv`,
+    each within its declared bound: coverage 7.16.2, Mako 1.4.3, platformdirs 4.12.0, pytest-mock
+    3.16.0, pytz 2026.4, starlette 1.7.0, types-pytz 2026.4.0.20260926 and uvicorn 0.54.0.
+  - *Runs.* `scripts/vs01_acceptance.py --with-tests`, the recipe of
+    `make verify-vs01 ARGS="--with-tests"`, ran twice in it. Both exited 0. Their reports are
+    byte-identical (sha256 `52ed908e…b507`), and are reproduced after this list.
+  - *Operator-only.* A28.citations is `OPERATOR` by design (A12). The command proves that DOC-003
+    `[238, 330)` and DOC-009 `[238, 333)` resolve and read back exactly. Whether they mean what
+    the brief claims is the reviewer's judgement, made by hand as the README's VS-01 section
+    describes. This record states no reviewer judgement; criterion 6 requires only that the
+    check is explicit.
+  - *Isolation (R-M9-1; criterion 19).* The development database (`8bfd73b6af60`) was read by a
+    read-only snapshot before, between and after the two runs. Its revision and every table's
+    row count were identical each time. The same held around every development run of
+    Phases 3–5. `tests/unit/test_vs01_acceptance.py` covers every exit-2 path, and four were
+    exercised live at Phase 3: a database name the guard refuses, an unreachable PostgreSQL,
+    `--timeout 0`, and a `--base-url` option, which the command does not have.
+  - *The rebuilt image (§0.8.8 step 2).* `docker compose build api` built
+    `finalyearproject-api:latest` as `645a7f3d…` from the pinned `pyproject.toml`; the image holds
+    SQLAlchemy 2.0.54. One throwaway container, `vs01-image-check`, ran it on the compose network.
+    Its port was published on `127.0.0.1` at a port Docker assigned, and it pointed read-only at
+    the acceptance database the second run left, which is past A27.8 (R-M9-2). Health reported
+    the database `ok`. OpenAPI published exactly the six risk operations and the three non-GET
+    operations. `GET /api/v1/risk/assessments?executive_worthy=true` answered `200` with two
+    rows, both CUST-007 and `CRITICAL`, one per fingerprint (`1d891b0b…` and `59487e17…`). The
+    container was removed.
+  - *The diff audit (criterion 17).* Every file changed since `2b6deb3` is in §0.8.13's table,
+    except the one file decision 1 ratifies. The owner's strategy document is modified in the
+    working tree, and is in no M9 commit.
+- **The tests.** M9's five new files hold 332 tests: `tests/unit/test_vs01_acceptance.py` 232,
+  `tests/integration/test_vs01_fixtures.py` 71, `tests/e2e/test_vs01_scenario.py` 5,
+  `tests/integration/test_vs01_a25_closure.py` 1 and
+  `tests/integration/test_vs01_mutation_closure.py` 23. T-M9-5's options-table parametrisation
+  adds the 333rd (`test_i2_readme.py`, 30 → 31). T-M9-1…T-M9-4 changed assertions, not counts.
+  Falsifiability checks ran outside §0.8.12's audit, and every file they mutated was restored and
+  hash-verified:
+  - Phase 3: 19 mutants of the script. 18 were killed, two of them only after the unit tests the
+    check prompted. The nineteenth, removing the guard's `_test` clause, is equivalent, because
+    the `_vs01` pattern already excludes such a name.
+  - Phase 4: 5 mutants against the e2e file. All were killed, the fifth after the ordered-write
+    assertion was added.
+  - Phase 5: three `brief.py` leaks against T-M9-4, and three data changes against decision 1's
+    proof. Each was caught.
+  - Phase 7: four README mutants. Each was caught.
+- **The fixture package (§0.8.7).** `tests/fixtures/vs01/` holds the manifest (the baseline and
+  the ten §A26 entries), the loader with its guard, and five delta directories.
+  - The loader refuses a database whose name ends in neither `_test` nor `_vs01`.
+  - The reserved ids are DOC-951…DOC-956 and TKT-950. CUST-950 and CUST-951 exist in no
+    `customers` row.
+  - M9's four new proofs are: the converse of §A25 test 7 (`name_substring`); a document naming
+    two customers (`two_customers`); a document naming a nonexistent customer id
+    (`unknown_customer_id`); and instruction-like text that changes no band, signal, escalation,
+    conflict, resolution or dissent, and approves nothing (`instruction_text`).
+  - Measured, and recorded in the manifest: `scaled_amounts` leaves the fingerprint at the pin,
+    because a Core update does not recompute `record_hash`.
+- **The §A25 corpus (§0.8.6).** 31 node ids, collecting 44 tests: §0.8.6's thirty, and decision
+  1's proof. T-M9-4 closes test 9's gap: no brief of one customer holds another customer's
+  `source_id`, name or email, in its payload or its narrative. The corpus passed directly at
+  Phase 5's gate, and in every A27.7 run (44 passed).
+- **The mutation audit (§0.8.12; R-M9-5; criterion 16).**
+  - *Specification.* 274 mutants in four JSON specifications, fixed before the first run. They
+    total 61603 bytes, with sha256
+    `995517d0ad5c2b06646d775a8b53358d0e9c3939ab8abe7f9a508a3a84d8cd8a` over the four
+    concatenated in the order signal engine, band table, conflict policy, linker. They cover every
+    §0.8.12 category, and every public function and branch of the nine target files. The harness
+    and the specifications are scratchpad tools, outside the repository.
+  - *Harness.* One mutant at a time. Each anchor must match exactly once. Each run sets
+    `PYTHONDONTWRITEBYTECODE=1` and a fresh `PYTHONPYCACHEPREFIX`, and runs
+    `.venv/bin/python -m pytest -x -q -p no:cacheprovider -o addopts= <kill set>` in the developer
+    `.venv` (Python 3.11.5, SQLAlchemy 2.0.54, pytest 9.1.1), on the suite's own `_test` database.
+  - *Kill sets.* Each target's milestone files come first:
+    - signal engine and band table: `tests/unit/test_m3_{windows,bands,boundary}.py` and
+      `tests/integration/test_m3_signals.py`;
+    - conflict policy: `tests/unit/test_m6_{policy,conflicts,reconciler,boundary}.py` and
+      `tests/integration/test_m6_reconciliation.py`;
+    - linker: `tests/unit/test_m4_{linker,signals,boundary}.py` and
+      `tests/integration/test_m4_{evidence,migration}.py`.
+
+    Then come the node ids of §0.8.6's table that lie outside those files. The kill sets were
+    built from `A25_PROOFS` before Phase 5 added decision 1's node, so
+    `tests/integration/test_vs01_a25_closure.py` is in none of them. That matches §0.8.12's "the
+    §A25 corpus (§0.8.6)" as §0.8.6's table states it. An added test can only kill more, so the
+    node's absence cannot hide a survivor, and no equivalence proof below depends on a kill set.
+    Whether the node would kill any of the 23 mutants attributed to newly authorised tests was
+    not measured; that could only move a mutant between the two killed classes.
+  - *Results.*
+
+    | Target | Files | Mutants | Killed | Killed under a named condition | Killed by a newly authorised test | Equivalent | Malformed and redone |
+    |---|---|---|---|---|---|---|---|
+    | Signal engine | `signals.py`, `windows.py`, the signal inputs of `risk_rules.yaml` | 87 | 65 | 0 | 14 | 8 | 0 |
+    | Risk-band table | `bands.py`, the band table | 58 | 54 | 0 | 4 | 0 | 0 |
+    | Conflict policy | `conflict_policy.yaml`, `policy.py`, `conflicts.py`, `reconciler.py` | 97 | 93 | 0 | 2 | 2 | 0 |
+    | Linker | `linker.py` | 32 | 25 | 0 | 3 | 4 | 0 |
+    | **Total** | | **274** | **237** | **0** | **23** | **14** | **0** |
+
+  - *Newly authorised tests.* The 37 first-run survivors ran again with
+    `tests/integration/test_vs01_mutation_closure.py` prepended to their kill sets. Its 23 tests,
+    each named for its mutant, killed 23 of them. The other 14 survived again, and each is proved
+    equivalent below. **No survivor exposed a production defect.**
+  - *Restoration.* After every mutant, the harness restored the file and checked its sha256
+    against its Phase 1 value before the next mutant; a mismatch would have aborted the audit, and
+    none occurred. After the audit, and again at this closure, every target file equals its
+    Phase 1 sha256: `signals.py` `d960c3ff…`, `windows.py` `9141df0d…`, `bands.py` `07506cf8…`,
+    `risk_rules.yaml` `40794928…`, `conflict_policy.yaml` `3b3668b7…`, `policy.py` `a3939b5c…`,
+    `conflicts.py` `ed7d71c8…`, `reconciler.py` `7f61fe56…` and `linker.py` `4890df43…`.
+    `git diff` shows no change under `app/` or `config/`.
+- **Regression (§A27.10 under K3; criteria 11–15).** A27.10 passed in both runs.
+  - The full suite: 6771 tests, 0 failed and 0 skipped. That is unit 5287, contract 185,
+    integration 1214 and e2e 85, as Phase 7's gate counted them on the same tree.
+  - `app/` coverage 100% over 7456 statements.
+  - ruff 0.16.7: 69, the same finding set at every gate; mypy 2.3.1: 9; secret scan 0; one head,
+    `070e4968a497`.
+  - The golden file is byte-identical (sha256 `87d13986…9dce`), and `TEMPLATE_VERSION` is `"1"`.
+    M7's three payload hashes are unchanged, and the fingerprint pin `1d891b0b…` matched.
+  - Every §0.8.13 frozen path is byte-identical to its anchor. T-M9-1…T-M9-5 are the only test
+    evolution.
+  - M9 added no ruff or mypy finding and fixed none. 69 and 9 are baseline counts, not an
+    acceptance of those findings (R-M9-3).
+- **The Docker environment, and an incident during Phase 5 (2026-09-27).**
+  - *The incident.* While drafting the README's VS-01 prose, the implementer passed text
+    containing backtick-quoted spans through an unquoted shell heredoc, so the shell executed
+    them as commands. The captured output shows three spans executed: the plan's path (refused,
+    not executable), a route path (no such file) and `make docker-up`
+    (`docker compose up --build -d`). The command was stopped about two minutes into the image
+    build, and the output shows nothing after the stop.
+  - *Observed effect.* The build had completed the mock-source image, so the local tag
+    `finalyearproject-mock-source:latest` moved to a rebuilt image, `e43ea4398f51`. Its inputs
+    were unchanged: `docker/Dockerfile.mock-source`, `docker/mock_source.py` and `data/demo/` on
+    `python:3.11-slim`, none changed since 2026-09-16. The previous image record, `56ceb3a3…`,
+    could not be re-tagged, because Docker's image store no longer resolved it. The interrupted
+    API build left `finalyearproject-api:latest` where it was.
+  - *Observed non-impact.* No container was recreated; all three development containers kept
+    running from 2026-09-16. The development database was identical to its Phase 3 snapshot, and
+    the repository and the `.venv` were unchanged.
+  - *Reported.* The incident was reported to the owner. From then on, text containing backticks
+    was written only with the file tools or a quoted heredoc.
+  - *The authorised rebuild.* Phase 8's `docker compose build api` (§0.8.8 step 2) moved
+    `finalyearproject-api:latest` to `645a7f3d…`, as intended, and its throwaway-container check
+    passed (above).
+  - *The state M9 leaves.*
+    - The development containers `ai-ceo-api`, `ai-ceo-postgres` and `ai-ceo-mock-source` were
+      never recreated. They still run their 2026-09-16 images, and that API image publishes no
+      `/risk` route.
+    - The development database is still at `8bfd73b6af60`, with its 233 clean rows.
+    - Both `finalyearproject-*:latest` tags now name rebuilt images. Recreating the containers,
+      for example with the next `make docker-up`, would start them from those images.
+    - M9 migrated and wrote nothing in the development stack. Whether to migrate and recreate it
+      is the owner's decision, outside M9 (§0.8.8 step 3), and §A28's manual demo against the
+      development stack needs both first.
+    - The acceptance database the last run left, `ai_ceo_layer1_vs01`, was left in place by
+      design, and it is disposable (R-M9-2).
+- **Frozen at closure.** M9 is closed, and with it VS-01 (M1–M9). The following are frozen as
+  committed:
+  - every file under `app/`, byte-identical since `88771d2`;
+  - `config/` (`fd3a7e0`);
+  - `migrations/`, with its one head `070e4968a497`;
+  - `data/` (`b2d588d`);
+  - `tests/golden/` (sha256 `87d13986…9dce`);
+  - the Docker files;
+  - `pyproject.toml`'s three pins (`c50ecb4`);
+  - the acceptance command, the fixture package and every test as they stand at `17de05f`;
+  - §0.8.
+
+  A change to any of them reopens its milestone and needs its own specification first, as
+  M5–M9 did. VS-02 has not started.
+- **Known limitations.** §0.8.16's six limitations are carried into §A29, and the README's VS-01
+  section summarises them for a reviewer.
+
+**The run-of-record report.** Both Phase 8 runs printed exactly this:
+
+```
+verify-vs01: A27.1         clean_dataset        PASS      sqlalchemy 2.0.54; head 070e4968a497; organizations 1, employees 24, customers 50, deals 44, projects 22, support_tickets 80, documents 12; 233 fetched, 0 rejected: SUCCESS then NOOP
+verify-vs01: A27.1b        pinned_fingerprint   PASS      pinned 1d891b0b matched; deliberate mismatch refused, 0 rows written; 50 assessments, 3 briefs
+verify-vs01: A27.2         single_escalation    PASS      50 assessments; CUST-007 alone is CRITICAL and executive-worthy
+verify-vs01: A27.3         brief_facts          PASS      payload_hash e93c29cf; narrative equals the golden file (12474 bytes); the 10 facts of A27.3; 36 citations
+verify-vs01: A27.4         no_active_project    PASS      no active project, in the payload and the narrative
+verify-vs01: A27.5         conflict_and_dissent PASS      CONF-001 over DEAL-001: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED wins; ACCELERATE_DEAL_CLOSE dissents with 3 citations
+verify-vs01: A27.6         citations_resolve    PASS      80 distinct citations across 50 assessments and 3 briefs resolve; 3 cited spans read back exactly
+verify-vs01: A27.9         approval_boundary    PASS      REJECTED recorded; a second decision without supersedes_id refused (409 SUPERSEDES_REQUIRED); APPROVED supersedes it; history of 2 in chain order; status DRAFT; append-only held; 3 writes, 6 risk operations
+verify-vs01: A27.8         determinism          PASS      re-run 200: identical hashes, 0 rows; one extra ticket: pinned run refused, unpinned run 201 with 50 new assessments
+verify-vs01: A27.7         named_tests          PASS      44 passed: A25 tests 1-14 and 13b
+verify-vs01: A27.10        regression           PASS      6771 passed; coverage 100% over 7456 statements; ruff 0.16.7: 69; mypy 2.3.1: 9; secret scan 0; head 070e4968a497
+verify-vs01: A28.citations hand_citations       OPERATOR  operator step: in data/demo/documents.csv, confirm DOC-003 [238, 330) reads "Customers raising three or more tickets within 14 days are escalated to their account owner."; DOC-009 [238, 333) reads "The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them."; DOC-003 states the escalation rule, and DOC-009 ties DEAL-001 to the tickets
+verify-vs01: 11 passed, 0 failed, 0 skipped, 1 operator
+```
+
+**The fourteen equivalent mutants: §0.8.12's evidence, verbatim.** Each triple below is
+`[path, anchor, replacement]`, exactly as the harness applied it. The strings are JSON, so `\n` is
+a newline, and each mutant can be applied by hand and run again; at this closure every anchor
+still matches its file exactly once. The command is the harness's (above), over the target's kill
+set. The outcome was green twice: first alone (signal engine 278 passed, conflict policy 403,
+linker 282), then with `tests/integration/test_vs01_mutation_closure.py` prepended (301, 426 and
+305).
+
+```json
+{
+ "SIG-05": ["app/intelligence/signals.py", "(resolved is not None and resolved <= as_of)", "(resolved is not None and resolved < as_of)"],
+ "SIG-15": ["app/intelligence/signals.py", "            .order_by(model.source_id)\n        ).all()\n        notes.extend(", "            .order_by(model.source_id.desc())\n        ).all()\n        notes.extend("],
+ "SIG-45": ["app/intelligence/signals.py", "currencies = sorted({deal.amount.currency for deal in deals})", "currencies = sorted({deal.amount.currency for deal in deals}, reverse=True)"],
+ "SIG-50": ["app/intelligence/signals.py", "    if not source_ids:\n        return ()\n    rows = session.execute(\n        select(\n            SupportTicket", "    if source_ids is None:\n        return ()\n    rows = session.execute(\n        select(\n            SupportTicket"],
+ "SIG-55": ["app/intelligence/signals.py", "    if not source_ids:\n        return ()\n    rows = session.execute(\n        select(Deal", "    if source_ids is None:\n        return ()\n    rows = session.execute(\n        select(Deal"],
+ "SIG-57": ["app/intelligence/signals.py", "        .order_by(Project.source_id)", "        .order_by(Project.source_id.desc())"],
+ "SIG-58": ["app/intelligence/signals.py", "    if not source_ids:\n        return 0", "    if source_ids is None:\n        return 0"],
+ "WIN-19": ["app/intelligence/windows.py", "key=lambda window: (window.count, -window.start.toordinal())", "key=lambda window: window.count"],
+ "CP-07": ["config/intelligence/conflict_policy.yaml", "    between: [ACCELERATE_DEAL_CLOSE, PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED]", "    between: [PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED, ACCELERATE_DEAL_CLOSE]"],
+ "CF-08": ["app/decisions/conflicts.py", "            if first.function is not second.function\n            and policy", "            if policy"],
+ "LK-15": ["app/evidence/linker.py", "    return character == \"\" or inside_token.fullmatch(character) is None", "    return inside_token.fullmatch(character) is None"],
+ "LK-21": ["app/evidence/linker.py", "        .order_by(Document.source_id)", "        .order_by(Document.source_id.desc())"],
+ "LK-22": ["app/evidence/linker.py", "        .order_by(Customer.source_id)", "        .order_by(Customer.source_id.desc())"],
+ "LK-23": ["app/evidence/linker.py", "                (LinkBasis.ID_TOKEN, find_id_token(text, customer_source_id)),\n                (LinkBasis.EXACT_NAME, find_exact_name(text, name)),", "                (LinkBasis.EXACT_NAME, find_exact_name(text, name)),\n                (LinkBasis.ID_TOKEN, find_id_token(text, customer_source_id)),"]
+}
+```
+
+Each proof states what the mutant reads, returns, writes and emits, and why no behaviour the
+committed contract specifies can differ, in the form of M8's Q2.
+
+*Signal engine.*
+
+- **SIG-05.** `app/intelligence/signals.py`: `(resolved is not None and resolved <= as_of)`
+  becomes `(resolved is not None and resolved < as_of)`, in `_Ticket.breaches`.
+  - The two conditions differ only when `resolved == as_of`.
+  - There the original takes `end = resolved` and the mutant takes `end = as_of`. That is the
+    same date, so `business_days_between(self.created, end)` and the breach are identical.
+  - It reads the same row, returns the same bool, writes nothing and emits nothing.
+- **SIG-15.** `app/intelligence/signals.py`: `data_quality_notes`'s `.order_by(model.source_id)`
+  becomes `.order_by(model.source_id.desc())`.
+  - The function returns `tuple(sorted(notes, key=lambda note: note.sort_key))`.
+  - `sort_key` is `(entity_type, source_id)`, and it is unique per note: each query reads one
+    entity type in one source system, and source identity is unique (`uq_*_source_identity`).
+  - So the sorted result does not depend on the order the rows were read in. Reads, returns,
+    writes and emits are identical.
+- **SIG-45.** `app/intelligence/signals.py`: `_exposure`'s `sorted({...})` becomes
+  `sorted({...}, reverse=True)`. Only the insertion order of the `exposure_by_currency` mapping
+  changes.
+  - No specified behaviour depends on that order:
+    - `SignalSet.to_payload()` iterates `sorted(self.exposure_by_currency)`;
+    - the brief renders from that payload;
+    - `SignalSet` and `MappingProxyType` equality are order-insensitive;
+    - `SignalSet.__post_init__`'s currency check is per key;
+    - no other module under `app/` iterates the mapping.
+  - The payload, its hash, the narrative, equality and every stored row are identical.
+- **SIG-50, SIG-55, SIG-58.** `app/intelligence/signals.py`: the `if not source_ids:` early return
+  of `_tickets`, `_active_deals` and `_active_project_count` becomes `if source_ids is None:`.
+  - For an empty list, the mutant runs one extra SELECT with `IN` over an empty set. SQLAlchemy
+    renders that as an always-false predicate, so it reads no row.
+  - The functions return `()`, `()` and `0`, exactly as the early return does. They write
+    nothing and emit nothing.
+  - The only difference is one extra read-only statement, and no committed contract counts M3's
+    statements. The kill sets exercise the case: 15 customers without tickets, 22 without deals,
+    34 without projects (measured from data/demo).
+- **SIG-57.** `app/intelligence/signals.py`: `_active_project_count`'s
+  `.order_by(Project.source_id)` becomes `.desc()`. The function returns `len(rows)`, which does
+  not depend on order.
+- **WIN-19.** `app/intelligence/windows.py`: `max_window`'s key
+  `(window.count, -window.start.toordinal())` becomes `window.count`.
+  - `sliding_windows` returns one window per distinct anchor date, in ascending start order
+    (`for anchor in sorted(set(visible))`).
+  - `max()` returns the first maximal element it meets, so with the count alone it returns the
+    earliest-starting fullest window. That is exactly what the original key's tie-break selects.
+  - The returned window is identical, and nothing is written or emitted.
+
+*Conflict policy.*
+
+- **CP-07.** `config/intelligence/conflict_policy.yaml`:
+  `between: [ACCELERATE_DEAL_CLOSE, PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED]` becomes
+  `between: [PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED, ACCELERATE_DEAL_CLOSE]`.
+  - `policy._between` validates the two actions and returns `sorted((first, second), key=str)`.
+  - The loaded `ConflictRule` is therefore identical: the same `between`, `pair`, `resolve_to`,
+    `overruled` and `to_payload()`.
+  - The raw list is read nowhere else. The resolution, dissent, payload, hash and every row are
+    identical.
+- **CF-08.** `app/decisions/conflicts.py`:
+  `if first.function is not second.function\n            and policy` becomes `if policy`.
+  - `detect_conflicts` first passes every position through
+    `checked_positions(positions, policy.catalogue)`, which refuses any position whose function
+    is not its action's catalogue function.
+  - A pair is declared incompatible only by a rule that `load_conflict_policy` validated against
+    that catalogue, and `_between` refuses a pair whose two actions share a function.
+  - So whenever `declares_incompatible(a, b)` holds for two checked positions, their functions
+    already differ. The dropped clause is implied, and the conflicts returned are identical.
+
+*Linker.*
+
+- **LK-15.** `app/evidence/linker.py`:
+  `return character == "" or inside_token.fullmatch(character) is None` becomes
+  `return inside_token.fullmatch(character) is None`.
+  - Both token patterns are single-character classes, and `fullmatch("")` of a one-character
+    class is `None`. So for `character == ""` the mutant also returns `True`, and for every other
+    character the two expressions are the same.
+  - Every match, link and span is identical.
+- **LK-21, LK-22, LK-23.** `app/evidence/linker.py`:
+  - LK-21: `derive_links`'s `.order_by(Document.source_id)` becomes `.desc()`;
+  - LK-22: `.order_by(Customer.source_id)` becomes `.desc()`;
+  - LK-23: the per-pair basis order `(ID_TOKEN, EXACT_NAME)` is swapped.
+
+  Only the order of the tuple `derive_links` returns changes, and the set of links is identical.
+  - That order is not part of the contract. The plan records that "M4's acceptance asserts which
+    links are returned, not their order".
+  - `documents_for()`'s order is §0.3.7 #9's deferral, and M7 orders `document_evidence` itself
+    by (document id, basis).
+  - The only production consumer, `derive_and_persist`, passes the links to `insert_links`. That
+    sorts the rows (`for row in sorted(rows)`) before one INSERT … ON CONFLICT DO NOTHING, so the
+    statement, the rows written and the returned count are identical.
+  - Nothing is emitted.
 
 ---
 

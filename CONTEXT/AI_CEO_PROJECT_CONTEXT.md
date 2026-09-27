@@ -828,3 +828,104 @@ are:
 Each of the 14 equivalent mutants has a written proof, recorded verbatim in Part B M9's closure
 block. **No survivor exposed a production defect**, and after the audit every target file's sha256
 equals its Phase 1 value.
+
+### 19.5 Acceptance result — the run of record (Phase 8)
+
+Phase 7's gate, on the tree committed as `17de05f`, measured 6771 tests (5287 / 185 / 1214 / 85),
+0 failed and 0 skipped. Every other §19.3 measurement was unchanged, but the gate reported three
+warnings, not two (§19.6). Phase 8 made no commit and changed no file.
+
+- **Environment.** A fresh virtual environment, installed from the pinned `pyproject.toml`
+  (`pip install -e ".[dev]"`, Python 3.11.5), never the developer `.venv`. It resolved
+  SQLAlchemy 2.0.54, ruff 0.16.7 and mypy 2.3.1. Eight unpinned packages resolved newer than in
+  the developer `.venv`, each within its declared bound; among them are starlette 1.7.0 and
+  uvicorn 0.54.0.
+- **Two runs.** `scripts/vs01_acceptance.py --with-tests`, the recipe of
+  `make verify-vs01 ARGS="--with-tests"`, ran twice. Both exited 0 with
+  `11 passed, 0 failed, 0 skipped, 1 operator`, and the two reports are byte-identical:
+
+```
+verify-vs01: A27.1         clean_dataset        PASS      sqlalchemy 2.0.54; head 070e4968a497; organizations 1, employees 24, customers 50, deals 44, projects 22, support_tickets 80, documents 12; 233 fetched, 0 rejected: SUCCESS then NOOP
+verify-vs01: A27.1b        pinned_fingerprint   PASS      pinned 1d891b0b matched; deliberate mismatch refused, 0 rows written; 50 assessments, 3 briefs
+verify-vs01: A27.2         single_escalation    PASS      50 assessments; CUST-007 alone is CRITICAL and executive-worthy
+verify-vs01: A27.3         brief_facts          PASS      payload_hash e93c29cf; narrative equals the golden file (12474 bytes); the 10 facts of A27.3; 36 citations
+verify-vs01: A27.4         no_active_project    PASS      no active project, in the payload and the narrative
+verify-vs01: A27.5         conflict_and_dissent PASS      CONF-001 over DEAL-001: PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED wins; ACCELERATE_DEAL_CLOSE dissents with 3 citations
+verify-vs01: A27.6         citations_resolve    PASS      80 distinct citations across 50 assessments and 3 briefs resolve; 3 cited spans read back exactly
+verify-vs01: A27.9         approval_boundary    PASS      REJECTED recorded; a second decision without supersedes_id refused (409 SUPERSEDES_REQUIRED); APPROVED supersedes it; history of 2 in chain order; status DRAFT; append-only held; 3 writes, 6 risk operations
+verify-vs01: A27.8         determinism          PASS      re-run 200: identical hashes, 0 rows; one extra ticket: pinned run refused, unpinned run 201 with 50 new assessments
+verify-vs01: A27.7         named_tests          PASS      44 passed: A25 tests 1-14 and 13b
+verify-vs01: A27.10        regression           PASS      6771 passed; coverage 100% over 7456 statements; ruff 0.16.7: 69; mypy 2.3.1: 9; secret scan 0; head 070e4968a497
+verify-vs01: A28.citations hand_citations       OPERATOR  operator step: in data/demo/documents.csv, confirm DOC-003 [238, 330) reads "Customers raising three or more tickets within 14 days are escalated to their account owner."; DOC-009 [238, 333) reads "The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them."; DOC-003 states the escalation rule, and DOC-009 ties DEAL-001 to the tickets
+verify-vs01: 11 passed, 0 failed, 0 skipped, 1 operator
+```
+
+- **Operator-only.** A28.citations prints DOC-003's and DOC-009's cited spans for the reviewer's
+  hand check. The command proves that they resolve. Whether they mean what the brief claims is
+  the reviewer's judgement, and this record states none.
+- **Isolation.** The development database (`8bfd73b6af60`, 233 rows) kept its revision and every
+  table's row count before, between and after the two runs.
+- **The rebuilt image.** `docker compose build api` rebuilt the API image from the pinned
+  `pyproject.toml`. A throwaway container of it pointed read-only at the acceptance database the
+  second run left. It published exactly the six risk operations and the three writes, and listed
+  CUST-007 as the one executive-worthy customer, once per fingerprint. It was removed afterwards.
+- **The diff audit.** Every file changed since `2b6deb3` is in §0.8.13's allowed set, except
+  `tests/integration/test_vs01_a25_closure.py` (§19.6, item 1).
+
+### 19.6 Known deviations
+
+1. **The §0.8.13 path omission.** Phase 8 identified that §0.8.13's explicit allowed-path table
+   omitted `tests/integration/test_vs01_a25_closure.py`, despite §0.8.6 and §0.8.15 expressly
+   authorising a new file for a missing §A25 proof. Owner ratification on 2026-09-27 resolves
+   this internal specification omission and authorises the file for M9 closure. §0.8.18's
+   criterion 17 therefore holds under that ratification, not as §0.8.13 was originally written.
+   The proof stays in its own file, and §0.8.13's committed text is unchanged.
+2. **§0.8.7's count.** §0.8.7 says the fixture package has six material entries, but its own
+   table gives seven: five delta directories and two loaders. The package follows the table.
+3. **The README count lines.** The Phase 2 instruction excluded README edits, but §0.8.15 lists
+   the README count lines in Phase 2. The owner authorised exactly the three count updates that
+   gate needed. Every later phase updated only its own count lines.
+4. **A third warning at Phase 7.** Every gate from Phase 1 to Phase 6 reported two third-party
+   deprecation warnings, and Phase 7's reported three. The third is pydantic's
+   `UnsupportedFieldAttributeWarning`, inside the frozen M8 concurrency test
+   `test_two_concurrent_identical_requests_converge_on_one_result_set`. It appears in about one
+   of five isolated runs of that test against the frozen code. It is pre-existing thread-timing
+   nondeterminism, not an M9 regression (owner ruling). The gate results stand as measured.
+5. **The mutation kill sets.** They hold §0.8.6's thirty corpus node ids, not the thirty-first,
+   which Phase 5 added after they were built. An added test can only kill more, so no survivor
+   is hidden, and the fourteen equivalence proofs do not depend on the kill sets.
+6. **A Docker environment incident (Phase 5).**
+   - A shell heredoc executed the backtick spans of draft README text, and one of them started
+     `make docker-up`. It was stopped about two minutes into the image build.
+   - No container was recreated. The development database, the `.venv` and the repository were
+     unchanged.
+   - The local tag `finalyearproject-mock-source:latest` now names an image rebuilt from
+     unchanged inputs, and the previous image record could not be restored.
+   - The incident was reported to the owner. `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` Part B M9
+     records it in full.
+
+### 19.7 Closure state
+
+- **M9 is COMPLETE, and its plan is closed** by the documentation commit
+  `docs: close M9 implementation plan`. That commit changes only
+  `CONTEXT/VS01_IMPLEMENTATION_PLAN.md` (the M9 status row, §A29 and Part B M9's closure block)
+  and this section.
+- **Commits.** The specification is `79f8d9e`. The implementation is `7a410a5`, `c50ecb4`,
+  `a801ce7`, `5c05f68`, `e643d27`, `0769441` and `17de05f`. The last is Phase 7's commit, which
+  §19.2 shows as "—" because this record was written before it existed. Phases 1 and 8 were
+  verification phases and made no commit.
+- **Criteria.** Every §0.8.18 criterion holds, criterion 17 under the ratification in §19.6.
+  T-M9-1…T-M9-5 are the only test evolution.
+- **Frozen.** VS-01 (M1–M9) is frozen as committed: `app/`, `config/`, `migrations/` (one head,
+  `070e4968a497`), `data/`, `tests/golden/`, the Docker files, the three pins, the acceptance
+  command, the fixture package and the tests. A change to any of them reopens its milestone.
+- **The environment M9 leaves.**
+  - The development containers were never recreated. They still run their 2026-09-16 images,
+    and that API image publishes no `/risk` route.
+  - The development database is still at `8bfd73b6af60`, with its 233 clean rows.
+  - Both `finalyearproject-*:latest` image tags now name rebuilt images, so recreating the
+    containers would start them from those.
+  - Migrating and recreating the development stack is the owner's decision, outside M9.
+- **Limitations.** The plan's §A29 carries M9's six (§0.8.16), and the README's VS-01 section
+  summarises them.
+- **Next.** VS-02 has not started.
