@@ -1294,13 +1294,16 @@ def test_every_a27_3_and_a27_5_fact_is_in_the_brief_with_its_provenance(assessed
 
 
 def test_no_brief_holds_another_customers_identifiers(assessed):
-    """§A25 test 9: a brief for X names no other customer's source id."""
+    """§A25 test 9: a brief for X names no other customer's source id, name or email."""
     sessions, _ = assessed
     with sessions() as session:
-        customers = session.scalars(select(Customer.source_id)).all()
+        customers = session.execute(
+            select(Customer.source_id, Customer.name, Customer.email)).all()
     for owner, rows in briefs_by_customer(sessions).items():
         for brief in rows:
             stored = canonical_json(brief.decision_payload) + brief.narrative
-            for other in customers:
-                if other != owner:
-                    assert other not in stored, (owner, other)
+            for source_id, name, email in customers:
+                if source_id != owner:
+                    for value in (source_id, name, email):
+                        if value is not None:
+                            assert value not in stored, (owner, source_id, value)

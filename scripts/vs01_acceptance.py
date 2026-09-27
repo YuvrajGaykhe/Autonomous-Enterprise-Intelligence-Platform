@@ -190,6 +190,8 @@ RISK_OPERATIONS = frozenset({
 
 #: The §A25 proof corpus (§0.8.6), in its order. A node id without a parameter
 #: selects every parametrisation; A25_PROOF_COUNT is the corpus's collected size.
+#: Phase 5 added test 10's third node: no mapped test asserted that the four
+#: inactive customers are among the fifteen ticketless ones.
 A25_PROOFS = (
     # 1 Single-escalation
     "tests/integration/test_m3_signals.py::test_meridian_is_the_only_escalated_customer_in_the_whole_dataset",
@@ -221,6 +223,7 @@ A25_PROOFS = (
     # 10 Negative cases
     "tests/integration/test_m3_signals.py::test_all_fifteen_ticketless_customers_band_none",
     "tests/integration/test_m6_reconciliation.py::test_only_cust_007_is_executive_worthy",
+    "tests/integration/test_vs01_a25_closure.py::test_the_four_inactive_customers_are_ticketless_and_yield_none_not_worthy",
     # 11 Rule liveness
     "tests/integration/test_m3_signals.py::test_raising_doc_003s_threshold_from_three_to_six_de_escalates_meridian",
     # 12 Determinism
@@ -237,7 +240,7 @@ A25_PROOFS = (
     "tests/integration/test_m5_contexts.py::test_a_two_currency_customer_renders_both_in_the_commercial_context",
     "tests/integration/test_m5_contexts.py::test_summing_two_currencies_raises_rather_than_inventing_a_rate",
 )
-A25_PROOF_COUNT = 43
+A25_PROOF_COUNT = 44
 
 #: The fixed argument lists of every subprocess (§0.8.4); none uses a shell.
 PYTEST = (sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "addopts=")

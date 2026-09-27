@@ -366,7 +366,7 @@ class World:
 
     # -- Runners -------------------------------------------------------------
 
-    proof_output = CommandResult(0, "........\n43 passed, 2 warnings in 31.20s\n")
+    proof_output = CommandResult(0, "........\n44 passed, 2 warnings in 31.20s\n")
     suite_output = CommandResult(0, "Name  Stmts  Miss  Cover\nTOTAL    7456      0   100%\n"
                                     "6600 passed, 2 warnings in 612.34s (0:10:12)\n")
     ruff_output = CommandResult(1, "Found 69 errors.\n")
@@ -1154,16 +1154,16 @@ def test_a27_8_fails_when_the_changed_snapshot_is_not_answered_201(world):
 
 
 def test_a27_7_reports_the_corpus_count(world):
-    assert check(run(world), "named_tests").detail == "43 passed: A25 tests 1-14 and 13b"
+    assert check(run(world), "named_tests").detail == "44 passed: A25 tests 1-14 and 13b"
 
 
 @pytest.mark.parametrize("output, message", [
-    (CommandResult(1, "1 failed, 42 passed in 30.00s\n"), "pytest exited 1: 1 failed, 42 passed"),
-    (CommandResult(0, "42 passed, 1 skipped in 30.00s\n"), "pytest exited 0: 42 passed, 1 skipped"),
-    (CommandResult(1, "42 passed, 1 error in 30.00s\n"), "pytest exited 1: 1 error, 42 passed"),
-    (CommandResult(0, "42 passed in 30.00s\n"), "42 passed, but the corpus collects 43"),
+    (CommandResult(1, "1 failed, 43 passed in 30.00s\n"), "pytest exited 1: 1 failed, 43 passed"),
+    (CommandResult(0, "43 passed, 1 skipped in 30.00s\n"), "pytest exited 0: 43 passed, 1 skipped"),
+    (CommandResult(1, "43 passed, 1 error in 30.00s\n"), "pytest exited 1: 1 error, 43 passed"),
+    (CommandResult(0, "43 passed in 30.00s\n"), "43 passed, but the corpus collects 44"),
     (CommandResult(4, "ERROR: not found\n"), "pytest exited 4 with no summary line"),
-    (CommandResult(5, "43 passed in 1.00s\n"), "pytest exited 5: 43 passed"),
+    (CommandResult(5, "44 passed in 1.00s\n"), "pytest exited 5: 44 passed"),
 ])
 def test_a27_7_fails_unless_every_proof_passed(world, output, message):
     world.proof_output = output
@@ -1490,8 +1490,12 @@ def test_every_proof_names_an_existing_test_function():
         assert name in functions, node_id
 
 
-def test_the_corpus_is_thirty_distinct_node_ids_covering_tests_1_to_14_and_13b():
-    assert len(vs01.A25_PROOFS) == 30 == len(set(vs01.A25_PROOFS))
+def test_the_corpus_is_31_distinct_node_ids_covering_tests_1_to_14_and_13b():
+    """§0.8.6's thirty, plus test 10's Phase 5 proof in tests/integration/test_vs01_a25_closure.py."""
+    assert len(vs01.A25_PROOFS) == 31 == len(set(vs01.A25_PROOFS))
+    assert vs01.A25_PROOFS[20] == ("tests/integration/test_vs01_a25_closure.py::"
+                                   "test_the_four_inactive_customers_are_ticketless_and_yield_none_"
+                                   "not_worthy")
     assert "doc005_leave_out" in vs01.A25_PROOFS[7]
     assert vs01.A25_PROOFS[17].endswith("test_no_brief_holds_another_customers_identifiers")
 
