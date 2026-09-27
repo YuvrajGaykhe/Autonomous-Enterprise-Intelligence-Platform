@@ -1,0 +1,4 @@
+document_id,title,document_type,body_text,source_uri,owner_id,created_date,updated_date
+DOC-956,Onboarding Status Report - Pending Account,report,"Onboarding status report, pending account
+
+Account CUST-951 is waiting for a signed order form; no onboarding work has started and no owner is assigned.",,EMP-024,2026-09-05,2026-09-05

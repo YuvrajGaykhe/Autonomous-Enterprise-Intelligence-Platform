@@ -1,0 +1,2 @@
+ticket_id,customer_id,assignee_id,priority,status,category,subject,description,created_date,resolved_date
+TKT-950,CUST-950,EMP-020,high,open,performance,Scheduled export fails for an unlisted account,The scheduled export fails for an account that the customer list does not hold.,2026-09-01,

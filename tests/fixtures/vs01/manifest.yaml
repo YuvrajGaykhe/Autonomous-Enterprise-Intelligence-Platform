@@ -1,0 +1,181 @@
+# The VS-01 fixture package (plan §0.8.7): the baseline and the ten §A26 entries.
+#
+# Every entry records its §A26 origin (quoted from the plan), its form, the rows
+# it adds, removes or changes, the effect tests/integration/test_vs01_fixtures.py
+# asserts, and the test that proves the behaviour the entry exists for.
+#
+# Forms:
+#   baseline  data/demo/, reused unchanged, through the clean full-dataset path.
+#   delta     a directory of the seven csv_demo files, ingested with run_ingestion
+#             and an entities filter naming exactly the files it adds to.
+#   loader    an operation Layer 1 cannot express, run in SQLAlchemy Core over a
+#             session the caller owns.
+#   reuse     rows the committed dataset already holds; nothing is added.
+#   carried   an M4 test fixture whose proof exists; it is not re-materialised.
+#
+# A fixture that changes the snapshot records it under `fingerprint: changed`.
+# Reserved ids: DOC-950 to DOC-959 and TKT-950 to TKT-959. CUST-950 and CUST-951
+# exist in no customers row.
+
+version: 1
+
+baseline:
+  origin: data/demo, built through the clean full-dataset path of plan A28
+  form: baseline
+  directory: data/demo
+  rows: 233
+  entity_counts:
+    organizations: 1
+    employees: 24
+    customers: 50
+    deals: 44
+    projects: 22
+    support_tickets: 80
+    documents: 12
+  fingerprint: 1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00
+
+fixtures:
+  - name: no_doc005
+    origin: corpus without DOC-005
+    form: loader
+    rows:
+      removed:
+        documents: [DOC-005]
+    fingerprint: changed
+    effect: >-
+      DOC-005 is removed; 11 documents remain and every other row is unchanged.
+    proofs:
+      - tests/integration/test_m7_assessment.py::test_doc005_leave_out_changes_no_band_signal_escalation_or_resolution
+
+  - name: scaled_amounts
+    origin: deals with scaled amounts
+    form: loader
+    rows:
+      changed:
+        deals: all
+    fingerprint: unchanged
+    effect: >-
+      Every deals.amount is multiplied by exactly 1000; currencies and every other
+      row are unchanged. The fingerprint is unchanged, because a Core update does
+      not recompute record_hash.
+    proofs:
+      - tests/integration/test_m3_signals.py::test_multiplying_every_deal_amount_by_a_thousand_changes_no_band_and_no_order
+      - tests/integration/test_m6_reconciliation.py::test_multiplying_every_amount_by_a_thousand_changes_nothing
+
+  - name: name_substring
+    origin: documents with a customer name embedded as a substring of another
+    form: delta
+    entities: [documents]
+    rows:
+      added:
+        documents: [DOC-951, DOC-952, DOC-953]
+    fingerprint: changed
+    effect: >-
+      DOC-951, DOC-952 and DOC-953 each link by EXACT_NAME to their own customer
+      only (CUST-041, CUST-002 and CUST-039); CUST-007 gains no link, and
+      Meridian's links are unchanged.
+    proofs:
+      - tests/integration/test_vs01_fixtures.py::test_name_substring_links_each_document_to_its_own_customer_only
+
+  - name: unresolved_ticket
+    origin: a ticket with an unresolved customer_source_id
+    form: delta
+    entities: [support_tickets]
+    rows:
+      added:
+        support_tickets: [TKT-950]
+    fingerprint: changed
+    effect: >-
+      E1 stores TKT-950 with a NULL customer FK and its source key CUST-950 kept;
+      M3 excludes it from every signal and reports it as unresolved, not missing;
+      no band changes.
+    proofs:
+      - tests/integration/test_m3_signals.py::test_a_non_null_unresolvable_source_key_is_reported_as_an_unresolved_relationship
+      - tests/integration/test_m3_signals.py::test_an_unresolved_row_reaches_no_customers_signals
+      - tests/integration/test_m3_signals.py::test_a_data_quality_note_is_informational_and_moves_no_band
+
+  - name: two_currencies
+    origin: a customer holding deals in two currencies
+    form: reuse
+    rows:
+      reused:
+        deals: [DEAL-005, DEAL-008, DEAL-016, DEAL-032]
+    fingerprint: unchanged
+    effect: >-
+      The committed rows hold exactly USD and INR for CUST-042: DEAL-005 and
+      DEAL-016 in USD, DEAL-008 and DEAL-032 in INR.
+    proofs:
+      - tests/integration/test_m3_signals.py::test_a_multi_currency_customer_reports_every_currency_and_totals_none_of_them
+      - tests/integration/test_m3_signals.py::test_two_currencies_of_one_customer_cannot_be_added_together
+      - tests/integration/test_m5_contexts.py::test_a_two_currency_customer_renders_both_in_the_commercial_context
+      - tests/integration/test_m5_contexts.py::test_summing_two_currencies_raises_rather_than_inventing_a_rate
+
+  - name: instruction_text
+    origin: a document containing instruction-like text, asserted to be quoted and never interpreted
+    form: delta
+    entities: [documents]
+    rows:
+      added:
+        documents: [DOC-954]
+    fingerprint: changed
+    effect: >-
+      DOC-954 links to CUST-007 by ID_TOKEN only. Every band, signal, escalation
+      state, conflict, resolution, winning action and dissent equals the run
+      without it; no decision row exists; CUST-007's narrative holds no line of
+      the instruction text and names DOC-954 only through its quoted matched token.
+    proofs:
+      - tests/integration/test_vs01_fixtures.py::test_instruction_text_is_quoted_and_never_interpreted
+
+  - name: two_customers
+    origin: a document naming two customers
+    form: delta
+    entities: [documents]
+    rows:
+      added:
+        documents: [DOC-955]
+    fingerprint: changed
+    effect: >-
+      DOC-955 yields exactly two EXACT_NAME links, to CUST-001 and CUST-026, each
+      at its own offsets; neither customer's signals change.
+    proofs:
+      - tests/integration/test_vs01_fixtures.py::test_two_customers_links_one_document_to_both_at_their_own_offsets
+
+  - name: unknown_customer_id
+    origin: a document naming a customer id that exists in no customers row
+    form: delta
+    entities: [documents]
+    rows:
+      added:
+        documents: [DOC-956]
+    fingerprint: changed
+    effect: >-
+      DOC-956 names CUST-951, which exists in no customers row; no link is
+      derived, and nothing raises.
+    proofs:
+      - tests/integration/test_vs01_fixtures.py::test_unknown_customer_id_derives_no_link_and_raises_nothing
+      - tests/integration/test_m4_evidence.py::test_a_row_naming_an_unknown_customer_is_not_written
+
+  - name: null_body
+    origin: a document with NULL body_text
+    form: carried
+    carried_from: tests/integration/test_m4_evidence.py::null_fields
+    rows: {}
+    fingerprint: unchanged
+    effect: nothing new
+    proofs:
+      - tests/integration/test_m4_evidence.py::test_a_null_body_is_skipped_rather_than_raising
+      - tests/integration/test_m4_evidence.py::test_null_fields_do_not_disturb_the_rest_of_the_corpus
+
+  - name: second_source_system
+    origin: a document and a customer in a second source_system
+    form: carried
+    carried_from: tests/integration/test_m4_evidence.py::cross_source
+    rows: {}
+    fingerprint: unchanged
+    effect: nothing new
+    proofs:
+      - tests/integration/test_m4_evidence.py::test_a_link_is_never_derived_across_source_systems
+      - tests/integration/test_m4_evidence.py::test_the_foreign_scope_links_its_own_rows_only
+      - tests/integration/test_m4_evidence.py::test_a_cross_source_row_offered_to_the_repository_is_not_written
+      - tests/integration/test_m4_evidence.py::test_the_read_refuses_a_cross_source_row_even_if_one_were_written
+      - tests/integration/test_m4_evidence.py::test_reading_a_customer_in_one_source_system_never_returns_the_others_links
