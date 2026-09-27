@@ -26,17 +26,24 @@ SECURITY_MODULE = "app/core/security.py"
 LOGGING_MODULE = "app/core/logging.py"
 SCANNER_MODULE = "scripts/secret_scan.py"
 ACCEPTANCE_MODULE = "scripts/verify_layer1.py"
-#: Modules allowed to run a subprocess. Both build a fixed argument list and
-#: never use a shell: the scanner runs "git ls-files", the acceptance command
-#: runs the project's own pytest for spec Section 20 step N.
-SUBPROCESS_MODULES = frozenset({SCANNER_MODULE, ACCEPTANCE_MODULE})
+VS01_ACCEPTANCE_MODULE = "scripts/vs01_acceptance.py"
+#: Modules allowed to run a subprocess. Each builds a fixed argument list and
+#: never uses a shell: the scanner runs "git ls-files", the acceptance command
+#: runs the project's own pytest for spec Section 20 step N, and the VS-01
+#: acceptance command runs pytest over the §A25 proof corpus and, under
+#: --with-tests, the full suite, ruff, mypy and the secret scan (plan §0.8.4).
+SUBPROCESS_MODULES = frozenset({SCANNER_MODULE, ACCEPTANCE_MODULE, VS01_ACCEPTANCE_MODULE})
 #: Modules allowed to build an HTTP client. app/core/security.py builds the
 #: read-only, same-origin client every source connector must use. The
 #: acceptance command is not a source connector: it drives Layer 1's own API,
 #: where the documented way to start an ingestion run is a POST, so the
 #: read-only client cannot serve it. tests/unit/test_i1_verify_units.py pins
-#: the only non-GET request it is allowed to make.
-HTTP_CLIENT_MODULES = frozenset({SECURITY_MODULE, ACCEPTANCE_MODULE})
+#: the only non-GET request it is allowed to make. The VS-01 acceptance command
+#: is not a source connector either: it drives the VS-01 API it serves itself on
+#: a loopback socket, and that API's documented writes are POSTs, so the
+#: read-only client cannot serve it. tests/unit/test_vs01_acceptance.py pins its
+#: only non-GET requests.
+HTTP_CLIENT_MODULES = frozenset({SECURITY_MODULE, ACCEPTANCE_MODULE, VS01_ACCEPTANCE_MODULE})
 SENSITIVE_NAME = re.compile(
     r"(?i)(password|passwd|secret|token|api_?key|authorization|credential|cookie|base_url|"
     r"database_url|dsn|header|env_var)")

@@ -808,13 +808,17 @@ def test_no_m6_module_imports_an_m7_module():
 
 
 def test_nothing_outside_the_package_imports_m7():
-    """M1-M5, persistence, the API, scripts and migrations: M8's routes need their own evolution."""
+    """M1-M5, persistence, the API, scripts and migrations: M8's routes need their own evolution.
+
+    M9's acceptance command imports the run for its pinned check (§0.8.9 T-M9-1).
+    """
     paths = [path for directory in ("app", "scripts", "migrations", "docker")
              for path in sorted((REPO / directory).rglob("*.py"))
              if not path.is_relative_to(DECISIONS_DIR)]
 
     assert paths
-    assert {entry.split(":", 1)[0] for entry in _m7_importers(paths)} == {"app/api/v1/risk.py"}
+    assert {entry.split(":", 1)[0] for entry in _m7_importers(paths)} == {
+        "app/api/v1/risk.py", "scripts/vs01_acceptance.py"}
 
 
 @pytest.mark.parametrize("source", [

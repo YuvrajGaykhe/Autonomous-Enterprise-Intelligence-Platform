@@ -54,7 +54,7 @@ ALLOWED_LAYER2_IMPORTS = {"app.relationships"}
 #: The Layer 2 packages permitted to import M1's foundation. Extended when a
 #: milestone legitimately becomes a consumer, never relaxed to a substring.
 LAYER2_PACKAGES = ("app/relationships/", "app/evidence/", "app/analysts/", "app/decisions/",
-                   "app/api/v1/risk.py")
+                   "app/api/v1/risk.py", "scripts/vs01_acceptance.py")
 #: Session methods that would write. The package reads; the caller owns the
 #: transaction, matching the repository convention.
 FORBIDDEN_WRITES = {"commit", "rollback", "add", "add_all", "flush", "delete", "merge",
@@ -202,7 +202,8 @@ def test_only_the_relationship_model_depends_on_the_foundation():
     named packages still fails the build, and so does an M2 module that stops
     importing M1. M4 was added the same way (§0.3.9 T2), M5 the same way
     again (§0.4.4 T-M5-1) and M6 once more (§0.5.3 T-M6-1) -- the tuple is
-    **extended**, never relaxed to a substring or a prefix check.
+    **extended**, never relaxed to a substring or a prefix check. M9's
+    acceptance command is named as one file, never as scripts/ (§0.8.9 T-M9-1).
     """
     importers = []
     for directory in ("app", "scripts", "migrations", "docker"):

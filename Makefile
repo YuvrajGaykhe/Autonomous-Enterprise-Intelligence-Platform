@@ -4,7 +4,7 @@
 # =============================================================================
 
 .PHONY: help install migrate migration-status seed ingest-demo test lint format \
-        secret-scan verify-layer1 docker-up docker-down docker-build clean
+        secret-scan verify-layer1 verify-vs01 docker-up docker-down docker-build clean
 
 # Default target: show available commands.
 help:
@@ -21,6 +21,7 @@ help:
 	@echo "  make format          Run black + ruff --fix formatting"
 	@echo "  make secret-scan     Scan tracked files for committed secrets"
 	@echo "  make verify-layer1   Run the complete Layer 1 acceptance scenario"
+	@echo "  make verify-vs01     Run the VS-01 acceptance scenario on its own database"
 	@echo "  make docker-up       Start all services with Docker Compose"
 	@echo "  make docker-down     Stop and remove Docker Compose services"
 	@echo "  make docker-build    Rebuild Docker images"
@@ -90,6 +91,14 @@ secret-scan:
 verify-layer1:
 	@echo "[verify-layer1] Running Layer 1 acceptance scenario..."
 	.venv/bin/python scripts/verify_layer1.py $(ARGS)
+
+# Run the VS-01 acceptance scenario (plan section 0.8). It recreates its own
+# <database>_vs01 database and serves the application itself on a loopback
+# port; it never uses the development database or stack. Needs a reachable
+# PostgreSQL. Pass options through ARGS, e.g. make verify-vs01 ARGS="--with-tests".
+verify-vs01:
+	@echo "[verify-vs01] Running the VS-01 acceptance scenario..."
+	.venv/bin/python scripts/vs01_acceptance.py $(ARGS)
 
 # Start all Docker Compose services.
 docker-up:

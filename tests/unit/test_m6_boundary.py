@@ -209,6 +209,7 @@ def test_nothing_outside_the_package_imports_it():
     """
     §0.5.13's last row, over every code directory: M1-M5, persistence, the API,
     the scripts, the migrations. The assessment run that will import it is M7's.
+    M9's acceptance command is its one importer outside app/ (§0.8.9 T-M9-1).
     """
     importers = []
     for directory in ("app", "scripts", "migrations", "docker"):
@@ -219,7 +220,7 @@ def test_nothing_outside_the_package_imports_it():
             if any(module.startswith("app.decisions") for module in _imported_modules(tree)):
                 importers.append(path.relative_to(REPO).as_posix())
 
-    assert importers == ["app/api/v1/risk.py"]
+    assert importers == ["app/api/v1/risk.py", "scripts/vs01_acceptance.py"]
 
 
 def test_the_importer_scan_would_catch_an_upstream_import():
