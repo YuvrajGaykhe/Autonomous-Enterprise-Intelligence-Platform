@@ -1175,7 +1175,7 @@ Run everything:
 make test
 ```
 
-`make test` runs `pytest` over `tests/`, which is 6737 tests in four layers
+`make test` runs `pytest` over `tests/`, which is 6742 tests in four layers
 (spec Section 15). The layers differ in what they need, so select them by path:
 
 | Layer | Command | Tests | Needs |
@@ -1183,7 +1183,7 @@ make test
 | Unit | `pytest tests/unit` | 5282 | nothing |
 | Connector contract | `pytest tests/contract` | 185 | nothing |
 | Database integration | `pytest tests/integration` | 1190 | PostgreSQL |
-| End-to-end | `pytest tests/e2e` | 80 | PostgreSQL |
+| End-to-end | `pytest tests/e2e` | 85 | PostgreSQL |
 
 The unit and contract layers run with no database at all: the contract suite
 starts the mock-source in-process and reads the committed CSVs directly, so
@@ -1290,7 +1290,7 @@ dataset, step A–C reports how many records it found and steps E–F report `NO
 | Validation | The bad fixture produces structured errors and quarantine | `validation`: `PARTIAL_SUCCESS`, structured errors readable at `GET /ingestion/runs/{id}/errors`, and every non-rejected fixture row still queryable |
 | API | Canonical records are queryable with pagination | `api_query`: `limit`/`offset` are echoed, `total` is stable across pages and pages do not overlap |
 | Safety | No source write operations are executed | `read_only`: all 14 committed source files are byte-identical (SHA-256) after the scenario. Structurally: no connector exposes a write method, no connector module names a mutating HTTP verb, and the live mock source records only `GET` (`tests/contract/`) |
-| Tests | All required automated tests pass | `make test` — 6737 tests in four layers; or `make verify-layer1 ARGS="--with-tests"` |
+| Tests | All required automated tests pass | `make test` — 6742 tests in four layers; or `make verify-layer1 ARGS="--with-tests"` |
 | Reproducibility | A clean rebuild reproduces the same demo behaviour | Step O: `make docker-down && make docker-build && make docker-up`, then run the command again. The dataset regenerates byte-identically, canonical ids are UUID5 of the source identity, and record hashes cover normalized business fields only |
 | Documentation | The README enables a new developer to run Layer 1 | [Prerequisites](#prerequisites) → [Environment Setup](#environment-setup) → [Running with Docker Compose](#running-with-docker-compose) or [Running Locally](#running-locally-without-docker) → [Ingestion Commands](#ingestion-commands) → [API Usage Examples](#api-usage-examples) → [Test Commands](#test-commands) |
 
