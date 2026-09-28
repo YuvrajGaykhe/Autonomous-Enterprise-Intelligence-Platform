@@ -1,0 +1,628 @@
+[
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/assessments",
+    "request_body": {
+      "as_of": "2026-09-18",
+      "source_system": "csv_demo"
+    },
+    "status": 201,
+    "body": {
+      "items": [
+        {
+          "assessment_id": "6ab5dd86-81cd-42b4-9afc-34ef70544e85",
+          "created": true,
+          "brief_id": "715f1775-fbb1-4c2a-939a-a6f79d69d312",
+          "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946"
+        },
+        {
+          "assessment_id": "82381be6-f781-471b-b1e9-11e24d3ee804",
+          "created": true,
+          "brief_id": "0f01a99c-6011-4570-a340-d4b1e445fd3a",
+          "payload_hash": "08c99ced40996611c8f7bb4ea48e918fabe0e9cd68390122d0f86faa50738770"
+        },
+        {
+          "assessment_id": "9c4250cd-4481-4869-a9a7-2d594673ae69",
+          "created": true,
+          "brief_id": "9261d9d8-8399-4d8a-ab47-e5ab0e4f9078",
+          "payload_hash": "a6240ac1edd4890724568adc7a8bd8f99add305638b9dcb179429ae67d06b637"
+        },
+        {
+          "assessment_id": "093ee1cc-9c30-4570-a0fa-9fbaff9b4603",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "bb02572c-c731-424c-b8a0-dd2f0b299879",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "ae684104-a9a4-4a8f-a7df-a8680293e453",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "bc6350f7-f4d0-41fb-8683-bc72f70c20f9",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "71ff51da-8fb8-4767-8f84-dfd777c4ef31",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "c3c1b89f-0f13-45b5-8876-2c64cd0d0220",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "87f97422-4aff-4dc0-bdfb-d7930ef355a8",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "4a48fcf7-c212-4d5d-9d1e-1c9eab2e51a2",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3912ff2e-8e9e-402b-bdcb-cd1fc4f0f316",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "2017cd7f-e077-4ea0-9107-059b1888849a",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "b405fb46-5cba-482f-ab3e-454a0c16efb0",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "6530a7e7-6f3e-4aaa-a407-37caa04c6a50",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7c58ab5f-5e19-4545-9b67-1c980a0e5c10",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "a95aaadc-3144-4207-bb3a-5eda2e9aebab",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "66362149-16a9-4f58-ae6f-8bda905c8a39",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "8f27b9e0-5e07-4c5e-8f64-7f9c1bc5e8c0",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "23e80881-24f3-4889-860e-3f2fe53561e1",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "e68e33a7-3c99-4a80-869a-274a4d904e8e",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "1ccba01f-7171-441f-afc8-1e6fff0a56a5",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "d0d67ddb-0527-4cb9-a052-5a0a66118f8f",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "d6d650fd-6a82-42b8-8f2c-fa70d6cc7904",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "2cb86be6-c299-480c-b72a-405e3bede228",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "dae6067b-98b9-44d7-a778-50edabd7dbbb",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3f58a18d-b1d6-4d3d-9b81-c4dcaf68eebb",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7c2b81c1-7def-4313-86ca-c4eb13e567fa",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "8863bacf-54cd-4753-ad6a-95cec9e5b4b7",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "5b4c4e10-c6f8-4b62-a606-f4e43c703597",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7b84d47f-4dfd-4005-b6ef-f7acec537574",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "1d7ffee0-ecaf-4231-b9b6-5714d1bc2ea9",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "c610f9c7-f139-498f-83e3-b5221a5e9783",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "d5c063eb-b2c1-475f-9252-441fc8266e2b",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3b683771-a528-4a8b-b6cf-905c9c18779a",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "a77a3a52-e8db-4e97-9a8d-953801c0ec07",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "1381ad87-9c7b-4978-9171-8fc95e038275",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "0f5f4e45-3b02-409e-99b9-2004de0b66aa",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3ed9c893-b610-44de-b3c5-d523c96fafd8",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "2543a844-55fb-4dba-9a9b-d70f070d035e",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3e82ecf0-1dd5-4d30-8521-7824b6133cbc",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7058cf69-e0ff-4e1d-87e9-9713ef5dafed",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "4c22b802-c4b5-4d00-b65e-b144b3761de0",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "f55b5a60-9a36-4ef2-836d-2fa39c4f4d1b",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "195ff331-00bf-438a-982a-6031aee6457a",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "01cd030f-7c65-443c-9df4-b6855e6101bc",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "b66b6030-7d35-44a7-9370-446b978dd2b7",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "19f1d57e-5952-4c52-a9a1-e12e5ebdca89",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3dde326c-e344-4c2c-b27f-a4089c667519",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "64435ab7-b0af-4d24-ae61-0265d597c495",
+          "created": true,
+          "brief_id": null,
+          "payload_hash": null
+        }
+      ]
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/assessments",
+    "request_body": {
+      "as_of": "2026-09-18",
+      "source_system": "csv_demo"
+    },
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "assessment_id": "6ab5dd86-81cd-42b4-9afc-34ef70544e85",
+          "created": false,
+          "brief_id": "715f1775-fbb1-4c2a-939a-a6f79d69d312",
+          "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946"
+        },
+        {
+          "assessment_id": "82381be6-f781-471b-b1e9-11e24d3ee804",
+          "created": false,
+          "brief_id": "0f01a99c-6011-4570-a340-d4b1e445fd3a",
+          "payload_hash": "08c99ced40996611c8f7bb4ea48e918fabe0e9cd68390122d0f86faa50738770"
+        },
+        {
+          "assessment_id": "9c4250cd-4481-4869-a9a7-2d594673ae69",
+          "created": false,
+          "brief_id": "9261d9d8-8399-4d8a-ab47-e5ab0e4f9078",
+          "payload_hash": "a6240ac1edd4890724568adc7a8bd8f99add305638b9dcb179429ae67d06b637"
+        },
+        {
+          "assessment_id": "093ee1cc-9c30-4570-a0fa-9fbaff9b4603",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "bb02572c-c731-424c-b8a0-dd2f0b299879",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "ae684104-a9a4-4a8f-a7df-a8680293e453",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "bc6350f7-f4d0-41fb-8683-bc72f70c20f9",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "71ff51da-8fb8-4767-8f84-dfd777c4ef31",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "c3c1b89f-0f13-45b5-8876-2c64cd0d0220",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "87f97422-4aff-4dc0-bdfb-d7930ef355a8",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "4a48fcf7-c212-4d5d-9d1e-1c9eab2e51a2",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3912ff2e-8e9e-402b-bdcb-cd1fc4f0f316",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "2017cd7f-e077-4ea0-9107-059b1888849a",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "b405fb46-5cba-482f-ab3e-454a0c16efb0",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "6530a7e7-6f3e-4aaa-a407-37caa04c6a50",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7c58ab5f-5e19-4545-9b67-1c980a0e5c10",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "a95aaadc-3144-4207-bb3a-5eda2e9aebab",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "66362149-16a9-4f58-ae6f-8bda905c8a39",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "8f27b9e0-5e07-4c5e-8f64-7f9c1bc5e8c0",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "23e80881-24f3-4889-860e-3f2fe53561e1",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "e68e33a7-3c99-4a80-869a-274a4d904e8e",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "1ccba01f-7171-441f-afc8-1e6fff0a56a5",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "d0d67ddb-0527-4cb9-a052-5a0a66118f8f",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "d6d650fd-6a82-42b8-8f2c-fa70d6cc7904",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "2cb86be6-c299-480c-b72a-405e3bede228",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "dae6067b-98b9-44d7-a778-50edabd7dbbb",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3f58a18d-b1d6-4d3d-9b81-c4dcaf68eebb",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7c2b81c1-7def-4313-86ca-c4eb13e567fa",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "8863bacf-54cd-4753-ad6a-95cec9e5b4b7",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "5b4c4e10-c6f8-4b62-a606-f4e43c703597",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7b84d47f-4dfd-4005-b6ef-f7acec537574",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "1d7ffee0-ecaf-4231-b9b6-5714d1bc2ea9",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "c610f9c7-f139-498f-83e3-b5221a5e9783",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "d5c063eb-b2c1-475f-9252-441fc8266e2b",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3b683771-a528-4a8b-b6cf-905c9c18779a",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "a77a3a52-e8db-4e97-9a8d-953801c0ec07",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "1381ad87-9c7b-4978-9171-8fc95e038275",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "0f5f4e45-3b02-409e-99b9-2004de0b66aa",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3ed9c893-b610-44de-b3c5-d523c96fafd8",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "2543a844-55fb-4dba-9a9b-d70f070d035e",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3e82ecf0-1dd5-4d30-8521-7824b6133cbc",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "7058cf69-e0ff-4e1d-87e9-9713ef5dafed",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "4c22b802-c4b5-4d00-b65e-b144b3761de0",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "f55b5a60-9a36-4ef2-836d-2fa39c4f4d1b",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "195ff331-00bf-438a-982a-6031aee6457a",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "01cd030f-7c65-443c-9df4-b6855e6101bc",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "b66b6030-7d35-44a7-9370-446b978dd2b7",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "19f1d57e-5952-4c52-a9a1-e12e5ebdca89",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "3dde326c-e344-4c2c-b27f-a4089c667519",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        },
+        {
+          "assessment_id": "64435ab7-b0af-4d24-ae61-0265d597c495",
+          "created": false,
+          "brief_id": null,
+          "payload_hash": null
+        }
+      ]
+    }
+  }
+]

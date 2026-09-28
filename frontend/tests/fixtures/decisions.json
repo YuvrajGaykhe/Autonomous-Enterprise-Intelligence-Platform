@@ -1,0 +1,26 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/715f1775-fbb1-4c2a-939a-a6f79d69d312/decisions",
+    "status": 200,
+    "body": {
+      "items": []
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/0f01a99c-6011-4570-a340-d4b1e445fd3a/decisions",
+    "status": 200,
+    "body": {
+      "items": []
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/9261d9d8-8399-4d8a-ab47-e5ab0e4f9078/decisions",
+    "status": 200,
+    "body": {
+      "items": []
+    }
+  }
+]

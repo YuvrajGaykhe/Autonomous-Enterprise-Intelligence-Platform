@@ -121,6 +121,8 @@ ALLOWED_FINDINGS: dict[tuple[str, str, str], str] = {
         "synthetic C5 API-key header test value",
     ("tests/unit/test_c5_rest_connector.py", "bearer_token", "fece50d2287f"):
         "synthetic C5 bearer header test value",
+    ("frontend/tests/fixtures/briefs.json", "quoted_secret_assignment", "f98ec4491f30"):
+        "recorded API fixture: matched_token is the synthetic customer source id CUST-007",
 }
 
 

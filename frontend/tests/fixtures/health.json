@@ -1,0 +1,15 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/health",
+    "status": 200,
+    "body": {
+      "status": "healthy",
+      "service": "ai-ceo-layer1",
+      "version": "0.1.0",
+      "checks": {
+        "database": "ok"
+      }
+    }
+  }
+]

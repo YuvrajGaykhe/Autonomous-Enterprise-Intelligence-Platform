@@ -991,6 +991,140 @@ baseline step (§13).
 **Next:** F1, which starts only on the owner's instruction. Its entry condition includes installing Node 24 LTS
 (R-F-5).
 
+### F1 — Foundation: CLOSED 2026-09-28
+
+**What F1 produced.**
+- `frontend/`, 86 files:
+  - **Toolchain:** Node 24 pinned by `.nvmrc`, `engines` and `package-lock.json`; TypeScript strict, ESLint, Prettier,
+    Vitest, Playwright, Tailwind 4 and three copied shadcn/ui primitives.
+  - **API layer:** `src/api/client.ts` (§6.2), one module per route family of §6.3, the Zod schemas
+    (`briefPayloadV1.ts` mirrors §0.6.13.1 key for key), and `src/api/generated/openapi.d.ts`, generated from
+    the recorded `/openapi.json`.
+  - **Tooling:** the isolated-database tooling (`tools/lib/isolated.ts`, `tools/backend.ts`, R-F-1), the fixture
+    recorder (`tools/record-fixtures.ts`) and the bundle report (`tools/bundle-report.ts`).
+  - **Fixtures:** 11 recorded exchange files, `openapi.json` and `PROVENANCE.json` (§12.2).
+  - **App:** the router, TanStack Query, theme variables, the three font families, the HUD, the Classic shell and
+    the four states.
+  - **Tests:** five Vitest layers and the Playwright smoke test.
+  - **Docs:** `THIRD_PARTY_NOTICES.md` and `README.md` (the npm-level commands, R-F-4).
+- `Makefile`: `frontend-install`, `frontend-backend`, `frontend-dev`, `frontend-test` and `frontend-build`. Each is
+  added to the first `.PHONY` block, given a recipe and listed by `make help`. No existing target, recipe or help
+  line changed.
+- `.gitignore`: exactly the six lines of §4.
+- `scripts/secret_scan.py`: one `ALLOWED_FINDINGS` entry (owner ruling 3). This is the only change under a
+  frozen path.
+
+**Owner rulings, 2026-09-28 (DIRECTED).**
+1. **Packages outside §5.** `@types/react`, `@types/react-dom` and `@types/node` are approved as development
+   dependencies. They are type-only; React 19 ships no types, and `tools/` and the configurations run on Node.
+2. **Browser.** Playwright uses the installed Google Chrome (`channel: 'chrome'`), and no browser is downloaded.
+   Carried forward: Chrome updates itself, so F2's and F3's screenshot baselines may need re-approval after a
+   Chrome update.
+3. **R-F-3 stop, resolved by an allow-list entry.**
+   - **The finding.** In the real CUST-007 brief, each of the three `ID_TOKEN` links has the key
+     `matched_token` with the value `CUST-007`. The frozen scanner's `quoted_secret_assignment` rule flags that:
+     a name containing `token`, and a value of exactly 8 characters with no placeholder marker. The key is the
+     API's own, so it cannot be renamed away.
+   - **The ruling.** Every recorded brief lives in one file, `frontend/tests/fixtures/briefs.json`. One entry is
+     pinned to that path, the rule and fingerprint `f98ec4491f30` (the value `CUST-007`), with the reason
+     "recorded API fixture: matched_token is the synthetic customer source id CUST-007".
+   - **What the edit is.** It is data only (+2 lines), made on the owner's approval as an exception to D-F-11 and
+     to §4's frozen `scripts/`. Because of it, the full backend suite was re-run at the gate.
+4. **The naming guard (§12.4).** It exempts only keys the frozen backend defines, each listed with the code that
+   emits it. Today that is only `matched_token` (`app/intelligence/contract.py`, `DerivedLink.to_payload`). A test
+   asserts that each exemption is really emitted by that file and really mirrored by the payload schema. Every
+   name the frontend chooses is still checked.
+
+**Choices made in F1 (PROPOSED; each stands unless replaced).**
+- **Majors at install (§5).**
+  - React 19.3, React Router 8.4, TanStack Query 5.104, Zod 4.6, three 0.186, R3F 9.8, drei 10.7, Tailwind 4.3,
+    Vite 8.3, Vitest 5.0, Playwright 1.63.
+  - **TypeScript 5.9.3, not 7:** typescript-eslint 8.70 requires `<6.1` and openapi-typescript 7.13 requires `^5`.
+  - **ESLint 9.39.5, not 10:** eslint-plugin-jsx-a11y 6.10 peers stop at ESLint 9. npm reports 9.39.5 as no longer
+    supported; this is carried forward.
+- **The HUD in F1** carries the product name, the health light and the `as_of` selector.
+  - Run assessment moves to F2, with the inbox that shows its result and the unknown-outcome re-read it needs.
+  - The Office/Classic, Pixel/Smooth and sound toggles, Replay and the tour arrive with the phases that build what
+    they control.
+- **Routes.** `/` opens Classic view, keeping the query, until F3's office exists. Auto is written in the URL as
+  `as_of=auto`.
+- **A 5xx without the API's error envelope** (a proxy or gateway answering for an unreachable API) is a
+  `NetworkError`. A GET retries it; for a POST, it is an unknown outcome (§7.6).
+- **Fixture recording** uses `<database>_frontend_e2e` on an OS-assigned port, so it never collides with a running
+  `make frontend-backend`. It must not run at the same time as the end-to-end tests.
+- **The no-fake-data guard** also matches `PROJ-nnn` and `ORG-nnn`, because the dataset's project and organisation
+  ids use those prefixes. The `PRJ` of §12.4 matches none of them.
+- **Tests beyond the spec's minimum.**
+  - A contract test re-hashes each recorded payload under a port of M1's `canonical_json`, as a test-only
+    provenance proof. The product never re-hashes (§6.4).
+  - A type-level test proves every Zod response type is assignable to its generated OpenAPI type.
+- **End-to-end** tests serve the production build through `vite preview`, so F3's network assertion on the world
+  chunk can use the same setup.
+
+**The baseline (§13), measured read-only before any file was created.**
+- `HEAD` is `21ded97` (the F0 commit) and `origin/main` is `2b6deb3`, 10 ahead.
+- Tracked files: 370, which is §3's 368 plus F0's two.
+- The golden sha begins `87d1398661b0c300`, the one migration head is `070e4968a497`, and the strategy
+  document's diff sha begins `94e4e5b2f65616f6`.
+- **The full backend suite equals §3:** 6771 passed (unit 5287, contract 185, integration 1214, e2e 85), with 0
+  failed and 0 skipped. `app/` line coverage is 100% over 7456 statements, with 2 warnings (the known anyio and
+  starlette deprecations). Ruff reports 69, mypy 9, and the secret scan 0 findings over 367 files scanned plus 3
+  binary.
+- **The development database** (read-only GETs) has 52 customers and 1 assessment, at `as_of 2026-09-27` with
+  fingerprint `3305b0d9…`.
+
+**The gate (§13).**
+1. **Frontend.**
+   - `tsc` reports 0 on both projects, ESLint 0 errors and 0 warnings, and Prettier is clean.
+   - **Vitest:** 182 passed, 0 failed, 0 skipped. By layer: unit 62, component 23, contract 41, guards 34,
+     tools 22.
+   - **Coverage:** `src/api/**` and `src/domain/**` are at 100% of lines, branches, functions and statements.
+     All of `src/` is 98.8% of statements. The remainder is `main.tsx`'s bootstrap, which the end-to-end tests
+     exercise, a `NavLink` inactive branch and `Button`'s unused `asChild`.
+   - **Playwright:** 3 passed and 0 skipped. The HUD shows `GET /api/v1/health` from the isolated API, and the
+     displayed request id equals the response's `X-Request-ID`. `/` opens Classic view at `2026-09-18`. axe reports
+     0 serious and 0 critical violations on `/classic`.
+   - **Bundle:** initial JavaScript is 145.5 KB gzip of the 250 KB budget, and CSS is 16.8 KB gzip. Fonts are
+     loaded on use. There is no world chunk yet.
+   - **`make frontend-install`** (`npm ci`) installs cleanly from the lockfile with 0 vulnerabilities. npm 11 skips
+     two install scripts (msw's optional postinstall and fsevents'); nothing depends on them.
+2. **The backend.** `git diff --stat 733b19b -- app config migrations alembic.ini data tests scripts Dockerfile
+   docker-compose.yml docker .env.example pyproject.toml` lists only `scripts/secret_scan.py | 2 ++` (ruling 3).
+   **The full backend suite was re-run on that tree, and it equals the baseline:** 6771 passed (unit 5287,
+   contract 185, integration 1214, e2e 85), with 0 failed and 0 skipped. `app/` coverage is 100% over 7456
+   statements, with the same 2 warnings. Ruff reports 69 over `app/ tests/ scripts/`, and mypy 9.
+3. **The four repository-scanning backend test files** pass on the staged tree: 256 passed and 0 failed, with the
+   2 known warnings. They ran in the repository `.venv`, with the caches and the coverage file kept out of the
+   repository.
+4. **The secret scan.**
+   - `scan_text` over all 89 new or changed files reports 0 findings with the allow-list. Without it, there are
+     exactly the three `briefs.json` findings, all with fingerprint `f98ec4491f30`.
+   - The scan also caught a made-up credential in `tests/tools/isolated.test.ts`. It was renamed to a value
+     carrying the scanner's `fake` placeholder marker, not allow-listed (R-F-3).
+   - **Staged `make secret-scan`:** 453 files scanned, 3 binary files skipped (456 tracked, which is 370 + 86)
+     and 0 findings.
+5. **Anchors.** The golden sha, the one migration head `070e4968a497` and the strategy diff sha all equal §3.
+6. **`git status`** shows only `frontend/`, `Makefile`, `.gitignore`, `scripts/secret_scan.py` (ruling 3) and the
+   unstaged strategy document.
+
+**AC-F-17.**
+- The development database's `GET /risk/assessments` and `GET /entities/customers` responses are byte-identical
+  before and after the gate.
+- A run without PostgreSQL exits 2, before any migration and without printing a credential. Tooling tests cover
+  both `record-fixtures` and `frontend-backend`.
+- `<database>_frontend` and `<database>_frontend_e2e` now exist on the local server. Every run recreates them.
+
+**Fixture provenance.**
+- Recorded at `21ded97` over `ai_ceo_layer1_frontend_e2e` at revision `070e4968a497`, `as_of 2026-09-18`. The
+  backend paths were clean.
+- The three payload hashes and the pinned fingerprint equal §3. CUST-007's narrative equals the golden brief byte
+  for byte.
+
+**Not run in F1.**
+- F2's end-to-end scenario, the visual tests and the performance record. Their surfaces do not exist yet.
+
+**Next:** F2, which starts only on the owner's instruction.
+
 ---
 
 ## Appendix A: fixed copy

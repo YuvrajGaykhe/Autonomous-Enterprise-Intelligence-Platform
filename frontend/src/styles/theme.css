@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+
+/*
+ * Theme variables (spec §7.1, §9.3, D-F-18). Always "theme variables", never the other word
+ * (R-F-3). Colour never carries meaning alone: every band, bulb and stamp also has a word and
+ * a glyph (§10).
+ */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-pixel: 'Silkscreen', ui-monospace, monospace;
+
+  /* Bands, in order NONE < WATCH < ELEVATED < CRITICAL (§7.1, PROPOSED colours). */
+  --color-band-none: var(--color-slate-500);
+  --color-band-watch: var(--color-yellow-400);
+  --color-band-elevated: var(--color-orange-500);
+  --color-band-critical: var(--color-red-600);
+
+  /* Antenna bulbs (§9.3). */
+  --color-bulb-idle: var(--color-zinc-400);
+  --color-bulb-working: var(--color-cyan-400);
+  --color-bulb-waiting: var(--color-amber-400);
+  --color-bulb-done: var(--color-green-500);
+  --color-bulb-error: var(--color-red-500);
+
+  /* Data flow and the office palette (§9.3). */
+  --color-neon-handoff: var(--color-cyan-300);
+  --color-neon-conflict: var(--color-red-400);
+  --color-floor-wood: #c8894f;
+  --color-wall-cream: #f3e6c9;
+}
+
+:root {
+  --background: oklch(0.985 0.004 85);
+  --foreground: oklch(0.21 0.01 260);
+  --card: oklch(1 0 0);
+  --muted: oklch(0.955 0.006 85);
+  --muted-foreground: oklch(0.45 0.015 260);
+  --border: oklch(0.89 0.01 85);
+  --primary: oklch(0.32 0.03 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --ring: oklch(0.55 0.15 220);
+  --ok: oklch(0.5 0.13 150);
+  --bad: oklch(0.52 0.19 27);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.18 0.01 260);
+    --foreground: oklch(0.95 0.005 85);
+    --card: oklch(0.23 0.012 260);
+    --muted: oklch(0.27 0.012 260);
+    --muted-foreground: oklch(0.75 0.01 260);
+    --border: oklch(0.34 0.012 260);
+    --primary: oklch(0.9 0.02 250);
+    --primary-foreground: oklch(0.2 0.01 260);
+    --ring: oklch(0.72 0.13 220);
+    --ok: oklch(0.78 0.15 150);
+    --bad: oklch(0.72 0.17 27);
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-ok: var(--ok);
+  --color-bad: var(--bad);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

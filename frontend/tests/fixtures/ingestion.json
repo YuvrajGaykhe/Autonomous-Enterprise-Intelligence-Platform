@@ -1,0 +1,68 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/ingestion/runs?limit=500&offset=0",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "run_id": "040d5906-134c-4eb1-bad2-eabef784989d",
+          "source_system": "csv_demo",
+          "source_entity": null,
+          "mode": "full",
+          "status": "SUCCESS",
+          "started_at": "2026-09-28T01:55:22.138426Z",
+          "finished_at": "2026-09-28T01:55:22.316830Z",
+          "records_fetched": 233,
+          "records_raw_persisted": 233,
+          "records_inserted": 233,
+          "records_updated": 0,
+          "records_unchanged": 0,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_failed": 0,
+          "error_summary": null
+        }
+      ],
+      "total": 1,
+      "limit": 500,
+      "offset": 0
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/ingestion/runs/040d5906-134c-4eb1-bad2-eabef784989d",
+    "status": 200,
+    "body": {
+      "run_id": "040d5906-134c-4eb1-bad2-eabef784989d",
+      "source_system": "csv_demo",
+      "source_entity": null,
+      "mode": "full",
+      "status": "SUCCESS",
+      "started_at": "2026-09-28T01:55:22.138426Z",
+      "finished_at": "2026-09-28T01:55:22.316830Z",
+      "records_fetched": 233,
+      "records_raw_persisted": 233,
+      "records_inserted": 233,
+      "records_updated": 0,
+      "records_unchanged": 0,
+      "records_rejected": 0,
+      "records_failed": 0,
+      "warnings": 0,
+      "batches_failed": 0,
+      "error_summary": null
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/ingestion/runs/040d5906-134c-4eb1-bad2-eabef784989d/errors?limit=500&offset=0",
+    "status": 200,
+    "body": {
+      "items": [],
+      "total": 0,
+      "limit": 500,
+      "offset": 0
+    }
+  }
+]

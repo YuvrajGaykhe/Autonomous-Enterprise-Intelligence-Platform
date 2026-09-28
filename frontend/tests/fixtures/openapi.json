@@ -1,0 +1,4975 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI CEO — Layer 1",
+    "description": "Connector and Ingestion Subsystem",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "description": "Liveness and readiness probe.",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PostgreSQL is not reachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources": {
+      "get": {
+        "tags": [
+          "sources"
+        ],
+        "summary": "List Sources",
+        "description": "List configured source connectors and their capabilities.",
+        "operationId": "list_sources_api_v1_sources_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A source connector configuration is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/{source}/health": {
+      "get": {
+        "tags": [
+          "sources"
+        ],
+        "summary": "Source Health",
+        "description": "Run a connector health check.",
+        "operationId": "source_health_api_v1_sources__source__health_get",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceHealthResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A source connector configuration is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/runs": {
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Start Run",
+        "description": "Run one ingestion to completion and return the run.",
+        "operationId": "start_run_api_v1_ingestion_runs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestionRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionRunCreatedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid or unsupported request, unknown source, or a request the source cannot serve; no run is created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Source misconfigured (no run is created) or a system failure during the run (the run is marked FAILED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "List Runs",
+        "description": "List ingestion runs, newest first.",
+        "operationId": "list_runs_api_v1_ingestion_runs_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RunStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Get Run",
+        "description": "Run detail and counts.",
+        "operationId": "get_run_api_v1_ingestion_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionRunResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The ingestion run does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/runs/{run_id}/errors": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "List Run Errors",
+        "description": "A run's structured errors with safe messages and field-level findings.",
+        "operationId": "list_run_errors_api_v1_ingestion_runs__run_id__errors_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorSeverity"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The ingestion run does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/organizations": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "List canonical organizations",
+        "description": "Canonical organizations in source-identity order.",
+        "operationId": "list_organizations_api_v1_entities_organizations_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/organizations/{entity_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Fetch one canonical organizations record",
+        "description": "Look up a record by its canonical id.",
+        "operationId": "get_organizations_api_v1_entities_organizations__entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationCanonical"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of this entity type has this id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/employees": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "List canonical employees",
+        "description": "Canonical employees in source-identity order.",
+        "operationId": "list_employees_api_v1_entities_employees_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/employees/{entity_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Fetch one canonical employees record",
+        "description": "Look up a record by its canonical id.",
+        "operationId": "get_employees_api_v1_entities_employees__entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeCanonical"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of this entity type has this id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/customers": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "List canonical customers",
+        "description": "Canonical customers in source-identity order.",
+        "operationId": "list_customers_api_v1_entities_customers_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/customers/{entity_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Fetch one canonical customers record",
+        "description": "Look up a record by its canonical id.",
+        "operationId": "get_customers_api_v1_entities_customers__entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerCanonical"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of this entity type has this id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/deals": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "List canonical deals",
+        "description": "Canonical deals in source-identity order.",
+        "operationId": "list_deals_api_v1_entities_deals_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/deals/{entity_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Fetch one canonical deals record",
+        "description": "Look up a record by its canonical id.",
+        "operationId": "get_deals_api_v1_entities_deals__entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealCanonical"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of this entity type has this id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/projects": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "List canonical projects",
+        "description": "Canonical projects in source-identity order.",
+        "operationId": "list_projects_api_v1_entities_projects_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/projects/{entity_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Fetch one canonical projects record",
+        "description": "Look up a record by its canonical id.",
+        "operationId": "get_projects_api_v1_entities_projects__entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCanonical"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of this entity type has this id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/support_tickets": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "List canonical support tickets",
+        "description": "Canonical support tickets in source-identity order.",
+        "operationId": "list_support_tickets_api_v1_entities_support_tickets_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/support_tickets/{entity_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Fetch one canonical support tickets record",
+        "description": "Look up a record by its canonical id.",
+        "operationId": "get_support_tickets_api_v1_entities_support_tickets__entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketCanonical"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of this entity type has this id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/documents": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "List canonical documents",
+        "description": "Canonical documents in source-identity order.",
+        "operationId": "list_documents_api_v1_entities_documents_get",
+        "parameters": [
+          {
+            "name": "source_system",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source System"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/documents/{entity_id}": {
+      "get": {
+        "tags": [
+          "entities"
+        ],
+        "summary": "Fetch one canonical documents record",
+        "description": "Look up a record by its canonical id.",
+        "operationId": "get_documents_api_v1_entities_documents__entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentCanonical"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of this entity type has this id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/ingestion": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Ingestion Metrics",
+        "description": "Database-derived ingestion metrics, plus this process's in-process counters.",
+        "operationId": "ingestion_metrics_api_v1_metrics_ingestion_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionMetricsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/assessments": {
+      "post": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "Run Assessments",
+        "description": "Assess every customer in scope, or the one named; 201 if anything was created.",
+        "operationId": "run_assessments_api_v1_risk_assessments_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Every result already existed; nothing was created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRunResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request, a customer outside the assessment scope, or a null as_of the scope cannot resolve; nothing is written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A system failure; nothing is written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "List Assessments",
+        "description": "Assessments matching every given filter, each with the ids of its briefs.",
+        "operationId": "list_assessments_api_v1_risk_assessments_get",
+        "parameters": [
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "name": "band",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RiskBand"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Band"
+            }
+          },
+          {
+            "name": "executive_worthy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Executive Worthy"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/assessments/{assessment_id}": {
+      "get": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "Get Assessment",
+        "description": "One assessment, its positions by ordinal and every one of its briefs.",
+        "operationId": "get_assessment_api_v1_risk_assessments__assessment_id__get",
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The risk assessment does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/briefs/{brief_id}": {
+      "get": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "Get Brief",
+        "description": "A stored brief as written, its citations, and its derived decision status.",
+        "operationId": "get_brief_api_v1_risk_briefs__brief_id__get",
+        "parameters": [
+          {
+            "name": "brief_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brief Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BriefResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The risk brief does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/briefs/{brief_id}/decision": {
+      "post": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "Record Brief Decision",
+        "description": "Record one decision on the stored brief, extending its history.",
+        "operationId": "record_brief_decision_api_v1_risk_briefs__brief_id__decision_post",
+        "parameters": [
+          {
+            "name": "brief_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brief Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The risk brief does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "payload_hash does not match the brief's decision payload (PAYLOAD_HASH_CONFLICT), or the decision does not extend the brief's decision history (DECISION_CONFLICT); nothing is written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A system failure; nothing is written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/briefs/{brief_id}/decisions": {
+      "get": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "List Brief Decisions",
+        "description": "The brief's decisions in chain order, from its first decision to its head.",
+        "operationId": "list_brief_decisions_api_v1_risk_briefs__brief_id__decisions_get",
+        "parameters": [
+          {
+            "name": "brief_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brief Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionHistoryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The risk brief does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssessmentBrief": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "policy_version": {
+            "type": "integer",
+            "title": "Policy Version"
+          },
+          "template_version": {
+            "type": "string",
+            "title": "Template Version"
+          },
+          "payload_hash": {
+            "type": "string",
+            "title": "Payload Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "policy_version",
+          "template_version",
+          "payload_hash"
+        ],
+        "title": "AssessmentBrief",
+        "description": "One brief of an assessment. None is current: every brief is listed."
+      },
+      "AssessmentDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "customer_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Source Id"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "layer1_fingerprint": {
+            "type": "string",
+            "title": "Layer1 Fingerprint"
+          },
+          "rules_version": {
+            "type": "integer",
+            "title": "Rules Version"
+          },
+          "linker_version": {
+            "type": "string",
+            "title": "Linker Version"
+          },
+          "band": {
+            "type": "string",
+            "title": "Band"
+          },
+          "executive_worthy": {
+            "type": "boolean",
+            "title": "Executive Worthy"
+          },
+          "ranking_key": {
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Ranking Key"
+          },
+          "satisfied_rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Satisfied Rules"
+          },
+          "signals": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Signals"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentPosition"
+            },
+            "type": "array",
+            "title": "Positions"
+          },
+          "briefs": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentBrief"
+            },
+            "type": "array",
+            "title": "Briefs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "customer_source_id",
+          "as_of",
+          "source_system",
+          "layer1_fingerprint",
+          "rules_version",
+          "linker_version",
+          "band",
+          "executive_worthy",
+          "ranking_key",
+          "satisfied_rules",
+          "signals",
+          "positions",
+          "briefs"
+        ],
+        "title": "AssessmentDetailResponse",
+        "description": "An assessment with its satisfied rules, signals, positions by ordinal and every brief."
+      },
+      "AssessmentListItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "customer_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Source Id"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "layer1_fingerprint": {
+            "type": "string",
+            "title": "Layer1 Fingerprint"
+          },
+          "rules_version": {
+            "type": "integer",
+            "title": "Rules Version"
+          },
+          "linker_version": {
+            "type": "string",
+            "title": "Linker Version"
+          },
+          "band": {
+            "type": "string",
+            "title": "Band"
+          },
+          "executive_worthy": {
+            "type": "boolean",
+            "title": "Executive Worthy"
+          },
+          "ranking_key": {
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Ranking Key"
+          },
+          "brief_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Brief Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "customer_source_id",
+          "as_of",
+          "source_system",
+          "layer1_fingerprint",
+          "rules_version",
+          "linker_version",
+          "band",
+          "executive_worthy",
+          "ranking_key",
+          "brief_ids"
+        ],
+        "title": "AssessmentListItem",
+        "description": "An assessment and the ids of every brief generated for it."
+      },
+      "AssessmentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentListItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AssessmentListResponse",
+        "description": "One limit/offset page: newest as_of first, then by scope and versions, then by\nranking key, then by id."
+      },
+      "AssessmentPosition": {
+        "properties": {
+          "ordinal": {
+            "type": "integer",
+            "title": "Ordinal"
+          },
+          "function": {
+            "type": "string",
+            "title": "Function"
+          },
+          "stance": {
+            "type": "string",
+            "title": "Stance"
+          },
+          "proposed_action": {
+            "type": "string",
+            "title": "Proposed Action"
+          },
+          "object_ref": {
+            "type": "string",
+            "title": "Object Ref"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale"
+          },
+          "citations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Citations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ordinal",
+          "function",
+          "stance",
+          "proposed_action",
+          "object_ref",
+          "rationale",
+          "citations"
+        ],
+        "title": "AssessmentPosition",
+        "description": "One position a function stated, as stored, with its evidence."
+      },
+      "AssessmentRunItem": {
+        "properties": {
+          "assessment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assessment Id"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          },
+          "brief_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brief Id"
+          },
+          "payload_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assessment_id",
+          "created",
+          "brief_id",
+          "payload_hash"
+        ],
+        "title": "AssessmentRunItem",
+        "description": "One customer's result: its assessment, whether this run created it, and its brief."
+      },
+      "AssessmentRunRequest": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "source_system": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Source System",
+            "default": "csv_demo"
+          },
+          "customer_source_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Source Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "as_of"
+        ],
+        "title": "AssessmentRunRequest",
+        "description": "Assess every customer in scope, or the one named, and persist the results.\n\nas_of is required and may be null, which asks for the scope's fallback\ndate explicitly. The run is unpinned: no expected fingerprint is taken,\nand no rules, linker or policy override is accepted."
+      },
+      "AssessmentRunResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentRunItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "AssessmentRunResponse",
+        "description": "One item per customer assessed, in ranking order."
+      },
+      "BriefResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "assessment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assessment Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "decision_status": {
+            "$ref": "#/components/schemas/RiskDecisionStatus"
+          },
+          "policy_version": {
+            "type": "integer",
+            "title": "Policy Version"
+          },
+          "template_version": {
+            "type": "string",
+            "title": "Template Version"
+          },
+          "payload_hash": {
+            "type": "string",
+            "title": "Payload Hash"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "narrative": {
+            "type": "string",
+            "title": "Narrative"
+          },
+          "citations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Citations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "assessment_id",
+          "status",
+          "decision_status",
+          "policy_version",
+          "template_version",
+          "payload_hash",
+          "payload",
+          "narrative",
+          "citations"
+        ],
+        "title": "BriefResponse",
+        "description": "A stored brief, read back as written: nothing is re-rendered or re-resolved.\n\nstatus is the stored column and is never updated; decision_status is\nderived from the brief's decision history. payload is the stored decision\npayload as an opaque object, and citations are the payload's own distinct\ncitations in ascending wire order."
+      },
+      "CanonicalRecordCounts": {
+        "properties": {
+          "organizations": {
+            "type": "integer",
+            "title": "Organizations"
+          },
+          "employees": {
+            "type": "integer",
+            "title": "Employees"
+          },
+          "customers": {
+            "type": "integer",
+            "title": "Customers"
+          },
+          "deals": {
+            "type": "integer",
+            "title": "Deals"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "support_tickets": {
+            "type": "integer",
+            "title": "Support Tickets"
+          },
+          "documents": {
+            "type": "integer",
+            "title": "Documents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "organizations",
+          "employees",
+          "customers",
+          "deals",
+          "projects",
+          "support_tickets",
+          "documents"
+        ],
+        "title": "CanonicalRecordCounts",
+        "description": "Canonical records per entity type; every type is always present."
+      },
+      "ConnectorHealthStatus": {
+        "type": "string",
+        "enum": [
+          "healthy",
+          "unhealthy",
+          "unsupported"
+        ],
+        "title": "ConnectorHealthStatus"
+      },
+      "CustomerCanonical": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "type": "string",
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          },
+          "ingestion_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ingestion Run Id"
+          },
+          "record_hash": {
+            "type": "string",
+            "title": "Record Hash"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "segment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment"
+          },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "owner_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Source Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "ingested_at",
+          "ingestion_run_id",
+          "record_hash",
+          "name",
+          "is_active"
+        ],
+        "title": "CustomerCanonical",
+        "description": "Source-neutral canonical representation of a Customer.\n\nSupports customer/account intelligence. owner_source_id is\na source-system reference to the account owner employee."
+      },
+      "CustomerListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerCanonical"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "CustomerListResponse"
+      },
+      "DealCanonical": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "type": "string",
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          },
+          "ingestion_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ingestion Run Id"
+          },
+          "record_hash": {
+            "type": "string",
+            "title": "Record Hash"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "probability": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probability"
+          },
+          "expected_close_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Close Date"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "customer_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Source Id"
+          },
+          "owner_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Source Id"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "ingested_at",
+          "ingestion_run_id",
+          "record_hash",
+          "name",
+          "is_active"
+        ],
+        "title": "DealCanonical",
+        "description": "Source-neutral canonical representation of a Deal.\n\ncustomer_id is nullable because unresolved customer references\nmust be preserved, not rejected. The original customer_source_id\nis always preserved for tracking."
+      },
+      "DealListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DealCanonical"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "DealListResponse"
+      },
+      "DecisionHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "DecisionHistoryResponse",
+        "description": "A brief's decisions in chain order, first to head."
+      },
+      "DecisionRequest": {
+        "properties": {
+          "actor": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Actor"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/RiskDecision"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "payload_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Payload Hash"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "actor",
+          "decision",
+          "payload_hash"
+        ],
+        "title": "DecisionRequest",
+        "description": "Record a human decision on a stored brief.\n\nactor is recorded exactly as supplied; it is asserted, never\nauthenticated, and never validated as an email address. supersedes_id is\nnull only for the brief's first decision, and otherwise names its current\nhead."
+      },
+      "DecisionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "brief_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Brief Id"
+          },
+          "payload_hash": {
+            "type": "string",
+            "title": "Payload Hash"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/RiskDecision"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Decided At"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "brief_id",
+          "payload_hash",
+          "actor",
+          "decision",
+          "note",
+          "decided_at",
+          "supersedes_id"
+        ],
+        "title": "DecisionResponse",
+        "description": "One recorded decision."
+      },
+      "DependencyStatus": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "unavailable"
+        ],
+        "title": "DependencyStatus"
+      },
+      "DocumentCanonical": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "type": "string",
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          },
+          "ingestion_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ingestion Run Id"
+          },
+          "record_hash": {
+            "type": "string",
+            "title": "Record Hash"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Type"
+          },
+          "body_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Text"
+          },
+          "source_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Uri"
+          },
+          "owner_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Source Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "ingested_at",
+          "ingestion_run_id",
+          "record_hash"
+        ],
+        "title": "DocumentCanonical",
+        "description": "Source-neutral canonical representation of a Document.\n\nSupports future RAG and institutional memory. body_text\naccepts full textual content with no artificial length limit."
+      },
+      "DocumentListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCanonical"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "DocumentListResponse"
+      },
+      "DurationSummary": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "sum": {
+            "type": "number",
+            "title": "Sum"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "sum"
+        ],
+        "title": "DurationSummary",
+        "description": "Finished runs (count) and their summed duration in seconds (sum)."
+      },
+      "EmployeeCanonical": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "type": "string",
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          },
+          "ingestion_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ingestion Run Id"
+          },
+          "record_hash": {
+            "type": "string",
+            "title": "Record Hash"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "manager_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Source Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "hire_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hire Date"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "ingested_at",
+          "ingestion_run_id",
+          "record_hash",
+          "name",
+          "is_active"
+        ],
+        "title": "EmployeeCanonical",
+        "description": "Source-neutral canonical representation of an Employee.\n\nSupports HR and ownership relationships. manager_source_id\nis a source-system reference (not a canonical UUID) because\nthe manager may come from any source system."
+      },
+      "EmployeeListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EmployeeCanonical"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "EmployeeListResponse"
+      },
+      "EntityRunResult": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "records_fetched": {
+            "type": "integer",
+            "title": "Records Fetched"
+          },
+          "records_inserted": {
+            "type": "integer",
+            "title": "Records Inserted"
+          },
+          "records_updated": {
+            "type": "integer",
+            "title": "Records Updated"
+          },
+          "records_unchanged": {
+            "type": "integer",
+            "title": "Records Unchanged"
+          },
+          "records_rejected": {
+            "type": "integer",
+            "title": "Records Rejected"
+          },
+          "records_failed": {
+            "type": "integer",
+            "title": "Records Failed"
+          },
+          "warnings": {
+            "type": "integer",
+            "title": "Warnings"
+          },
+          "batches_committed": {
+            "type": "integer",
+            "title": "Batches Committed"
+          },
+          "batches_failed": {
+            "type": "integer",
+            "title": "Batches Failed"
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "status",
+          "records_fetched",
+          "records_inserted",
+          "records_updated",
+          "records_unchanged",
+          "records_rejected",
+          "records_failed",
+          "warnings",
+          "batches_committed",
+          "batches_failed",
+          "failure"
+        ],
+        "title": "EntityRunResult",
+        "description": "One entity's outcome. failure is an exception class name or error code."
+      },
+      "EntityStatus": {
+        "type": "string",
+        "enum": [
+          "completed",
+          "failed",
+          "skipped"
+        ],
+        "title": "EntityStatus"
+      },
+      "EntityType": {
+        "type": "string",
+        "enum": [
+          "organizations",
+          "employees",
+          "customers",
+          "deals",
+          "projects",
+          "support_tickets",
+          "documents"
+        ],
+        "title": "EntityType",
+        "description": "Canonical entity types, in dependency order."
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "request_id"
+        ],
+        "title": "ErrorBody"
+      },
+      "ErrorFinding": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "field_name",
+          "severity",
+          "message"
+        ],
+        "title": "ErrorFinding",
+        "description": "A field-level finding. Source values are never included."
+      },
+      "ErrorListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IngestionErrorResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ErrorListResponse"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "The body of every API error response."
+      },
+      "ErrorSeverity": {
+        "type": "string",
+        "enum": [
+          "ERROR",
+          "WARNING",
+          "INFO"
+        ],
+        "title": "ErrorSeverity"
+      },
+      "ErrorSeverityCounts": {
+        "properties": {
+          "ERROR": {
+            "type": "integer",
+            "title": "Error"
+          },
+          "WARNING": {
+            "type": "integer",
+            "title": "Warning"
+          },
+          "INFO": {
+            "type": "integer",
+            "title": "Info"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ERROR",
+          "WARNING",
+          "INFO"
+        ],
+        "title": "ErrorSeverityCounts",
+        "description": "ingestion_errors rows per severity; every severity is always present."
+      },
+      "HealthChecks": {
+        "properties": {
+          "database": {
+            "$ref": "#/components/schemas/DependencyStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "database"
+        ],
+        "title": "HealthChecks"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/HealthStatus"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "checks": {
+            "$ref": "#/components/schemas/HealthChecks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version",
+          "checks"
+        ],
+        "title": "HealthResponse",
+        "description": "Liveness (the process answered) and readiness (its dependencies are reachable)."
+      },
+      "HealthStatus": {
+        "type": "string",
+        "enum": [
+          "healthy",
+          "unhealthy"
+        ],
+        "title": "HealthStatus"
+      },
+      "IngestionErrorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/ErrorSeverity"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "source_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source System"
+          },
+          "source_entity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorFinding"
+            },
+            "type": "array",
+            "title": "Findings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "severity",
+          "code",
+          "message",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "created_at",
+          "findings"
+        ],
+        "title": "IngestionErrorResponse",
+        "description": "A structured ingestion error with a safe message (no raw records or values)."
+      },
+      "IngestionMetrics": {
+        "properties": {
+          "runs_total": {
+            "type": "integer",
+            "title": "Runs Total"
+          },
+          "runs_by_status": {
+            "$ref": "#/components/schemas/RunStatusCounts"
+          },
+          "records_fetched_total": {
+            "type": "integer",
+            "title": "Records Fetched Total"
+          },
+          "records_raw_persisted_total": {
+            "type": "integer",
+            "title": "Records Raw Persisted Total"
+          },
+          "records_inserted_total": {
+            "type": "integer",
+            "title": "Records Inserted Total"
+          },
+          "records_updated_total": {
+            "type": "integer",
+            "title": "Records Updated Total"
+          },
+          "records_unchanged_total": {
+            "type": "integer",
+            "title": "Records Unchanged Total"
+          },
+          "records_rejected_total": {
+            "type": "integer",
+            "title": "Records Rejected Total"
+          },
+          "records_failed_total": {
+            "type": "integer",
+            "title": "Records Failed Total"
+          },
+          "warnings_total": {
+            "type": "integer",
+            "title": "Warnings Total"
+          },
+          "batches_failed_total": {
+            "type": "integer",
+            "title": "Batches Failed Total"
+          },
+          "errors_by_severity": {
+            "$ref": "#/components/schemas/ErrorSeverityCounts"
+          },
+          "connector_request_failures_total": {
+            "type": "integer",
+            "title": "Connector Request Failures Total"
+          },
+          "validation_errors_total": {
+            "type": "integer",
+            "title": "Validation Errors Total"
+          },
+          "ingestion_duration_seconds_total": {
+            "type": "number",
+            "title": "Ingestion Duration Seconds Total"
+          },
+          "canonical_records": {
+            "$ref": "#/components/schemas/CanonicalRecordCounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "runs_total",
+          "runs_by_status",
+          "records_fetched_total",
+          "records_raw_persisted_total",
+          "records_inserted_total",
+          "records_updated_total",
+          "records_unchanged_total",
+          "records_rejected_total",
+          "records_failed_total",
+          "warnings_total",
+          "batches_failed_total",
+          "errors_by_severity",
+          "connector_request_failures_total",
+          "validation_errors_total",
+          "ingestion_duration_seconds_total",
+          "canonical_records"
+        ],
+        "title": "IngestionMetrics",
+        "description": "Operational ingestion metrics derived from persisted runs, errors and records.\n\nrecords_failed_total = records_fetched_total - (records_inserted_total\n+ records_updated_total + records_unchanged_total + records_rejected_total).\nbatches_failed_total counts BATCH_FAILED errors; connector_request_failures_total\ncounts CONNECTOR_UNHEALTHY and CONNECTOR_FAILED errors; validation_errors_total\ncounts ERROR findings other than those E1 system codes.\ningestion_duration_seconds_total sums finished_at - started_at over finished runs."
+      },
+      "IngestionMetricsResponse": {
+        "properties": {
+          "totals": {
+            "$ref": "#/components/schemas/IngestionMetrics"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceIngestionMetrics"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "process": {
+            "$ref": "#/components/schemas/ProcessIngestionMetrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totals",
+          "sources",
+          "process"
+        ],
+        "title": "IngestionMetricsResponse",
+        "description": "Database-derived metrics for every source system combined and per source system\n(sorted by name), plus the in-process counters of the API process answering."
+      },
+      "IngestionRunCreatedResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Entity"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "records_fetched": {
+            "type": "integer",
+            "title": "Records Fetched"
+          },
+          "records_raw_persisted": {
+            "type": "integer",
+            "title": "Records Raw Persisted"
+          },
+          "records_inserted": {
+            "type": "integer",
+            "title": "Records Inserted"
+          },
+          "records_updated": {
+            "type": "integer",
+            "title": "Records Updated"
+          },
+          "records_unchanged": {
+            "type": "integer",
+            "title": "Records Unchanged"
+          },
+          "records_rejected": {
+            "type": "integer",
+            "title": "Records Rejected"
+          },
+          "records_failed": {
+            "type": "integer",
+            "title": "Records Failed"
+          },
+          "warnings": {
+            "type": "integer",
+            "title": "Warnings"
+          },
+          "batches_failed": {
+            "type": "integer",
+            "title": "Batches Failed"
+          },
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          },
+          "batches_committed": {
+            "type": "integer",
+            "title": "Batches Committed"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityRunResult"
+            },
+            "type": "array",
+            "title": "Entities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "source_system",
+          "source_entity",
+          "mode",
+          "status",
+          "started_at",
+          "finished_at",
+          "records_fetched",
+          "records_raw_persisted",
+          "records_inserted",
+          "records_updated",
+          "records_unchanged",
+          "records_rejected",
+          "records_failed",
+          "warnings",
+          "batches_failed",
+          "error_summary",
+          "batches_committed",
+          "entities"
+        ],
+        "title": "IngestionRunCreatedResponse",
+        "description": "The completed run, plus the per-entity results known only at execution time."
+      },
+      "IngestionRunRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "entities": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EntityType"
+                },
+                "type": "array",
+                "maxItems": 7,
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entities"
+          },
+          "mode": {
+            "type": "string",
+            "const": "full",
+            "title": "Mode",
+            "default": "full"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": false
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 10000,
+            "minimum": 1,
+            "title": "Page Size",
+            "default": 100
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "IngestionRunRequest",
+        "description": "Start a synchronous ingestion run.\n\nConnection details (URLs, directories, credentials) cannot be supplied:\nthe source is built from its committed configuration. entities omitted\nmeans every entity the source provides; parents always run first.\ndry_run is accepted for contract compatibility, but only false is\nsupported."
+      },
+      "IngestionRunResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Entity"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "records_fetched": {
+            "type": "integer",
+            "title": "Records Fetched"
+          },
+          "records_raw_persisted": {
+            "type": "integer",
+            "title": "Records Raw Persisted"
+          },
+          "records_inserted": {
+            "type": "integer",
+            "title": "Records Inserted"
+          },
+          "records_updated": {
+            "type": "integer",
+            "title": "Records Updated"
+          },
+          "records_unchanged": {
+            "type": "integer",
+            "title": "Records Unchanged"
+          },
+          "records_rejected": {
+            "type": "integer",
+            "title": "Records Rejected"
+          },
+          "records_failed": {
+            "type": "integer",
+            "title": "Records Failed"
+          },
+          "warnings": {
+            "type": "integer",
+            "title": "Warnings"
+          },
+          "batches_failed": {
+            "type": "integer",
+            "title": "Batches Failed"
+          },
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "source_system",
+          "source_entity",
+          "mode",
+          "status",
+          "started_at",
+          "finished_at",
+          "records_fetched",
+          "records_raw_persisted",
+          "records_inserted",
+          "records_updated",
+          "records_unchanged",
+          "records_rejected",
+          "records_failed",
+          "warnings",
+          "batches_failed",
+          "error_summary"
+        ],
+        "title": "IngestionRunResponse",
+        "description": "A run's state and quality counts.\n\nrecords_fetched = records_inserted + records_updated + records_unchanged\n+ records_rejected + records_failed. records_raw_persisted counts captured\nsource_records rows; batches_failed counts rolled-back batches."
+      },
+      "OrganizationCanonical": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "type": "string",
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          },
+          "ingestion_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ingestion Run Id"
+          },
+          "record_hash": {
+            "type": "string",
+            "title": "Record Hash"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "ingested_at",
+          "ingestion_run_id",
+          "record_hash",
+          "name"
+        ],
+        "title": "OrganizationCanonical",
+        "description": "Source-neutral canonical representation of an Organization.\n\nRepresents the enterprise boundary / tenant. The demo system\nhas one organization (e.g. \"Acme Corp\")."
+      },
+      "OrganizationListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrganizationCanonical"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "OrganizationListResponse"
+      },
+      "ProcessIngestionMetrics": {
+        "properties": {
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "runs_total": {
+            "type": "integer",
+            "title": "Runs Total"
+          },
+          "runs_by_status": {
+            "$ref": "#/components/schemas/RunStatusCounts"
+          },
+          "records_fetched_total": {
+            "type": "integer",
+            "title": "Records Fetched Total"
+          },
+          "records_inserted_total": {
+            "type": "integer",
+            "title": "Records Inserted Total"
+          },
+          "records_updated_total": {
+            "type": "integer",
+            "title": "Records Updated Total"
+          },
+          "records_unchanged_total": {
+            "type": "integer",
+            "title": "Records Unchanged Total"
+          },
+          "records_rejected_total": {
+            "type": "integer",
+            "title": "Records Rejected Total"
+          },
+          "connector_request_failures_total": {
+            "type": "integer",
+            "title": "Connector Request Failures Total"
+          },
+          "validation_errors_total": {
+            "type": "integer",
+            "title": "Validation Errors Total"
+          },
+          "ingestion_duration_seconds": {
+            "$ref": "#/components/schemas/DurationSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "started_at",
+          "runs_total",
+          "runs_by_status",
+          "records_fetched_total",
+          "records_inserted_total",
+          "records_updated_total",
+          "records_unchanged_total",
+          "records_rejected_total",
+          "connector_request_failures_total",
+          "validation_errors_total",
+          "ingestion_duration_seconds"
+        ],
+        "title": "ProcessIngestionMetrics",
+        "description": "Counters for ingestion runs executed by this API process since started_at.\n\nThey start at zero when the process starts and are not persisted; runs of\nother processes (other API workers, the ingest-demo command) are not\nincluded. runs_by_status RUNNING counts runs still in progress. Record\ncounts come from committed batches (a failed batch's records count as\nfetched); every rejected record is one validation error;\nconnector_request_failures_total counts failed health checks and failed\npage fetches; ingestion_duration_seconds covers finished runs."
+      },
+      "ProjectCanonical": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "type": "string",
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          },
+          "ingestion_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ingestion Run Id"
+          },
+          "record_hash": {
+            "type": "string",
+            "title": "Record Hash"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "customer_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Source Id"
+          },
+          "owner_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Source Id"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "ingested_at",
+          "ingestion_run_id",
+          "record_hash",
+          "name",
+          "is_active"
+        ],
+        "title": "ProjectCanonical",
+        "description": "Source-neutral canonical representation of a Project.\n\nSupports delivery/resource context. customer_id is nullable\nbecause the customer reference may not resolve."
+      },
+      "ProjectListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectCanonical"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "ProjectListResponse"
+      },
+      "RiskBand": {
+        "type": "string",
+        "enum": [
+          "NONE",
+          "WATCH",
+          "ELEVATED",
+          "CRITICAL"
+        ],
+        "title": "RiskBand",
+        "description": "Ordinal risk band (plan A5). Never a percentage, never a probability."
+      },
+      "RiskDecision": {
+        "type": "string",
+        "enum": [
+          "APPROVED",
+          "REJECTED"
+        ],
+        "title": "RiskDecision",
+        "description": "What a decision says about a brief. Mirrors app.decisions.approval.Decision."
+      },
+      "RiskDecisionStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "APPROVED",
+          "REJECTED"
+        ],
+        "title": "RiskDecisionStatus",
+        "description": "A brief's derived decision state. Mirrors app.decisions.approval.DecisionStatus."
+      },
+      "RunListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IngestionRunResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "RunListResponse"
+      },
+      "RunReference": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "status",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "RunReference"
+      },
+      "RunStatus": {
+        "type": "string",
+        "enum": [
+          "RUNNING",
+          "SUCCESS",
+          "PARTIAL_SUCCESS",
+          "FAILED",
+          "NOOP"
+        ],
+        "title": "RunStatus",
+        "description": "ingestion_runs.status vocabulary (spec Section 8)."
+      },
+      "RunStatusCounts": {
+        "properties": {
+          "RUNNING": {
+            "type": "integer",
+            "title": "Running"
+          },
+          "SUCCESS": {
+            "type": "integer",
+            "title": "Success"
+          },
+          "PARTIAL_SUCCESS": {
+            "type": "integer",
+            "title": "Partial Success"
+          },
+          "FAILED": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "NOOP": {
+            "type": "integer",
+            "title": "Noop"
+          }
+        },
+        "type": "object",
+        "required": [
+          "RUNNING",
+          "SUCCESS",
+          "PARTIAL_SUCCESS",
+          "FAILED",
+          "NOOP"
+        ],
+        "title": "RunStatusCounts",
+        "description": "Runs per status; every status is always present."
+      },
+      "SourceCapabilities": {
+        "properties": {
+          "supported_entity_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supported Entity Types"
+          },
+          "supports_incremental": {
+            "type": "boolean",
+            "title": "Supports Incremental"
+          },
+          "supports_health_check": {
+            "type": "boolean",
+            "title": "Supports Health Check"
+          },
+          "read_only": {
+            "type": "boolean",
+            "title": "Read Only"
+          }
+        },
+        "type": "object",
+        "required": [
+          "supported_entity_types",
+          "supports_incremental",
+          "supports_health_check",
+          "read_only"
+        ],
+        "title": "SourceCapabilities"
+      },
+      "SourceHealthResponse": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ConnectorHealthStatus"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "error_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Type"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checked At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "status",
+          "latency_ms",
+          "error_type",
+          "checked_at"
+        ],
+        "title": "SourceHealthResponse",
+        "description": "Connector health. Connector diagnostic messages are never exposed.\n\nerror_type is the connector exception class when the check raised."
+      },
+      "SourceIngestionMetrics": {
+        "properties": {
+          "runs_total": {
+            "type": "integer",
+            "title": "Runs Total"
+          },
+          "runs_by_status": {
+            "$ref": "#/components/schemas/RunStatusCounts"
+          },
+          "records_fetched_total": {
+            "type": "integer",
+            "title": "Records Fetched Total"
+          },
+          "records_raw_persisted_total": {
+            "type": "integer",
+            "title": "Records Raw Persisted Total"
+          },
+          "records_inserted_total": {
+            "type": "integer",
+            "title": "Records Inserted Total"
+          },
+          "records_updated_total": {
+            "type": "integer",
+            "title": "Records Updated Total"
+          },
+          "records_unchanged_total": {
+            "type": "integer",
+            "title": "Records Unchanged Total"
+          },
+          "records_rejected_total": {
+            "type": "integer",
+            "title": "Records Rejected Total"
+          },
+          "records_failed_total": {
+            "type": "integer",
+            "title": "Records Failed Total"
+          },
+          "warnings_total": {
+            "type": "integer",
+            "title": "Warnings Total"
+          },
+          "batches_failed_total": {
+            "type": "integer",
+            "title": "Batches Failed Total"
+          },
+          "errors_by_severity": {
+            "$ref": "#/components/schemas/ErrorSeverityCounts"
+          },
+          "connector_request_failures_total": {
+            "type": "integer",
+            "title": "Connector Request Failures Total"
+          },
+          "validation_errors_total": {
+            "type": "integer",
+            "title": "Validation Errors Total"
+          },
+          "ingestion_duration_seconds_total": {
+            "type": "number",
+            "title": "Ingestion Duration Seconds Total"
+          },
+          "canonical_records": {
+            "$ref": "#/components/schemas/CanonicalRecordCounts"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_successful_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "runs_total",
+          "runs_by_status",
+          "records_fetched_total",
+          "records_raw_persisted_total",
+          "records_inserted_total",
+          "records_updated_total",
+          "records_unchanged_total",
+          "records_rejected_total",
+          "records_failed_total",
+          "warnings_total",
+          "batches_failed_total",
+          "errors_by_severity",
+          "connector_request_failures_total",
+          "validation_errors_total",
+          "ingestion_duration_seconds_total",
+          "canonical_records",
+          "source_system",
+          "last_run",
+          "last_successful_run"
+        ],
+        "title": "SourceIngestionMetrics",
+        "description": "One source system's metrics. last_successful_run is the newest SUCCESS,\nPARTIAL_SUCCESS or NOOP run."
+      },
+      "SourceListResponse": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceSummary"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources"
+        ],
+        "title": "SourceListResponse"
+      },
+      "SourceSummary": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/SourceCapabilities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "source_type",
+          "capabilities"
+        ],
+        "title": "SourceSummary",
+        "description": "A configured source. Connection details (URLs, paths, credentials) are never exposed."
+      },
+      "SupportTicketCanonical": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_entity": {
+            "type": "string",
+            "title": "Source Entity"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          },
+          "ingestion_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ingestion Run Id"
+          },
+          "record_hash": {
+            "type": "string",
+            "title": "Record Hash"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "customer_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Source Id"
+          },
+          "assignee_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Source Id"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_system",
+          "source_entity",
+          "source_id",
+          "ingested_at",
+          "ingestion_run_id",
+          "record_hash"
+        ],
+        "title": "SupportTicketCanonical",
+        "description": "Source-neutral canonical representation of a Support Ticket.\n\nSupports risk/support signal analysis. No is_active field."
+      },
+      "SupportTicketListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SupportTicketCanonical"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "SupportTicketListResponse"
+      }
+    }
+  }
+}

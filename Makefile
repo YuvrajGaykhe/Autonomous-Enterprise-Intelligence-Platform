@@ -4,7 +4,8 @@
 # =============================================================================
 
 .PHONY: help install migrate migration-status seed ingest-demo test lint format \
-        secret-scan verify-layer1 verify-vs01 docker-up docker-down docker-build clean
+        secret-scan verify-layer1 verify-vs01 docker-up docker-down docker-build clean \
+        frontend-install frontend-backend frontend-dev frontend-test frontend-build
 
 # Default target: show available commands.
 help:
@@ -22,6 +23,11 @@ help:
 	@echo "  make secret-scan     Scan tracked files for committed secrets"
 	@echo "  make verify-layer1   Run the complete Layer 1 acceptance scenario"
 	@echo "  make verify-vs01     Run the VS-01 acceptance scenario on its own database"
+	@echo "  make frontend-install Install the frontend's locked dependencies (Node 24)"
+	@echo "  make frontend-backend Serve the working-tree API on 127.0.0.1:8010 over a fresh <db>_frontend"
+	@echo "  make frontend-dev    Run the frontend dev server, proxying /api to 127.0.0.1:8010"
+	@echo "  make frontend-test   Typecheck, lint and run the frontend's tests with coverage"
+	@echo "  make frontend-build  Build the frontend and report bundle sizes against the budget"
 	@echo "  make docker-up       Start all services with Docker Compose"
 	@echo "  make docker-down     Stop and remove Docker Compose services"
 	@echo "  make docker-build    Rebuild Docker images"
@@ -99,6 +105,28 @@ verify-layer1:
 verify-vs01:
 	@echo "[verify-vs01] Running the VS-01 acceptance scenario..."
 	.venv/bin/python scripts/vs01_acceptance.py $(ARGS)
+
+# Install the frontend's dependencies exactly as locked (frontend/package-lock.json).
+frontend-install:
+	npm --prefix frontend ci
+
+# Recreate <configured database>_frontend from clean (migrate, ingest data/demo, assess at
+# 2026-09-18) and serve the working-tree API on 127.0.0.1:8010 until interrupted. It never
+# opens the development database or touches Docker, and exits 2 when PostgreSQL is unreachable.
+frontend-backend:
+	npm --prefix frontend run backend
+
+# Run the frontend dev server; it proxies /api to make frontend-backend's API.
+frontend-dev:
+	npm --prefix frontend run dev
+
+# Typecheck, lint and run the unit, component, contract, guard and tooling tests with coverage.
+frontend-test:
+	npm --prefix frontend run check
+
+# Build the frontend for production and report bundle sizes against the budget.
+frontend-build:
+	npm --prefix frontend run build
 
 # Start all Docker Compose services.
 docker-up:

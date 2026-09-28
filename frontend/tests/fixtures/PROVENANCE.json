@@ -1,0 +1,70 @@
+{
+  "recorded_at": "2026-09-28T01:55:24.923Z",
+  "commit": "21ded97e1776b91d0bd0aef73d6e53dad80d20c6",
+  "backend_paths": [
+    "app",
+    "config",
+    "migrations",
+    "alembic.ini",
+    "data"
+  ],
+  "backend_paths_clean": true,
+  "database": "ai_ceo_layer1_frontend_e2e",
+  "database_revision": "070e4968a497",
+  "as_of": "2026-09-18",
+  "source_system": "csv_demo",
+  "api_version": "0.1.0",
+  "files": {
+    "assessment-runs.json": [
+      "POST /api/v1/risk/assessments 201",
+      "POST /api/v1/risk/assessments 200"
+    ],
+    "health.json": [
+      "GET /api/v1/health 200"
+    ],
+    "sources.json": [
+      "GET /api/v1/sources 200",
+      "GET /api/v1/sources/csv_demo/health 200",
+      "GET /api/v1/sources/odoo_mock/health 200",
+      "GET /api/v1/sources/rest_mock/health 200"
+    ],
+    "ingestion.json": [
+      "GET /api/v1/ingestion/runs?limit=500&offset=0 200",
+      "GET /api/v1/ingestion/runs/040d5906-134c-4eb1-bad2-eabef784989d 200",
+      "GET /api/v1/ingestion/runs/040d5906-134c-4eb1-bad2-eabef784989d/errors?limit=500&offset=0 200"
+    ],
+    "entities.json": [
+      "GET /api/v1/entities/organizations?limit=500&offset=0 200",
+      "GET /api/v1/entities/employees?limit=500&offset=0 200",
+      "GET /api/v1/entities/customers?limit=500&offset=0 200",
+      "GET /api/v1/entities/deals?limit=500&offset=0 200",
+      "GET /api/v1/entities/projects?limit=500&offset=0 200",
+      "GET /api/v1/entities/support_tickets?limit=500&offset=0 200",
+      "GET /api/v1/entities/documents?limit=500&offset=0 200"
+    ],
+    "metrics.json": [
+      "GET /api/v1/metrics/ingestion 200"
+    ],
+    "assessments.json": [
+      "GET /api/v1/risk/assessments?as_of=2026-09-18&limit=500&offset=0 200"
+    ],
+    "assessment-details.json": [
+      "GET /api/v1/risk/assessments/6ab5dd86-81cd-42b4-9afc-34ef70544e85 200",
+      "GET /api/v1/risk/assessments/82381be6-f781-471b-b1e9-11e24d3ee804 200",
+      "GET /api/v1/risk/assessments/9c4250cd-4481-4869-a9a7-2d594673ae69 200"
+    ],
+    "briefs.json": [
+      "GET /api/v1/risk/briefs/715f1775-fbb1-4c2a-939a-a6f79d69d312 200",
+      "GET /api/v1/risk/briefs/0f01a99c-6011-4570-a340-d4b1e445fd3a 200",
+      "GET /api/v1/risk/briefs/9261d9d8-8399-4d8a-ab47-e5ab0e4f9078 200"
+    ],
+    "decisions.json": [
+      "GET /api/v1/risk/briefs/715f1775-fbb1-4c2a-939a-a6f79d69d312/decisions 200",
+      "GET /api/v1/risk/briefs/0f01a99c-6011-4570-a340-d4b1e445fd3a/decisions 200",
+      "GET /api/v1/risk/briefs/9261d9d8-8399-4d8a-ab47-e5ab0e4f9078/decisions 200"
+    ],
+    "openapi.json": [
+      "GET /openapi.json 200"
+    ]
+  }
+}

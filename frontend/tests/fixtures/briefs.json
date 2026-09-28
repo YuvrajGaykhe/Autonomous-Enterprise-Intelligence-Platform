@@ -1,0 +1,3234 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/715f1775-fbb1-4c2a-939a-a6f79d69d312",
+    "status": 200,
+    "body": {
+      "id": "715f1775-fbb1-4c2a-939a-a6f79d69d312",
+      "assessment_id": "6ab5dd86-81cd-42b4-9afc-34ef70544e85",
+      "status": "DRAFT",
+      "decision_status": "PENDING",
+      "policy_version": 1,
+      "template_version": "1",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "payload": {
+        "band": "CRITICAL",
+        "scope": {
+          "as_of": "2026-09-18",
+          "source_system": "csv_demo",
+          "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+        },
+        "signals": {
+          "active_deals": [
+            {
+              "id": "DEAL-001",
+              "stage": "negotiation",
+              "amount": {
+                "amount": "5361.44",
+                "currency": "USD"
+              },
+              "probability": "90"
+            }
+          ],
+          "sla_breach_count": 5,
+          "active_deal_count": 1,
+          "open_ticket_count": 4,
+          "deal_under_pressure": true,
+          "high_priority_total": 4,
+          "tickets_in_lookback": 5,
+          "active_project_count": 0,
+          "exposure_by_currency": {
+            "USD": {
+              "amount": "5361.44",
+              "currency": "USD"
+            }
+          },
+          "contract_document_ids": [
+            "DOC-006"
+          ],
+          "days_since_last_ticket": 22,
+          "policy_escalation_state": true,
+          "stale_open_ticket_count": 0,
+          "dominant_ticket_category": "performance",
+          "open_high_priority_count": 3,
+          "max_tickets_in_14d_window": 5,
+          "open_sla_breach_high_count": 3
+        },
+        "customer": {
+          "id": "CUST-007",
+          "entity": "customers"
+        },
+        "versions": {
+          "rules": 1,
+          "linker": "1",
+          "policy": 1
+        },
+        "cited_spans": [
+          {
+            "target": "DOC_003_ESCALATION_RULE",
+            "citation": {
+              "end": 330,
+              "kind": "document",
+              "start": 238,
+              "document_id": "DOC-003"
+            }
+          },
+          {
+            "target": "DOC_006_TERM_AND_NOTICE",
+            "citation": {
+              "end": 238,
+              "kind": "document",
+              "start": 153,
+              "document_id": "DOC-006"
+            }
+          },
+          {
+            "target": "DOC_009_DEAL_LINKAGE",
+            "citation": {
+              "end": 333,
+              "kind": "document",
+              "start": 238,
+              "document_id": "DOC-009"
+            }
+          }
+        ],
+        "reconciliation": {
+          "dissent": [
+            {
+              "stance": "ADVANCE",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "is_active",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "stage",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "probability",
+                    "entity": "deals"
+                  }
+                }
+              ],
+              "function": "SALES",
+              "rationale": "DEAL-001 for CUST-007 is in negotiation at 90.00%, at or above the 80% threshold for acceleration.",
+              "object_ref": "DEAL-001",
+              "proposed_action": "ACCELERATE_DEAL_CLOSE"
+            }
+          ],
+          "customer": {
+            "id": "CUST-007",
+            "entity": "customers"
+          },
+          "conflicts": [
+            {
+              "positions": [
+                {
+                  "stance": "ADVANCE",
+                  "evidence": [
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "DEAL-001",
+                        "kind": "record",
+                        "field": "is_active",
+                        "entity": "deals"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "DEAL-001",
+                        "kind": "record",
+                        "field": "stage",
+                        "entity": "deals"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "DEAL-001",
+                        "kind": "record",
+                        "field": "probability",
+                        "entity": "deals"
+                      }
+                    }
+                  ],
+                  "function": "SALES",
+                  "rationale": "DEAL-001 for CUST-007 is in negotiation at 90.00%, at or above the 80% threshold for acceleration.",
+                  "object_ref": "DEAL-001",
+                  "proposed_action": "ACCELERATE_DEAL_CLOSE"
+                },
+                {
+                  "stance": "RESTRAIN",
+                  "evidence": [
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-075",
+                        "kind": "record",
+                        "field": "created_at",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-075",
+                        "kind": "record",
+                        "field": "priority",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-075",
+                        "kind": "record",
+                        "field": "resolved_at",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-076",
+                        "kind": "record",
+                        "field": "created_at",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-076",
+                        "kind": "record",
+                        "field": "priority",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-076",
+                        "kind": "record",
+                        "field": "resolved_at",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-080",
+                        "kind": "record",
+                        "field": "created_at",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-080",
+                        "kind": "record",
+                        "field": "priority",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "TKT-080",
+                        "kind": "record",
+                        "field": "resolved_at",
+                        "entity": "support_tickets"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "DEAL-001",
+                        "kind": "record",
+                        "field": "stage",
+                        "entity": "deals"
+                      }
+                    }
+                  ],
+                  "function": "SUPPORT",
+                  "rationale": "DEAL-001 is in negotiation while CUST-007 has 3 open high-priority SLA breaches, so the deal push should pause until they are resolved.",
+                  "object_ref": "DEAL-001",
+                  "proposed_action": "PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED"
+                }
+              ],
+              "object_ref": "DEAL-001"
+            }
+          ],
+          "worthiness": {
+            "band": "CRITICAL",
+            "executive_worthy": true,
+            "active_deal_count": 1,
+            "active_project_count": 0
+          },
+          "ranking_key": [
+            -3,
+            -3,
+            -5,
+            "CUST-007"
+          ],
+          "resolutions": [
+            {
+              "dissent": [
+                {
+                  "stance": "ADVANCE",
+                  "evidence": [
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "DEAL-001",
+                        "kind": "record",
+                        "field": "is_active",
+                        "entity": "deals"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "DEAL-001",
+                        "kind": "record",
+                        "field": "stage",
+                        "entity": "deals"
+                      }
+                    },
+                    {
+                      "kind": "CANONICAL_FACT",
+                      "citation": {
+                        "id": "DEAL-001",
+                        "kind": "record",
+                        "field": "probability",
+                        "entity": "deals"
+                      }
+                    }
+                  ],
+                  "function": "SALES",
+                  "rationale": "DEAL-001 for CUST-007 is in negotiation at 90.00%, at or above the 80% threshold for acceleration.",
+                  "object_ref": "DEAL-001",
+                  "proposed_action": "ACCELERATE_DEAL_CLOSE"
+                }
+              ],
+              "conflict": {
+                "positions": [
+                  {
+                    "stance": "ADVANCE",
+                    "evidence": [
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "DEAL-001",
+                          "kind": "record",
+                          "field": "is_active",
+                          "entity": "deals"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "DEAL-001",
+                          "kind": "record",
+                          "field": "stage",
+                          "entity": "deals"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "DEAL-001",
+                          "kind": "record",
+                          "field": "probability",
+                          "entity": "deals"
+                        }
+                      }
+                    ],
+                    "function": "SALES",
+                    "rationale": "DEAL-001 for CUST-007 is in negotiation at 90.00%, at or above the 80% threshold for acceleration.",
+                    "object_ref": "DEAL-001",
+                    "proposed_action": "ACCELERATE_DEAL_CLOSE"
+                  },
+                  {
+                    "stance": "RESTRAIN",
+                    "evidence": [
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-075",
+                          "kind": "record",
+                          "field": "created_at",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-075",
+                          "kind": "record",
+                          "field": "priority",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-075",
+                          "kind": "record",
+                          "field": "resolved_at",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-076",
+                          "kind": "record",
+                          "field": "created_at",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-076",
+                          "kind": "record",
+                          "field": "priority",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-076",
+                          "kind": "record",
+                          "field": "resolved_at",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-080",
+                          "kind": "record",
+                          "field": "created_at",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-080",
+                          "kind": "record",
+                          "field": "priority",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "TKT-080",
+                          "kind": "record",
+                          "field": "resolved_at",
+                          "entity": "support_tickets"
+                        }
+                      },
+                      {
+                        "kind": "CANONICAL_FACT",
+                        "citation": {
+                          "id": "DEAL-001",
+                          "kind": "record",
+                          "field": "stage",
+                          "entity": "deals"
+                        }
+                      }
+                    ],
+                    "function": "SUPPORT",
+                    "rationale": "DEAL-001 is in negotiation while CUST-007 has 3 open high-priority SLA breaches, so the deal push should pause until they are resolved.",
+                    "object_ref": "DEAL-001",
+                    "proposed_action": "PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED"
+                  }
+                ],
+                "object_ref": "DEAL-001"
+              },
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DOC-003",
+                    "kind": "record",
+                    "field": "body_text",
+                    "entity": "documents"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DOC-009",
+                    "kind": "record",
+                    "field": "body_text",
+                    "entity": "documents"
+                  }
+                }
+              ],
+              "policy_id": "CONF-001",
+              "rationale": "An active support-policy escalation outranks deal acceleration on the same account, and the customer has explicitly linked the deal decision to resolution of the open tickets.",
+              "prevailing": {
+                "stance": "RESTRAIN",
+                "evidence": [
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-075",
+                      "kind": "record",
+                      "field": "created_at",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-075",
+                      "kind": "record",
+                      "field": "priority",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-075",
+                      "kind": "record",
+                      "field": "resolved_at",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-076",
+                      "kind": "record",
+                      "field": "created_at",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-076",
+                      "kind": "record",
+                      "field": "priority",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-076",
+                      "kind": "record",
+                      "field": "resolved_at",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-080",
+                      "kind": "record",
+                      "field": "created_at",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-080",
+                      "kind": "record",
+                      "field": "priority",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "TKT-080",
+                      "kind": "record",
+                      "field": "resolved_at",
+                      "entity": "support_tickets"
+                    }
+                  },
+                  {
+                    "kind": "CANONICAL_FACT",
+                    "citation": {
+                      "id": "DEAL-001",
+                      "kind": "record",
+                      "field": "stage",
+                      "entity": "deals"
+                    }
+                  }
+                ],
+                "function": "SUPPORT",
+                "rationale": "DEAL-001 is in negotiation while CUST-007 has 3 open high-priority SLA breaches, so the deal push should pause until they are resolved.",
+                "object_ref": "DEAL-001",
+                "proposed_action": "PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED"
+              },
+              "resolved_action": "PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED"
+            }
+          ],
+          "policy_version": 1,
+          "ordered_positions": [
+            {
+              "stance": "ADVANCE",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "is_active",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "stage",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "probability",
+                    "entity": "deals"
+                  }
+                }
+              ],
+              "function": "SALES",
+              "rationale": "DEAL-001 for CUST-007 is in negotiation at 90.00%, at or above the 80% threshold for acceleration.",
+              "object_ref": "DEAL-001",
+              "proposed_action": "ACCELERATE_DEAL_CLOSE"
+            },
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "CUST-007 has 3 open high-priority tickets past their SLA target, at or above the threshold of 2 for a dedicated owner.",
+              "object_ref": "CUST-007",
+              "proposed_action": "ASSIGN_DEDICATED_SUPPORT_OWNER"
+            },
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "CUST-007 is in the policy escalation state: 5 tickets in a 14-day window meets the threshold of 3.",
+              "object_ref": "CUST-007",
+              "proposed_action": "ESCALATE_TO_ACCOUNT_OWNER_PER_SLA"
+            },
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "CUST-007 is in the policy escalation state and has at least one active deal, so the account warrants an executive sponsor.",
+              "object_ref": "CUST-007",
+              "proposed_action": "SCHEDULE_EXECUTIVE_SPONSOR_CALL"
+            },
+            {
+              "stance": "RESTRAIN",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "stage",
+                    "entity": "deals"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "DEAL-001 is in negotiation while CUST-007 has 3 open high-priority SLA breaches, so the deal push should pause until they are resolved.",
+              "object_ref": "DEAL-001",
+              "proposed_action": "PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED"
+            },
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "TKT-079 is an open ticket categorised 'billing' for CUST-007, so the invoice dispute needs review.",
+              "object_ref": "TKT-079",
+              "proposed_action": "REVIEW_INVOICE_DISPUTE"
+            }
+          ],
+          "resolved_positions": [
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "CUST-007 has 3 open high-priority tickets past their SLA target, at or above the threshold of 2 for a dedicated owner.",
+              "object_ref": "CUST-007",
+              "proposed_action": "ASSIGN_DEDICATED_SUPPORT_OWNER"
+            },
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "CUST-007 is in the policy escalation state: 5 tickets in a 14-day window meets the threshold of 3.",
+              "object_ref": "CUST-007",
+              "proposed_action": "ESCALATE_TO_ACCOUNT_OWNER_PER_SLA"
+            },
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "CUST-007 is in the policy escalation state and has at least one active deal, so the account warrants an executive sponsor.",
+              "object_ref": "CUST-007",
+              "proposed_action": "SCHEDULE_EXECUTIVE_SPONSOR_CALL"
+            },
+            {
+              "stance": "RESTRAIN",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "stage",
+                    "entity": "deals"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "DEAL-001 is in negotiation while CUST-007 has 3 open high-priority SLA breaches, so the deal push should pause until they are resolved.",
+              "object_ref": "DEAL-001",
+              "proposed_action": "PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED"
+            },
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "TKT-079 is an open ticket categorised 'billing' for CUST-007, so the invoice dispute needs review.",
+              "object_ref": "TKT-079",
+              "proposed_action": "REVIEW_INVOICE_DISPUTE"
+            }
+          ]
+        },
+        "payload_version": 1,
+        "satisfied_rules": [
+          "R-CRIT-001",
+          "R-ELEV-001",
+          "R-ELEV-002",
+          "R-WATCH-001",
+          "R-WATCH-002",
+          "R-WATCH-003"
+        ],
+        "support_evidence": {
+          "tickets": [
+            {
+              "id": "TKT-073",
+              "is_open": false,
+              "category": "performance",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-073",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "high",
+              "breaches_sla": true,
+              "created_date": "2026-08-18"
+            },
+            {
+              "id": "TKT-075",
+              "is_open": true,
+              "category": "performance",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-075",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "high",
+              "breaches_sla": true,
+              "created_date": "2026-08-20"
+            },
+            {
+              "id": "TKT-076",
+              "is_open": true,
+              "category": "integration",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-076",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "high",
+              "breaches_sla": true,
+              "created_date": "2026-08-23"
+            },
+            {
+              "id": "TKT-079",
+              "is_open": true,
+              "category": "billing",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-079",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "medium",
+              "breaches_sla": true,
+              "created_date": "2026-08-25"
+            },
+            {
+              "id": "TKT-080",
+              "is_open": true,
+              "category": "performance",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-080",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "high",
+              "breaches_sla": true,
+              "created_date": "2026-08-27"
+            }
+          ],
+          "derivations": [
+            {
+              "fact": "open_ticket_count",
+              "rule": "count of tickets where is_open",
+              "value": 4,
+              "ticket_ids": [
+                "TKT-075",
+                "TKT-076",
+                "TKT-079",
+                "TKT-080"
+              ]
+            },
+            {
+              "fact": "open_high_priority_count",
+              "rule": "count of tickets where is_open and priority == 'high'",
+              "value": 3,
+              "ticket_ids": [
+                "TKT-075",
+                "TKT-076",
+                "TKT-080"
+              ]
+            },
+            {
+              "fact": "high_priority_total",
+              "rule": "count of tickets where priority == 'high'",
+              "value": 4,
+              "ticket_ids": [
+                "TKT-073",
+                "TKT-075",
+                "TKT-076",
+                "TKT-080"
+              ]
+            },
+            {
+              "fact": "open_sla_breach_high_count",
+              "rule": "count of tickets where is_open and priority == 'high' and breaches_sla",
+              "value": 3,
+              "ticket_ids": [
+                "TKT-075",
+                "TKT-076",
+                "TKT-080"
+              ]
+            },
+            {
+              "fact": "dominant_ticket_category",
+              "rule": "most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order",
+              "value": "performance",
+              "lookback": {
+                "end": "2026-09-18",
+                "start": "2026-06-21"
+              },
+              "ticket_ids": [
+                "TKT-073",
+                "TKT-075",
+                "TKT-076",
+                "TKT-079",
+                "TKT-080"
+              ],
+              "category_counts": {
+                "billing": 1,
+                "integration": 1,
+                "performance": 3
+              }
+            }
+          ],
+          "ticket_span": {
+            "rule": "tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days",
+            "ticket_ids": [
+              "TKT-073",
+              "TKT-075",
+              "TKT-076",
+              "TKT-079",
+              "TKT-080"
+            ],
+            "ticket_count": 5,
+            "last_ticket_date": "2026-08-27",
+            "ticket_span_days": 9,
+            "first_ticket_date": "2026-08-18"
+          },
+          "escalation_path": {
+            "edges": [
+              {
+                "edge": "customer_owned_by",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "CUST-007",
+                  "entity": "customers"
+                },
+                "target": {
+                  "id": "EMP-007",
+                  "entity": "employees"
+                },
+                "carrier_field": "customers.owner_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-007",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-002",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-017",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-004",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-018",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-004",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-020",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-004",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-021",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-004",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "ticket_assigned_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "TKT-075",
+                  "entity": "support_tickets"
+                },
+                "target": {
+                  "id": "EMP-018",
+                  "entity": "employees"
+                },
+                "carrier_field": "support_tickets.assignee_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "ticket_assigned_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "TKT-076",
+                  "entity": "support_tickets"
+                },
+                "target": {
+                  "id": "EMP-021",
+                  "entity": "employees"
+                },
+                "carrier_field": "support_tickets.assignee_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "ticket_assigned_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "TKT-079",
+                  "entity": "support_tickets"
+                },
+                "target": {
+                  "id": "EMP-017",
+                  "entity": "employees"
+                },
+                "carrier_field": "support_tickets.assignee_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "ticket_assigned_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "TKT-080",
+                  "entity": "support_tickets"
+                },
+                "target": {
+                  "id": "EMP-020",
+                  "entity": "employees"
+                },
+                "carrier_field": "support_tickets.assignee_source_id",
+                "source_system": "csv_demo"
+              }
+            ],
+            "customer": {
+              "id": "CUST-007",
+              "entity": "customers"
+            },
+            "assignees": [
+              {
+                "id": "EMP-018",
+                "entity": "employees"
+              },
+              {
+                "id": "EMP-021",
+                "entity": "employees"
+              },
+              {
+                "id": "EMP-017",
+                "entity": "employees"
+              },
+              {
+                "id": "EMP-020",
+                "entity": "employees"
+              }
+            ],
+            "open_tickets": [
+              {
+                "id": "TKT-075",
+                "entity": "support_tickets"
+              },
+              {
+                "id": "TKT-076",
+                "entity": "support_tickets"
+              },
+              {
+                "id": "TKT-079",
+                "entity": "support_tickets"
+              },
+              {
+                "id": "TKT-080",
+                "entity": "support_tickets"
+              }
+            ],
+            "account_owner": {
+              "id": "EMP-007",
+              "entity": "employees"
+            },
+            "assignee_managers": [
+              {
+                "id": "EMP-004",
+                "entity": "employees"
+              }
+            ],
+            "account_owner_manager": {
+              "id": "EMP-002",
+              "entity": "employees"
+            }
+          },
+          "escalation_window": {
+            "end": "2026-08-31",
+            "count": 5,
+            "start": "2026-08-18"
+          },
+          "backlog_ticket_ids": []
+        },
+        "document_evidence": [
+          {
+            "basis": "EXACT_NAME",
+            "source": {
+              "id": "DOC-005",
+              "entity": "documents"
+            },
+            "target": {
+              "id": "CUST-007",
+              "entity": "customers"
+            },
+            "evidence": [
+              {
+                "kind": "DERIVED_RELATIONSHIP",
+                "citation": {
+                  "end": 188,
+                  "kind": "document",
+                  "start": 171,
+                  "document_id": "DOC-005"
+                }
+              }
+            ],
+            "confidence": "HIGH",
+            "edge_basis": "DERIVED_TEXT_MATCH",
+            "matched_token": "Meridian Textiles",
+            "source_system": "csv_demo",
+            "linker_version": "1",
+            "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+          },
+          {
+            "basis": "ID_TOKEN",
+            "source": {
+              "id": "DOC-005",
+              "entity": "documents"
+            },
+            "target": {
+              "id": "CUST-007",
+              "entity": "customers"
+            },
+            "evidence": [
+              {
+                "kind": "DERIVED_RELATIONSHIP",
+                "citation": {
+                  "end": 198,
+                  "kind": "document",
+                  "start": 190,
+                  "document_id": "DOC-005"
+                }
+              }
+            ],
+            "confidence": "HIGH",
+            "edge_basis": "DERIVED_TEXT_MATCH",
+            "matched_token": "CUST-007",
+            "source_system": "csv_demo",
+            "linker_version": "1",
+            "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+          },
+          {
+            "basis": "EXACT_NAME",
+            "source": {
+              "id": "DOC-006",
+              "entity": "documents"
+            },
+            "target": {
+              "id": "CUST-007",
+              "entity": "customers"
+            },
+            "evidence": [
+              {
+                "kind": "DERIVED_RELATIONSHIP",
+                "citation": {
+                  "end": 45,
+                  "kind": "document",
+                  "start": 28,
+                  "document_id": "DOC-006"
+                }
+              }
+            ],
+            "confidence": "HIGH",
+            "edge_basis": "DERIVED_TEXT_MATCH",
+            "matched_token": "Meridian Textiles",
+            "source_system": "csv_demo",
+            "linker_version": "1",
+            "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+          },
+          {
+            "basis": "ID_TOKEN",
+            "source": {
+              "id": "DOC-006",
+              "entity": "documents"
+            },
+            "target": {
+              "id": "CUST-007",
+              "entity": "customers"
+            },
+            "evidence": [
+              {
+                "kind": "DERIVED_RELATIONSHIP",
+                "citation": {
+                  "end": 121,
+                  "kind": "document",
+                  "start": 113,
+                  "document_id": "DOC-006"
+                }
+              }
+            ],
+            "confidence": "HIGH",
+            "edge_basis": "DERIVED_TEXT_MATCH",
+            "matched_token": "CUST-007",
+            "source_system": "csv_demo",
+            "linker_version": "1",
+            "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+          },
+          {
+            "basis": "EXACT_NAME",
+            "source": {
+              "id": "DOC-009",
+              "entity": "documents"
+            },
+            "target": {
+              "id": "CUST-007",
+              "entity": "customers"
+            },
+            "evidence": [
+              {
+                "kind": "DERIVED_RELATIONSHIP",
+                "citation": {
+                  "end": 40,
+                  "kind": "document",
+                  "start": 23,
+                  "document_id": "DOC-009"
+                }
+              }
+            ],
+            "confidence": "HIGH",
+            "edge_basis": "DERIVED_TEXT_MATCH",
+            "matched_token": "Meridian Textiles",
+            "source_system": "csv_demo",
+            "linker_version": "1",
+            "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+          },
+          {
+            "basis": "ID_TOKEN",
+            "source": {
+              "id": "DOC-009",
+              "entity": "documents"
+            },
+            "target": {
+              "id": "CUST-007",
+              "entity": "customers"
+            },
+            "evidence": [
+              {
+                "kind": "DERIVED_RELATIONSHIP",
+                "citation": {
+                  "end": 84,
+                  "kind": "document",
+                  "start": 76,
+                  "document_id": "DOC-009"
+                }
+              }
+            ],
+            "confidence": "HIGH",
+            "edge_basis": "DERIVED_TEXT_MATCH",
+            "matched_token": "CUST-007",
+            "source_system": "csv_demo",
+            "linker_version": "1",
+            "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+          }
+        ],
+        "commercial_evidence": {
+          "deals": [
+            {
+              "id": "DEAL-001",
+              "stage": "negotiation",
+              "amount": {
+                "amount": "5361.44",
+                "currency": "USD"
+              },
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "is_active",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "stage",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "probability",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "amount",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-001",
+                    "kind": "record",
+                    "field": "currency",
+                    "entity": "deals"
+                  }
+                }
+              ],
+              "probability": "90"
+            }
+          ]
+        }
+      },
+      "narrative": "VS-01 RISK BRIEF: CUST-007\n\nThis narrative is a view of the decision payload and is not hashed. An approval\nbinds to the payload's hash. Its facts come only from the payload and the\nresolved text of its cited spans, with citations and rules shown where they\napply rather than beside every fact. Headings, labels, absence lines and the\nlimitations are fixed template text.\n\n1. IDENTITY\nCustomer: CUST-007\nSource system: csv_demo\nAs of: 2026-09-18\nLayer 1 fingerprint: 1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00\nVersions: payload 1, rules 1, linker 1, policy 1\n\n2. RISK STATE AND WHY\nBand: CRITICAL\nSatisfied band rules: R-CRIT-001, R-ELEV-001, R-ELEV-002, R-WATCH-001, R-WATCH-002, R-WATCH-003\nExecutive-worthy: yes (band CRITICAL, active deal count 1, active project count 0)\nSignals:\n- S1 open_ticket_count: 4\n- S2 open_high_priority_count: 3\n- S2b high_priority_total: 4\n- S3 tickets_in_lookback: 5\n- S4 max_tickets_in_14d_window: 5\n- S5 policy_escalation_state: true\n- S6 days_since_last_ticket: 22\n- S7 sla_breach_count: 5\n- S8 open_sla_breach_high_count: 3\n- S9 stale_open_ticket_count: 0\n- S10 dominant_ticket_category: performance\n- S11 active_deal_count: 1\n- S13 active_project_count: 0\n- S15 deal_under_pressure: true\nEscalation window: 2026-08-18 to 2026-08-31, ticket count 5\nTicket span: a 9-day span from 2026-08-18 to 2026-08-27, ticket count 5: TKT-073, TKT-075, TKT-076, TKT-079, TKT-080\n  rule: tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days\nDerivations:\n- open_ticket_count = 4, counting TKT-075, TKT-076, TKT-079, TKT-080\n  rule: count of tickets where is_open\n- open_high_priority_count = 3, counting TKT-075, TKT-076, TKT-080\n  rule: count of tickets where is_open and priority == 'high'\n- high_priority_total = 4, counting TKT-073, TKT-075, TKT-076, TKT-080\n  rule: count of tickets where priority == 'high'\n- open_sla_breach_high_count = 3, counting TKT-075, TKT-076, TKT-080\n  rule: count of tickets where is_open and priority == 'high' and breaches_sla\n- dominant_ticket_category = performance, counting TKT-073, TKT-075, TKT-076, TKT-079, TKT-080; category counts billing 1, integration 1, performance 3; lookback 2026-06-21 to 2026-09-18\n  rule: most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order\n\n3. EVIDENCE\nTickets:\n- TKT-073: created 2026-08-18, priority high, category performance, open no, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-073 created_at\n  - CANONICAL_FACT record support_tickets TKT-073 priority\n  - CANONICAL_FACT record support_tickets TKT-073 category\n  - CANONICAL_FACT record support_tickets TKT-073 resolved_at\n- TKT-075: created 2026-08-20, priority high, category performance, open yes, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-075 created_at\n  - CANONICAL_FACT record support_tickets TKT-075 priority\n  - CANONICAL_FACT record support_tickets TKT-075 category\n  - CANONICAL_FACT record support_tickets TKT-075 resolved_at\n- TKT-076: created 2026-08-23, priority high, category integration, open yes, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-076 created_at\n  - CANONICAL_FACT record support_tickets TKT-076 priority\n  - CANONICAL_FACT record support_tickets TKT-076 category\n  - CANONICAL_FACT record support_tickets TKT-076 resolved_at\n- TKT-079: created 2026-08-25, priority medium, category billing, open yes, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-079 created_at\n  - CANONICAL_FACT record support_tickets TKT-079 priority\n  - CANONICAL_FACT record support_tickets TKT-079 category\n  - CANONICAL_FACT record support_tickets TKT-079 resolved_at\n- TKT-080: created 2026-08-27, priority high, category performance, open yes, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-080 created_at\n  - CANONICAL_FACT record support_tickets TKT-080 priority\n  - CANONICAL_FACT record support_tickets TKT-080 category\n  - CANONICAL_FACT record support_tickets TKT-080 resolved_at\nDocument links (this snapshot and linker version only):\n- DOC-005 names CUST-007 by EXACT_NAME, HIGH confidence, matching \"Meridian Textiles\"\n  evidence:\n  - DERIVED_RELATIONSHIP document DOC-005 [171, 188)\n- DOC-005 names CUST-007 by ID_TOKEN, HIGH confidence, matching \"CUST-007\"\n  evidence:\n  - DERIVED_RELATIONSHIP document DOC-005 [190, 198)\n- DOC-006 names CUST-007 by EXACT_NAME, HIGH confidence, matching \"Meridian Textiles\"\n  evidence:\n  - DERIVED_RELATIONSHIP document DOC-006 [28, 45)\n- DOC-006 names CUST-007 by ID_TOKEN, HIGH confidence, matching \"CUST-007\"\n  evidence:\n  - DERIVED_RELATIONSHIP document DOC-006 [113, 121)\n- DOC-009 names CUST-007 by EXACT_NAME, HIGH confidence, matching \"Meridian Textiles\"\n  evidence:\n  - DERIVED_RELATIONSHIP document DOC-009 [23, 40)\n- DOC-009 names CUST-007 by ID_TOKEN, HIGH confidence, matching \"CUST-007\"\n  evidence:\n  - DERIVED_RELATIONSHIP document DOC-009 [76, 84)\nCited spans:\n- DOC_003_ESCALATION_RULE: DOC-003 [238, 330), quoted in section 7\n- DOC_006_TERM_AND_NOTICE: DOC-006 [153, 238), quoted in section 7\n- DOC_009_DEAL_LINKAGE: DOC-009 [238, 333), quoted in section 7\n\n4. COMMERCIAL CONTEXT (PER CURRENCY)\nActive deals:\n- DEAL-001: stage negotiation, probability 90%, amount USD 5,361.44\n  evidence:\n  - CANONICAL_FACT record deals DEAL-001 is_active\n  - CANONICAL_FACT record deals DEAL-001 stage\n  - CANONICAL_FACT record deals DEAL-001 probability\n  - CANONICAL_FACT record deals DEAL-001 amount\n  - CANONICAL_FACT record deals DEAL-001 currency\nExposure by currency (S12):\n- USD 5,361.44\nActive projects (S13): none. CUST-007 has no active project.\n\n5. CONFLICT AND HOW IT WAS RESOLVED\n- Conflict over DEAL-001:\n  - SALES ADVANCE ACCELERATE_DEAL_CLOSE\n  - SUPPORT RESTRAIN PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED\n  Resolved by policy CONF-001 (policy version 1): PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED prevails, as SUPPORT proposed\n  Rationale: An active support-policy escalation outranks deal acceleration on the same account, and the customer has explicitly linked the deal decision to resolution of the open tickets.\n  evidence:\n  - CANONICAL_FACT record documents DOC-003 body_text\n  - CANONICAL_FACT record documents DOC-009 body_text\n\n6. RECORDED DISSENT\n- Overruled by CONF-001: SALES ADVANCE ACCELERATE_DEAL_CLOSE on DEAL-001\n  Rationale: DEAL-001 for CUST-007 is in negotiation at 90.00%, at or above the 80% threshold for acceleration.\n  evidence:\n  - CANONICAL_FACT record deals DEAL-001 is_active\n  - CANONICAL_FACT record deals DEAL-001 stage\n  - CANONICAL_FACT record deals DEAL-001 probability\n\n7. POLICY AND CONTRACT CONTEXT\nCited spans:\n- DOC_003_ESCALATION_RULE, DOC-003 [238, 330): \"Customers raising three or more tickets within 14 days are escalated to their account owner.\"\n- DOC_006_TERM_AND_NOTICE, DOC-006 [153, 238): \"Term: 36 months, renewing annually unless either party gives 90 days' written notice.\"\n- DOC_009_DEAL_LINKAGE, DOC-009 [238, 333): \"The customer tied the Meridian Textiles - Seat Expansion decision (DEAL-001) to resolving them.\"\nContract documents (S14): DOC-006\n\n8. CHRONIC BACKLOG\nChronic backlog tickets: none\nA chronic backlog ticket is reported here and never drives the band.\n\n9. RECOMMENDED ACTIONS\n- SUPPORT NEUTRAL ASSIGN_DEDICATED_SUPPORT_OWNER on CUST-007\n  Rationale: CUST-007 has 3 open high-priority tickets past their SLA target, at or above the threshold of 2 for a dedicated owner.\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-075 created_at\n  - CANONICAL_FACT record support_tickets TKT-075 priority\n  - CANONICAL_FACT record support_tickets TKT-075 resolved_at\n  - CANONICAL_FACT record support_tickets TKT-076 created_at\n  - CANONICAL_FACT record support_tickets TKT-076 priority\n  - CANONICAL_FACT record support_tickets TKT-076 resolved_at\n  - CANONICAL_FACT record support_tickets TKT-080 created_at\n  - CANONICAL_FACT record support_tickets TKT-080 priority\n  - CANONICAL_FACT record support_tickets TKT-080 resolved_at\n- SUPPORT NEUTRAL ESCALATE_TO_ACCOUNT_OWNER_PER_SLA on CUST-007\n  Rationale: CUST-007 is in the policy escalation state: 5 tickets in a 14-day window meets the threshold of 3.\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-073 created_at\n  - CANONICAL_FACT record support_tickets TKT-075 created_at\n  - CANONICAL_FACT record support_tickets TKT-076 created_at\n  - CANONICAL_FACT record support_tickets TKT-079 created_at\n  - CANONICAL_FACT record support_tickets TKT-080 created_at\n- SUPPORT NEUTRAL SCHEDULE_EXECUTIVE_SPONSOR_CALL on CUST-007\n  Rationale: CUST-007 is in the policy escalation state and has at least one active deal, so the account warrants an executive sponsor.\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-073 created_at\n  - CANONICAL_FACT record support_tickets TKT-075 created_at\n  - CANONICAL_FACT record support_tickets TKT-076 created_at\n  - CANONICAL_FACT record support_tickets TKT-079 created_at\n  - CANONICAL_FACT record support_tickets TKT-080 created_at\n- SUPPORT RESTRAIN PAUSE_DEAL_PUSH_UNTIL_TICKETS_RESOLVED on DEAL-001\n  Rationale: DEAL-001 is in negotiation while CUST-007 has 3 open high-priority SLA breaches, so the deal push should pause until they are resolved.\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-075 created_at\n  - CANONICAL_FACT record support_tickets TKT-075 priority\n  - CANONICAL_FACT record support_tickets TKT-075 resolved_at\n  - CANONICAL_FACT record support_tickets TKT-076 created_at\n  - CANONICAL_FACT record support_tickets TKT-076 priority\n  - CANONICAL_FACT record support_tickets TKT-076 resolved_at\n  - CANONICAL_FACT record support_tickets TKT-080 created_at\n  - CANONICAL_FACT record support_tickets TKT-080 priority\n  - CANONICAL_FACT record support_tickets TKT-080 resolved_at\n  - CANONICAL_FACT record deals DEAL-001 stage\n- SUPPORT NEUTRAL REVIEW_INVOICE_DISPUTE on TKT-079\n  Rationale: TKT-079 is an open ticket categorised 'billing' for CUST-007, so the invoice dispute needs review.\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-079 category\n  - CANONICAL_FACT record support_tickets TKT-079 resolved_at\n\n10. ESCALATION PATH\nAccount owner: EMP-007\nAccount owner's manager: EMP-002\nOpen tickets (by status): TKT-075, TKT-076, TKT-079, TKT-080\nAssignees of open tickets: EMP-018, EMP-021, EMP-017, EMP-020\nAssignees' managers: EMP-004\nEdges:\n- customer_owned_by: CUST-007 -> EMP-007 (SOURCE_KEY_JOIN, customers.owner_source_id)\n- employee_reports_to: EMP-007 -> EMP-002 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- employee_reports_to: EMP-017 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- employee_reports_to: EMP-018 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- employee_reports_to: EMP-020 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- employee_reports_to: EMP-021 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- ticket_assigned_to: TKT-075 -> EMP-018 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)\n- ticket_assigned_to: TKT-076 -> EMP-021 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)\n- ticket_assigned_to: TKT-079 -> EMP-017 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)\n- ticket_assigned_to: TKT-080 -> EMP-020 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)\n\n11. LIMITATIONS\n- Deterministic rules only: no language model, embedding or prompt produced any\n  part of this brief.\n- The band is a policy artefact, not a probability of churn.\n- Business days follow a Monday-to-Friday rule with no holiday calendar.\n- Money is stated per currency. No exchange rate is applied, so no cross-currency\n  total exists.\n- Document links are derived by exact identifier and exact name matching only. A\n  document that concerns the customer without naming it is linked to no one.\n- The escalation path lists open tickets by their status, while the signals\n  decide whether a ticket is open by its resolution date as of the evaluation\n  date.\n- Quoted document text is escaped and capped at 500 characters; a longer quote\n  is cut there and marked as truncated after its closing quote. Offsets index\n  the document's citable text: its title, a newline, then its body.\n- Approver identity is recorded, not authenticated, and nothing in this brief is\n  executed.\n",
+      "citations": [
+        {
+          "kind": "document",
+          "document_id": "DOC-003",
+          "start": 238,
+          "end": 330
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-005",
+          "start": 171,
+          "end": 188
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-005",
+          "start": 190,
+          "end": 198
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-006",
+          "start": 113,
+          "end": 121
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-006",
+          "start": 153,
+          "end": 238
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-006",
+          "start": 28,
+          "end": 45
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-009",
+          "start": 238,
+          "end": 333
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-009",
+          "start": 23,
+          "end": 40
+        },
+        {
+          "kind": "document",
+          "document_id": "DOC-009",
+          "start": 76,
+          "end": 84
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-001",
+          "field": "amount"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-001",
+          "field": "currency"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-001",
+          "field": "is_active"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-001",
+          "field": "probability"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-001",
+          "field": "stage"
+        },
+        {
+          "kind": "record",
+          "entity": "documents",
+          "id": "DOC-003",
+          "field": "body_text"
+        },
+        {
+          "kind": "record",
+          "entity": "documents",
+          "id": "DOC-009",
+          "field": "body_text"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-073",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-075",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-076",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-079",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-080",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-073",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-075",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-076",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-079",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-080",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-073",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-075",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-076",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-079",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-080",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-073",
+          "field": "resolved_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-075",
+          "field": "resolved_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-076",
+          "field": "resolved_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-079",
+          "field": "resolved_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-080",
+          "field": "resolved_at"
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/0f01a99c-6011-4570-a340-d4b1e445fd3a",
+    "status": 200,
+    "body": {
+      "id": "0f01a99c-6011-4570-a340-d4b1e445fd3a",
+      "assessment_id": "82381be6-f781-471b-b1e9-11e24d3ee804",
+      "status": "DRAFT",
+      "decision_status": "PENDING",
+      "policy_version": 1,
+      "template_version": "1",
+      "payload_hash": "08c99ced40996611c8f7bb4ea48e918fabe0e9cd68390122d0f86faa50738770",
+      "payload": {
+        "band": "WATCH",
+        "scope": {
+          "as_of": "2026-09-18",
+          "source_system": "csv_demo",
+          "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+        },
+        "signals": {
+          "active_deals": [],
+          "sla_breach_count": 2,
+          "active_deal_count": 0,
+          "open_ticket_count": 2,
+          "deal_under_pressure": false,
+          "high_priority_total": 1,
+          "tickets_in_lookback": 2,
+          "active_project_count": 0,
+          "exposure_by_currency": {},
+          "contract_document_ids": [],
+          "days_since_last_ticket": 38,
+          "policy_escalation_state": false,
+          "stale_open_ticket_count": 1,
+          "dominant_ticket_category": "billing",
+          "open_high_priority_count": 1,
+          "max_tickets_in_14d_window": 1,
+          "open_sla_breach_high_count": 1
+        },
+        "customer": {
+          "id": "CUST-025",
+          "entity": "customers"
+        },
+        "versions": {
+          "rules": 1,
+          "linker": "1",
+          "policy": 1
+        },
+        "cited_spans": [],
+        "reconciliation": {
+          "dissent": [],
+          "customer": {
+            "id": "CUST-025",
+            "entity": "customers"
+          },
+          "conflicts": [],
+          "worthiness": {
+            "band": "WATCH",
+            "executive_worthy": false,
+            "active_deal_count": 0,
+            "active_project_count": 0
+          },
+          "ranking_key": [
+            -1,
+            -1,
+            -1,
+            "CUST-025"
+          ],
+          "resolutions": [],
+          "policy_version": 1,
+          "ordered_positions": [
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "TKT-072 is an open ticket categorised 'billing' for CUST-025, so the invoice dispute needs review.",
+              "object_ref": "TKT-072",
+              "proposed_action": "REVIEW_INVOICE_DISPUTE"
+            }
+          ],
+          "resolved_positions": [
+            {
+              "stance": "NEUTRAL",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "function": "SUPPORT",
+              "rationale": "TKT-072 is an open ticket categorised 'billing' for CUST-025, so the invoice dispute needs review.",
+              "object_ref": "TKT-072",
+              "proposed_action": "REVIEW_INVOICE_DISPUTE"
+            }
+          ]
+        },
+        "payload_version": 1,
+        "satisfied_rules": [
+          "R-WATCH-001",
+          "R-WATCH-003"
+        ],
+        "support_evidence": {
+          "tickets": [
+            {
+              "id": "TKT-039",
+              "is_open": true,
+              "category": "integration",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-039",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-039",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-039",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-039",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "high",
+              "breaches_sla": true,
+              "created_date": "2026-05-10"
+            },
+            {
+              "id": "TKT-063",
+              "is_open": false,
+              "category": "onboarding",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-063",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-063",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-063",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-063",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "medium",
+              "breaches_sla": false,
+              "created_date": "2026-07-10"
+            },
+            {
+              "id": "TKT-072",
+              "is_open": true,
+              "category": "billing",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-072",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "medium",
+              "breaches_sla": true,
+              "created_date": "2026-08-11"
+            }
+          ],
+          "derivations": [
+            {
+              "fact": "open_ticket_count",
+              "rule": "count of tickets where is_open",
+              "value": 2,
+              "ticket_ids": [
+                "TKT-039",
+                "TKT-072"
+              ]
+            },
+            {
+              "fact": "open_high_priority_count",
+              "rule": "count of tickets where is_open and priority == 'high'",
+              "value": 1,
+              "ticket_ids": [
+                "TKT-039"
+              ]
+            },
+            {
+              "fact": "high_priority_total",
+              "rule": "count of tickets where priority == 'high'",
+              "value": 1,
+              "ticket_ids": [
+                "TKT-039"
+              ]
+            },
+            {
+              "fact": "open_sla_breach_high_count",
+              "rule": "count of tickets where is_open and priority == 'high' and breaches_sla",
+              "value": 1,
+              "ticket_ids": [
+                "TKT-039"
+              ]
+            },
+            {
+              "fact": "dominant_ticket_category",
+              "rule": "most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order",
+              "value": "billing",
+              "lookback": {
+                "end": "2026-09-18",
+                "start": "2026-06-21"
+              },
+              "ticket_ids": [
+                "TKT-063",
+                "TKT-072"
+              ],
+              "category_counts": {
+                "billing": 1,
+                "onboarding": 1
+              }
+            }
+          ],
+          "ticket_span": {
+            "rule": "tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days",
+            "ticket_ids": [
+              "TKT-063"
+            ],
+            "ticket_count": 1,
+            "last_ticket_date": "2026-07-10",
+            "ticket_span_days": 0,
+            "first_ticket_date": "2026-07-10"
+          },
+          "escalation_path": {
+            "edges": [
+              {
+                "edge": "customer_owned_by",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "CUST-025",
+                  "entity": "customers"
+                },
+                "target": {
+                  "id": "EMP-008",
+                  "entity": "employees"
+                },
+                "carrier_field": "customers.owner_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-008",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-002",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-020",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-004",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-021",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-004",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "ticket_assigned_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "TKT-039",
+                  "entity": "support_tickets"
+                },
+                "target": {
+                  "id": "EMP-021",
+                  "entity": "employees"
+                },
+                "carrier_field": "support_tickets.assignee_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "ticket_assigned_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "TKT-072",
+                  "entity": "support_tickets"
+                },
+                "target": {
+                  "id": "EMP-020",
+                  "entity": "employees"
+                },
+                "carrier_field": "support_tickets.assignee_source_id",
+                "source_system": "csv_demo"
+              }
+            ],
+            "customer": {
+              "id": "CUST-025",
+              "entity": "customers"
+            },
+            "assignees": [
+              {
+                "id": "EMP-021",
+                "entity": "employees"
+              },
+              {
+                "id": "EMP-020",
+                "entity": "employees"
+              }
+            ],
+            "open_tickets": [
+              {
+                "id": "TKT-039",
+                "entity": "support_tickets"
+              },
+              {
+                "id": "TKT-072",
+                "entity": "support_tickets"
+              }
+            ],
+            "account_owner": {
+              "id": "EMP-008",
+              "entity": "employees"
+            },
+            "assignee_managers": [
+              {
+                "id": "EMP-004",
+                "entity": "employees"
+              }
+            ],
+            "account_owner_manager": {
+              "id": "EMP-002",
+              "entity": "employees"
+            }
+          },
+          "escalation_window": {
+            "end": "2026-07-23",
+            "count": 1,
+            "start": "2026-07-10"
+          },
+          "backlog_ticket_ids": [
+            "TKT-039"
+          ]
+        },
+        "document_evidence": [],
+        "commercial_evidence": {
+          "deals": []
+        }
+      },
+      "narrative": "VS-01 RISK BRIEF: CUST-025\n\nThis narrative is a view of the decision payload and is not hashed. An approval\nbinds to the payload's hash. Its facts come only from the payload and the\nresolved text of its cited spans, with citations and rules shown where they\napply rather than beside every fact. Headings, labels, absence lines and the\nlimitations are fixed template text.\n\n1. IDENTITY\nCustomer: CUST-025\nSource system: csv_demo\nAs of: 2026-09-18\nLayer 1 fingerprint: 1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00\nVersions: payload 1, rules 1, linker 1, policy 1\n\n2. RISK STATE AND WHY\nBand: WATCH\nSatisfied band rules: R-WATCH-001, R-WATCH-003\nExecutive-worthy: no (band WATCH, active deal count 0, active project count 0)\nSignals:\n- S1 open_ticket_count: 2\n- S2 open_high_priority_count: 1\n- S2b high_priority_total: 1\n- S3 tickets_in_lookback: 2\n- S4 max_tickets_in_14d_window: 1\n- S5 policy_escalation_state: false\n- S6 days_since_last_ticket: 38\n- S7 sla_breach_count: 2\n- S8 open_sla_breach_high_count: 1\n- S9 stale_open_ticket_count: 1\n- S10 dominant_ticket_category: billing\n- S11 active_deal_count: 0\n- S13 active_project_count: 0\n- S15 deal_under_pressure: false\nEscalation window: 2026-07-10 to 2026-07-23, ticket count 1\nTicket span: a 0-day span from 2026-07-10 to 2026-07-10, ticket count 1: TKT-063\n  rule: tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days\nDerivations:\n- open_ticket_count = 2, counting TKT-039, TKT-072\n  rule: count of tickets where is_open\n- open_high_priority_count = 1, counting TKT-039\n  rule: count of tickets where is_open and priority == 'high'\n- high_priority_total = 1, counting TKT-039\n  rule: count of tickets where priority == 'high'\n- open_sla_breach_high_count = 1, counting TKT-039\n  rule: count of tickets where is_open and priority == 'high' and breaches_sla\n- dominant_ticket_category = billing, counting TKT-063, TKT-072; category counts billing 1, onboarding 1; lookback 2026-06-21 to 2026-09-18\n  rule: most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order\n\n3. EVIDENCE\nTickets:\n- TKT-039: created 2026-05-10, priority high, category integration, open yes, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-039 created_at\n  - CANONICAL_FACT record support_tickets TKT-039 priority\n  - CANONICAL_FACT record support_tickets TKT-039 category\n  - CANONICAL_FACT record support_tickets TKT-039 resolved_at\n- TKT-063: created 2026-07-10, priority medium, category onboarding, open no, breaches SLA no\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-063 created_at\n  - CANONICAL_FACT record support_tickets TKT-063 priority\n  - CANONICAL_FACT record support_tickets TKT-063 category\n  - CANONICAL_FACT record support_tickets TKT-063 resolved_at\n- TKT-072: created 2026-08-11, priority medium, category billing, open yes, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-072 created_at\n  - CANONICAL_FACT record support_tickets TKT-072 priority\n  - CANONICAL_FACT record support_tickets TKT-072 category\n  - CANONICAL_FACT record support_tickets TKT-072 resolved_at\nDocument links (this snapshot and linker version only):\n- none under this snapshot and linker version\nCited spans:\n- none, because no targeted document is cited in this payload\n\n4. COMMERCIAL CONTEXT (PER CURRENCY)\nActive deals:\n- none\nExposure by currency (S12):\n- none, because there is no active deal\nActive projects (S13): none. CUST-025 has no active project.\n\n5. CONFLICT AND HOW IT WAS RESOLVED\nNo conflict was detected between the functions' positions.\n\n6. RECORDED DISSENT\nNo position was overruled, so no dissent is recorded.\n\n7. POLICY AND CONTRACT CONTEXT\nCited spans:\n- none, because no targeted document is cited in this payload\nContract documents (S14): none\n\n8. CHRONIC BACKLOG\nChronic backlog tickets: TKT-039\nA chronic backlog ticket is reported here and never drives the band.\n\n9. RECOMMENDED ACTIONS\n- SUPPORT NEUTRAL REVIEW_INVOICE_DISPUTE on TKT-072\n  Rationale: TKT-072 is an open ticket categorised 'billing' for CUST-025, so the invoice dispute needs review.\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-072 category\n  - CANONICAL_FACT record support_tickets TKT-072 resolved_at\n\n10. ESCALATION PATH\nAccount owner: EMP-008\nAccount owner's manager: EMP-002\nOpen tickets (by status): TKT-039, TKT-072\nAssignees of open tickets: EMP-021, EMP-020\nAssignees' managers: EMP-004\nEdges:\n- customer_owned_by: CUST-025 -> EMP-008 (SOURCE_KEY_JOIN, customers.owner_source_id)\n- employee_reports_to: EMP-008 -> EMP-002 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- employee_reports_to: EMP-020 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- employee_reports_to: EMP-021 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- ticket_assigned_to: TKT-039 -> EMP-021 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)\n- ticket_assigned_to: TKT-072 -> EMP-020 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)\n\n11. LIMITATIONS\n- Deterministic rules only: no language model, embedding or prompt produced any\n  part of this brief.\n- The band is a policy artefact, not a probability of churn.\n- Business days follow a Monday-to-Friday rule with no holiday calendar.\n- Money is stated per currency. No exchange rate is applied, so no cross-currency\n  total exists.\n- Document links are derived by exact identifier and exact name matching only. A\n  document that concerns the customer without naming it is linked to no one.\n- The escalation path lists open tickets by their status, while the signals\n  decide whether a ticket is open by its resolution date as of the evaluation\n  date.\n- Quoted document text is escaped and capped at 500 characters; a longer quote\n  is cut there and marked as truncated after its closing quote. Offsets index\n  the document's citable text: its title, a newline, then its body.\n- Approver identity is recorded, not authenticated, and nothing in this brief is\n  executed.\n",
+      "citations": [
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-039",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-063",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-072",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-039",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-063",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-072",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-039",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-063",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-072",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-039",
+          "field": "resolved_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-063",
+          "field": "resolved_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-072",
+          "field": "resolved_at"
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/9261d9d8-8399-4d8a-ab47-e5ab0e4f9078",
+    "status": 200,
+    "body": {
+      "id": "9261d9d8-8399-4d8a-ab47-e5ab0e4f9078",
+      "assessment_id": "9c4250cd-4481-4869-a9a7-2d594673ae69",
+      "status": "DRAFT",
+      "decision_status": "PENDING",
+      "policy_version": 1,
+      "template_version": "1",
+      "payload_hash": "a6240ac1edd4890724568adc7a8bd8f99add305638b9dcb179429ae67d06b637",
+      "payload": {
+        "band": "WATCH",
+        "scope": {
+          "as_of": "2026-09-18",
+          "source_system": "csv_demo",
+          "layer1_fingerprint": "1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00"
+        },
+        "signals": {
+          "active_deals": [
+            {
+              "id": "DEAL-037",
+              "stage": "qualification",
+              "amount": {
+                "amount": "499000",
+                "currency": "INR"
+              },
+              "probability": "30"
+            }
+          ],
+          "sla_breach_count": 1,
+          "active_deal_count": 1,
+          "open_ticket_count": 1,
+          "deal_under_pressure": false,
+          "high_priority_total": 1,
+          "tickets_in_lookback": 1,
+          "active_project_count": 0,
+          "exposure_by_currency": {
+            "INR": {
+              "amount": "499000",
+              "currency": "INR"
+            }
+          },
+          "contract_document_ids": [],
+          "days_since_last_ticket": 25,
+          "policy_escalation_state": false,
+          "stale_open_ticket_count": 0,
+          "dominant_ticket_category": "performance",
+          "open_high_priority_count": 1,
+          "max_tickets_in_14d_window": 1,
+          "open_sla_breach_high_count": 1
+        },
+        "customer": {
+          "id": "CUST-036",
+          "entity": "customers"
+        },
+        "versions": {
+          "rules": 1,
+          "linker": "1",
+          "policy": 1
+        },
+        "cited_spans": [],
+        "reconciliation": {
+          "dissent": [],
+          "customer": {
+            "id": "CUST-036",
+            "entity": "customers"
+          },
+          "conflicts": [],
+          "worthiness": {
+            "band": "WATCH",
+            "executive_worthy": false,
+            "active_deal_count": 1,
+            "active_project_count": 0
+          },
+          "ranking_key": [
+            -1,
+            -1,
+            -1,
+            "CUST-036"
+          ],
+          "resolutions": [],
+          "policy_version": 1,
+          "ordered_positions": [],
+          "resolved_positions": []
+        },
+        "payload_version": 1,
+        "satisfied_rules": [
+          "R-WATCH-001"
+        ],
+        "support_evidence": {
+          "tickets": [
+            {
+              "id": "TKT-078",
+              "is_open": true,
+              "category": "performance",
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-078",
+                    "kind": "record",
+                    "field": "created_at",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-078",
+                    "kind": "record",
+                    "field": "priority",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-078",
+                    "kind": "record",
+                    "field": "category",
+                    "entity": "support_tickets"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "TKT-078",
+                    "kind": "record",
+                    "field": "resolved_at",
+                    "entity": "support_tickets"
+                  }
+                }
+              ],
+              "priority": "high",
+              "breaches_sla": true,
+              "created_date": "2026-08-24"
+            }
+          ],
+          "derivations": [
+            {
+              "fact": "open_ticket_count",
+              "rule": "count of tickets where is_open",
+              "value": 1,
+              "ticket_ids": [
+                "TKT-078"
+              ]
+            },
+            {
+              "fact": "open_high_priority_count",
+              "rule": "count of tickets where is_open and priority == 'high'",
+              "value": 1,
+              "ticket_ids": [
+                "TKT-078"
+              ]
+            },
+            {
+              "fact": "high_priority_total",
+              "rule": "count of tickets where priority == 'high'",
+              "value": 1,
+              "ticket_ids": [
+                "TKT-078"
+              ]
+            },
+            {
+              "fact": "open_sla_breach_high_count",
+              "rule": "count of tickets where is_open and priority == 'high' and breaches_sla",
+              "value": 1,
+              "ticket_ids": [
+                "TKT-078"
+              ]
+            },
+            {
+              "fact": "dominant_ticket_category",
+              "rule": "most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order",
+              "value": "performance",
+              "lookback": {
+                "end": "2026-09-18",
+                "start": "2026-06-21"
+              },
+              "ticket_ids": [
+                "TKT-078"
+              ],
+              "category_counts": {
+                "performance": 1
+              }
+            }
+          ],
+          "ticket_span": {
+            "rule": "tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days",
+            "ticket_ids": [
+              "TKT-078"
+            ],
+            "ticket_count": 1,
+            "last_ticket_date": "2026-08-24",
+            "ticket_span_days": 0,
+            "first_ticket_date": "2026-08-24"
+          },
+          "escalation_path": {
+            "edges": [
+              {
+                "edge": "customer_owned_by",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "CUST-036",
+                  "entity": "customers"
+                },
+                "target": {
+                  "id": "EMP-008",
+                  "entity": "employees"
+                },
+                "carrier_field": "customers.owner_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-008",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-002",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "employee_reports_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "EMP-019",
+                  "entity": "employees"
+                },
+                "target": {
+                  "id": "EMP-004",
+                  "entity": "employees"
+                },
+                "carrier_field": "employees.manager_source_id",
+                "source_system": "csv_demo"
+              },
+              {
+                "edge": "ticket_assigned_to",
+                "basis": "SOURCE_KEY_JOIN",
+                "source": {
+                  "id": "TKT-078",
+                  "entity": "support_tickets"
+                },
+                "target": {
+                  "id": "EMP-019",
+                  "entity": "employees"
+                },
+                "carrier_field": "support_tickets.assignee_source_id",
+                "source_system": "csv_demo"
+              }
+            ],
+            "customer": {
+              "id": "CUST-036",
+              "entity": "customers"
+            },
+            "assignees": [
+              {
+                "id": "EMP-019",
+                "entity": "employees"
+              }
+            ],
+            "open_tickets": [
+              {
+                "id": "TKT-078",
+                "entity": "support_tickets"
+              }
+            ],
+            "account_owner": {
+              "id": "EMP-008",
+              "entity": "employees"
+            },
+            "assignee_managers": [
+              {
+                "id": "EMP-004",
+                "entity": "employees"
+              }
+            ],
+            "account_owner_manager": {
+              "id": "EMP-002",
+              "entity": "employees"
+            }
+          },
+          "escalation_window": {
+            "end": "2026-09-06",
+            "count": 1,
+            "start": "2026-08-24"
+          },
+          "backlog_ticket_ids": []
+        },
+        "document_evidence": [],
+        "commercial_evidence": {
+          "deals": [
+            {
+              "id": "DEAL-037",
+              "stage": "qualification",
+              "amount": {
+                "amount": "499000",
+                "currency": "INR"
+              },
+              "evidence": [
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-037",
+                    "kind": "record",
+                    "field": "is_active",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-037",
+                    "kind": "record",
+                    "field": "stage",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-037",
+                    "kind": "record",
+                    "field": "probability",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-037",
+                    "kind": "record",
+                    "field": "amount",
+                    "entity": "deals"
+                  }
+                },
+                {
+                  "kind": "CANONICAL_FACT",
+                  "citation": {
+                    "id": "DEAL-037",
+                    "kind": "record",
+                    "field": "currency",
+                    "entity": "deals"
+                  }
+                }
+              ],
+              "probability": "30"
+            }
+          ]
+        }
+      },
+      "narrative": "VS-01 RISK BRIEF: CUST-036\n\nThis narrative is a view of the decision payload and is not hashed. An approval\nbinds to the payload's hash. Its facts come only from the payload and the\nresolved text of its cited spans, with citations and rules shown where they\napply rather than beside every fact. Headings, labels, absence lines and the\nlimitations are fixed template text.\n\n1. IDENTITY\nCustomer: CUST-036\nSource system: csv_demo\nAs of: 2026-09-18\nLayer 1 fingerprint: 1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00\nVersions: payload 1, rules 1, linker 1, policy 1\n\n2. RISK STATE AND WHY\nBand: WATCH\nSatisfied band rules: R-WATCH-001\nExecutive-worthy: no (band WATCH, active deal count 1, active project count 0)\nSignals:\n- S1 open_ticket_count: 1\n- S2 open_high_priority_count: 1\n- S2b high_priority_total: 1\n- S3 tickets_in_lookback: 1\n- S4 max_tickets_in_14d_window: 1\n- S5 policy_escalation_state: false\n- S6 days_since_last_ticket: 25\n- S7 sla_breach_count: 1\n- S8 open_sla_breach_high_count: 1\n- S9 stale_open_ticket_count: 0\n- S10 dominant_ticket_category: performance\n- S11 active_deal_count: 1\n- S13 active_project_count: 0\n- S15 deal_under_pressure: false\nEscalation window: 2026-08-24 to 2026-09-06, ticket count 1\nTicket span: a 0-day span from 2026-08-24 to 2026-08-24, ticket count 1: TKT-078\n  rule: tickets where escalation_window.start <= created_date <= escalation_window.end; ticket_span_days = (last_ticket_date - first_ticket_date).days\nDerivations:\n- open_ticket_count = 1, counting TKT-078\n  rule: count of tickets where is_open\n- open_high_priority_count = 1, counting TKT-078\n  rule: count of tickets where is_open and priority == 'high'\n- high_priority_total = 1, counting TKT-078\n  rule: count of tickets where priority == 'high'\n- open_sla_breach_high_count = 1, counting TKT-078\n  rule: count of tickets where is_open and priority == 'high' and breaches_sla\n- dominant_ticket_category = performance, counting TKT-078; category counts performance 1; lookback 2026-06-21 to 2026-09-18\n  rule: most frequent category among tickets where category is neither null nor empty and lookback.start <= created_date <= lookback.end; ties go to the smallest category name in code-point order\n\n3. EVIDENCE\nTickets:\n- TKT-078: created 2026-08-24, priority high, category performance, open yes, breaches SLA yes\n  evidence:\n  - CANONICAL_FACT record support_tickets TKT-078 created_at\n  - CANONICAL_FACT record support_tickets TKT-078 priority\n  - CANONICAL_FACT record support_tickets TKT-078 category\n  - CANONICAL_FACT record support_tickets TKT-078 resolved_at\nDocument links (this snapshot and linker version only):\n- none under this snapshot and linker version\nCited spans:\n- none, because no targeted document is cited in this payload\n\n4. COMMERCIAL CONTEXT (PER CURRENCY)\nActive deals:\n- DEAL-037: stage qualification, probability 30%, amount INR 499,000\n  evidence:\n  - CANONICAL_FACT record deals DEAL-037 is_active\n  - CANONICAL_FACT record deals DEAL-037 stage\n  - CANONICAL_FACT record deals DEAL-037 probability\n  - CANONICAL_FACT record deals DEAL-037 amount\n  - CANONICAL_FACT record deals DEAL-037 currency\nExposure by currency (S12):\n- INR 499,000\nActive projects (S13): none. CUST-036 has no active project.\n\n5. CONFLICT AND HOW IT WAS RESOLVED\nNo conflict was detected between the functions' positions.\n\n6. RECORDED DISSENT\nNo position was overruled, so no dissent is recorded.\n\n7. POLICY AND CONTRACT CONTEXT\nCited spans:\n- none, because no targeted document is cited in this payload\nContract documents (S14): none\n\n8. CHRONIC BACKLOG\nChronic backlog tickets: none\nA chronic backlog ticket is reported here and never drives the band.\n\n9. RECOMMENDED ACTIONS\nNo action is recommended, because no function stated a position.\n\n10. ESCALATION PATH\nAccount owner: EMP-008\nAccount owner's manager: EMP-002\nOpen tickets (by status): TKT-078\nAssignees of open tickets: EMP-019\nAssignees' managers: EMP-004\nEdges:\n- customer_owned_by: CUST-036 -> EMP-008 (SOURCE_KEY_JOIN, customers.owner_source_id)\n- employee_reports_to: EMP-008 -> EMP-002 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- employee_reports_to: EMP-019 -> EMP-004 (SOURCE_KEY_JOIN, employees.manager_source_id)\n- ticket_assigned_to: TKT-078 -> EMP-019 (SOURCE_KEY_JOIN, support_tickets.assignee_source_id)\n\n11. LIMITATIONS\n- Deterministic rules only: no language model, embedding or prompt produced any\n  part of this brief.\n- The band is a policy artefact, not a probability of churn.\n- Business days follow a Monday-to-Friday rule with no holiday calendar.\n- Money is stated per currency. No exchange rate is applied, so no cross-currency\n  total exists.\n- Document links are derived by exact identifier and exact name matching only. A\n  document that concerns the customer without naming it is linked to no one.\n- The escalation path lists open tickets by their status, while the signals\n  decide whether a ticket is open by its resolution date as of the evaluation\n  date.\n- Quoted document text is escaped and capped at 500 characters; a longer quote\n  is cut there and marked as truncated after its closing quote. Offsets index\n  the document's citable text: its title, a newline, then its body.\n- Approver identity is recorded, not authenticated, and nothing in this brief is\n  executed.\n",
+      "citations": [
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-037",
+          "field": "amount"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-037",
+          "field": "currency"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-037",
+          "field": "is_active"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-037",
+          "field": "probability"
+        },
+        {
+          "kind": "record",
+          "entity": "deals",
+          "id": "DEAL-037",
+          "field": "stage"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-078",
+          "field": "category"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-078",
+          "field": "created_at"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-078",
+          "field": "priority"
+        },
+        {
+          "kind": "record",
+          "entity": "support_tickets",
+          "id": "TKT-078",
+          "field": "resolved_at"
+        }
+      ]
+    }
+  }
+]

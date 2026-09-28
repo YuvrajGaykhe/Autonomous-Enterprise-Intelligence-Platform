@@ -1,0 +1,196 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/metrics/ingestion",
+    "status": 200,
+    "body": {
+      "totals": {
+        "runs_total": 1,
+        "runs_by_status": {
+          "RUNNING": 0,
+          "SUCCESS": 1,
+          "PARTIAL_SUCCESS": 0,
+          "FAILED": 0,
+          "NOOP": 0
+        },
+        "records_fetched_total": 233,
+        "records_raw_persisted_total": 233,
+        "records_inserted_total": 233,
+        "records_updated_total": 0,
+        "records_unchanged_total": 0,
+        "records_rejected_total": 0,
+        "records_failed_total": 0,
+        "warnings_total": 0,
+        "batches_failed_total": 0,
+        "errors_by_severity": {
+          "ERROR": 0,
+          "WARNING": 0,
+          "INFO": 0
+        },
+        "connector_request_failures_total": 0,
+        "validation_errors_total": 0,
+        "ingestion_duration_seconds_total": 0.178404,
+        "canonical_records": {
+          "organizations": 1,
+          "employees": 24,
+          "customers": 50,
+          "deals": 44,
+          "projects": 22,
+          "support_tickets": 80,
+          "documents": 12
+        }
+      },
+      "sources": [
+        {
+          "runs_total": 1,
+          "runs_by_status": {
+            "RUNNING": 0,
+            "SUCCESS": 1,
+            "PARTIAL_SUCCESS": 0,
+            "FAILED": 0,
+            "NOOP": 0
+          },
+          "records_fetched_total": 233,
+          "records_raw_persisted_total": 233,
+          "records_inserted_total": 233,
+          "records_updated_total": 0,
+          "records_unchanged_total": 0,
+          "records_rejected_total": 0,
+          "records_failed_total": 0,
+          "warnings_total": 0,
+          "batches_failed_total": 0,
+          "errors_by_severity": {
+            "ERROR": 0,
+            "WARNING": 0,
+            "INFO": 0
+          },
+          "connector_request_failures_total": 0,
+          "validation_errors_total": 0,
+          "ingestion_duration_seconds_total": 0.178404,
+          "canonical_records": {
+            "organizations": 1,
+            "employees": 24,
+            "customers": 50,
+            "deals": 44,
+            "projects": 22,
+            "support_tickets": 80,
+            "documents": 12
+          },
+          "source_system": "csv_demo",
+          "last_run": {
+            "run_id": "040d5906-134c-4eb1-bad2-eabef784989d",
+            "status": "SUCCESS",
+            "started_at": "2026-09-28T01:55:22.138426Z",
+            "finished_at": "2026-09-28T01:55:22.316830Z"
+          },
+          "last_successful_run": {
+            "run_id": "040d5906-134c-4eb1-bad2-eabef784989d",
+            "status": "SUCCESS",
+            "started_at": "2026-09-28T01:55:22.138426Z",
+            "finished_at": "2026-09-28T01:55:22.316830Z"
+          }
+        },
+        {
+          "runs_total": 0,
+          "runs_by_status": {
+            "RUNNING": 0,
+            "SUCCESS": 0,
+            "PARTIAL_SUCCESS": 0,
+            "FAILED": 0,
+            "NOOP": 0
+          },
+          "records_fetched_total": 0,
+          "records_raw_persisted_total": 0,
+          "records_inserted_total": 0,
+          "records_updated_total": 0,
+          "records_unchanged_total": 0,
+          "records_rejected_total": 0,
+          "records_failed_total": 0,
+          "warnings_total": 0,
+          "batches_failed_total": 0,
+          "errors_by_severity": {
+            "ERROR": 0,
+            "WARNING": 0,
+            "INFO": 0
+          },
+          "connector_request_failures_total": 0,
+          "validation_errors_total": 0,
+          "ingestion_duration_seconds_total": 0,
+          "canonical_records": {
+            "organizations": 0,
+            "employees": 0,
+            "customers": 0,
+            "deals": 0,
+            "projects": 0,
+            "support_tickets": 0,
+            "documents": 0
+          },
+          "source_system": "odoo_mock",
+          "last_run": null,
+          "last_successful_run": null
+        },
+        {
+          "runs_total": 0,
+          "runs_by_status": {
+            "RUNNING": 0,
+            "SUCCESS": 0,
+            "PARTIAL_SUCCESS": 0,
+            "FAILED": 0,
+            "NOOP": 0
+          },
+          "records_fetched_total": 0,
+          "records_raw_persisted_total": 0,
+          "records_inserted_total": 0,
+          "records_updated_total": 0,
+          "records_unchanged_total": 0,
+          "records_rejected_total": 0,
+          "records_failed_total": 0,
+          "warnings_total": 0,
+          "batches_failed_total": 0,
+          "errors_by_severity": {
+            "ERROR": 0,
+            "WARNING": 0,
+            "INFO": 0
+          },
+          "connector_request_failures_total": 0,
+          "validation_errors_total": 0,
+          "ingestion_duration_seconds_total": 0,
+          "canonical_records": {
+            "organizations": 0,
+            "employees": 0,
+            "customers": 0,
+            "deals": 0,
+            "projects": 0,
+            "support_tickets": 0,
+            "documents": 0
+          },
+          "source_system": "rest_mock",
+          "last_run": null,
+          "last_successful_run": null
+        }
+      ],
+      "process": {
+        "started_at": "2026-09-28T01:55:22.892358Z",
+        "runs_total": 0,
+        "runs_by_status": {
+          "RUNNING": 0,
+          "SUCCESS": 0,
+          "PARTIAL_SUCCESS": 0,
+          "FAILED": 0,
+          "NOOP": 0
+        },
+        "records_fetched_total": 0,
+        "records_inserted_total": 0,
+        "records_updated_total": 0,
+        "records_unchanged_total": 0,
+        "records_rejected_total": 0,
+        "connector_request_failures_total": 0,
+        "validation_errors_total": 0,
+        "ingestion_duration_seconds": {
+          "count": 0,
+          "sum": 0
+        }
+      }
+    }
+  }
+]

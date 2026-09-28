@@ -1,0 +1,101 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/sources",
+    "status": 200,
+    "body": {
+      "sources": [
+        {
+          "source": "csv_demo",
+          "source_type": "csv",
+          "capabilities": {
+            "supported_entity_types": [
+              "customers",
+              "deals",
+              "documents",
+              "employees",
+              "organizations",
+              "projects",
+              "support_tickets"
+            ],
+            "supports_incremental": false,
+            "supports_health_check": true,
+            "read_only": true
+          }
+        },
+        {
+          "source": "odoo_mock",
+          "source_type": "mock",
+          "capabilities": {
+            "supported_entity_types": [
+              "customers",
+              "deals",
+              "documents",
+              "employees",
+              "organizations",
+              "projects",
+              "support_tickets"
+            ],
+            "supports_incremental": false,
+            "supports_health_check": true,
+            "read_only": true
+          }
+        },
+        {
+          "source": "rest_mock",
+          "source_type": "rest",
+          "capabilities": {
+            "supported_entity_types": [
+              "customers",
+              "deals",
+              "documents",
+              "employees",
+              "organizations",
+              "projects",
+              "support_tickets"
+            ],
+            "supports_incremental": false,
+            "supports_health_check": true,
+            "read_only": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/sources/csv_demo/health",
+    "status": 200,
+    "body": {
+      "source": "csv_demo",
+      "status": "healthy",
+      "latency_ms": null,
+      "error_type": null,
+      "checked_at": "2026-09-28T01:55:24.608929Z"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/sources/odoo_mock/health",
+    "status": 200,
+    "body": {
+      "source": "odoo_mock",
+      "status": "unhealthy",
+      "latency_ms": 52.34379193279892,
+      "error_type": null,
+      "checked_at": "2026-09-28T01:55:24.660940Z"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/sources/rest_mock/health",
+    "status": 200,
+    "body": {
+      "source": "rest_mock",
+      "status": "unhealthy",
+      "latency_ms": 52.08062496967614,
+      "error_type": null,
+      "checked_at": "2026-09-28T01:55:24.661005Z"
+    }
+  }
+]
