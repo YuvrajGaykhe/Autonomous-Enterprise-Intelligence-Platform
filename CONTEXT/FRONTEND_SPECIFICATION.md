@@ -1125,6 +1125,147 @@ baseline step (§13).
 
 **Next:** F2, which starts only on the owner's instruction.
 
+### F2 — Classic view: CLOSED 2026-09-28
+
+**What F2 produced.**
+- **Domain (`src/domain/`, §7).** Pure modules for bands, snapshots and the inbox, the brief view,
+  cited text, the decision chain and request, what a failed write means (§7.6), money, timestamps,
+  the roster and rooms, and evidence records. `asOf.ts` is F1's.
+- **API layer.** Query options for every route of §6.3 that F2 reads. Each result carries the calls
+  behind it, for **Show the API call**, and the §6.7 invalidations are functions. One addition,
+  `countAssessments`, reads a total with a single-row `GET /risk/assessments`. The client now
+  exports its error-envelope schema, so the contract tests can parse recorded refusals.
+- **Pages.** Classic view is complete:
+  - `/classic`: the health report, the About panel and the staff directory;
+  - `/classic/inbox`: the CEO inbox;
+  - `/classic/briefs/<brief-id>`: every §7.3 section, the decision panel and the chain;
+  - `/classic/agents/<agent-id>`: each agent of §9.2, including one per configured source.
+  - Every panel has all four states and **Show the API call**. Evidence links open the cited
+    record or the document text with the span marked, in dialogs that trap and return focus.
+- **HUD.** **Run assessment**, with the outcome of the session's latest run under the top bar.
+- **Session state** (zustand, never persisted): the latest run, the selected brief, and the briefs
+  refused for `STORED_PAYLOAD_MISMATCH`. The decider's name is kept in `aiceohq.actorName` (§11).
+- **Tests.** Five unit files, five component files, contract additions and the end-to-end
+  scenario `tests/e2e/classic.spec.ts`, with six screenshot baselines.
+- **Fixtures.** Re-recorded at `1cf8e55` (the F1 commit), with two new files:
+  - `decision-flow.json`: on the first brief, recorded after everything else because it writes.
+    It holds an approval; refusals for `SUPERSEDES_REQUIRED`, `REQUEST_HASH_MISMATCH`,
+    `PREDECESSOR_NOT_ON_BRIEF` and `INVALID_REQUEST`; a rejection that supersedes the approval;
+    `PREDECESSOR_NOT_HEAD`; the chain of two; and three 404s. MSW serves it only to tests that
+    ask for it, because it describes a later state of the database.
+  - `auto-run.json`: an Auto run (201), the date it resolved to (`2026-08-27`), that snapshot, and
+    `SCOPE_UNRESOLVED`. The recorder obtains that refusal by asking Auto for `rest_mock`, which the
+    isolated database never ingests. The app itself sends only `csv_demo`.
+  - Every recorded brief body is in `briefs.json`: the three at `2026-09-18`, then the Auto
+    snapshot's four.
+- `Makefile`: `frontend-e2e` (§4.1). It is added to `.PHONY`, listed by `make help` and given a
+  recipe. No existing line changed.
+- `frontend/README.md`: the F2 status, the Classic addresses and the visual-test rule.
+
+**Owner rulings.** The owner approved staging and committing F2 on 2026-09-28. No other ruling was
+needed. One R-F-3 stop arose and was resolved inside ruling 3 of F1:
+- **The finding.** The first recording put brief bodies into `decision-flow.json` (the decided
+  brief) and `auto-run.json` (the Auto snapshot's briefs). `scan_text` then reported 6 findings,
+  all with fingerprint `f98ec4491f30`, in those two files. The allow-list entry names
+  `briefs.json` only.
+- **The resolution.** The recorder now writes every brief body into `briefs.json` and nowhere
+  else, and it no longer records the decided brief. `scripts/secret_scan.py` is unchanged.
+- **The check.** Without the allow-list, `briefs.json` now has 6 findings, all `f98ec4491f30`: three
+  each from CUST-007's briefs at `2026-09-18` and at `2026-08-27`. A contract test asserts that no
+  other fixture file holds a brief body.
+
+**Choices made in F2 (PROPOSED; each stands unless replaced).**
+- **The copy.** Classic view replays nothing, so it shows neither of F4's replay banners (Appendix
+  A). A run that answers 200 reads "Already assessed at <date>: all <n> results existed, so nothing
+  was written." The §7.6 defect message reads "The API refused this decision because this page sent
+  an inconsistent request. Nothing was written."
+- **Auto in the inbox.** Under Auto, the inbox shows the snapshot of this session's Auto run. Before
+  any Auto run it says how to get one. The frontend does not work out the latest ticket's date
+  itself, because that would duplicate `app/intelligence/scope.py`.
+- **Unknown outcomes (R-F-7).**
+  - **Run assessment.** Before the POST, the page counts the assessments at the run's `as_of`, or at
+    every date for Auto. After an unknown outcome it counts again: the run landed only if the total
+    grew. The POST is idempotent, so the retry offered otherwise cannot write twice. If the count
+    before the POST fails, nothing is sent.
+  - **A decision.** The page re-reads the chain. The decision landed only if an entry matches the
+    sent actor, decision, note, hash and predecessor. If another decision moved the head instead,
+    the page shows the §7.6 stale-head message.
+  - If a re-read fails, the page offers **Check again**, never a retry.
+- **The inbox renders only when every brief of the snapshot has loaded.** Partially loaded data is
+  never rendered.
+- **The selected customer (§9.2)** is the brief last opened in this session, while it is in the
+  inbox shown; otherwise it is the inbox's first row.
+- **Connector panels** list the source's 10 most recent runs; each run's errors load on request.
+- **Money and probability.** A deal's `probability` is shown as the payload states it
+  (`probability 90`); `src/` adds no percent sign (D-F-2). The API's own rationale and narrative
+  text is shown verbatim, and it states a deal probability as "90.00%" and a threshold as "80%".
+  Those strings come from the backend. They are not a risk score, and no guard can apply to them.
+- **The narrative block** grows with the page rather than scrolling inside itself, because axe
+  reports an internally scrolling `pre` as `scrollable-region-focusable` (serious).
+- **The end-to-end environment** is fixed at a 1280×800 viewport, the UTC time zone, the `en-GB`
+  locale and the light scheme. The six screenshots are the overview, the inbox, CUST-007's brief,
+  and the MEMORY, RECONCILER_AGENT and CSV_DEMO_AGENT panels. They mask only the overview's request
+  id and the connector's timestamps.
+- **New tests beyond the spec's minimum.** Contract tests assert that the decision flow holds every
+  refusal kind, and that no fixture file but `briefs.json` holds a brief body. Unit tests check that
+  every S1–S15 line, derivation, quote and money line equals its golden-brief counterpart.
+
+**The gate (§13).**
+1. **Frontend.**
+   - `tsc` reports 0 on both projects, ESLint 0 errors and 0 warnings, and Prettier is clean.
+   - **Vitest:** 381 passed, 0 failed, 0 skipped. By layer: unit 142, component 116, contract 67,
+     guards 34, tools 22.
+   - **Coverage:** `src/api/**` and `src/domain/**` are at 100% of lines, branches, functions and
+     statements. All of `src/` is 98.1% of statements (1125 of 1147) and 93.4% of branches.
+   - **Playwright:** 20 passed, 0 skipped, on two consecutive runs over a recreated database. The
+     17 new tests cover:
+     - the six screenshots;
+     - CUST-007 pinned `CRITICAL · EXECUTIVE`, with CUST-025 and CUST-036 following;
+     - Run assessment at `2026-09-18` answering 200;
+     - the golden narrative and quotes, and a document span dialog;
+     - approve, then reject with supersede, with the chain and `decision_status` checked through
+       the API;
+     - 409 `DECISION_CONFLICT` (`PREDECESSOR_NOT_HEAD`), provoked by a decision recorded directly
+       through the API;
+     - 409 `PAYLOAD_HASH_CONFLICT` (`REQUEST_HASH_MISMATCH`), provoked by rewriting the request's
+       hash in the browser;
+     - an empty chain;
+     - an unknown outcome that landed, and one that did not;
+     - Auto (201 at `2026-08-27`, four briefs);
+     - an API that is down, and its recovery.
+   - **axe:** 0 serious and 0 critical on `/classic`, `/classic/inbox`, CUST-007's brief, all 11
+     agent pages and an open evidence dialog.
+   - **Bundle:** initial JavaScript is 181.0 KB gzip of the 250 KB budget, and CSS is 18.2 KB gzip.
+     Vite warns that the one chunk is over 500 KB minified (604 KB raw). The budget is measured in
+     gzip, and F3's lazy world chunk splits the bundle anyway.
+2. **The backend.** `git diff --stat 733b19b -- app config migrations alembic.ini data tests scripts
+   Dockerfile docker-compose.yml docker .env.example pyproject.toml` lists only
+   `scripts/secret_scan.py | 2 ++` (F1, ruling 3). F2 changes nothing under a frozen path. The full
+   backend suite is not run in F2 (§13 runs it at F1, F5 and F6).
+3. **The four repository-scanning backend test files** pass on the staged tree: 256 passed and
+   0 failed, with the 2 known warnings. They ran in the repository `.venv`, with the caches and the
+   coverage file kept out of the repository.
+4. **The secret scan.**
+   - `scan_text` over all 76 new or changed files reports 0 findings: 70 text files and 6 PNG
+     baselines skipped as binary.
+   - **Staged `make secret-scan`:** 496 files scanned, 9 binary files skipped (505 tracked, which is
+     456 + 49 new) and 0 findings.
+5. **Anchors.** The golden sha, the one migration head `070e4968a497` and the strategy diff sha all
+   equal §3.
+6. **`git status`** shows only `frontend/`, `Makefile`, this document and the unstaged strategy
+   document.
+
+**AC-F-17.**
+- The development database's `GET /risk/assessments` and `GET /entities/customers` responses are
+  byte-identical before and after F2's gate (52 customers; 1 assessment, at `as_of 2026-09-27`).
+- F2 used `<database>_frontend_e2e`, for the recorder and the end-to-end tests, and
+  `<database>_frontend`, for a manual check through `make frontend-backend`. It used nothing else.
+
+**Not run in F2.**
+- The performance record, the office screenshots and the world-chunk network assertion (F3).
+
+**Next:** F3, which starts only on the owner's instruction.
+
 ---
 
 ## Appendix A: fixed copy

@@ -53,6 +53,22 @@ export function fetchAssessments(asOf: string, options: RequestOptions = {}) {
   );
 }
 
+/**
+ * How many assessments exist at `asOf`, or at every date when it is null: one single-row request
+ * that reads `total` only. A run reads it before and after an unknown outcome (R-F-7).
+ */
+export async function countAssessments(asOf: string | null, options: RequestOptions = {}) {
+  const query = new URLSearchParams(asOf === null ? {} : { as_of: asOf });
+  query.set('limit', '1');
+  query.set('offset', '0');
+  const result = await getJson(
+    `/api/v1/risk/assessments?${query.toString()}`,
+    assessmentListResponse,
+    options,
+  );
+  return { total: result.data.total, call: result.call };
+}
+
 export function fetchAssessment(assessmentId: string, options: RequestOptions = {}) {
   return getJson(
     `/api/v1/risk/assessments/${encodeURIComponent(assessmentId)}`,

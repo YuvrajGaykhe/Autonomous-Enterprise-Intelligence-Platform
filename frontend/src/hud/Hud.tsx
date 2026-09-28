@@ -1,7 +1,7 @@
 /**
- * The top bar (spec §8.2). F1 carries the product name, the health light and the `as_of`
- * selector; Run assessment, the view, pixel and sound toggles, Replay and the tour arrive
- * with the phases that build what they control (§14).
+ * The top bar (spec §8.2): the product name, the health light, the `as_of` selector and Run
+ * assessment. The view, pixel and sound toggles, Replay and the tour arrive with the phases that
+ * build what they control (§14).
  */
 
 import { Link, useLocation } from 'react-router';
@@ -10,6 +10,7 @@ import { COPY } from '@/copy';
 
 import { AsOfSelector } from './AsOfSelector';
 import { HealthLight } from './HealthLight';
+import { RunAssessmentButton } from './RunAssessmentControls';
 
 export function Hud() {
   const { search } = useLocation();
@@ -19,8 +20,9 @@ export function Hud() {
         {COPY.productName}
       </Link>
       <HealthLight />
-      <div className="ml-auto">
+      <div className="ml-auto flex flex-wrap items-center gap-3">
         <AsOfSelector />
+        <RunAssessmentButton />
       </div>
     </header>
   );

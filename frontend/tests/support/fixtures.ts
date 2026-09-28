@@ -46,7 +46,41 @@ export function recordedPrefix(name: string, prefix: string): RecordedExchange {
   return found;
 }
 
-/** The recorded brief exchanges, CUST-007 first, in the list's order. */
-export function recordedBriefs(): RecordedExchange[] {
+/** Every recorded brief: the three at 2026-09-18, then the Auto run's (owner ruling 3, F1). */
+export function allRecordedBriefs(): RecordedExchange[] {
   return loadExchanges('briefs.json');
+}
+
+/** The recorded briefs at 2026-09-18 (§3), CUST-007 first, in the list's order. */
+export function recordedBriefs(): RecordedExchange[] {
+  return allRecordedBriefs().filter(
+    (exchange) =>
+      (exchange.body as { payload: { scope: { as_of: string } } }).payload.scope.as_of ===
+      '2026-09-18',
+  );
+}
+
+/** The recorded body of the one exchange for a method and path, typed by the caller. */
+export function recordedBody<T>(name: string, method: 'GET' | 'POST', path: string): T {
+  return recorded(name, method, path).body as T;
+}
+
+/** The recorded assessment list at 2026-09-18, every page. */
+export function recordedAssessmentList<T>(): T {
+  return recordedPrefix('assessments.json', '/api/v1/risk/assessments?as_of=2026-09-18').body as T;
+}
+
+/** The recorded entity list of one type. */
+export function recordedEntities<T>(type: string): T {
+  return recorded('entities.json', 'GET', `/api/v1/entities/${type}?limit=500&offset=0`).body as T;
+}
+
+/** The decision flow, recorded after every other fixture because it writes (§7.5, §7.6). */
+export function decisionFlow(): RecordedExchange[] {
+  return loadExchanges('decision-flow.json');
+}
+
+/** The Auto run (as_of null), the date it resolved to, that snapshot and its refusals. */
+export function autoRun(): RecordedExchange[] {
+  return loadExchanges('auto-run.json');
 }

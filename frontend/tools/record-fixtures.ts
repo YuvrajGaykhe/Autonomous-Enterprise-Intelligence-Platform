@@ -7,6 +7,10 @@
  * edits a recorded body. Never run it while the end-to-end tests run: both use the same
  * isolated database.
  *
+ * Every recorded brief body goes into `briefs.json` and nowhere else (owner ruling 3 of F1): the
+ * three at 2026-09-18 first, then the Auto run's. That file is the only one the secret scanner's
+ * allow-list names for a brief's `matched_token`.
+ *
  * Exit status 2 means the isolated environment could not be used or started.
  */
 
@@ -92,6 +96,96 @@ interface ListItem {
   brief_ids: string[];
 }
 
+/** An id no row carries, for the not-found and foreign-predecessor answers. */
+const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
+/** A well-formed payload hash that is no brief's. */
+const STALE_HASH = '0'.repeat(64);
+const RECORDER_ACTOR = 'Fixture Recorder';
+
+/**
+ * The decision writes and refusals the pages render (spec §7.5, §7.6), on the first brief. It runs
+ * after every other recording, because it writes: the brief and chain files above stay PENDING.
+ */
+async function recordDecisionFlow(
+  base: string,
+  briefId: string | undefined,
+  brief: Exchange | undefined,
+): Promise<Exchange[]> {
+  if (briefId === undefined || brief === undefined) throw new Error('no brief to decide on');
+  const path = `/api/v1/risk/briefs/${briefId}/decision`;
+  const decide = async (body: Record<string, unknown>, status: number) =>
+    expectStatus(await exchange(base, 'POST', path, body), status);
+  const approval = {
+    actor: RECORDER_ACTOR,
+    decision: 'APPROVED',
+    note: 'Recorded by the fixture tool.',
+    payload_hash: (brief.body as { payload_hash: string }).payload_hash,
+    supersedes_id: null,
+  };
+  const approve = await decide(approval, 201);
+  const firstId = (approve.body as { id: string }).id;
+  const flow = [
+    approve,
+    // SUPERSEDES_REQUIRED, REQUEST_HASH_MISMATCH, PREDECESSOR_NOT_ON_BRIEF, INVALID_REQUEST.
+    await decide({ ...approval, decision: 'REJECTED', note: null }, 409),
+    await decide({ ...approval, payload_hash: STALE_HASH, supersedes_id: firstId }, 409),
+    await decide({ ...approval, supersedes_id: UNKNOWN_ID }, 409),
+    await decide({ ...approval, actor: '', supersedes_id: firstId }, 422),
+  ];
+  const rejection = {
+    ...approval,
+    decision: 'REJECTED',
+    note: 'Superseded by the fixture tool.',
+    supersedes_id: firstId,
+  };
+  flow.push(await decide(rejection, 201));
+  // PREDECESSOR_NOT_HEAD: the first decision is no longer the head.
+  flow.push(await decide(rejection, 409));
+  flow.push(
+    expectStatus(await get(base, `/api/v1/risk/briefs/${briefId}/decisions`), 200),
+    expectStatus(await get(base, `/api/v1/risk/briefs/${UNKNOWN_ID}`), 404),
+    expectStatus(await get(base, `/api/v1/risk/briefs/${UNKNOWN_ID}/decisions`), 404),
+    expectStatus(await get(base, `/api/v1/risk/assessments/${UNKNOWN_ID}`), 404),
+  );
+  return flow;
+}
+
+/**
+ * Auto (`as_of: null`, D-F-14): the run, the date it resolved to and that date's snapshot, then
+ * the refusal of a scope with no ticket to resolve a date from (SCOPE_UNRESOLVED). The snapshot's
+ * briefs are returned apart, for `briefs.json`.
+ */
+async function recordAutoRun(base: string): Promise<{ exchanges: Exchange[]; briefs: Exchange[] }> {
+  const run = expectStatus(
+    await exchange(base, 'POST', '/api/v1/risk/assessments', {
+      as_of: null,
+      source_system: SOURCE_SYSTEM,
+    }),
+    201,
+  );
+  const [first] = (run.body as { items: { assessment_id: string }[] }).items;
+  if (first === undefined) throw new Error('the Auto run assessed no customer');
+  const detail = expectStatus(
+    await get(base, `/api/v1/risk/assessments/${first.assessment_id}`),
+    200,
+  );
+  const asOf = (detail.body as { as_of: string }).as_of;
+  const list = expectStatus(await get(base, `/api/v1/risk/assessments?as_of=${asOf}&${PAGE}`), 200);
+  const briefIds = (list.body as { items: ListItem[] }).items.flatMap((item) => item.brief_ids);
+  const briefs = await Promise.all(briefIds.map((id) => get(base, `/api/v1/risk/briefs/${id}`)));
+  const unresolved = expectStatus(
+    await exchange(base, 'POST', '/api/v1/risk/assessments', {
+      as_of: null,
+      source_system: 'rest_mock',
+    }),
+    422,
+  );
+  return {
+    exchanges: [run, detail, list, unresolved],
+    briefs: briefs.map((item) => expectStatus(item, 200)),
+  };
+}
+
 async function main(): Promise<number> {
   const configuredUrl = configuredDatabaseUrl();
   const backend = await startIsolatedBackend({
@@ -170,11 +264,9 @@ async function main(): Promise<number> {
     );
 
     const briefIds = briefed.flatMap((item) => item.brief_ids);
-    const briefs = await Promise.all(briefIds.map((id) => get(base, `/api/v1/risk/briefs/${id}`)));
-    files['briefs.json'] = write(
-      'briefs.json',
-      briefs.map((item) => expectStatus(item, 200)),
-    );
+    const briefs = (
+      await Promise.all(briefIds.map((id) => get(base, `/api/v1/risk/briefs/${id}`)))
+    ).map((item) => expectStatus(item, 200));
 
     const chains = await Promise.all(
       briefIds.map((id) => get(base, `/api/v1/risk/briefs/${id}/decisions`)),
@@ -183,6 +275,14 @@ async function main(): Promise<number> {
       'decisions.json',
       chains.map((item) => expectStatus(item, 200)),
     );
+
+    files['decision-flow.json'] = write(
+      'decision-flow.json',
+      await recordDecisionFlow(base, briefIds[0], briefs[0]),
+    );
+    const auto = await recordAutoRun(base);
+    files['auto-run.json'] = write('auto-run.json', auto.exchanges);
+    files['briefs.json'] = write('briefs.json', [...briefs, ...auto.briefs]);
 
     const openapi = await fetch(`${base}/openapi.json`);
     if (openapi.status !== 200) throw new Error(`GET /openapi.json answered ${openapi.status}`);

@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { z } from 'zod';
 
+import { errorEnvelope } from '@/api/client';
 import { briefPayloadV1 } from '@/api/schemas/briefPayloadV1';
 import { ENTITY_TYPES, entityPages } from '@/api/schemas/entities';
 import {
@@ -30,6 +31,7 @@ import {
   assessmentRunResponse,
   briefResponse,
   decisionHistoryResponse,
+  decisionResponse,
 } from '@/api/schemas/risk';
 
 import {
@@ -37,6 +39,8 @@ import {
   FIXTURE_DIR,
   REPO_ROOT,
   loadExchanges,
+  allRecordedBriefs,
+  decisionFlow,
   loadJson,
   recordedBriefs,
   type RecordedExchange,
@@ -66,12 +70,15 @@ const ROUTES: readonly (readonly [RegExp, z.ZodType])[] = [
   [new RegExp(`^GET /api/v1/risk/assessments/${UUID}$`), assessmentDetailResponse],
   [new RegExp(`^GET /api/v1/risk/briefs/${UUID}$`), briefResponse],
   [new RegExp(`^GET /api/v1/risk/briefs/${UUID}/decisions$`), decisionHistoryResponse],
+  [new RegExp(`^POST /api/v1/risk/briefs/${UUID}/decision$`), decisionResponse],
   ...ENTITY_TYPES.map(
     (type) => [new RegExp(`^GET /api/v1/entities/${type}\\?`), entityPages[type]] as const,
   ),
 ];
 
+/** A refusal's body is the API's error envelope, whatever the route. */
 function schemaFor(exchange: RecordedExchange): z.ZodType {
+  if (exchange.status >= 400) return errorEnvelope;
   const key = `${exchange.method} ${exchange.path}`;
   const matches = ROUTES.filter(([pattern]) => pattern.test(key));
   if (matches.length !== 1) throw new Error(`${key} matches ${matches.length} routes`);
@@ -98,6 +105,7 @@ interface BriefBody {
 }
 
 const briefs = recordedBriefs().map((exchange) => exchange.body as BriefBody);
+const everyBrief = allRecordedBriefs().map((exchange) => exchange.body as BriefBody);
 
 describe('every recorded exchange', () => {
   const all = EXCHANGE_FILES.flatMap((file) =>
@@ -142,7 +150,7 @@ describe('the recorded briefs', () => {
     },
   );
 
-  it.each(briefs.map((brief) => [brief.payload.customer.id, brief] as const))(
+  it.each(everyBrief.map((brief) => [brief.payload.customer.id, brief] as const))(
     "%s's payload hashes to its payload_hash under canonical_json (a test-only provenance proof)",
     (_customer, brief) => {
       const digest = createHash('sha256')
@@ -152,9 +160,53 @@ describe('the recorded briefs', () => {
     },
   );
 
+  it('live in briefs.json only, as owner ruling 3 requires: no other fixture holds a brief body', () => {
+    const elsewhere = EXCHANGE_FILES.filter((file) => file !== 'briefs.json').flatMap((file) =>
+      loadExchanges(file)
+        .filter((exchange) => new RegExp(`^/api/v1/risk/briefs/${UUID}$`).test(exchange.path))
+        .filter((exchange) => exchange.status === 200)
+        .map((exchange) => `${file}: ${exchange.path}`),
+    );
+    expect(elsewhere).toEqual([]);
+    expect(everyBrief.length).toBeGreaterThan(briefs.length);
+  });
+
   it("CUST-007's narrative is byte-identical to the golden brief", () => {
     const golden = readFileSync(`${REPO_ROOT}${GOLDEN_BRIEF}`, 'utf8');
     expect(briefs[0]?.narrative).toBe(golden);
+  });
+});
+
+describe('the recorded decision flow (§7.5, §7.6)', () => {
+  const flow = decisionFlow();
+  const reasons = flow.flatMap((exchange) => {
+    const error = (exchange.body as { error?: { code: string; details: unknown } }).error;
+    if (error === undefined) return [];
+    const reason = (error.details as { reason?: string } | null)?.reason;
+    return [`${exchange.status} ${error.code}${reason === undefined ? '' : ` ${reason}`}`];
+  });
+
+  it('holds a refusal of every kind the API can answer a decision with, from the real API', () => {
+    expect(reasons).toEqual([
+      '409 DECISION_CONFLICT SUPERSEDES_REQUIRED',
+      '409 PAYLOAD_HASH_CONFLICT REQUEST_HASH_MISMATCH',
+      '409 DECISION_CONFLICT PREDECESSOR_NOT_ON_BRIEF',
+      '422 INVALID_REQUEST',
+      '409 DECISION_CONFLICT PREDECESSOR_NOT_HEAD',
+      '404 BRIEF_NOT_FOUND',
+      '404 BRIEF_NOT_FOUND',
+      '404 ASSESSMENT_NOT_FOUND',
+    ]);
+  });
+
+  it('records an approval, then a rejection that supersedes it, on the first brief', () => {
+    const created = flow.filter((exchange) => exchange.status === 201);
+    const [approval, rejection] = created.map(
+      (exchange) => exchange.body as { id: string; decision: string; supersedes_id: string | null },
+    );
+    expect(approval).toMatchObject({ decision: 'APPROVED', supersedes_id: null });
+    expect(rejection).toMatchObject({ decision: 'REJECTED', supersedes_id: approval?.id });
+    expect(created[0]?.path).toContain((recordedBriefs()[0]?.body as { id: string }).id);
   });
 });
 

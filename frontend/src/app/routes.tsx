@@ -1,8 +1,11 @@
-/** The route table (spec §8.1). F2 adds the inbox, brief and agent pages; F3 the office. */
+/** The route table (spec §8.1): Classic view's pages. F3 adds the office. */
 
 import type { RouteObject } from 'react-router';
 
+import { ClassicAgent } from '@/classic/ClassicAgent';
+import { ClassicBrief } from '@/classic/ClassicBrief';
 import { ClassicHome } from '@/classic/ClassicHome';
+import { ClassicInbox } from '@/classic/ClassicInbox';
 import { ClassicLayout } from '@/classic/ClassicLayout';
 import { NotFound } from '@/classic/NotFound';
 
@@ -19,7 +22,12 @@ export const routes: RouteObject[] = [
       {
         path: '/classic',
         element: <ClassicLayout />,
-        children: [{ index: true, element: <ClassicHome /> }],
+        children: [
+          { index: true, element: <ClassicHome /> },
+          { path: 'inbox', element: <ClassicInbox /> },
+          { path: 'briefs/:briefId', element: <ClassicBrief /> },
+          { path: 'agents/:agentId', element: <ClassicAgent /> },
+        ],
       },
       { path: '*', element: <NotFound /> },
     ],

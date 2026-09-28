@@ -5,7 +5,8 @@
 
 .PHONY: help install migrate migration-status seed ingest-demo test lint format \
         secret-scan verify-layer1 verify-vs01 docker-up docker-down docker-build clean \
-        frontend-install frontend-backend frontend-dev frontend-test frontend-build
+        frontend-install frontend-backend frontend-dev frontend-test frontend-build \
+        frontend-e2e
 
 # Default target: show available commands.
 help:
@@ -28,6 +29,7 @@ help:
 	@echo "  make frontend-dev    Run the frontend dev server, proxying /api to 127.0.0.1:8010"
 	@echo "  make frontend-test   Typecheck, lint and run the frontend's tests with coverage"
 	@echo "  make frontend-build  Build the frontend and report bundle sizes against the budget"
+	@echo "  make frontend-e2e    Run the frontend's end-to-end tests over a fresh <db>_frontend_e2e"
 	@echo "  make docker-up       Start all services with Docker Compose"
 	@echo "  make docker-down     Stop and remove Docker Compose services"
 	@echo "  make docker-build    Rebuild Docker images"
@@ -127,6 +129,11 @@ frontend-test:
 # Build the frontend for production and report bundle sizes against the budget.
 frontend-build:
 	npm --prefix frontend run build
+
+# Build the frontend, then run its Playwright tests against the working-tree API over a fresh
+# <configured database>_frontend_e2e (never the development database; exit 2 without PostgreSQL).
+frontend-e2e:
+	npm --prefix frontend run e2e
 
 # Start all Docker Compose services.
 docker-up:

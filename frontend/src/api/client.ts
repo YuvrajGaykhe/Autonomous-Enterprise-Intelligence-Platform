@@ -44,7 +44,8 @@ export interface ApiResult<T> {
   call: ApiCall;
 }
 
-const errorEnvelope = z.strictObject({
+/** The API's error body (DERIVED from `app/api/errors.py`). */
+export const errorEnvelope = z.strictObject({
   error: z.strictObject({
     code: z.string(),
     message: z.string(),

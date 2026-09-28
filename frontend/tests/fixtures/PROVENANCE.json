@@ -1,6 +1,6 @@
 {
-  "recorded_at": "2026-09-28T01:55:24.923Z",
-  "commit": "21ded97e1776b91d0bd0aef73d6e53dad80d20c6",
+  "recorded_at": "2026-09-28T03:15:54.003Z",
+  "commit": "1cf8e55685ca17a183a00a7365905b9595c99c95",
   "backend_paths": [
     "app",
     "config",
@@ -30,8 +30,8 @@
     ],
     "ingestion.json": [
       "GET /api/v1/ingestion/runs?limit=500&offset=0 200",
-      "GET /api/v1/ingestion/runs/040d5906-134c-4eb1-bad2-eabef784989d 200",
-      "GET /api/v1/ingestion/runs/040d5906-134c-4eb1-bad2-eabef784989d/errors?limit=500&offset=0 200"
+      "GET /api/v1/ingestion/runs/e35438ce-c69e-4b9a-a92b-d61c1f712050 200",
+      "GET /api/v1/ingestion/runs/e35438ce-c69e-4b9a-a92b-d61c1f712050/errors?limit=500&offset=0 200"
     ],
     "entities.json": [
       "GET /api/v1/entities/organizations?limit=500&offset=0 200",
@@ -49,19 +49,42 @@
       "GET /api/v1/risk/assessments?as_of=2026-09-18&limit=500&offset=0 200"
     ],
     "assessment-details.json": [
-      "GET /api/v1/risk/assessments/6ab5dd86-81cd-42b4-9afc-34ef70544e85 200",
-      "GET /api/v1/risk/assessments/82381be6-f781-471b-b1e9-11e24d3ee804 200",
-      "GET /api/v1/risk/assessments/9c4250cd-4481-4869-a9a7-2d594673ae69 200"
-    ],
-    "briefs.json": [
-      "GET /api/v1/risk/briefs/715f1775-fbb1-4c2a-939a-a6f79d69d312 200",
-      "GET /api/v1/risk/briefs/0f01a99c-6011-4570-a340-d4b1e445fd3a 200",
-      "GET /api/v1/risk/briefs/9261d9d8-8399-4d8a-ab47-e5ab0e4f9078 200"
+      "GET /api/v1/risk/assessments/bc48f0b3-606c-4a0e-8f48-d016fb1254da 200",
+      "GET /api/v1/risk/assessments/a4946455-681f-4116-8e89-73160652916f 200",
+      "GET /api/v1/risk/assessments/3f29c780-5894-445d-acbb-214bb42d472e 200"
     ],
     "decisions.json": [
-      "GET /api/v1/risk/briefs/715f1775-fbb1-4c2a-939a-a6f79d69d312/decisions 200",
-      "GET /api/v1/risk/briefs/0f01a99c-6011-4570-a340-d4b1e445fd3a/decisions 200",
-      "GET /api/v1/risk/briefs/9261d9d8-8399-4d8a-ab47-e5ab0e4f9078/decisions 200"
+      "GET /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decisions 200",
+      "GET /api/v1/risk/briefs/25d77cce-33c0-434f-b0ac-78132713be39/decisions 200",
+      "GET /api/v1/risk/briefs/24d3b006-3f21-4570-b5e6-eff7cbc968df/decisions 200"
+    ],
+    "decision-flow.json": [
+      "POST /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision 201",
+      "POST /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision 409",
+      "POST /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision 409",
+      "POST /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision 409",
+      "POST /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision 422",
+      "POST /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision 201",
+      "POST /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision 409",
+      "GET /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decisions 200",
+      "GET /api/v1/risk/briefs/00000000-0000-4000-8000-000000000000 404",
+      "GET /api/v1/risk/briefs/00000000-0000-4000-8000-000000000000/decisions 404",
+      "GET /api/v1/risk/assessments/00000000-0000-4000-8000-000000000000 404"
+    ],
+    "auto-run.json": [
+      "POST /api/v1/risk/assessments 201",
+      "GET /api/v1/risk/assessments/0acdfdb4-7f52-4d83-accb-88736da89ffb 200",
+      "GET /api/v1/risk/assessments?as_of=2026-08-27&limit=500&offset=0 200",
+      "POST /api/v1/risk/assessments 422"
+    ],
+    "briefs.json": [
+      "GET /api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d 200",
+      "GET /api/v1/risk/briefs/25d77cce-33c0-434f-b0ac-78132713be39 200",
+      "GET /api/v1/risk/briefs/24d3b006-3f21-4570-b5e6-eff7cbc968df 200",
+      "GET /api/v1/risk/briefs/a5ddc54f-8c14-4682-9873-89583a6afdcf 200",
+      "GET /api/v1/risk/briefs/34ccbf24-a379-4f73-ba06-0d1e8f06d556 200",
+      "GET /api/v1/risk/briefs/0951d888-68f9-477b-beed-c7c9470bdc05 200",
+      "GET /api/v1/risk/briefs/a8d4f1ad-f8bb-4820-ba6f-5d3d8d1a6357 200"
     ],
     "openapi.json": [
       "GET /openapi.json 200"

@@ -71,7 +71,7 @@
       "status": "healthy",
       "latency_ms": null,
       "error_type": null,
-      "checked_at": "2026-09-28T01:55:24.608929Z"
+      "checked_at": "2026-09-28T03:15:52.882040Z"
     }
   },
   {
@@ -81,9 +81,9 @@
     "body": {
       "source": "odoo_mock",
       "status": "unhealthy",
-      "latency_ms": 52.34379193279892,
+      "latency_ms": 14.190000016242266,
       "error_type": null,
-      "checked_at": "2026-09-28T01:55:24.660940Z"
+      "checked_at": "2026-09-28T03:15:52.895829Z"
     }
   },
   {
@@ -93,9 +93,9 @@
     "body": {
       "source": "rest_mock",
       "status": "unhealthy",
-      "latency_ms": 52.08062496967614,
+      "latency_ms": 13.719083042815328,
       "error_type": null,
-      "checked_at": "2026-09-28T01:55:24.661005Z"
+      "checked_at": "2026-09-28T03:15:52.895877Z"
     }
   }
 ]

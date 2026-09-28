@@ -1,0 +1,231 @@
+[
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision",
+    "request_body": {
+      "actor": "Fixture Recorder",
+      "decision": "APPROVED",
+      "note": "Recorded by the fixture tool.",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "supersedes_id": null
+    },
+    "status": 201,
+    "body": {
+      "id": "923e2913-693d-43ae-84ca-2a107989fba4",
+      "brief_id": "98737bd0-b029-4732-97bd-861dd6e1a68d",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "actor": "Fixture Recorder",
+      "decision": "APPROVED",
+      "note": "Recorded by the fixture tool.",
+      "decided_at": "2026-09-28T03:15:53.031812Z",
+      "supersedes_id": null
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision",
+    "request_body": {
+      "actor": "Fixture Recorder",
+      "decision": "REJECTED",
+      "note": null,
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "supersedes_id": null
+    },
+    "status": 409,
+    "body": {
+      "error": {
+        "code": "DECISION_CONFLICT",
+        "message": "the decision does not extend the brief's decision history",
+        "details": {
+          "reason": "SUPERSEDES_REQUIRED"
+        },
+        "request_id": "6f7af7d7d1e940f78cfb850cd4a8c81b"
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision",
+    "request_body": {
+      "actor": "Fixture Recorder",
+      "decision": "APPROVED",
+      "note": "Recorded by the fixture tool.",
+      "payload_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "supersedes_id": "923e2913-693d-43ae-84ca-2a107989fba4"
+    },
+    "status": 409,
+    "body": {
+      "error": {
+        "code": "PAYLOAD_HASH_CONFLICT",
+        "message": "payload_hash does not match the brief's decision payload",
+        "details": {
+          "reason": "REQUEST_HASH_MISMATCH"
+        },
+        "request_id": "17ea3a3cfb1e4d8d89a6eb1d3d29e3f1"
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision",
+    "request_body": {
+      "actor": "Fixture Recorder",
+      "decision": "APPROVED",
+      "note": "Recorded by the fixture tool.",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "supersedes_id": "00000000-0000-4000-8000-000000000000"
+    },
+    "status": 409,
+    "body": {
+      "error": {
+        "code": "DECISION_CONFLICT",
+        "message": "the decision does not extend the brief's decision history",
+        "details": {
+          "reason": "PREDECESSOR_NOT_ON_BRIEF"
+        },
+        "request_id": "1c9f9d0428d249979204018d2f449cd1"
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision",
+    "request_body": {
+      "actor": "",
+      "decision": "APPROVED",
+      "note": "Recorded by the fixture tool.",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "supersedes_id": "923e2913-693d-43ae-84ca-2a107989fba4"
+    },
+    "status": 422,
+    "body": {
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "request validation failed",
+        "details": [
+          {
+            "loc": [
+              "body",
+              "actor"
+            ],
+            "message": "String should have at least 1 character",
+            "type": "string_too_short"
+          }
+        ],
+        "request_id": "88b5c23813de475ebe6975afc94349f8"
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision",
+    "request_body": {
+      "actor": "Fixture Recorder",
+      "decision": "REJECTED",
+      "note": "Superseded by the fixture tool.",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "supersedes_id": "923e2913-693d-43ae-84ca-2a107989fba4"
+    },
+    "status": 201,
+    "body": {
+      "id": "6b5e4ef2-6946-4ddd-838f-a1d678ee166d",
+      "brief_id": "98737bd0-b029-4732-97bd-861dd6e1a68d",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "actor": "Fixture Recorder",
+      "decision": "REJECTED",
+      "note": "Superseded by the fixture tool.",
+      "decided_at": "2026-09-28T03:15:53.065046Z",
+      "supersedes_id": "923e2913-693d-43ae-84ca-2a107989fba4"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decision",
+    "request_body": {
+      "actor": "Fixture Recorder",
+      "decision": "REJECTED",
+      "note": "Superseded by the fixture tool.",
+      "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+      "supersedes_id": "923e2913-693d-43ae-84ca-2a107989fba4"
+    },
+    "status": 409,
+    "body": {
+      "error": {
+        "code": "DECISION_CONFLICT",
+        "message": "the decision does not extend the brief's decision history",
+        "details": {
+          "reason": "PREDECESSOR_NOT_HEAD"
+        },
+        "request_id": "710496006a314bfb8b02aec6bbe0ecd2"
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decisions",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "923e2913-693d-43ae-84ca-2a107989fba4",
+          "brief_id": "98737bd0-b029-4732-97bd-861dd6e1a68d",
+          "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+          "actor": "Fixture Recorder",
+          "decision": "APPROVED",
+          "note": "Recorded by the fixture tool.",
+          "decided_at": "2026-09-28T03:15:53.031812Z",
+          "supersedes_id": null
+        },
+        {
+          "id": "6b5e4ef2-6946-4ddd-838f-a1d678ee166d",
+          "brief_id": "98737bd0-b029-4732-97bd-861dd6e1a68d",
+          "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946",
+          "actor": "Fixture Recorder",
+          "decision": "REJECTED",
+          "note": "Superseded by the fixture tool.",
+          "decided_at": "2026-09-28T03:15:53.065046Z",
+          "supersedes_id": "923e2913-693d-43ae-84ca-2a107989fba4"
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/00000000-0000-4000-8000-000000000000",
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "BRIEF_NOT_FOUND",
+        "message": "risk brief does not exist",
+        "details": null,
+        "request_id": "271bfce1295345aead38ca2e4f511086"
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/briefs/00000000-0000-4000-8000-000000000000/decisions",
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "BRIEF_NOT_FOUND",
+        "message": "risk brief does not exist",
+        "details": null,
+        "request_id": "34d1e87183674371a4035d424ec3de77"
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/risk/assessments/00000000-0000-4000-8000-000000000000",
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "ASSESSMENT_NOT_FOUND",
+        "message": "risk assessment does not exist",
+        "details": null,
+        "request_id": "c842cf5869c047ba985fb27e3d0725ce"
+      }
+    }
+  }
+]

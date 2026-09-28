@@ -6,9 +6,9 @@ existing FastAPI routes under `/api/v1`, and it changes no backend code.
 
 The authority for this track is `CONTEXT/FRONTEND_SPECIFICATION.md`. This file covers the commands.
 
-> **Status: F1 (foundation).** The API client, the Zod schemas, the recorded fixtures, the
-> isolated-database tooling, the HUD and the Classic shell are in place. Classic view's pages
-> come in F2, the office in F3 and its animation in F4.
+> **Status: F2 (Classic view).** Classic view is complete: the CEO inbox, each brief with its
+> decision panel and decision chain, and one panel per agent, all reading the real API. The HUD
+> runs assessments. The office comes in F3, and its animation in F4.
 
 ## Prerequisites
 
@@ -31,12 +31,26 @@ Run the `make` targets from the repository root, and the `npm` scripts from this
 | `make frontend-dev`     | `npm run dev`                | Vite on `127.0.0.1:5173`, proxying `/api` to `127.0.0.1:8010`                                |
 | `make frontend-test`    | `npm run check`              | `tsc`, ESLint, Prettier, then every Vitest layer with coverage                               |
 | `make frontend-build`   | `npm run build`              | Build for production, then the bundle report                                                 |
-| —                       | `npm run e2e`                | Build, then the Playwright tests over `<database>_frontend_e2e`                              |
+| `make frontend-e2e`     | `npm run e2e`                | Build, then the Playwright tests over `<database>_frontend_e2e`                              |
 | —                       | `npm run record-fixtures`    | Re-record `tests/fixtures/` from the real API                                                |
 | —                       | `npm run generate-api-types` | Regenerate `src/api/generated/openapi.d.ts` from the recorded `openapi.json`                 |
 
 For local development, run `make frontend-backend` in one terminal and `make frontend-dev` in
 another. Then open http://127.0.0.1:5173.
+
+## Classic view
+
+| Address                      | Shows                                                                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/classic`                   | The API's health, and the agents with their roles                                                                                               |
+| `/classic/inbox`             | The CEO inbox: one snapshot, one row per brief, executive-worthy first                                                                          |
+| `/classic/briefs/<brief-id>` | Every section of one brief, the decision panel and the decision chain                                                                           |
+| `/classic/agents/<agent-id>` | One agent's real output: a connector's source name, or `memory`, `linker`, `signals`, `sales`, `support`, `reconciler`, `brief-writer` or `ceo` |
+
+Every page keeps `as_of` in its address (`as_of=2026-09-18` or `as_of=auto`). When a date has
+more than one snapshot, `snapshot=<first 12 characters of the fingerprint>` chooses one. Every
+panel has **Show the API call**, which lists the route, status, duration and `X-Request-ID` of each
+request behind it.
 
 ## Isolated databases
 
@@ -67,13 +81,16 @@ These guarantees hold:
 | Contract   | `tests/contract/`  | Every fixture parses strictly. The briefs carry the specification's payload hashes and fingerprint. CUST-007's narrative equals `tests/golden/vs01_cust007_brief.txt` byte for byte. The generated types are current, and every Zod type is assignable to its OpenAPI type |
 | Guards     | `tests/guards/`    | Covers no fake data, no score, notices, the Appendix A copy, and the secret-scanner naming rule                                                                                                                                                                            |
 | Tooling    | `tests/tools/`     | Covers the isolation guard, the settings precedence, and exit status 2 without PostgreSQL                                                                                                                                                                                  |
-| End-to-end | `tests/e2e/`       | Runs against the real API over the isolated database, plus axe                                                                                                                                                                                                             |
+| End-to-end | `tests/e2e/`       | Runs against the real API over the isolated database: the inbox, a brief, approve, reject with supersede, both 409 families, unknown outcomes, Auto and an API that is down. Axe runs on every Classic page                                                                |
+| Visual     | `tests/e2e/`       | Screenshots of Classic pages on the clean database, compared within 1% of pixels. After a Chrome update, review the difference, then re-record the baselines with `npx playwright test --update-snapshots`                                                                 |
 
 ## Rules worth knowing
 
 - **Fixtures.** They come only from the real API, via `npm run record-fixtures`, and are never edited
   by hand. `PROVENANCE.json` records where they came from. Nothing under `src/` may import from
-  `tests/` or `tools/`.
+  `tests/` or `tools/`. Every recorded brief lives in `briefs.json`, the one fixture file the
+  repository secret scanner's allow-list names. `decision-flow.json` is recorded after writes, so
+  MSW serves it only to tests that ask for it.
 - **Naming.** No name the frontend chooses may contain `password`, `secret`, `token`, `api_key` or
   their variants. The repository secret scanner reads every tracked file. Design variables are
   called **theme variables**. The only exemption is a key the backend itself defines, listed in
