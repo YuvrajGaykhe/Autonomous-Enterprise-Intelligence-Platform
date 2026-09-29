@@ -1266,6 +1266,193 @@ needed. One R-F-3 stop arose and was resolved inside ruling 3 of F1:
 
 **Next:** F3, which starts only on the owner's instruction.
 
+### F3 — The office: CLOSED 2026-09-29
+
+**What F3 produced.**
+- **The office page (`src/office/`, in the main chunk).**
+  - `/`, `/?agent=<agent-id>`, `/?inbox=1` and `/brief/<brief-id>` sit under one parent route, so
+    the 3D world is created once and survives moving between them.
+  - The page probes for WebGL 2 before it loads the world. It holds the staff directory (a sidebar),
+    the view controls, and the panels: an agent's panel and the CEO inbox as right-hand drawers, a
+    brief as a large overlay. Each panel is a modal dialog that traps focus and, on close, returns
+    it to its opener, or to the office after a deep link.
+  - A visually hidden text twin states what the canvas draws beyond the agents: SIGNALS_AGENT's
+    board and the CEO's corkboard.
+- **The office's model (`useOfficeModel`).** Each agent's state comes from the requests behind its
+  own panel, which TanStack Query then shares with the panel:
+  - a connector: its source's health check (`unhealthy` is ERROR);
+  - MEMORY: `GET /health`;
+  - LINKER_AGENT, RECONCILER_AGENT and BRIEF_WRITER: the selected brief;
+  - SIGNALS_AGENT, SALES_AGENT and SUPPORT_AGENT: the selected brief's assessment;
+  - the CEO desk: WAITING while the shown snapshot holds a PENDING brief.
+
+  A loading request shows the "…" bubble and a failed one ERROR, with the message and code in the
+  staff directory. **No agent is ever WORKING in F3**: no request is tracked as a stage until F4's
+  Director (D-F-1).
+- **The world (`src/world/`, the lazy chunk).**
+  - Rooms, walls, furniture and agents are built in code from primitive parts, and each shape and
+    finish is drawn as one instanced mesh. Materials are toon with a 3-step gradient; one warm key
+    light casts the shadows.
+  - The orthographic camera (§9.8) and three's `RenderPixelatedPass`, then its `OutputPass`. Smooth
+    bypasses both.
+  - SIGNALS_AGENT's board is a canvas texture turned to face the camera. It draws the selected
+    customer's S1–S15 and band from `GET /risk/assessments/{id}`, clipping a long value on the board
+    only.
+  - The CEO's tray holds one sheet per inbox row (up to 8), and the corkboard one note per decision
+    on the selected brief (up to 6), stamped by the decision (§8.6).
+  - Name tags with their bulb glyphs, bubbles and room signs are DOM over the canvas. The world
+    projects their anchors each frame.
+  - Click targets around every agent, the CEO's desk and the board. A white floor ring marks the open
+    panel's agent, an amber one the evidence highlight (§8.4).
+  - `?perf=1` shows the frame time and draw calls of the last 30 seconds.
+- **Domain (`src/domain/`).** New pure modules, all at 100%:
+  - `views.ts`: the office and Classic addresses and their twins, the remembered view, `pixel`,
+    `still` and `perf`;
+  - `floorPlan.ts`: rooms, walls and doors, seats, furniture and signs;
+  - `officeCamera.ts`: the yaw, zoom stops and pixel sizes, fitting, snapping and panning;
+  - `agentLook.ts`: states, bulbs, glyphs and glow, and readiness into state;
+  - `monitor.ts`: the board; `seed.ts`: the seeds of §9.7; `perf.ts`: the record's statistics;
+  - `roster.ts` gains `evidenceDesk`.
+- **HUD.** **Office | Classic**, and in the office **Pixel | Smooth**. Each choice is remembered
+  (`aiceohq.view`, `aiceohq.pixel`, §11). Panel links, the product name and Run assessment's inbox
+  now stay in the view the reader is in.
+- **Classic view** shows the WebGL notice (Appendix A) after a fallback.
+- **Tooling.** `npm run perf` (`tools/perf-record.ts`) measures the record below. The bundle report
+  now checks the world chunk and the world assets too.
+- **Tests.** Three unit files (`views`, `office`, `world`), two component files (`office`,
+  `labels`) and `tests/e2e/office.spec.ts`, with three office baselines. The smoke test now opens
+  the office at `/`. The six Classic baselines were re-recorded, because the HUD gained the view
+  switch.
+- `frontend/README.md` and `THIRD_PARTY_NOTICES.md` describe the office. No file outside
+  `frontend/` and this record changed.
+
+**Owner rulings.** None were needed while F3 was built. On 2026-09-29, after checking the running
+site, the owner approved staging and committing F3. The owner also directed how the agents move in
+F4. F4's record carries that ruling.
+
+**Choices made in F3 (PROPOSED; each stands unless replaced).**
+- **Procedural furniture, not CC0 glTF files (§9.8).** §9.8 names Kenney or KayKit `.glb` models.
+  Downloading them is an outward action that needs its own approval, and the world did not need
+  them. The world therefore ships no model or texture file: `public/models/` does not exist, the
+  world assets are 0 MB, and the notices list none. Swapping in a CC0 pack later is local to
+  `src/world/kit/furniture.ts`, after that approval.
+- **Labels without drei's `<Html>`.** drei renders each label in a React root of its own. Under
+  React 19, unmounting those roots logged "Attempted to synchronously unmount a root while React
+  was already rendering". The labels are now plain DOM in the page's tree, placed by one projection
+  pass each frame. `@react-three/drei` and `@react-three/postprocessing` stay installed but are not
+  imported; whether F4 needs them is F4's decision.
+- **Rendering numbers.**
+  - Zoom stops 1, 1.5 and 2.25, with pixel sizes of 3, 4 and 5 CSS pixels (times the device pixel
+    ratio).
+  - The camera target snaps to whole cells in the camera's plane.
+  - PCF shadows, updated once per frame before the beauty render rather than again for the pass's
+    normal render. No tone mapping, so the palette stays flat.
+- **Walls.** The two outer walls on the camera's far side stand 2.4 tall, with windows. Every other
+  wall is a 0.9 partition, so the floor stays in view at every yaw. Locked rooms have closed doors:
+  striped barriers and a padlock.
+- **Layout and input.**
+  - The staff directory is a sidebar, not an overlay, so it never hides a room.
+  - Panels are modal (§10). The HUD is unreachable while one is open, so closing it comes first.
+  - The keys (Q and E, plus and minus, the arrows, 0) work anywhere on the office page except in a
+    field or an open panel.
+- **The fallback** also covers a world that throws, for example a chunk that fails to load. It keeps
+  the reader in Classic view for the session.
+- **The evidence highlight** lasts 10 seconds, as a pulsing amber ring, never the working glow.
+- **Test infrastructure.**
+  - Playwright runs the office first and then Classic, as two projects. The office writes nothing,
+    and its screenshots need the database before Classic's scenario records decisions. Baselines
+    keep their names.
+  - Component tests get a 20-second test timeout and a 5-second `findBy`/`waitFor` limit. At F3's
+    baseline, with the machine at a load average of 21, F2's own suite showed 10 timeouts under
+    `npm run check`, all passing on the rerun. The change is to timing only.
+  - The React Compiler's `immutability` and `refs` lint rules are off for `src/world/**` only.
+    three.js objects are mutable by design, and React Three Fiber changes them in effects and frame
+    callbacks.
+
+**The baseline (§13), measured read-only before any file was created.**
+- `HEAD` and `origin/main` are both `39c2fe3` (the F2 commit), 0 ahead and 0 behind. There are 505
+  tracked files.
+- The golden sha begins `87d1398661b0c300`, the one migration head is `070e4968a497`, and the
+  strategy document's diff sha begins `94e4e5b2f65616f6`.
+- **Frontend:** `vitest run` passed all 381. The first `npm run check`, at a load average of 21,
+  showed 10 timeouts in F2's own tests. They all passed on the rerun (see the test-infrastructure
+  choice above).
+- **The development database** (read-only GETs) had 52 customers and 1 assessment, at `as_of
+  2026-09-27`.
+
+**The gate (§13).**
+1. **Frontend.**
+   - `tsc` reports 0 on both projects, ESLint 0 errors and 0 warnings, and Prettier is clean.
+   - **Vitest:** 472 passed, 0 failed, 0 skipped. By layer: unit 196, component 153, contract 67,
+     guards 34, tools 22.
+   - **Coverage:** `src/api/**` and `src/domain/**` are at 100% of lines, branches, functions and
+     statements (698 statements, 346 branches). All of `src/` outside `src/world/` is 98.0% of
+     statements. `src/world/` is 43.1%: its part kit is 96–100% under unit tests, and its React
+     Three Fiber components run only in the end-to-end tests.
+   - **Playwright:** 31 passed, 0 skipped, on two consecutive runs over a recreated database. The
+     11 new office tests cover:
+     - the office at `?still=1` in pixel art and in smooth toon, and turned and zoomed in, each
+       within 5% of its baseline, with a canvas of more than 40 colours;
+     - Classic view never requesting a script beyond `index.html`'s, and the office requesting
+       exactly the `Office` chunk;
+     - each agent's state in its tag and in the directory, and the locked rooms' signs;
+     - SIGNALS_AGENT's board against CUST-007's assessment, read from the API directly;
+     - a panel opened from the directory with Enter, focus trapped and returned;
+     - panels opened by a name tag, by a click on MEMORY's body and on the CEO's desk;
+     - the inbox, a brief over the office, and the evidence highlight;
+     - the view switch, the remembered Classic choice, and the way back;
+     - a device without WebGL, sent to the Classic twin with the notice and no world chunk;
+     - a WebGL context lost once and survived, then lost again, falling back.
+   - **axe:** 0 serious and 0 critical on the office with the MEMORY drawer, with the CEO inbox, and
+     with CUST-007's brief, as well as on every Classic page as before.
+   - **Bundle:** initial JavaScript is 189.6 KB gzip of the 250 KB budget (F2: 181.0). The world
+     chunk is 247.2 KB gzip of 900 KB, and the world assets are 0 of 5 MB. CSS is 19.1 KB gzip.
+   - **Performance** (`npm run perf`: the static scene, `?perf=1`, 1920×1080 at device pixel ratio
+     1, 30 seconds per mode after a 3-second warm-up). The reference machine is the owner's
+     MacBook Air (15-inch, M2, 2023; `Mac14,15`, 8 GB), running the installed Chrome 153 headless
+     on ANGLE Metal (Apple M2).
+
+     | Mode | Frames | Median | p95 | Draw calls | Triangles |
+     |---|---|---|---|---|---|
+     | Pixel | 1799 | 16.70 ms | 17.60 ms | 62 | 101,814 |
+     | Smooth | 1800 | 16.70 ms | 17.40 ms | 37 | 65,478 |
+
+     Both are within §9.10 (median ≤ 16.7 ms, p95 ≤ 25 ms, ≤ 150 draw calls). The median is the
+     display's 60 Hz frame. F4 measures again with every agent moving.
+2. **The backend.** `git diff --stat 733b19b -- app config migrations alembic.ini data tests scripts
+   Dockerfile docker-compose.yml docker .env.example pyproject.toml` lists only
+   `scripts/secret_scan.py | 2 ++` (F1, ruling 3). F3 changes nothing under a frozen path, and
+   nothing outside `frontend/` but this record. The full backend suite is not run in F3 (§13 runs
+   it at F1, F5 and F6).
+3. **The four repository-scanning backend test files** pass on the staged tree: 256 passed and
+   0 failed, with the 2 known warnings. They ran in the repository `.venv`, with the caches and the
+   coverage file kept out of the repository.
+4. **The secret scan.** `scan_text` over every new or changed path reports 0 findings: 70 text
+   files (this record included), 9 PNG baselines skipped as binary, and one deleted file
+   (`src/app/HomeRedirect.tsx`, whose job the office page took over).
+   - **Staged `make secret-scan`:** 541 files scanned, 12 binary files skipped (553 tracked, which
+     is 505 + 49 new − 1 deleted) and 0 findings.
+5. **Anchors.** The golden sha, the one migration head `070e4968a497` and the strategy diff sha all
+   equal §3.
+6. **`git status`** shows only `frontend/`, this document and the unstaged strategy document.
+
+**AC-F-17.**
+- The development database's `GET /risk/assessments` and `GET /entities/customers` responses are
+  byte-identical before and after F3's gate (52 customers; 1 assessment, at `as_of 2026-09-27`).
+- F3 used `<database>_frontend_e2e`, for the end-to-end tests and the performance record, and
+  `<database>_frontend`, for a manual check through `npm run backend`. It used nothing else.
+
+**Known in F3, carried forward.**
+- React Three Fiber logs three's own deprecation warning for `THREE.Clock` once per load. It comes
+  from the library, not from this code.
+- The office's baselines follow Chrome and the GPU, like Classic's (F1, ruling 2).
+
+**Not run in F3.**
+- The full backend suite (F5, F6).
+- Anything that moves: walks, episodes, replays, the decision stamp and sound (F4).
+
+**Next:** F4, which starts only on the owner's instruction.
+
 ---
 
 ## Appendix A: fixed copy

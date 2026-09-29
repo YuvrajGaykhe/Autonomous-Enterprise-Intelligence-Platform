@@ -39,10 +39,11 @@ test('the HUD shows GET /api/v1/health from the isolated API', async ({ page, re
   ).toBeVisible();
 });
 
-test('/ opens Classic view with the default as_of', async ({ page }) => {
+test('/ opens the office with the default as_of', async ({ page }) => {
   await page.goto(`${baseUrl()}/`);
 
-  await expect(page).toHaveURL(/\/classic$/);
+  await expect(page).toHaveURL(`${baseUrl()}/`);
+  await expect(page.getByTestId('office')).toHaveAttribute('data-world', 'ready');
   await expect(page.getByLabel('as_of date')).toHaveValue('2026-09-18');
 });
 

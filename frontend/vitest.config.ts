@@ -27,6 +27,8 @@ export default mergeConfig(
             include: ['tests/component/**/*.test.tsx'],
             environment: 'jsdom',
             setupFiles: ['tests/setup/component.ts'],
+            // Whole pages render here; on a loaded machine one can take seconds (F3 record).
+            testTimeout: 20_000,
           },
         },
         {

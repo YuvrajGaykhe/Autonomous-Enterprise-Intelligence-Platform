@@ -1,6 +1,6 @@
 /**
- * What this browser session remembers between pages (spec §7.2, §7.6, §9.2). Nothing here is
- * persisted: a reload starts clean.
+ * What this browser session remembers between pages (spec §7.2, §7.6, §8.4, §9.2, §9.11).
+ * Nothing here is persisted: a reload starts clean.
  */
 
 import { create } from 'zustand';
@@ -24,15 +24,31 @@ export interface SessionState {
   selectedBriefId: string | null;
   /** Briefs whose stored payload no longer matches its hash, with the refusal's request id. */
   refusedBriefs: Readonly<Record<string, string | null>>;
+  /** Set once the 3D office could not start, or lost its WebGL context twice (§9.11). */
+  webglFailed: boolean;
+  /** How many times the office's WebGL context was lost in this session. */
+  contextLosses: number;
+  /** The agent whose desk the office highlights after an evidence link opened (§8.4). */
+  highlightedAgentId: string | null;
   setLastRun: (run: LastRun) => void;
   selectBrief: (briefId: string) => void;
   refuseBrief: (briefId: string, requestId: string | null) => void;
+  failWebgl: () => void;
+  /** Count a lost context; the second one in a session fails the office. */
+  loseContext: () => void;
+  highlight: (agentId: string | null) => void;
 }
+
+/** A lost context is survivable once; the second loss in a session falls back (§9.11). */
+export const CONTEXT_LOSSES_TOLERATED = 1;
 
 export const initialSession = {
   lastRun: null,
   selectedBriefId: null,
   refusedBriefs: {},
+  webglFailed: false,
+  contextLosses: 0,
+  highlightedAgentId: null,
 } satisfies Partial<SessionState>;
 
 export const useSession = create<SessionState>()((set) => ({
@@ -41,4 +57,11 @@ export const useSession = create<SessionState>()((set) => ({
   selectBrief: (briefId) => set({ selectedBriefId: briefId }),
   refuseBrief: (briefId, requestId) =>
     set((state) => ({ refusedBriefs: { ...state.refusedBriefs, [briefId]: requestId } })),
+  failWebgl: () => set({ webglFailed: true }),
+  loseContext: () =>
+    set((state) => {
+      const contextLosses = state.contextLosses + 1;
+      return { contextLosses, webglFailed: contextLosses > CONTEXT_LOSSES_TOLERATED };
+    }),
+  highlight: (agentId) => set({ highlightedAgentId: agentId }),
 }));

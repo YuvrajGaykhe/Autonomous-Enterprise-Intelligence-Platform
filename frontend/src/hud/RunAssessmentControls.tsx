@@ -1,15 +1,16 @@
 /** The HUD's Run assessment button and the line that reports its outcome (spec §8.2, §7.6). */
 
 import { Play, RotateCw, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 
+import { useViewLinks } from '@/app/links';
 import { COPY } from '@/copy';
 import { failureRequestId, OUTCOME_MESSAGES } from '@/domain/outcomes';
 import type { AsOf } from '@/domain/asOf';
 import { ErrorState } from '@/states/states';
 import { Button } from '@/ui/button';
 
-import { CLASSIC_INBOX, isBusy, useRunAssessment, type RunPhase } from './runAssessment';
+import { isBusy, useRunAssessment, type RunPhase } from './runAssessment';
 import { useAsOf } from './useAsOf';
 
 export function RunAssessmentButton({ label = 'Run assessment' }: { label?: string }) {
@@ -43,7 +44,7 @@ function RequestId({ id }: { id: string | null }) {
 
 function Message({ phase }: { phase: Exclude<RunPhase, { kind: 'idle' }> }) {
   const { checkAgain } = useRunAssessment();
-  const { search } = useLocation();
+  const links = useViewLinks();
   switch (phase.kind) {
     case 'running':
       return <p>Assessing every customer at {dateOf(phase.asOf)}…</p>;
@@ -99,7 +100,7 @@ function Message({ phase }: { phase: Exclude<RunPhase, { kind: 'idle' }> }) {
       return phase.landed ? (
         <p>
           The assessment was recorded.{' '}
-          <Link className="underline" to={{ pathname: CLASSIC_INBOX, search }}>
+          <Link className="underline" to={links.inbox()}>
             Show the inbox
           </Link>
         </p>

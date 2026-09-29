@@ -41,6 +41,16 @@ export default tseslint.config(
     },
   },
   {
+    // The 3D world drives three.js objects, which are mutable by design: React Three Fiber has
+    // effects and frame callbacks change cameras, textures and meshes in place. The compiler's
+    // immutability and ref rules cannot tell those objects from React state.
+    files: ['src/world/**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/immutability': 'off',
+      'react-hooks/refs': 'off',
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': 'error',

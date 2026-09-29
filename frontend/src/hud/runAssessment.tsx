@@ -16,6 +16,7 @@ import { invalidateAfterAssessment } from '@/api/queries';
 import { countAssessments, fetchAssessment, runAssessment } from '@/api/risk';
 import { requestAsOf, type AsOf } from '@/domain/asOf';
 import { classifyWriteFailure, type WriteFailure } from '@/domain/outcomes';
+import { addressOf, viewOf } from '@/domain/views';
 import { useSession } from '@/state/session';
 
 export type RunPhase =
@@ -52,21 +53,19 @@ export function useRunAssessment(): RunContext {
   return context;
 }
 
-export const CLASSIC_INBOX = '/classic/inbox';
-
 export function RunAssessmentProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<RunPhase>({ kind: 'idle' });
   const client = useQueryClient();
   const navigate = useNavigate();
-  const { search } = useLocation();
+  const { pathname, search } = useLocation();
   const setLastRun = useSession((state) => state.setLastRun);
 
+  /** The run's snapshot, in the inbox of the view the reader is in (§7.2). */
   const showInbox = useCallback(() => {
     const params = new URLSearchParams(search);
     params.delete('snapshot');
-    const query = params.toString();
-    void navigate({ pathname: CLASSIC_INBOX, search: query === '' ? '' : `?${query}` });
-  }, [navigate, search]);
+    void navigate(addressOf(viewOf(pathname) ?? 'classic', { kind: 'inbox' }, params.toString()));
+  }, [navigate, pathname, search]);
 
   const recount = useCallback(
     async (asOf: AsOf, before: number) => {

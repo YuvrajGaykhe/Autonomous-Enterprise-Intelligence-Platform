@@ -4,8 +4,9 @@
  */
 
 import { useId } from 'react';
-import { Link, useLocation, type To } from 'react-router';
+import { Link } from 'react-router';
 
+import { useViewLinks } from '@/app/links';
 import { COPY } from '@/copy';
 import { useInbox, useSnapshotParam, type InboxState } from '@/data/useInbox';
 import { bandCounts, describeBandCounts } from '@/domain/bands';
@@ -83,12 +84,13 @@ function SnapshotHeader({
   );
 }
 
-function Row({ row, hrefFor }: { row: InboxRow; hrefFor: (briefId: string) => To }) {
+function Row({ row }: { row: InboxRow }) {
   const selectBrief = useSession((state) => state.selectBrief);
+  const links = useViewLinks();
   return (
     <li>
       <Link
-        to={hrefFor(row.briefId)}
+        to={links.brief(row.briefId)}
         onClick={() => selectBrief(row.briefId)}
         className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border bg-card px-3 py-2 hover:bg-muted"
         data-testid="inbox-row"
@@ -121,7 +123,7 @@ function Row({ row, hrefFor }: { row: InboxRow; hrefFor: (briefId: string) => To
   );
 }
 
-function InboxBody({ state, hrefFor }: { state: InboxState; hrefFor: (briefId: string) => To }) {
+function InboxBody({ state }: { state: InboxState }) {
   switch (state.status) {
     case 'auto-unresolved':
       return <EmptyState message={AUTO_UNRESOLVED} />;
@@ -151,7 +153,7 @@ function InboxBody({ state, hrefFor }: { state: InboxState; hrefFor: (briefId: s
               </p>
               <ol aria-label="Briefs, executive-worthy first" className="space-y-2">
                 {state.rows.map((row) => (
-                  <Row key={row.briefId} row={row} hrefFor={hrefFor} />
+                  <Row key={row.briefId} row={row} />
                 ))}
               </ol>
             </>
@@ -162,21 +164,18 @@ function InboxBody({ state, hrefFor }: { state: InboxState; hrefFor: (briefId: s
   }
 }
 
-/** The inbox at the HUD's `as_of`, with its requests. */
-export function CeoInbox({ hrefFor }: { hrefFor: (briefId: string) => To }) {
+/**
+ * The inbox at the HUD's `as_of`, with its requests. Its links keep the page's query, so `as_of`
+ * and the snapshot travel with them, and stay in the view the reader is in.
+ */
+export function CeoInbox() {
   const [asOf] = useAsOf();
   const [snapshotParam] = useSnapshotParam();
   const state = useInbox(asOf, snapshotParam);
   return (
     <div className="space-y-4">
-      <InboxBody state={state} hrefFor={hrefFor} />
+      <InboxBody state={state} />
       <ApiXray calls={state.calls} />
     </div>
   );
-}
-
-/** Links to a brief keep the page's query, so `as_of` and the snapshot travel with them. */
-export function useBriefHref(pathname: (briefId: string) => string): (briefId: string) => To {
-  const { search } = useLocation();
-  return (briefId: string) => ({ pathname: pathname(briefId), search });
 }

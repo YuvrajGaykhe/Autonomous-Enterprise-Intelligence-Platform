@@ -108,11 +108,13 @@ describe('the as_of selector (D-F-14)', () => {
 });
 
 describe('the routes', () => {
-  it('opens Classic view at / until the office exists, keeping the query', async () => {
+  it('opens Classic view at /, with the WebGL notice, when the office cannot start', async () => {
+    // jsdom has no WebGL, so the office falls back (§9.11); office.test.tsx covers the office.
     const { router } = renderRoute('/?as_of=auto');
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/classic'));
     expect(router.state.location.search).toBe('?as_of=auto');
+    expect(await screen.findByText(COPY.webglFallback)).toBeInTheDocument();
   });
 
   it('shows the system status on the Classic overview, with its request id', async () => {

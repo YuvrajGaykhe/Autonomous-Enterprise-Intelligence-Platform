@@ -12,7 +12,15 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'tests/e2e',
-  testMatch: '**/*.spec.ts',
+  // The office runs first: it writes nothing, and its screenshots need the database as the global
+  // setup left it, before Classic's scenario records decisions (F3).
+  projects: [
+    { name: 'office', testMatch: 'office.spec.ts' },
+    { name: 'classic', testMatch: ['classic.spec.ts', 'smoke.spec.ts'], dependencies: ['office'] },
+  ],
+  // Baselines are named by test file and platform only, as they were before there were projects.
+  snapshotPathTemplate:
+    '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-snapshotSuffix}{ext}',
   globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: false,
   workers: 1,
@@ -21,7 +29,8 @@ export default defineConfig({
   timeout: 30_000,
   reporter: [['list']],
   outputDir: 'test-results',
-  // Classic routes are compared pixel-exactly within 1% (spec §12.1).
+  // Classic routes are compared pixel-exactly within 1%; the office, whose WebGL output can vary,
+  // within 5% (spec §12.1).
   expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled' } },
   use: {
     channel: 'chrome',

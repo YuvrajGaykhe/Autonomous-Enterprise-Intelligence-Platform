@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 
 import { ApiError, type ApiCall } from '@/api/client';
 import {
@@ -34,13 +34,14 @@ import {
 import type { Brief } from '@/api/risk';
 import { ENTITY_TYPES } from '@/api/schemas/entities';
 import type { IngestionRunResponse } from '@/api/schemas/operations';
+import { useViewLinks } from '@/app/links';
 import { COPY } from '@/copy';
 import { buildBriefView, derivationViews, signalRows } from '@/domain/briefView';
 import { formatTimestamp } from '@/domain/dates';
 import { shortFingerprint } from '@/domain/inbox';
 import type { Agent, AgentKind } from '@/domain/roster';
 import { useSelectedRow, type SelectedRowState } from '@/data/useSelectedRow';
-import { AUTO_UNRESOLVED, CeoInbox, useBriefHref } from '@/panels/CeoInbox';
+import { AUTO_UNRESOLVED, CeoInbox } from '@/panels/CeoInbox';
 import { EmptyState, ErrorState, LoadingState } from '@/states/states';
 import { Button } from '@/ui/button';
 
@@ -71,11 +72,11 @@ const AVATARS: Record<AgentKind, LucideIcon> = {
 
 /** A 404 on a panel's request (§7.6): the not-found state, with a way back to the inbox. */
 function NotFoundHere() {
-  const { search } = useLocation();
+  const links = useViewLinks();
   return (
     <div className="space-y-2">
       <EmptyState message="The API has no such record any more." />
-      <Link className="text-sm underline" to={{ pathname: '/classic/inbox', search }}>
+      <Link className="text-sm underline" to={links.inbox()}>
         Return to the inbox
       </Link>
     </div>
@@ -404,15 +405,12 @@ function SelectionFallback({ state }: { state: Exclude<SelectedRowState, { statu
 }
 
 function SelectedHeader({ state }: { state: Extract<SelectedRowState, { status: 'ready' }> }) {
-  const { search } = useLocation();
+  const links = useViewLinks();
   const { row } = state;
   return (
     <p className="flex flex-wrap items-center gap-2 text-sm">
       <span className="text-muted-foreground">Showing</span>
-      <Link
-        className="font-medium underline"
-        to={{ pathname: `/classic/briefs/${row.briefId}`, search }}
-      >
+      <Link className="font-medium underline" to={links.brief(row.briefId)}>
         {row.customerName ?? row.customerId ?? 'the selected brief'}
       </Link>
       <span className="font-mono text-xs text-muted-foreground">{row.customerId}</span>
@@ -678,8 +676,7 @@ function useAssessmentBody(kind: 'signals' | 'sales' | 'support'): Body {
 }
 
 function useCeoBody(): Body {
-  const hrefFor = useBriefHref((briefId) => `/classic/briefs/${briefId}`);
-  return { content: <CeoInbox hrefFor={hrefFor} />, calls: [] };
+  return { content: <CeoInbox />, calls: [] };
 }
 
 /** Each agent's body, as a component so each keeps its own hooks. */

@@ -1,4 +1,7 @@
-/** The route table (spec §8.1): Classic view's pages. F3 adds the office. */
+/**
+ * The route table (spec §8.1): the office at `/` and `/brief/<id>`, under one parent so the 3D
+ * world stays mounted between them, and Classic view's pages.
+ */
 
 import type { RouteObject } from 'react-router';
 
@@ -9,8 +12,9 @@ import { ClassicInbox } from '@/classic/ClassicInbox';
 import { ClassicLayout } from '@/classic/ClassicLayout';
 import { NotFound } from '@/classic/NotFound';
 
+import { OfficePage } from '@/office/OfficePage';
+
 import { AppShell } from './AppShell';
-import { HomeRedirect } from './HomeRedirect';
 import { RouteError } from './RouteError';
 
 export const routes: RouteObject[] = [
@@ -18,7 +22,14 @@ export const routes: RouteObject[] = [
     element: <AppShell />,
     errorElement: <RouteError />,
     children: [
-      { path: '/', element: <HomeRedirect /> },
+      {
+        path: '/',
+        element: <OfficePage />,
+        children: [
+          { index: true, element: null },
+          { path: 'brief/:briefId', element: null },
+        ],
+      },
       {
         path: '/classic',
         element: <ClassicLayout />,

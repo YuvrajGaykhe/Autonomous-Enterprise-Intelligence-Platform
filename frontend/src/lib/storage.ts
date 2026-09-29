@@ -5,6 +5,8 @@
 
 export const STORAGE_KEYS = {
   actorName: 'aiceohq.actorName',
+  view: 'aiceohq.view',
+  pixel: 'aiceohq.pixel',
 } as const;
 
 export function readStored(key: string): string | null {

@@ -2,18 +2,24 @@
  * Evidence links (spec §8.4): every evidence item opens what it cites. A record citation or an
  * entity reference opens the Layer 1 record, built from its entity list; a document citation opens
  * the document's citable text with the span marked. The dialogs trap focus and return it (§10).
+ * Over the office, opening a ticket highlights SUPPORT_AGENT's desk and opening a document
+ * highlights LINKER_AGENT's.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router';
 
 import { entitiesQuery } from '@/api/queries';
 import type { Citation, Evidence } from '@/api/schemas/briefPayloadV1';
 import { entityTypeOf, findRecord, recordFields } from '@/domain/records';
+import { evidenceDesk } from '@/domain/roster';
+import { viewOf } from '@/domain/views';
 import { citableText, highlight, spanFits } from '@/domain/spans';
 import { cn } from '@/lib/utils';
+import { useSession } from '@/state/session';
 import { EmptyState, ErrorState, LoadingState } from '@/states/states';
 import { Button } from '@/ui/button';
 
@@ -21,18 +27,28 @@ const linkButton =
   'rounded-sm font-mono text-xs text-primary underline decoration-dotted underline-offset-2 hover:decoration-solid';
 
 function EvidenceDialog({
+  entity,
   label,
   title,
   description,
   children,
 }: {
+  /** The entity type the dialog opens, which picks the desk to highlight. */
+  entity: string;
   label: ReactNode;
   title: string;
   description: string;
   children: ReactNode;
 }) {
+  const { pathname } = useLocation();
+  const highlight = useSession((state) => state.highlight);
+  const desk = evidenceDesk(entity);
   return (
-    <Dialog.Root>
+    <Dialog.Root
+      onOpenChange={(open) => {
+        if (open && desk !== null && viewOf(pathname) === 'office') highlight(desk);
+      }}
+    >
       <Dialog.Trigger className={linkButton}>{label}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40" />
@@ -122,6 +138,7 @@ export function RecordLink({
 }) {
   return (
     <EvidenceDialog
+      entity={entity}
       label={children ?? id}
       title={`${entity} ${id}`}
       description={
@@ -187,6 +204,7 @@ export function DocumentSpanLink({
 }) {
   return (
     <EvidenceDialog
+      entity="documents"
       label={`${documentId} [${start}, ${end})`}
       title={`${documentId} [${start}, ${end})`}
       description="The document's citable text (title, a line break, then the body) with the cited span marked."

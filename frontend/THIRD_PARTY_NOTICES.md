@@ -52,5 +52,11 @@ is licensed under the SIL Open Font License 1.1, whose text ships in the package
 
 ## Vendored code (`src/vendor/`) and models (`public/models/`)
 
-There are none yet. F3 and F4 add them here: the CC0 furniture models and the walk-grid code adapted
-from Claw3D.
+There are none yet.
+
+- **Models.** The office's rooms, furniture and agents are built in code from primitive shapes
+  (`src/world/kit/`), so no model or texture file is shipped and no CC0 pack is copied.
+- **Rendering.** The pixel pass, the effect composer and the output pass are imported from the
+  `three` package (`three/examples/jsm/postprocessing/`), not copied, so they keep their licence in
+  `node_modules`.
+- **F4** adds the walk-grid code adapted from Claw3D here, with its notice.

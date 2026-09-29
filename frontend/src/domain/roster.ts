@@ -169,3 +169,13 @@ export function rosterFor(sources: readonly { source: string }[]): Agent[] {
 export function agentById(roster: readonly Agent[], id: string): Agent | null {
   return roster.find((agent) => agent.id === id) ?? null;
 }
+
+/**
+ * The desk an evidence link points at in the office (§8.4): a support ticket at SUPPORT_AGENT's,
+ * a document at LINKER_AGENT's. Other records point at no desk.
+ */
+export function evidenceDesk(entity: string): string | null {
+  if (entity === 'support_tickets') return 'support';
+  if (entity === 'documents') return 'linker';
+  return null;
+}
