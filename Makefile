@@ -6,7 +6,7 @@
 .PHONY: help install migrate migration-status seed ingest-demo test lint format \
         secret-scan verify-layer1 verify-vs01 docker-up docker-down docker-build clean \
         frontend-install frontend-backend frontend-dev frontend-test frontend-build \
-        frontend-e2e
+        frontend-e2e demo-reset
 
 # Default target: show available commands.
 help:
@@ -30,6 +30,7 @@ help:
 	@echo "  make frontend-test   Typecheck, lint and run the frontend's tests with coverage"
 	@echo "  make frontend-build  Build the frontend and report bundle sizes against the budget"
 	@echo "  make frontend-e2e    Run the frontend's end-to-end tests over a fresh <db>_frontend_e2e"
+	@echo "  make demo-reset      Reset the hosted demo database to the clean dataset (asks first)"
 	@echo "  make docker-up       Start all services with Docker Compose"
 	@echo "  make docker-down     Stop and remove Docker Compose services"
 	@echo "  make docker-build    Rebuild Docker images"
@@ -134,6 +135,23 @@ frontend-build:
 # <configured database>_frontend_e2e (never the development database; exit 2 without PostgreSQL).
 frontend-e2e:
 	npm --prefix frontend run e2e
+
+# Reset the hosted demo database (D-F-8): migrate it down and up from this machine, ingest the
+# demo dataset through the hosted API, then assess at 2026-09-18. It asks first and prints no
+# credential. DEMO_DATABASE_URL is the demo database's direct connection string, and DEMO_URL
+# the hosted site (https://<name>.vercel.app). It ignores DATABASE_URL and the POSTGRES_* settings.
+demo-reset:
+	@test -n "$$DEMO_DATABASE_URL" || { echo "[demo-reset] Set DEMO_DATABASE_URL to the demo database's direct connection string."; exit 2; }
+	@test -n "$$DEMO_URL" || { echo "[demo-reset] Set DEMO_URL to the hosted site, for example https://<name>.vercel.app."; exit 2; }
+	@printf '[demo-reset] This erases every row in the demo database behind %s.\nType reset to continue: ' "$$DEMO_URL"; read -r answer; test "$$answer" = reset || { echo "[demo-reset] Not confirmed; nothing changed."; exit 1; }
+	@echo "[demo-reset] Migrating the demo database down and up..."
+	@DATABASE_URL="$$DEMO_DATABASE_URL" .venv/bin/alembic downgrade base
+	@DATABASE_URL="$$DEMO_DATABASE_URL" .venv/bin/alembic upgrade head
+	@echo "[demo-reset] Ingesting the demo dataset through the hosted API..."
+	@curl -fsS --max-time 300 -X POST "$$DEMO_URL/api/v1/ingestion/runs" -H 'Content-Type: application/json' -d '{"source": "csv_demo"}' -o /dev/null -w '[demo-reset] POST /api/v1/ingestion/runs: HTTP %{http_code}\n'
+	@echo "[demo-reset] Assessing at 2026-09-18..."
+	@curl -fsS --max-time 300 -X POST "$$DEMO_URL/api/v1/risk/assessments" -H 'Content-Type: application/json' -d '{"as_of": "2026-09-18", "source_system": "csv_demo"}' -o /dev/null -w '[demo-reset] POST /api/v1/risk/assessments: HTTP %{http_code}\n'
+	@echo "[demo-reset] Done: the demo database holds the clean dataset, assessed at 2026-09-18."
 
 # Start all Docker Compose services.
 docker-up:

@@ -26,17 +26,18 @@ The authority for this track is `CONTEXT/FRONTEND_SPECIFICATION.md`. This file c
 
 Run the `make` targets from the repository root, and the `npm` scripts from this folder.
 
-| Make target             | npm script                   | What it does                                                                                 |
-| ----------------------- | ---------------------------- | -------------------------------------------------------------------------------------------- |
-| `make frontend-install` | `npm ci`                     | Install the dependencies exactly as locked                                                   |
-| `make frontend-backend` | `npm run backend`            | Recreate `<database>_frontend` from clean and serve the working-tree API on `127.0.0.1:8010` |
-| `make frontend-dev`     | `npm run dev`                | Vite on `127.0.0.1:5173`, proxying `/api` to `127.0.0.1:8010`                                |
-| `make frontend-test`    | `npm run check`              | `tsc`, ESLint, Prettier, then every Vitest layer with coverage                               |
-| `make frontend-build`   | `npm run build`              | Build for production, then the bundle report                                                 |
-| `make frontend-e2e`     | `npm run e2e`                | Build, then the Playwright tests over `<database>_frontend_e2e`                              |
-| —                       | `npm run perf`               | Build, then measure the office's frame time and draw calls for 30 s during a replay          |
-| —                       | `npm run record-fixtures`    | Re-record `tests/fixtures/` from the real API                                                |
-| —                       | `npm run generate-api-types` | Regenerate `src/api/generated/openapi.d.ts` from the recorded `openapi.json`                 |
+| Make target             | npm script                   | What it does                                                                                                 |
+| ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `make frontend-install` | `npm ci`                     | Install the dependencies exactly as locked                                                                   |
+| `make frontend-backend` | `npm run backend`            | Recreate `<database>_frontend` from clean and serve the working-tree API on `127.0.0.1:8010`                 |
+| `make frontend-dev`     | `npm run dev`                | Vite on `127.0.0.1:5173`, proxying `/api` to `127.0.0.1:8010`                                                |
+| `make frontend-test`    | `npm run check`              | `tsc`, ESLint, Prettier, then every Vitest layer with coverage                                               |
+| `make frontend-build`   | `npm run build`              | Build for production, then the bundle report                                                                 |
+| `make frontend-e2e`     | `npm run e2e`                | Build, then the Playwright tests over `<database>_frontend_e2e`                                              |
+| —                       | `npm run perf`               | Build, then measure the office's frame time and draw calls for 30 s during a replay                          |
+| —                       | `npm run smoke:hosted`       | The hosted smoke test against `AICEOHQ_HOSTED_URL`: `@clean` checks only read, `@write` records one approval |
+| —                       | `npm run record-fixtures`    | Re-record `tests/fixtures/` from the real API                                                                |
+| —                       | `npm run generate-api-types` | Regenerate `src/api/generated/openapi.d.ts` from the recorded `openapi.json`                                 |
 
 For local development, run `make frontend-backend` in one terminal and `make frontend-dev` in
 another. Then open http://127.0.0.1:5173.

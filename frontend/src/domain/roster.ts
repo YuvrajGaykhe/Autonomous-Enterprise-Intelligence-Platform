@@ -153,6 +153,14 @@ export function connectorAgent(source: string): Agent {
 }
 
 /**
+ * Whether a source is one of the local mock servers, by the backend's own source names
+ * (`odoo_mock`, `rest_mock`). The hosted site cannot reach them (§16), so their panels say so.
+ */
+export function isMockSource(source: string): boolean {
+  return source.endsWith('_mock');
+}
+
+/**
  * The roster: every source's connector in API order, then the fixed agents. A source whose name
  * is a fixed agent's id would be unreachable by URL, so the fixed agent keeps the id.
  */

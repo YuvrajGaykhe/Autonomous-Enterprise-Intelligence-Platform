@@ -54,3 +54,4 @@ CONTEXT
 # Docker files (avoid recursive copy)
 docker-compose.yml
 docker-compose.override.yml
+frontend/node_modules

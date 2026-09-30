@@ -39,8 +39,9 @@ import { COPY } from '@/copy';
 import { buildBriefView, derivationViews, signalRows } from '@/domain/briefView';
 import { formatTimestamp } from '@/domain/dates';
 import { shortFingerprint } from '@/domain/inbox';
-import type { Agent, AgentKind } from '@/domain/roster';
+import { isMockSource, type Agent, type AgentKind } from '@/domain/roster';
 import { useSelectedRow, type SelectedRowState } from '@/data/useSelectedRow';
+import { HOSTED } from '@/lib/hosting';
 import { AUTO_UNRESOLVED, CeoInbox } from '@/panels/CeoInbox';
 import { EmptyState, ErrorState, LoadingState } from '@/states/states';
 import { Button } from '@/ui/button';
@@ -230,17 +231,23 @@ function useConnectorBody(source: string): Body {
       </Section>
       <Section id="connector-health" title="Health check">
         {queryBody(health, 'the health check', ({ data }) => (
-          <Facts
-            rows={[
-              ['Status', <HealthWord key="s" status={data.status} />],
-              [
-                'Latency',
-                data.latency_ms === null ? 'not measured' : `${Math.round(data.latency_ms)} ms`,
-              ],
-              ['Error type', data.error_type ?? 'none'],
-              ['Checked at', when(data.checked_at)],
-            ]}
-          />
+          <>
+            <Facts
+              rows={[
+                ['Status', <HealthWord key="s" status={data.status} />],
+                [
+                  'Latency',
+                  data.latency_ms === null ? 'not measured' : `${Math.round(data.latency_ms)} ms`,
+                ],
+                ['Error type', data.error_type ?? 'none'],
+                ['Checked at', when(data.checked_at)],
+              ]}
+            />
+            {/* The hosted site shows the real result, and says why (§16). */}
+            {HOSTED && isMockSource(source) && (
+              <p className="mt-2 text-sm text-muted-foreground">{COPY.mockSourceHostedOnly}</p>
+            )}
+          </>
         ))}
       </Section>
       <Section id="connector-ingest" title="Run ingestion">

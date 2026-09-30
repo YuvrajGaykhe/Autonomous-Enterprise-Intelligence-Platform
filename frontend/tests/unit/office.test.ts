@@ -368,5 +368,11 @@ describe('the performance record (§9.10)', () => {
       frameMs: index % 10 === 0 ? 30 : 16,
     }));
     expect(summarize(jittery)?.within).toBe(false);
+    // A 16.7 ms frame measured as a difference of timestamps is within; 16.71 ms is not.
+    const noisy = samples.map((sample) => ({ ...sample, frameMs: 5000.1 - 4983.4 }));
+    expect(noisy[0]?.frameMs).toBeGreaterThan(PERF_BUDGET.medianMs);
+    expect(summarize(noisy)?.within).toBe(true);
+    const over = samples.map((sample) => ({ ...sample, frameMs: 16.71 }));
+    expect(summarize(over)?.within).toBe(false);
   });
 });

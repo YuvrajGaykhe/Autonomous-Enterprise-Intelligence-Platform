@@ -7,6 +7,14 @@ export const PERF_WINDOW_MS = 30_000;
 
 export const PERF_BUDGET = { medianMs: 16.7, p95Ms: 25, drawCalls: 150 } as const;
 
+/**
+ * A frame time at the budget's resolution. Frame times are differences of timestamps, so a 16.7 ms
+ * frame can come out as 16.700000000000728 and fail `<= 16.7` on floating-point noise alone.
+ */
+function atResolution(ms: number): number {
+  return Math.round(ms * 100) / 100;
+}
+
 export interface FrameSample {
   /** When the frame began, in milliseconds. */
   at: number;
@@ -62,8 +70,8 @@ export function summarize(samples: readonly FrameSample[]): PerfSummary | null {
   return {
     ...summary,
     within:
-      summary.medianMs <= PERF_BUDGET.medianMs &&
-      summary.p95Ms <= PERF_BUDGET.p95Ms &&
+      atResolution(summary.medianMs) <= PERF_BUDGET.medianMs &&
+      atResolution(summary.p95Ms) <= PERF_BUDGET.p95Ms &&
       summary.maxDrawCalls <= PERF_BUDGET.drawCalls,
   };
 }

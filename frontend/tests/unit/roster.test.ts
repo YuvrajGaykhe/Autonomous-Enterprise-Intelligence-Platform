@@ -14,6 +14,7 @@ import {
   agentById,
   connectorAgent,
   isLocked,
+  isMockSource,
   rosterFor,
 } from '@/domain/roster';
 
@@ -77,6 +78,14 @@ describe('the roster (§9.2)', () => {
     ]);
     expect(agentById(roster, 'csv_demo')?.kind).toBe('connector');
     expect(agentById(roster, 'nobody')).toBeNull();
+  });
+
+  it('knows the local mock servers by their source names (§16)', () => {
+    expect(sources.map((item) => [item.source, isMockSource(item.source)])).toEqual([
+      ['csv_demo', false],
+      ['odoo_mock', true],
+      ['rest_mock', true],
+    ]);
   });
 
   it('opens the eight VS-01 rooms and locks VS-02 to VS-05 (D-F-4)', () => {

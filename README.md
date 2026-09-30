@@ -1472,6 +1472,75 @@ The full list is in the plan's §A29.
 
 ---
 
+## Frontend and demo
+
+AI CEO HQ is the web frontend in `frontend/`: a pixel-art 3D office whose agents are the VS-01
+components, the CEO's inbox of briefs, and a plain Classic view of the same data. It reads and
+writes only through the routes under `/api/v1` and changes no backend code. Its specification is
+`CONTEXT/FRONTEND_SPECIFICATION.md`, and `frontend/README.md` lists its npm commands.
+
+### Running it locally
+
+It needs Node 24 and a reachable PostgreSQL. It never uses the development database:
+`make frontend-backend` recreates its own `<database>_frontend`, ingests `data/demo`, assesses at
+2026-09-18 and serves the working-tree API on 127.0.0.1:8010. Run the dev server in a second
+terminal and open http://127.0.0.1:5173.
+
+```bash
+make frontend-install
+make frontend-backend
+make frontend-dev
+```
+
+The checks: `make frontend-test` (typecheck, lint, and the unit, component, contract, guard and
+tooling tests), `make frontend-build` (the production build against its bundle budget) and
+`make frontend-e2e` (Playwright over a fresh `<database>_frontend_e2e`).
+
+### The hosted demo
+
+The demo runs at https://ai-ceo-hq-chi.vercel.app. `vercel.json` serves both halves from one
+Vercel project with Vercel Services: `/api/*`, `/docs`, `/redoc` and `/openapi.json` go to the
+FastAPI app (`app.main:app`, on Vercel's Python runtime, in Singapore), and every other path goes
+to the built frontend. The browser sees one origin, so the API never enables CORS. The database
+is a disposable Neon PostgreSQL, also in Singapore, that holds only the synthetic demo dataset.
+Anyone with the link can record a decision, because identity is recorded, not authenticated.
+
+On the hosted site the Odoo and REST mock servers do not exist. Their two agents show the real
+failed health check, with the note "This mock source runs in local mode only."
+
+To put the demo database back to the clean dataset, set `DEMO_DATABASE_URL` to the database's
+direct connection string and `DEMO_URL` to the site (`https://<name>.vercel.app`) in your shell,
+then run:
+
+```bash
+make demo-reset
+```
+
+It asks you to type `reset`. It then migrates the demo database down and up from your machine,
+ingests the demo dataset through the hosted API (`POST /api/v1/ingestion/runs`) and assesses at
+2026-09-18 (`POST /api/v1/risk/assessments`). It prints no credential.
+
+### A five-minute demo
+
+1. **Arrive.** Agents not at work stroll round the Break Area. The HUD shows the API's health and
+   `as_of 2026-09-18`.
+2. **Click MEMORY.** It holds Layer 1's canonical records, by entity type.
+3. **Press Run assessment.** The demo is already assessed, so the API answers 200 and the banner
+   says "Already assessed: replaying recorded results". The agents walk to their desks. MEMORY
+   hands its snapshot to LINKER_AGENT, SALES_AGENT and SUPPORT_AGENT meet at the debate table over
+   DEAL-001, the RECONCILER rules `CONF-001 → SUPPORT PREVAILS`, and BRIEF_WRITER carries three
+   briefs to the CEO's tray.
+4. **Click the CEO's desk.** CUST-007 is pinned `CRITICAL · EXECUTIVE`. CUST-025 and CUST-036
+   follow, both WATCH.
+5. **Open CUST-007's brief.** It shows the rules, the signals, the cited evidence, the conflict
+   and its dissent, the recommended actions and the limitations.
+6. **Approve it with a note.** The stamp lands on the CEO's tray, and the decision chain shows ①.
+7. **Switch to Classic view.** The same data appears as plain pages. **Show the API call** names
+   the route and request id behind a panel, and `/docs` is the API's own reference.
+8. **Point at the locked rooms.** Each opens with a later slice.
+
+---
+
 ## Troubleshooting
 
 ### Commands

@@ -18,6 +18,7 @@
     "build": "vite build && node tools/bundle-report.ts",
     "e2e": "vite build && playwright test",
     "perf": "vite build && node tools/perf-record.ts",
+    "smoke:hosted": "playwright test -c playwright.hosted.config.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

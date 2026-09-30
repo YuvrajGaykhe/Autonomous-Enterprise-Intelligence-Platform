@@ -1627,6 +1627,190 @@ between desks and Break Area places (§9.7).
 **Next:** F5 (hosting), which starts only on the owner's instruction, with each external action
 approved separately.
 
+### F5 — Hosting: CLOSED 2026-10-01
+
+**The hosted demo:** https://ai-ceo-hq-chi.vercel.app, the Vercel project
+`yuvraj-gaykhes-projects/ai-ceo-hq` (the name `ai-ceo-hq` was taken, so Vercel added `-chi`).
+
+**Owner rulings (2026-09-30).**
+1. **F4 committed first** (`6b0e52b`), which is F5's entry condition.
+2. **Deployments come from the Vercel CLI and a clean export, not from GitHub.** Each deployment
+   uploads `git archive` of `HEAD` plus the phase's changed and new files, and nothing else. The
+   CLI would otherwise upload a plain `.env`: it skips only `.env.local` and `.env.*.local`, the
+   repository has a local `.env` with database credentials, and §4 allows no `.vercelignore`. The
+   export refuses to build if any other file, or any `.env`, would be included. Nothing is pushed.
+3. **Singapore.** The API's function runs in `sin1`, and Neon in AWS `ap-southeast-1`, near the
+   reviewers in India.
+4. **The gate runs on the production domain, not a preview URL (a departure from §14).** Vercel's
+   standard Deployment Protection puts every preview and generated deployment URL behind a Vercel
+   login, so Playwright and `make demo-reset` cannot reach them. The production domain is public in
+   any case.
+5. Each external action was approved as it came: creating the project and the first deployment;
+   connecting Neon (done by the owner, who accepted Neon's terms); each production redeployment; and
+   the hosted smoke test's write followed by the second reset.
+
+**D-F-17: the Python runtime, not a container (R-F-8).** A fresh `uv` venv on CPython 3.12.13, built
+from `pyproject.toml` with `.[dev]` (FastAPI 0.142.2, SQLAlchemy 2.0.54, pandas 3.0.6, pydantic
+2.13.5, psycopg2-binary 2.9.13), ran the full backend suite: 6771 passed (unit 5287, contract 185,
+integration 1214, e2e 85), 0 failed and 0 skipped, `app/` 100% over 7456 statements, the 2 known
+warnings. There is no repository-level Python pin. Vercel's build log says "Using Python 3.12 from
+pyproject.toml", so the observed runtime is the version the suite passed on. PyYAML, which `app/`
+imports, reaches Vercel only through `uvicorn[standard]`'s extras.
+
+**What F5 produced.**
+- **`vercel.json`** (Vercel Services, checked against Vercel's configuration reference and its own
+  Vite + FastAPI example):
+  - `web`: `frontend/`, the Vite preset, and a rewrite of every path to `/index.html` inside the
+    service, so deep links load the app. Built files are served before rewrites apply;
+  - `api`: the repository root, the FastAPI preset, entrypoint `app.main:app`, with its function in
+    `sin1` and `excludeFiles` for `tests/**`, `data/fixtures/**`, `data/quarantine/**`, `CONTEXT/**`
+    and `frontend/**`;
+  - top-level rewrites send `/api/(.*)`, `/docs`, `/redoc` and `/openapi.json` to `api`, and every
+    other path to `web`. The API receives the original path, so `/api/v1/...` is unchanged. An
+    unknown `/api` path gets the API's own 404, not the web page.
+- **`make demo-reset`** (D-F-8). It needs `DEMO_DATABASE_URL`, the demo database's direct
+  connection string, and `DEMO_URL`, the site, and exits 2 without either. It asks the reader to
+  type `reset`; any other answer changes nothing. It then runs `.venv/bin/alembic downgrade base`
+  and `upgrade head` against `DEMO_DATABASE_URL`, and `POST /api/v1/ingestion/runs` for
+  `csv_demo` and `POST /api/v1/risk/assessments` at 2026-09-18 against `DEMO_URL`. It prints the
+  two statuses and no credential, and it ignores `DATABASE_URL` and the `POSTGRES_*` settings.
+- **`.dockerignore`** gains the line `frontend/node_modules` (D-F-16).
+- **`README.md`** gains `## Frontend and demo`, after the VS-01 section: the frontend, running it
+  locally, the hosted demo and its address, `make demo-reset`, and a five-minute demo. Its `bash`
+  blocks hold only `make` commands (R-F-4). `frontend/README.md` lists `npm run smoke:hosted`.
+- **Frontend.**
+  - On the hosted site the mock sources' panels keep their real failed health check and show
+    Appendix A's "This mock source runs in local mode only." Before F5 no surface rendered it.
+    `isMockSource` (`src/domain/roster.ts`) knows the mocks by the backend's own names (`odoo_mock`,
+    `rest_mock`). `src/lib/hosting.ts` reads `VITE_VERCEL_ENV`, which Vercel sets while it builds
+    the Vite preset and a local build leaves unset. It carries no secret (§6.1).
+  - **The performance budget's comparison** now rounds frame times to 0.01 ms first. Frame times
+    are differences of timestamps, so a 16.7 ms frame can come out as `16.700000000000728`. That
+    made F5's first record print a median of 16.70 ms and still say "OVER budget". A unit test
+    covers both sides of the edge.
+- **The hosted smoke test.** `playwright.hosted.config.ts` and `tests/hosted/hosted.spec.ts`, run by
+  `npm run smoke:hosted` against `AICEOHQ_HOSTED_URL`, with no global setup. Three `@clean` tests
+  only read:
+  - one origin without CORS: health, `/openapi.json`, `/docs`, a deep link and the office;
+  - the clean dataset: 50 assessments, the three briefs with §3's payload hashes and the pinned
+    fingerprint, CUST-007's golden narrative, and no decision;
+  - the inbox, and the mock sources' caption.
+
+  One `@write` test records an approval of CUST-007. The config also accepts `vercel dev` on a
+  loopback port, to rehearse.
+- **Tests.** `tests/component/hosted.test.tsx` (3), and additions to `tests/unit/roster.test.ts` and
+  `tests/unit/office.test.ts`.
+
+**Choices made in F5 (PROPOSED; each stands unless replaced).**
+- **`demo-reset` ingests and assesses through the hosted API.** Plan §8.2 had the owner's machine
+  run the ingestion. Here the ingestion runs next to the database, through the existing route with
+  the same defaults as `scripts/ingest_demo.py` (every entity, page size 100). The rehearsals below
+  prove the result is the same: §3's payload hashes and the pinned fingerprint. Only the
+  migrations run from the owner's machine.
+- **The mock-source caption keys on the source's name**, because the API calls `odoo_mock` type
+  `mock` and `rest_mock` type `rest`.
+
+**Rehearsals, before any outward action.**
+- `make demo-reset` against the isolated `<database>_frontend`, with `DEMO_URL` a local API:
+  - an answer other than `reset`: nothing changed;
+  - twice after recording a decision, and once from an empty database: each finished in about
+    3 seconds with 50 assessments, §3's three payload hashes, the pinned fingerprint, and empty
+    chains.
+- `vercel dev -L` on a clean export, pointed at `<database>_frontend`, routed exactly as above.
+  Without `DATABASE_URL` the application's defaults would name the development database, so a
+  wrapper set it and no request was sent before it did. Through it: the hosted smoke 4/4, then
+  `demo-reset`, then `@clean` 3/3. Under `vercel dev` the web service's rewrite also catches
+  Vite's development modules, so the rehearsal copy left it out. The rewrite itself is proven on
+  the deployment.
+
+**The deployment.**
+- Each deployment uploaded 582 files: `git archive 6b0e52b` plus 14 F5 files, with no `.env` and no
+  ignored file. The build ran `npm ci` and `npm run build` for `web` (the bundle report within
+  budget) and `uv` for `api`.
+- **Vercel made the first deployment production**, although it was asked for as a preview:
+  a new project's first deployment always is. It served the site with no database until Neon was
+  connected. Two more production deployments followed: one to pick up `DATABASE_URL`, and one after
+  the password reset below. Standard Deployment Protection (Vercel Authentication) covers the
+  preview and generated URLs.
+- Responses carry `x-vercel-id: bom1::sin1`: the edge in Mumbai, the function in Singapore.
+- **Neon** was connected by the owner through the Vercel Marketplace: the Free plan,
+  `ap-southeast-1`, Production and Preview. Its variables are sensitive, so no command line can
+  read them back (`vercel env run` and `pull` receive empty values). `make demo-reset` therefore
+  takes the connection string from the owner's own clipboard, in the owner's terminal.
+- **The database password was reset once.** The owner pasted a connection string into the chat.
+  It was not used, and the owner reset the password from Neon's Connect dialog, which pushed the
+  new value to Vercel's variables; a redeployment picked it up. The string in the chat no longer
+  works.
+- **The rate limit.** The owner published one Vercel Firewall rule on 2026-10-01: a request whose
+  path starts with `/api/` and whose method is `POST` is rate-limited per IP, in a fixed window of
+  60 seconds, to 20 requests, and then answered 429. Hobby allows one such rule. It was not
+  exercised, because that would have written runs into the demo database.
+
+**The gate (§13).**
+1. **Frontend.**
+   - `tsc` reports 0 on both projects, ESLint 0 errors and 0 warnings, and Prettier is clean.
+   - **Vitest:** 551 passed, 0 failed, 0 skipped. By layer: unit 253, component 174, contract 68,
+     guards 34, tools 22. `src/api/**` and `src/domain/**` are at 100% (1313 statements, 598
+     branches).
+   - **Playwright:** 39 passed, 0 skipped, on two consecutive runs over a recreated database. Two
+     earlier runs, at load averages of 30 to 140, each timed out once, on different tests, with no
+     assertion failing (7 and 2 passed before them). They are not counted.
+   - **axe:** unchanged; it runs inside the end-to-end tests.
+   - **Bundle:** initial JavaScript 198.7 KB gzip, the world chunk 253.0 KB, world assets 0, CSS
+     19.5 KB: the same as F4.
+   - **Performance** (`npm run perf`, as F4: a Replay, every agent moving, 1920×1080, 30 seconds per
+     mode, the same machine and Chrome): pixel 1795 frames, median 16.70 ms, p95 17.60 ms, 74 draw
+     calls; smooth 1791 frames, median 16.70 ms, p95 17.50 ms, 43 draw calls. Both within §9.10.
+2. **The backend.** The frozen-path diff against `733b19b` lists only `scripts/secret_scan.py | 2 ++`
+   (F1, ruling 3). **The full backend suite equals the baseline** in the repository `.venv`
+   (Python 3.11.5): 6771 passed (unit 5287, contract 185, integration 1214, e2e 85), 0 failed and
+   0 skipped, `app/` 100% over 7456 statements, the 2 known warnings. The fresh 3.12 venv gave the
+   same (above).
+3. **The four repository-scanning backend test files** pass on the staged tree, with the new
+   `Makefile`, `README.md` and `.dockerignore`: 256 passed, the 2 known warnings (the working
+   tree gave the same).
+4. **The secret scan.** `scan_text` over every new or changed path reports 0 findings: 18 text
+   files, this record included. **Staged `make secret-scan`:** 570 files scanned, 12 binary files
+   skipped (582 tracked, which is 576 + 6 new) and 0 findings.
+5. **Anchors.** The golden sha, the one migration head `070e4968a497` and the strategy diff sha all
+   equal §3.
+6. **`git status`** shows only F5's allowed paths, this document, the unstaged strategy document
+   and an untracked `.claude/launch.json`. That file, a preview launch configuration, was created
+   by another session on 2026-09-30. It is not F5's and is never staged.
+
+**The hosted gate (AC-F-10).** `AICEOHQ_HOSTED_URL=https://ai-ceo-hq-chi.vercel.app`, on
+2026-10-01:
+1. `make demo-reset` on the empty Neon database: both `HTTP 201`;
+2. `@clean`: 3 passed;
+3. the whole smoke test: 4 passed, and CUST-007's chain held one `APPROVED` by "Hosted smoke";
+4. `make demo-reset` again: both `HTTP 201`;
+5. `@clean`: 3 passed. The site is clean again.
+
+The site is same-origin with no CORS header, and `demo-reset` is proven twice on Neon.
+
+**AC-F-17.**
+- The development database's `GET /risk/assessments` and `GET /entities/customers` responses are
+  byte-identical before and after F5 (52 customers; 1 assessment, at `as_of 2026-09-27`).
+- F5 used `<database>_frontend` (the rehearsals and `vercel dev`), `<database>_frontend_e2e`
+  (Playwright and the performance record), the backend suite's own `_test` database, and the
+  hosted Neon database. It used nothing else.
+
+**Known in F5, carried forward.**
+- The hosted site has no authentication (§16): anyone with the link can record a decision. Reset
+  before each review.
+- Vercel Services is in beta (§16). The deployment used no fallback.
+- Resetting the hosted database needs the owner's connection string, because the integration's
+  variables are sensitive.
+- The Neon integration also adds `VITE_NEON_AUTH_URL`. Nothing references it, and the built bundle
+  contains no Neon address.
+- **The live site predates four of F5's edits:** the budget comparison's fix, its unit test, the
+  two READMEs' last lines and this record. Only the fix reaches a bundle: the lazy world chunk's
+  `?perf=1` overlay, which can still say "OVER" on a 16.70 ms median. The owner approved a
+  production deployment from the F5 commit itself, which follows the commit and brings the site
+  level with the repository.
+
+**Next:** F6 (polish), which starts only on the owner's instruction.
+
 ---
 
 ## Appendix A: fixed copy
