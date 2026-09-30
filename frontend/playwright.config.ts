@@ -13,10 +13,12 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/e2e',
   // The office runs first: it writes nothing, and its screenshots need the database as the global
-  // setup left it, before Classic's scenario records decisions (F3).
+  // setup left it, before Classic's scenario records decisions (F3). Life runs last (F4): it records
+  // a decision from the office and an ingestion run, which Classic's screenshots must not see.
   projects: [
     { name: 'office', testMatch: 'office.spec.ts' },
     { name: 'classic', testMatch: ['classic.spec.ts', 'smoke.spec.ts'], dependencies: ['office'] },
+    { name: 'life', testMatch: 'life.spec.ts', dependencies: ['classic'] },
   ],
   // Baselines are named by test file and platform only, as they were before there were projects.
   snapshotPathTemplate:

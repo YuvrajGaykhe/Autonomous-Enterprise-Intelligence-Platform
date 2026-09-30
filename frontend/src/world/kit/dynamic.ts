@@ -1,14 +1,13 @@
 /**
- * The parts that follow the data (spec §9.3, §9.5, §8.6): each agent's antenna bulb in its state's
- * colour, the paper in the CEO's tray (one sheet per inbox row) and the corkboard's notes (one per
- * decision on the selected brief, stamped APPROVED or REJECTED).
+ * The parts that follow the data (spec §9.3, §9.5, §8.6): the colours of the antenna bulbs and the
+ * working glow (the crowd draws them, F4), the paper in the CEO's tray (one sheet per inbox row)
+ * and the corkboard's notes (one per decision on the selected brief, stamped APPROVED or REJECTED).
  */
 
-import { LOOKS, type BulbColour } from '@/domain/agentLook';
+import type { BulbColour } from '@/domain/agentLook';
 import { FURNITURE } from '@/domain/floorPlan';
-import type { CorkNote, WorldAgent } from '@/office/worldTypes';
+import type { CorkNote } from '@/office/worldTypes';
 
-import type { Body } from './characters';
 import { box, part, placed, type Part } from './parts';
 
 export const BULB_HEX: Readonly<Record<BulbColour, string>> = {
@@ -31,24 +30,9 @@ const STAMP: Readonly<Record<CorkNote['decision'], string>> = {
   REJECTED: '#c0392b',
 };
 
-export function bulbParts(
-  agents: readonly WorldAgent[],
-  bodies: ReadonlyMap<string, Body | null>,
-): Part[] {
-  return agents.flatMap((world) => {
-    const body = bodies.get(world.agent.id);
-    if (body === undefined || body === null) return [];
-    return [
-      part(
-        'sphere',
-        BULB_HEX[LOOKS[world.state].bulb],
-        [0.14, 0.14, 0.14],
-        body.bulb,
-        [0, 0, 0],
-        'glow',
-      ),
-    ];
-  });
+/** The top of the paper in the tray, where a stamp lands (§9.5). */
+export function trayTop(count: number | null): number {
+  return 0.86 + Math.max(0, Math.min(count ?? 0, TRAY_SHEETS) - 1) * 0.016 + 0.012;
 }
 
 export function trayParts(count: number | null): Part[] {

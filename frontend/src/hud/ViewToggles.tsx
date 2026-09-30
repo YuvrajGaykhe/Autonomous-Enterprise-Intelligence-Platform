@@ -1,9 +1,11 @@
 /**
  * The HUD's view switches (spec §8.2): Office or Classic (D-F-6), and, in the office, Pixel or
- * Smooth (D-F-5). Each choice is remembered in this browser (§11). The view switch goes to the
- * twin of the current address, so the open panel or brief stays open.
+ * Smooth (D-F-5) and Sound (off by default, D-F-19). Each choice is remembered in this browser
+ * (§11). The view switch goes to the twin of the current address, so the open panel or brief
+ * stays open.
  */
 
+import { Volume2, VolumeX } from 'lucide-react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 
 import { OFFICE_PARAMS, pixelArt, twinAddress, viewOf, type ViewName } from '@/domain/views';
@@ -72,5 +74,25 @@ export function PixelSwitch() {
         Smooth
       </button>
     </div>
+  );
+}
+
+export function SoundSwitch() {
+  const sound = usePreferences((state) => state.sound);
+  const setSound = usePreferences((state) => state.setSound);
+  return (
+    <button
+      type="button"
+      aria-pressed={sound}
+      onClick={() => setSound(!sound)}
+      className={cn(segment, 'flex items-center gap-1.5 rounded-md border bg-card py-1')}
+    >
+      {sound ? (
+        <Volume2 aria-hidden="true" className="size-4" />
+      ) : (
+        <VolumeX aria-hidden="true" className="size-4" />
+      )}
+      Sound
+    </button>
   );
 }

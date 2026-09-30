@@ -34,6 +34,15 @@ export function fetchRunErrors(runId: string, options: RequestOptions = {}) {
   );
 }
 
+/**
+ * How many ingestion runs exist: one single-row request that reads `total` only. A run reads it
+ * before its POST, and again after an outcome it cannot know (R-F-7).
+ */
+export async function countRuns(options: RequestOptions = {}) {
+  const result = await getJson('/api/v1/ingestion/runs?limit=1&offset=0', runListResponse, options);
+  return { total: result.data.total, call: result.call };
+}
+
 /** Start an ingestion of one source. The body is `{"source": …}` only (R-F-6). */
 export function startIngestion(source: string, options: RequestOptions = {}) {
   return postJson('/api/v1/ingestion/runs', { source }, ingestionRunCreatedResponse, options);

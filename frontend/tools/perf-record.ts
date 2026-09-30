@@ -7,6 +7,10 @@
  * with the pixel pass and once smooth. It prints the machine, the GPU and the numbers, and exits 1
  * when a budget is exceeded. It must not run at the same time as the end-to-end tests, which use
  * the same database.
+ *
+ * Every agent moves while it measures (F4): `?perf=1` keeps idle agents strolling round the Break
+ * Area without a pause, and the measurement starts a Replay, so the assessment's agents walk to
+ * their desks and to each other under the arrows.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -58,11 +62,15 @@ async function measure(baseUrl: string, mode: 'pixel' | 'smooth'): Promise<Measu
     await page.goto(`${baseUrl}/?perf=1&pixel=${mode === 'pixel' ? '1' : '0'}`);
     await page.getByTestId('office').and(page.locator('[data-world="ready"]')).waitFor();
     await page.waitForTimeout(WARM_UP_MS);
+    await page.getByRole('button', { name: 'Replay' }).click();
+    await page.getByTestId('office').and(page.locator('[data-show="replay"]')).waitFor();
     await page.evaluate(() => {
       const record = (window as PerfWindow).aiceohqPerf;
       if (record) record.samples = [];
     });
     await page.waitForTimeout(MEASURE_MS);
+    const replaying = await page.getByTestId('office').getAttribute('data-show');
+    if (replaying !== 'replay') throw new Error(`the replay ended before the measurement did`);
     return await page.evaluate((label) => {
       const record = (window as PerfWindow).aiceohqPerf;
       return {

@@ -1,13 +1,17 @@
 /**
  * The in-world labels (spec §9.3): each agent's name tag with its bulb glyph, its bubble ("…"
- * while its data loads, "?" while it waits for the CEO), and the room signs, locked rooms saying
- * which slice opens them (D-F-4). They are HTML over the canvas, so they are never pixelated. The
- * staff directory is their accessible twin, so they are hidden from assistive technology.
+ * while its data loads, "?" while it waits for the CEO, a step's caption while it works or hands
+ * over, §9.5), each arrow's label, and the room signs, locked rooms saying which slice opens them
+ * (D-F-4). They are HTML over the canvas, so they are never pixelated. The staff directory is their
+ * accessible twin, so they are hidden from assistive technology.
+ *
+ * A walking agent's tag and bubble follow it: the crowd moves their anchors every frame (F4).
  */
 
 import { Lock } from 'lucide-react';
 
 import { COPY, fill } from '@/copy';
+import type { Arrow } from '@/domain/director';
 import { ROOM_LABEL_POINTS, type Seat } from '@/domain/floorPlan';
 import { ROOMS } from '@/domain/roster';
 import { StatusBadge } from '@/office/StatusBadge';
@@ -25,7 +29,11 @@ function tagHeight(world: WorldAgent, seat: Seat): number {
     : bulbHeight(world.agent.kind, seat.pose) + 0.32;
 }
 
-/** Every label's anchor in the world, by label id. */
+/**
+ * The anchors that stand still, by label id: the room signs, and the CEO desk's tag and bubble
+ * over the empty chair. An agent with a body is anchored by the crowd, wherever it walks; until
+ * its first frame, at its desk.
+ */
 export function labelAnchors(
   agents: readonly WorldAgent[],
   seats: ReadonlyMap<string, Seat>,
@@ -45,14 +53,25 @@ export function labelAnchors(
   return anchors;
 }
 
+/** What an agent's bubble says: its step's caption, else "?" or "…", else nothing. */
+export function bubbleText(world: WorldAgent): string | null {
+  const caption = world.cue?.caption ?? null;
+  if (caption !== null && (world.state === 'WORKING' || world.state === 'HANDOFF')) return caption;
+  if (world.bubble === 'waiting') return '?';
+  if (world.bubble === 'loading') return '…';
+  return null;
+}
+
 export function WorldLabels({
   layer,
   agents,
+  arrows = [],
   onOpenAgent,
   onOpenInbox,
 }: {
   layer: LabelLayer;
   agents: readonly WorldAgent[];
+  arrows?: readonly Arrow[];
   onOpenAgent: (agentId: string) => void;
   onOpenInbox: () => void;
 }) {
@@ -81,33 +100,62 @@ export function WorldLabels({
           )}
         </Label>
       ))}
-      {agents.map((world) => (
-        <Label key={`tag:${world.agent.id}`} layer={layer} id={`tag:${world.agent.id}`}>
-          <button
-            type="button"
-            tabIndex={-1}
-            data-agent-tag={world.agent.id}
-            onClick={() =>
-              world.agent.kind === 'ceo' ? onOpenInbox() : onOpenAgent(world.agent.id)
-            }
-            className="pointer-events-auto flex items-center gap-1 rounded-full bg-black/85 py-0.5 pr-2 pl-0.5 font-pixel text-[0.625rem] whitespace-nowrap text-white shadow-md hover:bg-black"
-          >
-            <StatusBadge state={world.state} />
-            {world.agent.tag}
-          </button>
-        </Label>
-      ))}
-      {agents.map((world) => (
-        <Label key={`bubble:${world.agent.id}`} layer={layer} id={`bubble:${world.agent.id}`}>
+      {agents.map((world) => {
+        // An agent on its break wears a smaller tag, so the Break Area's crowd stays legible.
+        const resting = world.cue === undefined && world.agent.kind !== 'ceo';
+        return (
+          <Label key={`tag:${world.agent.id}`} layer={layer} id={`tag:${world.agent.id}`}>
+            <button
+              type="button"
+              tabIndex={-1}
+              data-agent-tag={world.agent.id}
+              data-resting={resting ? 'true' : undefined}
+              onClick={() =>
+                world.agent.kind === 'ceo' ? onOpenInbox() : onOpenAgent(world.agent.id)
+              }
+              className={
+                resting
+                  ? 'pointer-events-auto flex items-center gap-0.5 rounded-full bg-black/75 py-px pr-1.5 pl-px font-pixel text-[0.5rem] whitespace-nowrap text-white shadow hover:bg-black'
+                  : 'pointer-events-auto flex items-center gap-1 rounded-full bg-black/85 py-0.5 pr-2 pl-0.5 font-pixel text-[0.625rem] whitespace-nowrap text-white shadow-md hover:bg-black'
+              }
+            >
+              <StatusBadge state={world.state} className={resting ? 'size-3 text-[0.5rem]' : ''} />
+              {world.agent.tag}
+            </button>
+          </Label>
+        );
+      })}
+      {agents.map((world) => {
+        const text = bubbleText(world);
+        const captioned = text !== null && text === (world.cue?.caption ?? null);
+        return (
+          <Label key={`bubble:${world.agent.id}`} layer={layer} id={`bubble:${world.agent.id}`}>
+            <span
+              data-bubble={captioned ? 'caption' : (world.bubble ?? 'none')}
+              className={
+                text === null
+                  ? 'hidden'
+                  : captioned
+                    ? 'block max-w-56 rounded-md border-2 border-[#22d3ee] bg-[#0b1d26]/90 px-1.5 font-pixel text-[0.625rem] leading-4 whitespace-nowrap text-[#bff6ff] shadow'
+                    : 'block rounded-md border-2 border-black bg-white px-1.5 font-pixel text-xs leading-5 text-black shadow'
+              }
+            >
+              {text ?? '…'}
+            </span>
+          </Label>
+        );
+      })}
+      {arrows.map((arrow) => (
+        <Label key={`arrow:${arrow.id}`} layer={layer} id={`arrow:${arrow.id}`}>
           <span
-            data-bubble={world.bubble ?? 'none'}
+            data-arrow={arrow.tone}
             className={
-              world.bubble === null
-                ? 'hidden'
-                : 'block rounded-md border-2 border-black bg-white px-1.5 font-pixel text-xs leading-5 text-black shadow'
+              arrow.tone === 'conflict'
+                ? 'block rounded-full border-2 border-[#ef4444] bg-[#2a0d0d]/90 px-2 font-pixel text-[0.625rem] leading-4 whitespace-nowrap text-[#ffd0d0] shadow'
+                : 'block rounded-full border-2 border-[#22d3ee] bg-[#0b1d26]/90 px-2 font-pixel text-[0.625rem] leading-4 whitespace-nowrap text-[#bff6ff] shadow'
             }
           >
-            {world.bubble === 'waiting' ? '?' : '…'}
+            {arrow.label}
           </span>
         </Label>
       ))}

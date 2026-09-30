@@ -4,29 +4,30 @@
  * Smooth is chosen, three's pixel pass. Every value it shows arrives in its props, computed from
  * API responses by the office page (D-F-1).
  *
- * Nothing moves on its own in F3: agents sit or stand at their places. With `?still=1` the world
- * renders only when something changes, so screenshots are stable.
+ * Agents walk (F4; the owner's ruling): idle ones live in the Break Area, and a show's cues send
+ * them to their desks, to each other and to the CEO's tray, under neon arrows. With `?still=1`
+ * nobody walks, idle agents keep their first places, and the world renders only when something
+ * changes, so screenshots are stable.
  */
 
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useMemo, useRef, useState } from 'react';
 
-import type { Seat } from '@/domain/floorPlan';
-
-import { FURNITURE, connectorProps, seatsFor } from '@/domain/floorPlan';
+import { AMBIENT_DWELL, type Dwell } from '@/domain/ambient';
+import { officeLayout, type OfficeLayout } from '@/domain/layout';
+import { officeFurniture } from '@/domain/floorPlan';
 import { yawDegrees } from '@/domain/officeCamera';
-import { LOOKS } from '@/domain/agentLook';
 import type { WorldProps } from '@/office/worldTypes';
 import { useCamera } from '@/state/camera';
 
+import { Arrows } from './Arrows';
 import { Batch } from './Batch';
 import { CameraRig } from './CameraRig';
+import { Crowd, type BodyPosition } from './Crowd';
 import { Hitboxes } from './Hitboxes';
-import { bodyFor } from './kit/characters';
 import { floorParts, groundParts, wallParts } from './kit/building';
-import { bulbParts, GLOW_HEX, noteParts, trayParts } from './kit/dynamic';
+import { noteParts, trayParts } from './kit/dynamic';
 import { furnitureParts } from './kit/furniture';
-import { outlined } from './kit/parts';
 import { Lighting } from './Lighting';
 import { LabelLayer, LabelProjector } from './LabelLayer';
 import { labelAnchors, WorldLabels } from './Overlays';
@@ -34,6 +35,10 @@ import { PerfOverlay, PerfProbe } from './Perf';
 import { PixelRenderer } from './PixelRenderer';
 import { Rings } from './Rings';
 import { SignalsBoard } from './SignalsBoard';
+import { Stamp } from './Stamp';
+
+/** Idle agents keep strolling, for the performance record's "every agent moving" (§9.10). */
+const RESTLESS: Dwell = [0, 0.3];
 
 /** Calls `onReady` once, after the first frame. */
 function FirstFrame({ onReady }: { onReady: () => void }) {
@@ -48,68 +53,23 @@ function FirstFrame({ onReady }: { onReady: () => void }) {
 
 interface SceneProps extends WorldProps {
   animate: boolean;
-  seats: ReadonlyMap<string, Seat>;
+  dwell: Dwell | null;
+  layout: OfficeLayout;
+  positions: Map<string, BodyPosition>;
   layer: LabelLayer;
   labelVersion: string;
 }
 
 function Scene(props: SceneProps) {
-  const { agents, pixel, seats } = props;
+  const { agents, pixel, layout } = props;
   const quarterTurns = useCamera((state) => state.quarterTurns);
   const zoomIndex = useCamera((state) => state.zoomIndex);
   const yaw = yawDegrees(quarterTurns);
 
-  const bodies = useMemo(
-    () =>
-      new Map(
-        agents.map((world) => {
-          const seat = seats.get(world.agent.id);
-          return [
-            world.agent.id,
-            seat === undefined ? null : bodyFor(world.agent.id, world.agent.kind, seat),
-          ];
-        }),
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [seats],
-  );
-
   const ground = useMemo(() => groundParts(), []);
   const floor = useMemo(() => floorParts(), []);
   const walls = useMemo(() => wallParts(yaw), [yaw]);
-  const furniture = useMemo(
-    () => [
-      ...FURNITURE.flatMap(furnitureParts),
-      ...agents
-        .filter((world) => world.agent.kind === 'connector')
-        .flatMap((world) => {
-          const seat = seats.get(world.agent.id);
-          return seat === undefined ? [] : connectorProps(seat).flatMap(furnitureParts);
-        }),
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [seats],
-  );
-
-  const glowing = agents
-    .filter((world) => LOOKS[world.state].glow)
-    .map((world) => world.agent.id)
-    .join(' ');
-  const characters = useMemo(
-    () => [
-      ...[...bodies.values()].flatMap((body) => body?.parts ?? []),
-      ...[...bodies.entries()]
-        .filter(([id]) => glowing.split(' ').includes(id))
-        .flatMap(([, body]) => outlined(body?.parts ?? [], GLOW_HEX)),
-    ],
-    [bodies, glowing],
-  );
-  const states = agents.map((world) => `${world.agent.id}:${world.state}`).join(' ');
-  const bulbs = useMemo(
-    () => bulbParts(agents, bodies),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bodies, states],
-  );
+  const furniture = useMemo(() => officeFurniture(layout.roster).flatMap(furnitureParts), [layout]);
   const tray = useMemo(() => trayParts(props.trayCount), [props.trayCount]);
   const noteKey = props.notes.map((note) => note.decision).join(' ');
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,24 +80,33 @@ function Scene(props: SceneProps) {
       <color attach="background" args={['#2b2622']} />
       <Lighting />
       <CameraRig pixel={pixel} animate={props.animate} />
+      <Crowd
+        agents={agents}
+        layout={layout}
+        animate={props.animate}
+        dwell={props.dwell}
+        positions={props.positions}
+        layer={props.layer}
+      />
       <Batch parts={ground} shadows="receive" />
       <Batch parts={floor} shadows="receive" />
       <Batch parts={walls} />
       <Batch parts={furniture} />
-      <Batch parts={characters} shadows="cast" />
-      <Batch parts={bulbs} shadows="none" />
       <Batch parts={tray} shadows="none" />
       <Batch parts={notes} shadows="none" />
+      <Arrows arrows={props.arrows} animate={props.animate} layer={props.layer} />
+      <Stamp stamp={props.stamp} trayCount={props.trayCount} animate={props.animate} />
       <SignalsBoard board={props.board} yaw={yaw} pixel={pixel} />
       <Rings
-        seats={seats}
+        seats={layout.seats}
+        positions={props.positions}
         openAgentId={props.openAgentId}
         highlightedAgentId={props.highlightedAgentId}
         animate={props.animate}
       />
       <Hitboxes
         agents={agents}
-        seats={seats}
+        positions={props.positions}
         onOpenAgent={props.onOpenAgent}
         onOpenInbox={props.onOpenInbox}
       />
@@ -151,17 +120,24 @@ function Scene(props: SceneProps) {
 
 export default function Office(props: WorldProps) {
   const animate = !props.still && !props.reducedMotion;
+  const dwell = props.still || props.reducedMotion ? null : props.perf ? RESTLESS : AMBIENT_DWELL;
   const [layer] = useState(() => new LabelLayer());
+  const [positions] = useState(() => new Map<string, BodyPosition>());
   const rosterKey = props.agents.map((world) => world.agent.id).join(' ');
-  // The seats depend on the roster alone, not on the agents' states.
+  // The layout depends on the roster alone, not on the agents' states.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const seats = useMemo(() => seatsFor(props.agents.map((world) => world.agent)), [rosterKey]);
-  const anchors = useMemo(() => labelAnchors(props.agents, seats), [props.agents, seats]);
-  layer.anchors.clear();
-  for (const [id, anchor] of anchors) layer.anchors.set(id, anchor);
-  const labelVersion = props.agents
-    .map((world) => `${world.agent.id}:${world.state}:${world.bubble ?? ''}`)
-    .join(' ');
+  const layout = useMemo(() => officeLayout(props.agents.map((world) => world.agent)), [rosterKey]);
+  // The fixed anchors: room signs and the CEO desk. A body is anchored by the crowd each frame;
+  // until its first frame, at its desk.
+  for (const [id, anchor] of labelAnchors(props.agents, layout.seats))
+    if (!layer.anchors.has(id)) layer.anchors.set(id, anchor);
+  const labelVersion = [
+    ...props.agents.map(
+      (world) =>
+        `${world.agent.id}:${world.state}:${world.bubble ?? ''}:${world.cue?.caption ?? ''}`,
+    ),
+    ...props.arrows.map((arrow) => arrow.id),
+  ].join(' ');
   return (
     <>
       <Canvas
@@ -181,7 +157,9 @@ export default function Office(props: WorldProps) {
         <Scene
           {...props}
           animate={animate}
-          seats={seats}
+          dwell={dwell}
+          layout={layout}
+          positions={positions}
           layer={layer}
           labelVersion={labelVersion}
         />
@@ -189,6 +167,7 @@ export default function Office(props: WorldProps) {
       <WorldLabels
         layer={layer}
         agents={props.agents}
+        arrows={props.arrows}
         onOpenAgent={props.onOpenAgent}
         onOpenInbox={props.onOpenInbox}
       />

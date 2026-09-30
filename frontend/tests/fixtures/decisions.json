@@ -1,7 +1,7 @@
 [
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d/decisions",
+    "path": "/api/v1/risk/briefs/1e8672b5-3c16-4996-9e04-4322214fbad1/decisions",
     "status": 200,
     "body": {
       "items": []
@@ -9,7 +9,7 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/25d77cce-33c0-434f-b0ac-78132713be39/decisions",
+    "path": "/api/v1/risk/briefs/180b7c6c-d95f-4c0c-965f-120c4a5c5ac6/decisions",
     "status": 200,
     "body": {
       "items": []
@@ -17,7 +17,7 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/24d3b006-3f21-4570-b5e6-eff7cbc968df/decisions",
+    "path": "/api/v1/risk/briefs/3c3503fe-9be2-41e2-8d82-87f49edf6cf8/decisions",
     "status": 200,
     "body": {
       "items": []

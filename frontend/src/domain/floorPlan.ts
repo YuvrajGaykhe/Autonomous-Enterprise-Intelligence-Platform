@@ -237,7 +237,18 @@ export type FurnitureKind =
   | 'magnifierStand'
   | 'whiteboard'
   | 'coveredCrate'
-  | 'lamp';
+  | 'lamp'
+  | 'fridge'
+  | 'arcadeCabinet'
+  | 'pingPongTable'
+  | 'armchair'
+  | 'beanBag'
+  | 'tvConsole'
+  | 'loungeRug'
+  | 'cafeTable'
+  | 'cafeChair'
+  | 'pizzaBox'
+  | 'chargingPad';
 
 export interface FurnitureItem {
   kind: FurnitureKind;
@@ -305,14 +316,31 @@ export const FURNITURE: readonly FurnitureItem[] = [
   ...deskFor('brief-studio', FIXED_SEATS.briefWriter, 'typewriter'),
   { kind: 'filingCabinet', x: 21.3, z: 9, rotation: -QUARTER, room: 'brief-studio' },
   { kind: 'lamp', x: 15.6, z: 14.3, rotation: 0, room: 'brief-studio' },
-  // Break Area: where ambient walks go (§9.7).
-  { kind: 'sofa', x: 26.5, z: 13.9, rotation: Math.PI, room: 'break-area' },
-  { kind: 'coffeeTable', x: 26.5, z: 12.4, rotation: 0, room: 'break-area' },
+  // Break Area: where every agent not at work spends its time (§9.7; the owner's F4 ruling). A
+  // kitchenette along the north wall, games in the middle, a lounge facing the TV in the west and
+  // a café corner in the east. `breakArea.ts` lists the places an agent can take here.
   { kind: 'coffeeMachine', x: 23, z: 8.7, rotation: 0, room: 'break-area' },
-  { kind: 'waterCooler', x: 24.4, z: 8.7, rotation: 0, room: 'break-area' },
+  { kind: 'waterCooler', x: 24.35, z: 8.6, rotation: 0, room: 'break-area' },
+  { kind: 'fridge', x: 25.3, z: 8.55, rotation: 0, room: 'break-area' },
+  { kind: 'plant', x: 26.55, z: 8.5, rotation: 0, room: 'break-area' },
+  { kind: 'arcadeCabinet', x: 29.6, z: 8.55, rotation: 0, room: 'break-area' },
   { kind: 'vendingMachine', x: 31.3, z: 9.4, rotation: -QUARTER, room: 'break-area' },
-  { kind: 'plant', x: 22.6, z: 14.3, rotation: 0, room: 'break-area' },
-  { kind: 'plant', x: 31.4, z: 14.3, rotation: 0, room: 'break-area' },
+  { kind: 'chargingPad', x: 26.9, z: 10, rotation: 0, room: 'break-area' },
+  { kind: 'pingPongTable', x: 29, z: 11.4, rotation: 0, room: 'break-area' },
+  { kind: 'loungeRug', x: 24.6, z: 13.3, rotation: 0, room: 'break-area' },
+  { kind: 'tvConsole', x: 22.45, z: 13.3, rotation: QUARTER, room: 'break-area' },
+  { kind: 'coffeeTable', x: 24.2, z: 13.3, rotation: QUARTER, room: 'break-area' },
+  { kind: 'pizzaBox', x: 24.2, z: 13.55, rotation: 0.3, room: 'break-area' },
+  { kind: 'sofa', x: 25.9, z: 13.3, rotation: -QUARTER, room: 'break-area' },
+  { kind: 'armchair', x: 24.2, z: 14.45, rotation: Math.PI, room: 'break-area' },
+  { kind: 'beanBag', x: 23.1, z: 14.5, rotation: Math.PI, room: 'break-area' },
+  { kind: 'lamp', x: 26.75, z: 14.65, rotation: 0, room: 'break-area' },
+  { kind: 'beanBag', x: 27.7, z: 14.35, rotation: Math.PI, room: 'break-area' },
+  { kind: 'beanBag', x: 28.75, z: 14.4, rotation: Math.PI, room: 'break-area' },
+  { kind: 'cafeTable', x: 30.3, z: 13.7, rotation: 0, room: 'break-area' },
+  { kind: 'cafeChair', x: 29.55, z: 13.7, rotation: QUARTER, room: 'break-area' },
+  { kind: 'cafeChair', x: 31.05, z: 13.7, rotation: -QUARTER, room: 'break-area' },
+  { kind: 'plant', x: 31.45, z: 14.5, rotation: 0, room: 'break-area' },
   // Locked rooms: covered crates, waiting for their slice (D-F-4).
   { kind: 'coveredCrate', x: 3, z: 17.5, rotation: 0, room: 'pipeline-room' },
   { kind: 'coveredCrate', x: 5.4, z: 18, rotation: 0.4, room: 'pipeline-room' },
@@ -329,4 +357,50 @@ export function connectorProps(seat: Seat): FurnitureItem[] {
   return [
     { kind: 'crateStack', x: seat.x + 0.75, z: seat.z + 0.1, rotation: 0, room: 'data-dock' },
   ];
+}
+
+/** All the furniture of an office with this roster: the fixed pieces and each connector's crates. */
+export function officeFurniture(roster: readonly Agent[]): FurnitureItem[] {
+  const seats = seatsFor(roster);
+  return [
+    ...FURNITURE,
+    ...roster.flatMap((agent) => {
+      const seat = agent.kind === 'connector' ? seats.get(agent.id) : undefined;
+      return seat === undefined ? [] : connectorProps(seat);
+    }),
+  ];
+}
+
+/**
+ * Where an agent stands to hand something to `receiver` (the owner's F4 ruling: a hand-off walks
+ * to the receiver): across the desk of a seated agent, beside the RECONCILER at the debate table,
+ * in front of one who stands, and at the tray of the CEO's desk.
+ */
+export function visitPoint(receiver: Agent['kind'], seat: Seat): Seat {
+  switch (receiver) {
+    case 'ceo':
+      return { x: seat.x + 0.6, z: seat.z + 2.05, facing: Math.PI, pose: 'stand' };
+    case 'reconciler':
+      return { x: seat.x + 1, z: seat.z - 0.1, facing: -QUARTER, pose: 'stand' };
+    case 'memory':
+      return { x: seat.x, z: seat.z + 1.1, facing: Math.PI, pose: 'stand' };
+    case 'connector':
+      return { x: seat.x, z: seat.z + 1, facing: Math.PI, pose: 'stand' };
+    default:
+      return { x: seat.x, z: seat.z + 1.5, facing: Math.PI, pose: 'stand' };
+  }
+}
+
+/**
+ * The places at the debate table for the agents of a conflict (§9.5 step 5): the two side chairs,
+ * then standing room at the far side for any more.
+ */
+export const DEBATE_SEATS: readonly Seat[] = [
+  { x: 10.1, z: 12.3, facing: QUARTER, pose: 'sit' },
+  { x: 12.9, z: 12.3, facing: -QUARTER, pose: 'sit' },
+  { x: 11.5, z: 13.35, facing: Math.PI, pose: 'stand' },
+];
+
+export function debateSeat(index: number): Seat {
+  return DEBATE_SEATS[Math.min(index, DEBATE_SEATS.length - 1)] as Seat;
 }

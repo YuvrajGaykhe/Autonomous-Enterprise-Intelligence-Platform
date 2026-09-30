@@ -5,6 +5,7 @@
  * The request supersedes the chain's head. A refusal keeps the chosen decision and the typed note.
  * A request that never produced an answer has an unknown outcome: the page re-reads the chain and
  * offers a retry only when the decision is not in it (R-F-7). Nothing is retried automatically.
+ * A recorded decision lands its stamp on the office's CEO desk (§9.5).
  */
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -32,6 +33,7 @@ import {
   type WriteFailure,
 } from '@/domain/outcomes';
 import { readStored, STORAGE_KEYS, writeStored } from '@/lib/storage';
+import { useDirector } from '@/state/director';
 import { useSession } from '@/state/session';
 import { ErrorState } from '@/states/states';
 import { Button } from '@/ui/button';
@@ -199,6 +201,7 @@ export function DecisionPanel({
   const refused = useSession((state) => briefId in state.refusedBriefs);
   const refusalRequestId = useSession((state) => state.refusedBriefs[briefId] ?? null);
   const refuseBrief = useSession((state) => state.refuseBrief);
+  const stampDecision = useDirector((state) => state.stampDecision);
   const [form, setForm] = useState<DecisionForm>(() => ({
     actor: readStored(STORAGE_KEYS.actorName) ?? '',
     decision: null,
@@ -218,6 +221,7 @@ export function DecisionPanel({
     try {
       const reread = (await fetchDecisions(briefId)).data.items;
       const landed = decisionLanded(reread, sent) !== null;
+      if (landed) stampDecision(sent.decision);
       const moved = !landed && (chainHead(reread)?.id ?? null) !== sent.supersedes_id;
       setPhase({ kind: 'checked', landed, moved });
       if (landed) setForm((current) => ({ ...current, decision: null, note: '' }));
@@ -235,6 +239,7 @@ export function DecisionPanel({
     try {
       const result = await recordDecision(briefId, sent);
       setPhase({ kind: 'recorded', decision: result.data });
+      stampDecision(result.data.decision);
       setForm((current) => ({ ...current, decision: null, note: '' }));
       await invalidateAfterDecision(client, briefId);
       return;

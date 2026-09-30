@@ -1,10 +1,10 @@
 [
   {
     "method": "GET",
-    "path": "/api/v1/risk/assessments/bc48f0b3-606c-4a0e-8f48-d016fb1254da",
+    "path": "/api/v1/risk/assessments/b33dfa40-6f18-40f8-888a-a3c3bc719a0b",
     "status": 200,
     "body": {
-      "id": "bc48f0b3-606c-4a0e-8f48-d016fb1254da",
+      "id": "b33dfa40-6f18-40f8-888a-a3c3bc719a0b",
       "customer_source_id": "CUST-007",
       "as_of": "2026-09-18",
       "source_system": "csv_demo",
@@ -433,7 +433,7 @@
       ],
       "briefs": [
         {
-          "id": "98737bd0-b029-4732-97bd-861dd6e1a68d",
+          "id": "1e8672b5-3c16-4996-9e04-4322214fbad1",
           "policy_version": 1,
           "template_version": "1",
           "payload_hash": "e93c29cfb6094284d7ea6fe84bf966ad0b40995fccdc4e2a671b502a7f16c946"
@@ -443,10 +443,10 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/assessments/a4946455-681f-4116-8e89-73160652916f",
+    "path": "/api/v1/risk/assessments/344e54e7-461f-48d1-9316-e4374c6771b8",
     "status": 200,
     "body": {
-      "id": "a4946455-681f-4116-8e89-73160652916f",
+      "id": "344e54e7-461f-48d1-9316-e4374c6771b8",
       "customer_source_id": "CUST-025",
       "as_of": "2026-09-18",
       "source_system": "csv_demo",
@@ -516,7 +516,7 @@
       ],
       "briefs": [
         {
-          "id": "25d77cce-33c0-434f-b0ac-78132713be39",
+          "id": "180b7c6c-d95f-4c0c-965f-120c4a5c5ac6",
           "policy_version": 1,
           "template_version": "1",
           "payload_hash": "08c99ced40996611c8f7bb4ea48e918fabe0e9cd68390122d0f86faa50738770"
@@ -526,10 +526,10 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/assessments/3f29c780-5894-445d-acbb-214bb42d472e",
+    "path": "/api/v1/risk/assessments/3a10d523-10c1-4d89-bd34-d806aae95091",
     "status": 200,
     "body": {
-      "id": "3f29c780-5894-445d-acbb-214bb42d472e",
+      "id": "3a10d523-10c1-4d89-bd34-d806aae95091",
       "customer_source_id": "CUST-036",
       "as_of": "2026-09-18",
       "source_system": "csv_demo",
@@ -584,7 +584,7 @@
       "positions": [],
       "briefs": [
         {
-          "id": "24d3b006-3f21-4570-b5e6-eff7cbc968df",
+          "id": "3c3503fe-9be2-41e2-8d82-87f49edf6cf8",
           "policy_version": 1,
           "template_version": "1",
           "payload_hash": "a6240ac1edd4890724568adc7a8bd8f99add305638b9dcb179429ae67d06b637"

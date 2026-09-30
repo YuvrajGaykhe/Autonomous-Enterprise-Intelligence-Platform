@@ -59,4 +59,5 @@ There are none yet.
 - **Rendering.** The pixel pass, the effect composer and the output pass are imported from the
   `three` package (`three/examples/jsm/postprocessing/`), not copied, so they keep their licence in
   `node_modules`.
-- **F4** adds the walk-grid code adapted from Claw3D here, with its notice.
+- **Walking.** The walk grid and its A\* path finder (`src/domain/walkGrid.ts`) were written for
+  this project, not adapted from Claw3D, so they need no notice.

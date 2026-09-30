@@ -292,6 +292,132 @@ function lamp(): Part[] {
   ];
 }
 
+// The Break Area (the owner's F4 ruling: more to do there). Screens here are blank: only
+// SIGNALS_AGENT's board and the CEO's tray and corkboard carry data.
+
+function fridge(): Part[] {
+  return [
+    box('#e9edf0', [0.7, 1.8, 0.66], [0, 0.9, 0]),
+    box('#d3d9de', [0.66, 0.02, 0.02], [0, 1.22, 0.34]),
+    box(METAL.mid, [0.04, 0.34, 0.04], [0.26, 1.48, 0.35]),
+    box(METAL.mid, [0.04, 0.5, 0.04], [0.26, 0.82, 0.35]),
+    box('#e74c3c', [0.08, 0.08, 0.01], [-0.18, 1.52, 0.335]),
+    box('#f5b041', [0.1, 0.07, 0.01], [-0.05, 1.4, 0.335]),
+    box('#fbfaf5', [0.14, 0.18, 0.01], [-0.16, 0.92, 0.335], [0, 0, 0.1]),
+  ];
+}
+
+function arcadeCabinet(): Part[] {
+  return [
+    box('#2d2a6e', [0.8, 1.75, 0.72], [0, 0.875, 0]),
+    box('#1b1945', [0.84, 0.3, 0.1], [0, 1.66, 0.33]),
+    glowBox('#ff4fa3', [0.7, 0.14, 0.02], [0, 1.66, 0.385]),
+    box(METAL.black, [0.66, 0.56, 0.06], [0, 1.2, 0.3], [-0.25, 0, 0]),
+    glowBox('#1e7bd6', [0.56, 0.44, 0.01], [0, 1.2, 0.34], [-0.25, 0, 0]),
+    glowBox('#f7dc6f', [0.1, 0.06, 0.01], [-0.12, 1.26, 0.35], [-0.25, 0, 0]),
+    glowBox('#58d68d', [0.08, 0.08, 0.01], [0.14, 1.14, 0.33], [-0.25, 0, 0]),
+    box('#3b3890', [0.8, 0.08, 0.34], [0, 0.9, 0.5], [0.35, 0, 0]),
+    part('cylinder', METAL.black, [0.03, 0.12, 0.03], [-0.18, 0.98, 0.52]),
+    part('sphere', '#e74c3c', [0.07, 0.07, 0.07], [-0.18, 1.05, 0.52]),
+    part('cylinder', '#f5b041', [0.06, 0.03, 0.06], [0.08, 0.96, 0.52]),
+    part('cylinder', '#58d68d', [0.06, 0.03, 0.06], [0.2, 0.96, 0.5]),
+  ];
+}
+
+function pingPongTable(): Part[] {
+  const parts = [
+    box('#1f6f5c', [2, 0.05, 1.1], [0, 0.76, 0]),
+    box('#fbfaf5', [2, 0.052, 0.03], [0, 0.762, 0]),
+    box('#fbfaf5', [0.03, 0.052, 1.1], [-0.985, 0.762, 0]),
+    box('#fbfaf5', [0.03, 0.052, 1.1], [0.985, 0.762, 0]),
+    box('#f2efe6', [0.02, 0.16, 1.18], [0, 0.86, 0]),
+    part('cylinder', '#e74c3c', [0.18, 0.02, 0.18], [-0.7, 0.8, 0.35]),
+    part('cylinder', '#2c3e8f', [0.18, 0.02, 0.18], [0.72, 0.8, -0.3]),
+    part('sphere', '#fbfaf5', [0.06, 0.06, 0.06], [0.3, 0.82, 0.1]),
+  ];
+  for (const x of [-0.85, 0.85])
+    for (const z of [-0.45, 0.45]) parts.push(box(METAL.dark, [0.06, 0.74, 0.06], [x, 0.37, z]));
+  return parts;
+}
+
+function armchair(): Part[] {
+  return [
+    box('#4f7cac', [0.72, 0.36, 0.7], [0, 0.2, 0]),
+    box('#436c96', [0.72, 0.5, 0.16], [0, 0.6, -0.27]),
+    box('#436c96', [0.14, 0.46, 0.7], [-0.29, 0.38, 0]),
+    box('#436c96', [0.14, 0.46, 0.7], [0.29, 0.38, 0]),
+    box('#5d8fc2', [0.46, 0.1, 0.5], [0, 0.42, 0.06]),
+  ];
+}
+
+function beanBag(): Part[] {
+  return [
+    part('sphere', '#e67e22', [0.8, 0.46, 0.8], [0, 0.22, 0]),
+    part('sphere', '#d35400', [0.6, 0.5, 0.36], [0, 0.42, -0.2]),
+  ];
+}
+
+function tvConsole(): Part[] {
+  return [
+    box(WOOD.dark, [1.6, 0.46, 0.46], [0, 0.23, 0]),
+    box(WOOD.mid, [0.72, 0.3, 0.02], [-0.38, 0.23, 0.235]),
+    box(WOOD.mid, [0.72, 0.3, 0.02], [0.38, 0.23, 0.235]),
+    box(METAL.dark, [0.3, 0.04, 0.2], [0, 0.48, 0]),
+    box(METAL.black, [1.4, 0.8, 0.06], [0, 1.0, -0.02]),
+    glowBox('#243b55', [1.3, 0.7, 0.01], [0, 1.0, 0.015]),
+    glowBox('#3d6b99', [0.5, 0.12, 0.01], [-0.3, 1.18, 0.02]),
+    part('cylinder', METAL.black, [0.12, 0.2, 0.12], [0.62, 0.56, 0.05]),
+  ];
+}
+
+function loungeRug(): Part[] {
+  return [
+    box('#2a7f7a', [3.4, 0.012, 2.3], [0, 0.006, 0]),
+    box('#e8d9b0', [3.0, 0.014, 1.9], [0, 0.008, 0]),
+    box('#2a7f7a', [2.6, 0.016, 1.5], [0, 0.01, 0]),
+  ];
+}
+
+function cafeTable(): Part[] {
+  return [
+    part('cylinder', '#f2efe6', [0.7, 0.04, 0.7], [0, 0.72, 0]),
+    part('cylinder', METAL.dark, [0.06, 0.7, 0.06], [0, 0.36, 0]),
+    part('cylinder', METAL.dark, [0.4, 0.03, 0.4], [0, 0.02, 0]),
+    part('cylinder', '#c0392b', [0.1, 0.1, 0.1], [-0.14, 0.79, 0.05]),
+    part('cylinder', '#fbfaf5', [0.1, 0.1, 0.1], [0.15, 0.79, -0.06]),
+    part('sphere', '#e0b43a', [0.12, 0.08, 0.12], [0.02, 0.77, 0.16]),
+  ];
+}
+
+function cafeChair(): Part[] {
+  return [
+    box(WOOD.light, [0.42, 0.05, 0.4], [0, 0.44, 0]),
+    box(WOOD.light, [0.42, 0.42, 0.05], [0, 0.68, -0.18]),
+    ...[-0.17, 0.17].flatMap((x) =>
+      [-0.15, 0.15].map((z) => box(WOOD.dark, [0.04, 0.44, 0.04], [x, 0.22, z])),
+    ),
+  ];
+}
+
+function pizzaBox(): Part[] {
+  return [
+    box('#c8a26b', [0.42, 0.04, 0.42], [0, 0.45, 0]),
+    part('cone', '#f0b44a', [0.34, 0.02, 0.34], [0, 0.48, 0]),
+    part('cylinder', '#c0392b', [0.06, 0.01, 0.06], [-0.06, 0.492, 0.04]),
+    part('cylinder', '#c0392b', [0.06, 0.01, 0.06], [0.07, 0.492, -0.03]),
+    box('#c8a26b', [0.42, 0.42, 0.02], [0, 0.66, -0.21], [-0.2, 0, 0]),
+  ];
+}
+
+function chargingPad(): Part[] {
+  return [
+    part('cylinder', '#3d434c', [0.9, 0.03, 0.9], [0, 0.015, 0]),
+    part('torus', '#5de0f0', [0.78, 0.2, 0.78], [0, 0.035, 0], [Math.PI / 2, 0, 0], 'glow'),
+    box('#3d434c', [0.14, 0.7, 0.1], [0, 0.35, -0.5]),
+    glowBox('#f7dc6f', [0.08, 0.16, 0.01], [0, 0.55, -0.445], [0, 0, 0.35]),
+  ];
+}
+
 const KINDS: Readonly<Record<Exclude<FurnitureKind, 'signalsBoard'>, () => Part[]>> = {
   desk,
   chair,
@@ -318,6 +444,17 @@ const KINDS: Readonly<Record<Exclude<FurnitureKind, 'signalsBoard'>, () => Part[
   whiteboard,
   coveredCrate,
   lamp,
+  fridge,
+  arcadeCabinet,
+  pingPongTable,
+  armchair,
+  beanBag,
+  tvConsole,
+  loungeRug,
+  cafeTable,
+  cafeChair,
+  pizzaBox,
+  chargingPad,
 };
 
 /** One item's parts, in place. SIGNALS_AGENT's board is drawn by its own component. */

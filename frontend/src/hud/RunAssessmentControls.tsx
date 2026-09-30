@@ -56,18 +56,28 @@ function Message({ phase }: { phase: Exclude<RunPhase, { kind: 'idle' }> }) {
           <RetryButton asOf={phase.asOf} />
         </div>
       );
-    case 'done':
+    case 'done': {
+      // Classic view opens the inbox; the office replays, and links to it (F4).
+      const inbox = links.view === 'office' && (
+        <>
+          {' '}
+          <Link className="underline" to={links.inbox()}>
+            Show the inbox
+          </Link>
+        </>
+      );
       return phase.status === 201 ? (
         <p>
           Assessed {phase.assessed} customers at {phase.resolvedAsOf ?? 'the resolved date'}:{' '}
-          {phase.briefs} briefs, {phase.created} new results.
+          {phase.briefs} briefs, {phase.created} new results.{inbox}
         </p>
       ) : (
         <p>
           Already assessed at {phase.resolvedAsOf ?? 'the resolved date'}: all {phase.assessed}{' '}
-          results existed, so nothing was written.
+          results existed, so nothing was written.{inbox}
         </p>
       );
+    }
     case 'failed': {
       const { failure } = phase;
       if (failure.kind === 'scope-unresolved') return <p>{OUTCOME_MESSAGES.scopeUnresolved}</p>;

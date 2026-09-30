@@ -4,8 +4,10 @@
  * change between visits (§9.7). The CEO has no body: the CEO is the user, and the chair stays
  * empty.
  *
- * Every body is built facing +z with its feet at y = 0, standing or sitting, then placed at its
- * seat. The antenna bulb is returned apart from the body, because its colour follows the state.
+ * Every body is built facing +z with its feet at y = 0, standing or sitting: a rig whose parts
+ * each belong to a segment (the body, a leg or an arm), so the world can swing the limbs as the
+ * agent walks, types, presents or cheers (F4). The antenna bulb is not part of the rig, because
+ * its colour follows the state.
  */
 
 import type { Pose, Seat } from '@/domain/floorPlan';
@@ -13,6 +15,13 @@ import type { AgentKind } from '@/domain/roster';
 import { hashString, pick } from '@/domain/seed';
 
 import { box, glowBox, part, placed, type Part, type Triple } from './parts';
+
+/** What a part moves with: the body, or one of the limbs, which swing about the hip or shoulder. */
+export type Segment = 'body' | 'legLeft' | 'legRight' | 'armLeft' | 'armRight';
+
+export interface RigPart extends Part {
+  segment: Segment;
+}
 
 const SKIN = ['#f2c9a0', '#e0ac7e', '#c68b5e', '#8d5a3b', '#f5d6b8'] as const;
 const HAIR = ['#2d2019', '#5a3a22', '#a3642f', '#d8b25a', '#1f1f24', '#7a2f2f'] as const;
@@ -45,34 +54,41 @@ const FRAMES: Readonly<Record<Pose, Frame>> = {
 
 const HEAD = { width: 0.46, height: 0.42, depth: 0.42 } as const;
 
-function legs(pose: Pose, colour: string, shoes: string): Part[] {
+const side = (x: number, left: Segment, right: Segment): Segment => (x < 0 ? left : right);
+
+function legs(pose: Pose, colour: string, shoes: string): RigPart[] {
   if (pose === 'stand') {
-    return [-0.11, 0.11].flatMap((x) => [
-      box(colour, [0.16, 0.36, 0.18], [x, 0.22, 0]),
-      box(shoes, [0.17, 0.08, 0.24], [x, 0.04, 0.03]),
-    ]);
+    return [-0.11, 0.11].flatMap((x) =>
+      [
+        box(colour, [0.16, 0.36, 0.18], [x, 0.22, 0]),
+        box(shoes, [0.17, 0.08, 0.24], [x, 0.04, 0.03]),
+      ].map((item) => ({ ...item, segment: side(x, 'legLeft', 'legRight') })),
+    );
   }
-  return [-0.11, 0.11].flatMap((x) => [
-    box(colour, [0.16, 0.16, 0.4], [x, 0.5, 0.16]),
-    box(colour, [0.16, 0.42, 0.16], [x, 0.27, 0.34]),
-    box(shoes, [0.17, 0.08, 0.24], [x, 0.04, 0.38]),
-  ]);
+  return [-0.11, 0.11].flatMap((x) =>
+    [
+      box(colour, [0.16, 0.16, 0.4], [x, 0.5, 0.16]),
+      box(colour, [0.16, 0.42, 0.16], [x, 0.27, 0.34]),
+      box(shoes, [0.17, 0.08, 0.24], [x, 0.04, 0.38]),
+    ].map((item) => ({ ...item, segment: side(x, 'legLeft', 'legRight') })),
+  );
 }
 
 /** Arms at the sides when standing; reaching forward to a desk when sitting. */
-function arms(pose: Pose, frame: Frame, sleeve: string, skin: string): Part[] {
+function arms(pose: Pose, frame: Frame, sleeve: string, skin: string): RigPart[] {
   const shoulder = frame.torso + 0.18;
   return [-0.29, 0.29].flatMap((x) => {
-    if (pose === 'stand') {
-      return [
-        box(sleeve, [0.12, 0.38, 0.14], [x, shoulder - 0.19, 0]),
-        part('sphere', skin, [0.12, 0.12, 0.12], [x, shoulder - 0.42, 0]),
-      ];
-    }
-    return [
-      box(sleeve, [0.12, 0.36, 0.14], [x, shoulder - 0.04, 0.18], [-1.35, 0, 0]),
-      part('sphere', skin, [0.12, 0.12, 0.12], [x * 0.9, shoulder - 0.09, 0.4]),
-    ];
+    const parts =
+      pose === 'stand'
+        ? [
+            box(sleeve, [0.12, 0.38, 0.14], [x, shoulder - 0.19, 0]),
+            part('sphere', skin, [0.12, 0.12, 0.12], [x, shoulder - 0.42, 0]),
+          ]
+        : [
+            box(sleeve, [0.12, 0.36, 0.14], [x, shoulder - 0.04, 0.18], [-1.35, 0, 0]),
+            part('sphere', skin, [0.12, 0.12, 0.12], [x * 0.9, shoulder - 0.09, 0.4]),
+          ];
+    return parts.map((item) => ({ ...item, segment: side(x, 'armLeft', 'armRight') }));
   });
 }
 
@@ -169,26 +185,78 @@ function role(kind: AgentKind, frame: Frame, skin: string): Part[] {
 }
 
 /** MEMORY: a friendly robot, the Layer 1 store (§9.9). */
-function robot(frame: Frame): Part[] {
+function robot(frame: Frame): RigPart[] {
   const steel = '#9aa7b4';
   const dark = '#5b6570';
+  const limbs: RigPart[] = [
+    { ...box(dark, [0.18, 0.3, 0.2], [-0.14, 0.15, 0]), segment: 'legLeft' },
+    { ...box(dark, [0.18, 0.3, 0.2], [0.14, 0.15, 0]), segment: 'legRight' },
+    { ...part('cylinder', dark, [0.1, 0.46, 0.1], [-0.4, 0.62, 0]), segment: 'armLeft' },
+    { ...part('cylinder', dark, [0.1, 0.46, 0.1], [0.4, 0.62, 0]), segment: 'armRight' },
+    { ...part('sphere', steel, [0.16, 0.16, 0.16], [-0.4, 0.36, 0]), segment: 'armLeft' },
+    { ...part('sphere', steel, [0.16, 0.16, 0.16], [0.4, 0.36, 0]), segment: 'armRight' },
+  ];
+  return [...limbs, ...robotBody(frame, steel, dark).map(onBody)];
+}
+
+function robotBody(frame: Frame, steel: string, dark: string): Part[] {
   return [
-    box(dark, [0.18, 0.3, 0.2], [-0.14, 0.15, 0]),
-    box(dark, [0.18, 0.3, 0.2], [0.14, 0.15, 0]),
     box(steel, [0.66, 0.66, 0.48], [0, 0.62, 0]),
     glowBox('#58d68d', [0.08, 0.06, 0.02], [-0.16, 0.72, 0.25]),
     glowBox('#f5b041', [0.08, 0.06, 0.02], [0, 0.72, 0.25]),
     glowBox('#5dade2', [0.08, 0.06, 0.02], [0.16, 0.72, 0.25]),
     box(dark, [0.34, 0.2, 0.02], [0, 0.52, 0.25]),
-    part('cylinder', dark, [0.1, 0.46, 0.1], [-0.4, 0.62, 0]),
-    part('cylinder', dark, [0.1, 0.46, 0.1], [0.4, 0.62, 0]),
-    part('sphere', steel, [0.16, 0.16, 0.16], [-0.4, 0.36, 0]),
-    part('sphere', steel, [0.16, 0.16, 0.16], [0.4, 0.36, 0]),
     box(steel, [0.54, 0.42, 0.46], [0, frame.head + 0.1, 0]),
     glowBox('#5de0f0', [0.42, 0.1, 0.02], [0, frame.head + 0.12, 0.235]),
     box(dark, [0.08, 0.14, 0.14], [-0.3, frame.head + 0.1, 0]),
     box(dark, [0.08, 0.14, 0.14], [0.3, frame.head + 0.1, 0]),
   ];
+}
+
+const onBody = (item: Part): RigPart => ({ ...item, segment: 'body' });
+
+export interface Rig {
+  pose: Pose;
+  /** In the body's own frame: feet at y = 0, facing +z. */
+  parts: RigPart[];
+  /** Where the legs swing from, and the arms. */
+  hip: number;
+  shoulder: number;
+  /** The antenna bulb's height; it sits on the head's centre line. */
+  bulb: number;
+}
+
+/** An agent's body in one pose, in its own frame. The CEO has none. */
+export function rigFor(agentId: string, kind: AgentKind, pose: Pose): Rig | null {
+  if (kind === 'ceo') return null;
+  // MEMORY never sits: a robot keeps its feet.
+  const shape: Pose = kind === 'memory' ? 'stand' : pose;
+  const frame = FRAMES[shape];
+  const seed = hashString(agentId);
+  if (kind === 'memory') {
+    return {
+      pose: shape,
+      parts: [...robot(frame), ...antenna(frame, 0.12).map(onBody)],
+      hip: 0.3,
+      shoulder: 0.85,
+      bulb: bulbHeight(kind, shape),
+    };
+  }
+  const skin = pick(SKIN, seed);
+  const outfit = OUTFIT[kind];
+  const hair = kind === 'connector' || kind === 'reconciler' ? null : pick(HAIR, seed >>> 3);
+  return {
+    pose: shape,
+    parts: [
+      ...legs(shape, outfit.legs, '#2b2b30'),
+      onBody(box(outfit.shirt, [0.44, 0.44, 0.28], [0, frame.torso, 0])),
+      ...arms(shape, frame, outfit.shirt, skin),
+      ...[...head(frame, skin, hair), ...role(kind, frame, skin), ...antenna(frame)].map(onBody),
+    ],
+    hip: frame.hips,
+    shoulder: frame.torso + 0.18,
+    bulb: bulbHeight(kind, shape),
+  };
 }
 
 export interface Body {
@@ -197,30 +265,12 @@ export interface Body {
   bulb: Triple;
 }
 
-/** An agent's body at its seat. The CEO has none. */
+/** An agent's body at rest at a seat, in world units. The CEO has none. */
 export function bodyFor(agentId: string, kind: AgentKind, seat: Seat): Body | null {
-  if (kind === 'ceo') return null;
-  const seed = hashString(agentId);
-  const frame = FRAMES[seat.pose];
-  let local: Part[];
-  if (kind === 'memory') {
-    local = [...robot(frame), ...antenna(frame, 0.12)];
-  } else {
-    const skin = pick(SKIN, seed);
-    const outfit = OUTFIT[kind];
-    const hair = kind === 'connector' || kind === 'reconciler' ? null : pick(HAIR, seed >>> 3);
-    local = [
-      ...legs(seat.pose, outfit.legs, '#2b2b30'),
-      box(outfit.shirt, [0.44, 0.44, 0.28], [0, frame.torso, 0]),
-      ...arms(seat.pose, frame, outfit.shirt, skin),
-      ...head(frame, skin, hair),
-      ...role(kind, frame, skin),
-      ...antenna(frame),
-    ];
-  }
+  const rig = rigFor(agentId, kind, seat.pose);
+  if (rig === null) return null;
   return {
-    parts: placed(local, seat.x, 0, seat.z, seat.facing),
-    // The bulb sits on the head's centre line, so turning the body leaves it in place.
-    bulb: [seat.x, bulbHeight(kind, seat.pose), seat.z],
+    parts: placed(rig.parts, seat.x, 0, seat.z, seat.facing),
+    bulb: [seat.x, rig.bulb, seat.z],
   };
 }

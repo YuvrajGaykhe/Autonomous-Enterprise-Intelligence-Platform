@@ -5,14 +5,35 @@
  */
 
 import type { AgentState, Bubble } from '@/domain/agentLook';
+import type { Arrow, Place } from '@/domain/director';
 import type { Board } from '@/domain/monitor';
 import type { Agent } from '@/domain/roster';
+
+/** What a show asks of an agent (§9.4–§9.6): where to be, and what it holds and says. */
+export interface AgentCue {
+  place: Place;
+  /** The step's caption (§9.5), shown in the agent's bubble. */
+  caption: string | null;
+  carrying: boolean;
+  cheer: boolean;
+  /** When the walk there should be over, as `performance.now()` milliseconds; null: no hurry. */
+  arriveBy: number | null;
+}
 
 export interface WorldAgent {
   agent: Agent;
   state: AgentState;
   bubble: Bubble;
   detail: string;
+  /** Absent outside a show: the agent is idle, in the Break Area (the owner's F4 ruling). */
+  cue?: AgentCue;
+}
+
+/** The decision stamp on the CEO's desk (§9.5, the decision episode). */
+export interface StampCue {
+  /** Changes with every decision, so the same decision twice stamps twice. */
+  id: number;
+  decision: 'APPROVED' | 'REJECTED';
 }
 
 /** SIGNALS_AGENT's board: the selected customer's signals, or why there are none. */
@@ -30,6 +51,10 @@ export interface WorldProps {
   board: BoardState;
   /** The inbox's rows, for the paper in the CEO's tray; null until the inbox has loaded. */
   trayCount: number | null;
+  /** The show's hand-off and conflict arrows (§9.3, §9.5). */
+  arrows: readonly Arrow[];
+  /** The latest decision's stamp, while it lands. */
+  stamp: StampCue | null;
   notes: readonly CorkNote[];
   /** The agent whose panel is open. */
   openAgentId: string | null;
@@ -37,7 +62,7 @@ export interface WorldProps {
   pixel: boolean;
   /** `?still=1`: nothing moves on its own, and the world renders on demand (§8.1). */
   still: boolean;
-  /** `?perf=1`: the frame-time overlay (§9.10). */
+  /** `?perf=1`: the frame-time overlay, with every agent kept walking (§9.10). */
   perf: boolean;
   reducedMotion: boolean;
   onOpenAgent: (agentId: string) => void;

@@ -4,6 +4,7 @@ import { cleanup, configure } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
 import { initialCamera, useCamera } from '@/state/camera';
+import { directorClock, useDirector } from '@/state/director';
 import { storedPreferences, usePreferences } from '@/state/preferences';
 import { initialSession, useSession } from '@/state/session';
 
@@ -20,6 +21,9 @@ afterEach(() => {
   // The session store and browser storage outlive a render; every test starts clean.
   useSession.setState(initialSession);
   useCamera.setState(initialCamera);
+  useDirector.getState().end();
+  useDirector.setState({ stamp: null });
+  directorClock.now = () => performance.now();
   window.localStorage.clear();
   usePreferences.setState(storedPreferences());
 });

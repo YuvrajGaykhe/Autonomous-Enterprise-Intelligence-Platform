@@ -10,301 +10,301 @@
     "body": {
       "items": [
         {
-          "assessment_id": "0acdfdb4-7f52-4d83-accb-88736da89ffb",
+          "assessment_id": "0c25616e-d69a-4db4-a9be-77facdb36496",
           "created": true,
-          "brief_id": "a5ddc54f-8c14-4682-9873-89583a6afdcf",
+          "brief_id": "df30b0b2-e397-4005-96a1-6fb9c45298c1",
           "payload_hash": "1b9b896e4837b84290d376811e2a772f07ed571725202db18cc80aeba1dce260"
         },
         {
-          "assessment_id": "c7d5ddce-9915-4e6f-9503-d9f9bb2b1b5f",
+          "assessment_id": "34d796b2-9562-4566-b453-2d65139a033b",
           "created": true,
-          "brief_id": "34ccbf24-a379-4f73-ba06-0d1e8f06d556",
+          "brief_id": "5d6dcc19-f4db-4ee5-87c3-244f3bc132b0",
           "payload_hash": "e1dd2dc8a14894568a6a2cc52330ef2e0133ae91a1f10c261f9d2d10802664f6"
         },
         {
-          "assessment_id": "bb7501f9-2a08-43f1-a03e-6e79c3fabe8e",
+          "assessment_id": "a452d1e5-40d6-4258-829f-992ad98f419d",
           "created": true,
-          "brief_id": "0951d888-68f9-477b-beed-c7c9470bdc05",
+          "brief_id": "e6bbd46f-8f2d-430e-95ad-1a4799e4dffb",
           "payload_hash": "346f14223cfbc8b5ab087758517ef85865a03f833da6146d9323902f1abd34b2"
         },
         {
-          "assessment_id": "04c733d3-353a-460a-88ae-7cf60eb407aa",
+          "assessment_id": "daf26157-0132-43b1-991e-234b310ac561",
           "created": true,
-          "brief_id": "a8d4f1ad-f8bb-4820-ba6f-5d3d8d1a6357",
+          "brief_id": "e9b2f6b6-fad7-4de3-8cd0-95e2773161c7",
           "payload_hash": "8716599b9526c632c8284ef5f2c3b6d556fb4eae386d6d7bb92bb2248d623ccf"
         },
         {
-          "assessment_id": "76bcdcd6-e2e1-4452-ba79-19d1d65987e1",
+          "assessment_id": "e5d20055-b50c-43f2-a3ce-579c9350881c",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "c74cf0fb-86d8-48f4-b2cc-4ff3d24d3b81",
+          "assessment_id": "a966cffb-3cb9-4d06-9496-da738f165573",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "fecc65c4-1e45-4c22-b39e-90d78121dcf8",
+          "assessment_id": "c237319e-3bf6-46d8-bf50-cb872f39aa02",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "b8f7b1d0-1c13-4cdf-87b8-461e07d84fef",
+          "assessment_id": "ef835564-e80c-4298-9e2d-7a2aa9f763eb",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "a1df35ac-e22d-4021-971a-d79dde99469b",
+          "assessment_id": "d6ec4933-6d3e-499d-ad3c-0c9f3a90b70c",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "ea8c1781-a8c0-4766-a7f2-b7aaca76dc08",
+          "assessment_id": "59e85505-2f2a-4848-bc16-7b971807f50e",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "bc72653a-9abe-4927-aa44-632b0687a948",
+          "assessment_id": "b99ce004-65d7-47da-818f-cc8f93dc5d91",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "8f57d836-69f6-4948-bacf-ceb57e4b67f9",
+          "assessment_id": "c356f044-48c2-4a7f-ac71-7532859aed78",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "6c4c5637-1cc8-406b-9da4-8443ac55dd4c",
+          "assessment_id": "dab990d9-6fcd-4ebb-9c5b-0fd1c853e5ff",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "7b99578e-0975-4f12-b2a1-2a44f3b47943",
+          "assessment_id": "17bcc7fc-ad78-41b6-94fb-e3027516ffda",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "2fe6a03d-d084-4d7b-a401-6d3d79e02eb9",
+          "assessment_id": "8aeb6216-1f74-4027-933b-a20e8de4cc32",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "26ecef1c-f428-451d-bba0-de5740689594",
+          "assessment_id": "8a77b04a-33ba-4ef8-b9b3-0580d977e266",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "951a378c-597f-419c-8baa-8953c6b0e385",
+          "assessment_id": "d7b9c2b3-b1e6-4c4a-bb96-08f5d063650c",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "498bee8b-f8ce-4b4e-a7c4-fe1def9a86f7",
+          "assessment_id": "5345951b-f895-4cef-b672-febb5362de2a",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "59db0a20-be0d-4751-a7eb-b98729ad4d49",
+          "assessment_id": "8d0d585a-53ee-4b83-b64f-c60c9631a750",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "018c38b8-1add-415a-a101-bdd3b2273aac",
+          "assessment_id": "8706a4b5-e80f-48ad-a3e4-92fa9c0e2885",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "4cdc99fd-0733-4995-afd8-4b2ba313d96e",
+          "assessment_id": "21eff41f-a584-47ba-9213-e4c131312cfd",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "98dc5383-145f-436f-9738-3a4fed579e92",
+          "assessment_id": "7011e360-af2f-4cbf-a44d-5cd49109e877",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "8164c70c-165b-4055-9330-5169e2c57bf2",
+          "assessment_id": "e181d7ec-8719-4920-b42a-89e737571200",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "5c1c29ed-6f45-4848-95a6-33c6d4d37e6b",
+          "assessment_id": "75bbbf0e-5a1c-4733-b94c-ad53e6a82836",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "788924f2-66cd-4c6b-8963-d28041752fff",
+          "assessment_id": "62ebabd2-bab7-402f-a8d1-668e761ade9b",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "057696be-555f-4638-9714-10697e1081b3",
+          "assessment_id": "811fa41b-4a50-44cb-b06d-eb64fd0792bc",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "2e263a14-3059-4071-8b4f-b3e8b9f771cb",
+          "assessment_id": "b1aebed5-659d-4aae-87ec-c6888a619e46",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "7900338b-93f4-4225-b78b-c4704676d19f",
+          "assessment_id": "1e5390d7-b587-47b7-97a2-826ea9fa0b74",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "7bec5a99-0b9f-4d89-a864-6e456ac57235",
+          "assessment_id": "34f61566-7fdc-47cf-9d3f-3f342e1e26d1",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "5a456d46-a8a7-46e5-a6f3-fb90d441cf5e",
+          "assessment_id": "fdf1de18-0620-4fbf-b1c2-92c1706f61cf",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "12e6ba56-c7fc-4c40-a590-29136eff64b0",
+          "assessment_id": "7e5292b4-e1fd-4c2f-a132-d7630e0d75a5",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "c5319632-3757-4dd8-a0a5-203e74395712",
+          "assessment_id": "1a57650e-4c2e-405e-9e4c-afef6fcd5ad2",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "ee35201f-a5ca-4d6b-8a5e-8136e4e95f6c",
+          "assessment_id": "a7464c2b-4e04-4174-99df-b7e08e33230a",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "211e91fa-6f31-4c0b-869e-251ead4933e1",
+          "assessment_id": "15024426-5090-4667-88a2-23786604b891",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "0ec40f0b-bb96-442d-84bb-6e300c498666",
+          "assessment_id": "b2864a3d-35d6-4f42-b56d-9fc03b9f333e",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "d8f2615c-b0da-4ebe-8d9b-3ec6f6975bfe",
+          "assessment_id": "ce18f48c-c3ec-405d-90bd-5ffa0884d448",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "648d61a5-ac76-4071-b240-5796b3861c4f",
+          "assessment_id": "16e9592e-e931-4065-818b-0b9677d40ca0",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "9e79b854-fb45-492b-9c61-e4c33e1b3d46",
+          "assessment_id": "bc51349e-9b4d-4217-af53-b19cd7611e95",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "bb816957-cb51-40be-acfa-527032963fe5",
+          "assessment_id": "8c44c69f-9a2e-4e46-9f8e-0060e040b19a",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "a21146f0-684c-49bd-bf09-22220698b4a8",
+          "assessment_id": "197eb09d-5435-4e2b-9af9-4dfcfba6d9bc",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "053ede03-7c3b-4a4c-bf0e-2690ff07fd62",
+          "assessment_id": "19e3c814-a439-4d93-8cf8-6a3c326d0669",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "95c6457a-6ce4-46fe-9729-880baf840fae",
+          "assessment_id": "2f18bc73-8cb7-4097-844a-17b557860a1a",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "d9bcb777-bb7e-4e43-8a63-5930549970b0",
+          "assessment_id": "88a9f333-4d60-4a50-a8e8-635a3e59bf44",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "58cae00b-54e6-47c9-bdd6-963caa479368",
+          "assessment_id": "5c009cc8-82b0-4e16-82fb-c9318613d933",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "bc594234-130a-4186-9cdd-893d5eb0c213",
+          "assessment_id": "04a23249-c4f0-4696-81ad-88943c693544",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "43aae5d7-ec83-4ab4-83b7-2c17b503268f",
+          "assessment_id": "f933becb-7d25-4ae8-9588-3119112b8f31",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "b8391093-fe73-4b5d-a576-873d29f1bbd2",
+          "assessment_id": "cfc9ee7d-5ee6-4149-8aff-9dfc5e6bb188",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "40be1fb1-075a-4be1-bac3-caad52c14e6f",
+          "assessment_id": "e0ac1e6f-dbca-466c-b88a-ff40c5abfc76",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "baf2a3a5-7d9d-4ee9-b8d6-510f52cc183b",
+          "assessment_id": "e521d941-1333-456f-9391-15929f3b416a",
           "created": true,
           "brief_id": null,
           "payload_hash": null
         },
         {
-          "assessment_id": "2fc3887e-e00a-4bfb-8230-08f05318ab06",
+          "assessment_id": "667d74e9-90b4-4283-a189-4214372f4022",
           "created": true,
           "brief_id": null,
           "payload_hash": null
@@ -314,10 +314,10 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/assessments/0acdfdb4-7f52-4d83-accb-88736da89ffb",
+    "path": "/api/v1/risk/assessments/0c25616e-d69a-4db4-a9be-77facdb36496",
     "status": 200,
     "body": {
-      "id": "0acdfdb4-7f52-4d83-accb-88736da89ffb",
+      "id": "0c25616e-d69a-4db4-a9be-77facdb36496",
       "customer_source_id": "CUST-007",
       "as_of": "2026-08-27",
       "source_system": "csv_demo",
@@ -692,7 +692,7 @@
       ],
       "briefs": [
         {
-          "id": "a5ddc54f-8c14-4682-9873-89583a6afdcf",
+          "id": "df30b0b2-e397-4005-96a1-6fb9c45298c1",
           "policy_version": 1,
           "template_version": "1",
           "payload_hash": "1b9b896e4837b84290d376811e2a772f07ed571725202db18cc80aeba1dce260"
@@ -707,7 +707,7 @@
     "body": {
       "items": [
         {
-          "id": "0acdfdb4-7f52-4d83-accb-88736da89ffb",
+          "id": "0c25616e-d69a-4db4-a9be-77facdb36496",
           "customer_source_id": "CUST-007",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -723,11 +723,11 @@
             "CUST-007"
           ],
           "brief_ids": [
-            "a5ddc54f-8c14-4682-9873-89583a6afdcf"
+            "df30b0b2-e397-4005-96a1-6fb9c45298c1"
           ]
         },
         {
-          "id": "c7d5ddce-9915-4e6f-9503-d9f9bb2b1b5f",
+          "id": "34d796b2-9562-4566-b453-2d65139a033b",
           "customer_source_id": "CUST-025",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -743,11 +743,11 @@
             "CUST-025"
           ],
           "brief_ids": [
-            "34ccbf24-a379-4f73-ba06-0d1e8f06d556"
+            "5d6dcc19-f4db-4ee5-87c3-244f3bc132b0"
           ]
         },
         {
-          "id": "bb7501f9-2a08-43f1-a03e-6e79c3fabe8e",
+          "id": "a452d1e5-40d6-4258-829f-992ad98f419d",
           "customer_source_id": "CUST-036",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -763,11 +763,11 @@
             "CUST-036"
           ],
           "brief_ids": [
-            "0951d888-68f9-477b-beed-c7c9470bdc05"
+            "e6bbd46f-8f2d-430e-95ad-1a4799e4dffb"
           ]
         },
         {
-          "id": "04c733d3-353a-460a-88ae-7cf60eb407aa",
+          "id": "daf26157-0132-43b1-991e-234b310ac561",
           "customer_source_id": "CUST-009",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -783,11 +783,11 @@
             "CUST-009"
           ],
           "brief_ids": [
-            "a8d4f1ad-f8bb-4820-ba6f-5d3d8d1a6357"
+            "e9b2f6b6-fad7-4de3-8cd0-95e2773161c7"
           ]
         },
         {
-          "id": "76bcdcd6-e2e1-4452-ba79-19d1d65987e1",
+          "id": "e5d20055-b50c-43f2-a3ce-579c9350881c",
           "customer_source_id": "CUST-006",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -805,7 +805,7 @@
           "brief_ids": []
         },
         {
-          "id": "c74cf0fb-86d8-48f4-b2cc-4ff3d24d3b81",
+          "id": "a966cffb-3cb9-4d06-9496-da738f165573",
           "customer_source_id": "CUST-005",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -823,7 +823,7 @@
           "brief_ids": []
         },
         {
-          "id": "fecc65c4-1e45-4c22-b39e-90d78121dcf8",
+          "id": "c237319e-3bf6-46d8-bf50-cb872f39aa02",
           "customer_source_id": "CUST-008",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -841,7 +841,7 @@
           "brief_ids": []
         },
         {
-          "id": "b8f7b1d0-1c13-4cdf-87b8-461e07d84fef",
+          "id": "ef835564-e80c-4298-9e2d-7a2aa9f763eb",
           "customer_source_id": "CUST-012",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -859,7 +859,7 @@
           "brief_ids": []
         },
         {
-          "id": "a1df35ac-e22d-4021-971a-d79dde99469b",
+          "id": "d6ec4933-6d3e-499d-ad3c-0c9f3a90b70c",
           "customer_source_id": "CUST-014",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -877,7 +877,7 @@
           "brief_ids": []
         },
         {
-          "id": "ea8c1781-a8c0-4766-a7f2-b7aaca76dc08",
+          "id": "59e85505-2f2a-4848-bc16-7b971807f50e",
           "customer_source_id": "CUST-018",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -895,7 +895,7 @@
           "brief_ids": []
         },
         {
-          "id": "bc72653a-9abe-4927-aa44-632b0687a948",
+          "id": "b99ce004-65d7-47da-818f-cc8f93dc5d91",
           "customer_source_id": "CUST-024",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -913,7 +913,7 @@
           "brief_ids": []
         },
         {
-          "id": "8f57d836-69f6-4948-bacf-ceb57e4b67f9",
+          "id": "c356f044-48c2-4a7f-ac71-7532859aed78",
           "customer_source_id": "CUST-026",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -931,7 +931,7 @@
           "brief_ids": []
         },
         {
-          "id": "6c4c5637-1cc8-406b-9da4-8443ac55dd4c",
+          "id": "dab990d9-6fcd-4ebb-9c5b-0fd1c853e5ff",
           "customer_source_id": "CUST-029",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -949,7 +949,7 @@
           "brief_ids": []
         },
         {
-          "id": "7b99578e-0975-4f12-b2a1-2a44f3b47943",
+          "id": "17bcc7fc-ad78-41b6-94fb-e3027516ffda",
           "customer_source_id": "CUST-033",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -967,7 +967,7 @@
           "brief_ids": []
         },
         {
-          "id": "2fe6a03d-d084-4d7b-a401-6d3d79e02eb9",
+          "id": "8aeb6216-1f74-4027-933b-a20e8de4cc32",
           "customer_source_id": "CUST-038",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -985,7 +985,7 @@
           "brief_ids": []
         },
         {
-          "id": "26ecef1c-f428-451d-bba0-de5740689594",
+          "id": "8a77b04a-33ba-4ef8-b9b3-0580d977e266",
           "customer_source_id": "CUST-040",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1003,7 +1003,7 @@
           "brief_ids": []
         },
         {
-          "id": "951a378c-597f-419c-8baa-8953c6b0e385",
+          "id": "d7b9c2b3-b1e6-4c4a-bb96-08f5d063650c",
           "customer_source_id": "CUST-041",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1021,7 +1021,7 @@
           "brief_ids": []
         },
         {
-          "id": "498bee8b-f8ce-4b4e-a7c4-fe1def9a86f7",
+          "id": "5345951b-f895-4cef-b672-febb5362de2a",
           "customer_source_id": "CUST-047",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1039,7 +1039,7 @@
           "brief_ids": []
         },
         {
-          "id": "59db0a20-be0d-4751-a7eb-b98729ad4d49",
+          "id": "8d0d585a-53ee-4b83-b64f-c60c9631a750",
           "customer_source_id": "CUST-050",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1057,7 +1057,7 @@
           "brief_ids": []
         },
         {
-          "id": "018c38b8-1add-415a-a101-bdd3b2273aac",
+          "id": "8706a4b5-e80f-48ad-a3e4-92fa9c0e2885",
           "customer_source_id": "CUST-001",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1075,7 +1075,7 @@
           "brief_ids": []
         },
         {
-          "id": "4cdc99fd-0733-4995-afd8-4b2ba313d96e",
+          "id": "21eff41f-a584-47ba-9213-e4c131312cfd",
           "customer_source_id": "CUST-002",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1093,7 +1093,7 @@
           "brief_ids": []
         },
         {
-          "id": "98dc5383-145f-436f-9738-3a4fed579e92",
+          "id": "7011e360-af2f-4cbf-a44d-5cd49109e877",
           "customer_source_id": "CUST-003",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1111,7 +1111,7 @@
           "brief_ids": []
         },
         {
-          "id": "8164c70c-165b-4055-9330-5169e2c57bf2",
+          "id": "e181d7ec-8719-4920-b42a-89e737571200",
           "customer_source_id": "CUST-004",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1129,7 +1129,7 @@
           "brief_ids": []
         },
         {
-          "id": "5c1c29ed-6f45-4848-95a6-33c6d4d37e6b",
+          "id": "75bbbf0e-5a1c-4733-b94c-ad53e6a82836",
           "customer_source_id": "CUST-010",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1147,7 +1147,7 @@
           "brief_ids": []
         },
         {
-          "id": "788924f2-66cd-4c6b-8963-d28041752fff",
+          "id": "62ebabd2-bab7-402f-a8d1-668e761ade9b",
           "customer_source_id": "CUST-011",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1165,7 +1165,7 @@
           "brief_ids": []
         },
         {
-          "id": "057696be-555f-4638-9714-10697e1081b3",
+          "id": "811fa41b-4a50-44cb-b06d-eb64fd0792bc",
           "customer_source_id": "CUST-013",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1183,7 +1183,7 @@
           "brief_ids": []
         },
         {
-          "id": "2e263a14-3059-4071-8b4f-b3e8b9f771cb",
+          "id": "b1aebed5-659d-4aae-87ec-c6888a619e46",
           "customer_source_id": "CUST-015",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1201,7 +1201,7 @@
           "brief_ids": []
         },
         {
-          "id": "7900338b-93f4-4225-b78b-c4704676d19f",
+          "id": "1e5390d7-b587-47b7-97a2-826ea9fa0b74",
           "customer_source_id": "CUST-016",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1219,7 +1219,7 @@
           "brief_ids": []
         },
         {
-          "id": "7bec5a99-0b9f-4d89-a864-6e456ac57235",
+          "id": "34f61566-7fdc-47cf-9d3f-3f342e1e26d1",
           "customer_source_id": "CUST-017",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1237,7 +1237,7 @@
           "brief_ids": []
         },
         {
-          "id": "5a456d46-a8a7-46e5-a6f3-fb90d441cf5e",
+          "id": "fdf1de18-0620-4fbf-b1c2-92c1706f61cf",
           "customer_source_id": "CUST-019",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1255,7 +1255,7 @@
           "brief_ids": []
         },
         {
-          "id": "12e6ba56-c7fc-4c40-a590-29136eff64b0",
+          "id": "7e5292b4-e1fd-4c2f-a132-d7630e0d75a5",
           "customer_source_id": "CUST-020",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1273,7 +1273,7 @@
           "brief_ids": []
         },
         {
-          "id": "c5319632-3757-4dd8-a0a5-203e74395712",
+          "id": "1a57650e-4c2e-405e-9e4c-afef6fcd5ad2",
           "customer_source_id": "CUST-021",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1291,7 +1291,7 @@
           "brief_ids": []
         },
         {
-          "id": "ee35201f-a5ca-4d6b-8a5e-8136e4e95f6c",
+          "id": "a7464c2b-4e04-4174-99df-b7e08e33230a",
           "customer_source_id": "CUST-022",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1309,7 +1309,7 @@
           "brief_ids": []
         },
         {
-          "id": "211e91fa-6f31-4c0b-869e-251ead4933e1",
+          "id": "15024426-5090-4667-88a2-23786604b891",
           "customer_source_id": "CUST-023",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1327,7 +1327,7 @@
           "brief_ids": []
         },
         {
-          "id": "0ec40f0b-bb96-442d-84bb-6e300c498666",
+          "id": "b2864a3d-35d6-4f42-b56d-9fc03b9f333e",
           "customer_source_id": "CUST-027",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1345,7 +1345,7 @@
           "brief_ids": []
         },
         {
-          "id": "d8f2615c-b0da-4ebe-8d9b-3ec6f6975bfe",
+          "id": "ce18f48c-c3ec-405d-90bd-5ffa0884d448",
           "customer_source_id": "CUST-028",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1363,7 +1363,7 @@
           "brief_ids": []
         },
         {
-          "id": "648d61a5-ac76-4071-b240-5796b3861c4f",
+          "id": "16e9592e-e931-4065-818b-0b9677d40ca0",
           "customer_source_id": "CUST-030",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1381,7 +1381,7 @@
           "brief_ids": []
         },
         {
-          "id": "9e79b854-fb45-492b-9c61-e4c33e1b3d46",
+          "id": "bc51349e-9b4d-4217-af53-b19cd7611e95",
           "customer_source_id": "CUST-031",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1399,7 +1399,7 @@
           "brief_ids": []
         },
         {
-          "id": "bb816957-cb51-40be-acfa-527032963fe5",
+          "id": "8c44c69f-9a2e-4e46-9f8e-0060e040b19a",
           "customer_source_id": "CUST-032",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1417,7 +1417,7 @@
           "brief_ids": []
         },
         {
-          "id": "a21146f0-684c-49bd-bf09-22220698b4a8",
+          "id": "197eb09d-5435-4e2b-9af9-4dfcfba6d9bc",
           "customer_source_id": "CUST-034",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1435,7 +1435,7 @@
           "brief_ids": []
         },
         {
-          "id": "053ede03-7c3b-4a4c-bf0e-2690ff07fd62",
+          "id": "19e3c814-a439-4d93-8cf8-6a3c326d0669",
           "customer_source_id": "CUST-035",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1453,7 +1453,7 @@
           "brief_ids": []
         },
         {
-          "id": "95c6457a-6ce4-46fe-9729-880baf840fae",
+          "id": "2f18bc73-8cb7-4097-844a-17b557860a1a",
           "customer_source_id": "CUST-037",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1471,7 +1471,7 @@
           "brief_ids": []
         },
         {
-          "id": "d9bcb777-bb7e-4e43-8a63-5930549970b0",
+          "id": "88a9f333-4d60-4a50-a8e8-635a3e59bf44",
           "customer_source_id": "CUST-039",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1489,7 +1489,7 @@
           "brief_ids": []
         },
         {
-          "id": "58cae00b-54e6-47c9-bdd6-963caa479368",
+          "id": "5c009cc8-82b0-4e16-82fb-c9318613d933",
           "customer_source_id": "CUST-042",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1507,7 +1507,7 @@
           "brief_ids": []
         },
         {
-          "id": "bc594234-130a-4186-9cdd-893d5eb0c213",
+          "id": "04a23249-c4f0-4696-81ad-88943c693544",
           "customer_source_id": "CUST-043",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1525,7 +1525,7 @@
           "brief_ids": []
         },
         {
-          "id": "43aae5d7-ec83-4ab4-83b7-2c17b503268f",
+          "id": "f933becb-7d25-4ae8-9588-3119112b8f31",
           "customer_source_id": "CUST-044",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1543,7 +1543,7 @@
           "brief_ids": []
         },
         {
-          "id": "b8391093-fe73-4b5d-a576-873d29f1bbd2",
+          "id": "cfc9ee7d-5ee6-4149-8aff-9dfc5e6bb188",
           "customer_source_id": "CUST-045",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1561,7 +1561,7 @@
           "brief_ids": []
         },
         {
-          "id": "40be1fb1-075a-4be1-bac3-caad52c14e6f",
+          "id": "e0ac1e6f-dbca-466c-b88a-ff40c5abfc76",
           "customer_source_id": "CUST-046",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1579,7 +1579,7 @@
           "brief_ids": []
         },
         {
-          "id": "baf2a3a5-7d9d-4ee9-b8d6-510f52cc183b",
+          "id": "e521d941-1333-456f-9391-15929f3b416a",
           "customer_source_id": "CUST-048",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1597,7 +1597,7 @@
           "brief_ids": []
         },
         {
-          "id": "2fc3887e-e00a-4bfb-8230-08f05318ab06",
+          "id": "667d74e9-90b4-4283-a189-4214372f4022",
           "customer_source_id": "CUST-049",
           "as_of": "2026-08-27",
           "source_system": "csv_demo",
@@ -1633,7 +1633,7 @@
         "code": "SCOPE_UNRESOLVED",
         "message": "as_of is null and the scope has no support ticket to resolve it from",
         "details": null,
-        "request_id": "90b325a329d443b08478b5abb62f88fe"
+        "request_id": "ff82d8b2bd78445e866ad2ee6ea66ddb"
       }
     }
   }

@@ -1,0 +1,130 @@
+[
+  {
+    "method": "POST",
+    "path": "/api/v1/ingestion/runs",
+    "request_body": {
+      "source": "csv_demo"
+    },
+    "status": 201,
+    "body": {
+      "run_id": "26e7edae-a803-4fd0-a9c4-98b0a85759cf",
+      "source_system": "csv_demo",
+      "source_entity": null,
+      "mode": "full",
+      "status": "NOOP",
+      "started_at": "2026-09-29T05:35:44.506603Z",
+      "finished_at": "2026-09-29T05:35:44.598353Z",
+      "records_fetched": 233,
+      "records_raw_persisted": 233,
+      "records_inserted": 0,
+      "records_updated": 0,
+      "records_unchanged": 233,
+      "records_rejected": 0,
+      "records_failed": 0,
+      "warnings": 0,
+      "batches_failed": 0,
+      "error_summary": null,
+      "batches_committed": 7,
+      "entities": [
+        {
+          "entity_type": "organizations",
+          "status": "completed",
+          "records_fetched": 1,
+          "records_inserted": 0,
+          "records_updated": 0,
+          "records_unchanged": 1,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_committed": 1,
+          "batches_failed": 0,
+          "failure": null
+        },
+        {
+          "entity_type": "employees",
+          "status": "completed",
+          "records_fetched": 24,
+          "records_inserted": 0,
+          "records_updated": 0,
+          "records_unchanged": 24,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_committed": 1,
+          "batches_failed": 0,
+          "failure": null
+        },
+        {
+          "entity_type": "customers",
+          "status": "completed",
+          "records_fetched": 50,
+          "records_inserted": 0,
+          "records_updated": 0,
+          "records_unchanged": 50,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_committed": 1,
+          "batches_failed": 0,
+          "failure": null
+        },
+        {
+          "entity_type": "deals",
+          "status": "completed",
+          "records_fetched": 44,
+          "records_inserted": 0,
+          "records_updated": 0,
+          "records_unchanged": 44,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_committed": 1,
+          "batches_failed": 0,
+          "failure": null
+        },
+        {
+          "entity_type": "projects",
+          "status": "completed",
+          "records_fetched": 22,
+          "records_inserted": 0,
+          "records_updated": 0,
+          "records_unchanged": 22,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_committed": 1,
+          "batches_failed": 0,
+          "failure": null
+        },
+        {
+          "entity_type": "support_tickets",
+          "status": "completed",
+          "records_fetched": 80,
+          "records_inserted": 0,
+          "records_updated": 0,
+          "records_unchanged": 80,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_committed": 1,
+          "batches_failed": 0,
+          "failure": null
+        },
+        {
+          "entity_type": "documents",
+          "status": "completed",
+          "records_fetched": 12,
+          "records_inserted": 0,
+          "records_updated": 0,
+          "records_unchanged": 12,
+          "records_rejected": 0,
+          "records_failed": 0,
+          "warnings": 0,
+          "batches_committed": 1,
+          "batches_failed": 0,
+          "failure": null
+        }
+      ]
+    }
+  }
+]

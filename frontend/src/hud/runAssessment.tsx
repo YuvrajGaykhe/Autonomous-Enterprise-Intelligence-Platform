@@ -1,11 +1,16 @@
 /**
- * Run assessment (spec §6.6, §7.6, §8.2, D-F-14, R-F-7).
+ * Run assessment (spec §6.6, §7.6, §8.2, §9.6, D-F-14, R-F-7).
  *
  * The run's state lives in one provider, so the HUD's button and the inbox's empty-state button
  * are the same action. Before the POST, the page counts the assessments at the run's `as_of` (or
  * at every date, for Auto). A POST that never produced an answer has an unknown outcome: the page
  * counts again, and offers a retry only when nothing new was recorded. The POST is idempotent, so
  * that retry cannot write twice. No POST is retried automatically.
+ *
+ * In the office the run is also a show (F4): its agents work while the POST is in flight, wait at
+ * their desks while the replay's data is read, then replay the recorded results under the banner,
+ * "Already assessed" when the API answered 200. The office does not open the inbox over the
+ * replay; the CEO's desk says what waits. Classic view opens the inbox, as before.
  */
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,9 +19,22 @@ import { useLocation, useNavigate } from 'react-router';
 
 import { invalidateAfterAssessment } from '@/api/queries';
 import { countAssessments, fetchAssessment, runAssessment } from '@/api/risk';
+import { COPY, fill } from '@/copy';
+import { useRoster } from '@/data/useRoster';
+import { SNAPSHOT_PARAM } from '@/data/useInbox';
+import {
+  ASSESSMENT_CAST,
+  loadAssessmentEpisode,
+  playedFor,
+  startHold,
+  startLive,
+  startReplay,
+} from '@/data/shows';
 import { requestAsOf, type AsOf } from '@/domain/asOf';
+import { officeLayout } from '@/domain/layout';
 import { classifyWriteFailure, type WriteFailure } from '@/domain/outcomes';
 import { addressOf, viewOf } from '@/domain/views';
+import { useDirector } from '@/state/director';
 import { useSession } from '@/state/session';
 
 export type RunPhase =
@@ -59,13 +77,46 @@ export function RunAssessmentProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const setLastRun = useSession((state) => state.setLastRun);
+  const { roster } = useRoster();
+  const inOffice = viewOf(pathname) === 'office';
 
-  /** The run's snapshot, in the inbox of the view the reader is in (§7.2). */
+  /**
+   * The run's snapshot (§7.2): Classic opens its inbox; the office forgets any chosen snapshot,
+   * so the tray and the replay show the run's.
+   */
   const showInbox = useCallback(() => {
     const params = new URLSearchParams(search);
-    params.delete('snapshot');
-    void navigate(addressOf(viewOf(pathname) ?? 'classic', { kind: 'inbox' }, params.toString()));
+    params.delete(SNAPSHOT_PARAM);
+    if (viewOf(pathname) === 'office') {
+      if (new URLSearchParams(search).has(SNAPSHOT_PARAM))
+        void navigate({ pathname, search: params.toString() }, { replace: true });
+      return;
+    }
+    void navigate(addressOf('classic', { kind: 'inbox' }, params.toString()));
   }, [navigate, pathname, search]);
+
+  /** Replay the run's recorded results (§9.6), or end the hold when there is nothing to play. */
+  const replay = useCallback(
+    async (hold: number, walked: number, status: number, date: string, ids: string[]) => {
+      const end = () => useDirector.getState().end(hold);
+      try {
+        const episode = await loadAssessmentEpisode(client, {
+          asOf: date,
+          fingerprintParam: null,
+          runAssessmentIds: ids,
+        });
+        if (useDirector.getState().show?.id !== hold) return;
+        const banner =
+          status === 200 ? COPY.alreadyAssessedBanner : fill(COPY.replayBanner, { date });
+        if (startReplay('assessment', episode, officeLayout(roster), banner, walked) === null)
+          end();
+      } catch {
+        // The run itself is reported by the status line; without its data there is no replay.
+        end();
+      }
+    },
+    [client, roster],
+  );
 
   const recount = useCallback(
     async (asOf: AsOf, before: number) => {
@@ -92,15 +143,19 @@ export function RunAssessmentProvider({ children }: { children: ReactNode }) {
         setPhase({ kind: 'not-sent', asOf, error });
         return;
       }
+      const live = inOffice ? startLive('assessment', ASSESSMENT_CAST) : null;
       let result: Awaited<ReturnType<typeof runAssessment>>;
       try {
         result = await runAssessment(requestAsOf(asOf));
       } catch (error) {
+        if (live !== null) useDirector.getState().end(live);
         const failure = classifyWriteFailure(error);
         if (failure.kind === 'unknown') await recount(asOf, before);
         else setPhase({ kind: 'failed', asOf, failure });
         return;
       }
+      const walked = live === null ? 0 : playedFor(live);
+      const hold = live === null ? null : startHold('assessment', ASSESSMENT_CAST);
       const items = result.data.items;
       let resolvedAsOf = asOf.kind === 'date' ? asOf.date : null;
       const [first] = items;
@@ -129,8 +184,18 @@ export function RunAssessmentProvider({ children }: { children: ReactNode }) {
         created: items.filter((item) => item.created).length,
       });
       showInbox();
+      if (hold === null) return;
+      if (resolvedAsOf === null) useDirector.getState().end(hold);
+      else
+        await replay(
+          hold,
+          walked,
+          result.status,
+          resolvedAsOf,
+          items.map((item) => item.assessment_id),
+        );
     },
-    [client, recount, setLastRun, showInbox],
+    [client, inOffice, recount, replay, setLastRun, showInbox],
   );
 
   const checkAgain = useCallback(async () => {

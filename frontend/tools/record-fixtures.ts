@@ -284,6 +284,15 @@ async function main(): Promise<number> {
     files['auto-run.json'] = write('auto-run.json', auto.exchanges);
     files['briefs.json'] = write('briefs.json', [...briefs, ...auto.briefs]);
 
+    // The ingestion write (R-F-6) comes last of all, because it adds a run that the runs list and
+    // the metrics above must not see. The source has not changed since the environment ingested
+    // it, so the run is a NOOP.
+    const ingestionRun = expectStatus(
+      await exchange(base, 'POST', '/api/v1/ingestion/runs', { source: SOURCE_SYSTEM }),
+      201,
+    );
+    files['ingestion-run.json'] = write('ingestion-run.json', [ingestionRun]);
+
     const openapi = await fetch(`${base}/openapi.json`);
     if (openapi.status !== 200) throw new Error(`GET /openapi.json answered ${openapi.status}`);
     writeFileSync(`${FIXTURES}openapi.json`, `${JSON.stringify(await openapi.json(), null, 2)}\n`);

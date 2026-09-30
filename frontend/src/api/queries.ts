@@ -169,6 +169,15 @@ export async function invalidateAfterDecision(client: QueryClient, briefId: stri
   ]);
 }
 
+/** After an ingestion run: the runs, the metrics, the record counts and the records (§6.7). */
+export async function invalidateAfterIngestion(client: QueryClient): Promise<void> {
+  await Promise.all(
+    [queryKeys.runs, queryKeys.metrics, ['entity-total'], ['entities']].map((queryKey) =>
+      client.invalidateQueries({ queryKey }),
+    ),
+  );
+}
+
 /** After an assessment run returns: every assessment list, which the inbox is built on (§6.7). */
 export async function invalidateAfterAssessment(client: QueryClient): Promise<void> {
   await client.invalidateQueries({ queryKey: queryKeys.assessmentLists });

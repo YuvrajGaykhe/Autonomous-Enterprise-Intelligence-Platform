@@ -30,6 +30,7 @@ import { AgentPanel } from '@/panels/AgentPanel';
 import { BriefDetail } from '@/panels/BriefDetail';
 import { CeoInbox } from '@/panels/CeoInbox';
 import { useCamera } from '@/state/camera';
+import { useDirector } from '@/state/director';
 import { usePreferences } from '@/state/preferences';
 import { useSession } from '@/state/session';
 import { EmptyState, LoadingState } from '@/states/states';
@@ -38,8 +39,10 @@ import { ROLE_LINES } from '@/copy';
 import { CameraControls, CONTROLS_HELP, useCameraKeys, useViewportPointer } from './CameraControls';
 import { OfficeDialog } from './OfficeDialog';
 import { OfficeText } from './OfficeText';
+import { ReplayBanner } from './ReplayBanner';
 import { StaffDirectory } from './StaffDirectory';
 import { useOfficeModel } from './useOfficeModel';
+import { useOfficeSound } from './useOfficeSound';
 import { WorldBoundary } from './WorldBoundary';
 
 const World = lazy(() => import('@/world/Office'));
@@ -87,6 +90,19 @@ function Office() {
   const reducedMotion = useReducedMotion();
   const quarterTurns = useCamera((state) => state.quarterTurns);
   const zoomIndex = useCamera((state) => state.zoomIndex);
+  const sound = usePreferences((state) => state.sound);
+  const show = useDirector((state) => state.show);
+  const refresh = useDirector((state) => state.refresh);
+  useOfficeSound(model.agents, model.stamp, sound && !still);
+
+  // A background tab's timers are held back; coming back, the show catches up at once.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [refresh]);
 
   const highlighted = useSession((state) => state.highlightedAgentId);
   const highlight = useSession((state) => state.highlight);
@@ -125,6 +141,9 @@ function Office() {
       data-zoom={zoomIndex}
       data-pixel={pixel ? '1' : '0'}
       data-highlight={highlighted ?? ''}
+      data-show={show?.kind ?? 'none'}
+      data-tray={model.trayCount ?? ''}
+      data-stamp={model.stamp?.decision ?? ''}
       className="flex h-full overflow-hidden"
     >
       <StaffDirectory
@@ -158,6 +177,8 @@ function Office() {
                 agents={model.agents}
                 board={model.board}
                 trayCount={model.trayCount}
+                arrows={model.arrows}
+                stamp={model.stamp}
                 notes={model.notes}
                 openAgentId={agentId ?? (target.kind === 'inbox' ? 'ceo' : null)}
                 highlightedAgentId={highlighted}
@@ -173,6 +194,7 @@ function Office() {
             </Suspense>
           </WorldBoundary>
         </div>
+        <ReplayBanner banner={model.banner} />
         <CameraControls />
       </div>
       <p id={helpId} className="sr-only">

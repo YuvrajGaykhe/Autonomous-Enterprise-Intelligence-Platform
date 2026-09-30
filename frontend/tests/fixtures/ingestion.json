@@ -6,13 +6,13 @@
     "body": {
       "items": [
         {
-          "run_id": "e35438ce-c69e-4b9a-a92b-d61c1f712050",
+          "run_id": "6b410d1b-397f-49b6-bed0-ef3a6741f84a",
           "source_system": "csv_demo",
           "source_entity": null,
           "mode": "full",
           "status": "SUCCESS",
-          "started_at": "2026-09-28T03:15:50.436810Z",
-          "finished_at": "2026-09-28T03:15:50.611602Z",
+          "started_at": "2026-09-29T05:35:40.859562Z",
+          "finished_at": "2026-09-29T05:35:41.162195Z",
           "records_fetched": 233,
           "records_raw_persisted": 233,
           "records_inserted": 233,
@@ -32,16 +32,16 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/ingestion/runs/e35438ce-c69e-4b9a-a92b-d61c1f712050",
+    "path": "/api/v1/ingestion/runs/6b410d1b-397f-49b6-bed0-ef3a6741f84a",
     "status": 200,
     "body": {
-      "run_id": "e35438ce-c69e-4b9a-a92b-d61c1f712050",
+      "run_id": "6b410d1b-397f-49b6-bed0-ef3a6741f84a",
       "source_system": "csv_demo",
       "source_entity": null,
       "mode": "full",
       "status": "SUCCESS",
-      "started_at": "2026-09-28T03:15:50.436810Z",
-      "finished_at": "2026-09-28T03:15:50.611602Z",
+      "started_at": "2026-09-29T05:35:40.859562Z",
+      "finished_at": "2026-09-29T05:35:41.162195Z",
       "records_fetched": 233,
       "records_raw_persisted": 233,
       "records_inserted": 233,
@@ -56,7 +56,7 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/ingestion/runs/e35438ce-c69e-4b9a-a92b-d61c1f712050/errors?limit=500&offset=0",
+    "path": "/api/v1/ingestion/runs/6b410d1b-397f-49b6-bed0-ef3a6741f84a/errors?limit=500&offset=0",
     "status": 200,
     "body": {
       "items": [],

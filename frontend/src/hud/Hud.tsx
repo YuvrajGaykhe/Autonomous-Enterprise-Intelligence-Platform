@@ -1,7 +1,7 @@
 /**
- * The top bar (spec §8.2): the product name, the health light, the Office/Classic switch, the
- * Pixel/Smooth switch in the office, the `as_of` selector and Run assessment. The sound toggle,
- * Replay and the tour arrive with the phases that build what they control (§14).
+ * The top bar (spec §8.2): the product name, the health light, the Office/Classic switch, and in
+ * the office the Pixel/Smooth switch, Sound and Replay (F4); the `as_of` selector and Run
+ * assessment. The tour arrives with F6 (§14).
  */
 
 import { Link } from 'react-router';
@@ -11,8 +11,9 @@ import { COPY } from '@/copy';
 
 import { AsOfSelector } from './AsOfSelector';
 import { HealthLight } from './HealthLight';
+import { ReplayButton } from './ReplayButton';
 import { RunAssessmentButton } from './RunAssessmentControls';
-import { PixelSwitch, ViewSwitch } from './ViewToggles';
+import { PixelSwitch, SoundSwitch, ViewSwitch } from './ViewToggles';
 
 export function Hud() {
   const links = useViewLinks();
@@ -25,7 +26,9 @@ export function Hud() {
       <div className="ml-auto flex flex-wrap items-center gap-3">
         <ViewSwitch />
         {links.view === 'office' && <PixelSwitch />}
+        {links.view === 'office' && <SoundSwitch />}
         <AsOfSelector />
+        {links.view === 'office' && <ReplayButton />}
         <RunAssessmentButton />
       </div>
     </header>

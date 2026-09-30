@@ -29,7 +29,7 @@
         },
         "connector_request_failures_total": 0,
         "validation_errors_total": 0,
-        "ingestion_duration_seconds_total": 0.174792,
+        "ingestion_duration_seconds_total": 0.302633,
         "canonical_records": {
           "organizations": 1,
           "employees": 24,
@@ -66,7 +66,7 @@
           },
           "connector_request_failures_total": 0,
           "validation_errors_total": 0,
-          "ingestion_duration_seconds_total": 0.174792,
+          "ingestion_duration_seconds_total": 0.302633,
           "canonical_records": {
             "organizations": 1,
             "employees": 24,
@@ -78,16 +78,16 @@
           },
           "source_system": "csv_demo",
           "last_run": {
-            "run_id": "e35438ce-c69e-4b9a-a92b-d61c1f712050",
+            "run_id": "6b410d1b-397f-49b6-bed0-ef3a6741f84a",
             "status": "SUCCESS",
-            "started_at": "2026-09-28T03:15:50.436810Z",
-            "finished_at": "2026-09-28T03:15:50.611602Z"
+            "started_at": "2026-09-29T05:35:40.859562Z",
+            "finished_at": "2026-09-29T05:35:41.162195Z"
           },
           "last_successful_run": {
-            "run_id": "e35438ce-c69e-4b9a-a92b-d61c1f712050",
+            "run_id": "6b410d1b-397f-49b6-bed0-ef3a6741f84a",
             "status": "SUCCESS",
-            "started_at": "2026-09-28T03:15:50.436810Z",
-            "finished_at": "2026-09-28T03:15:50.611602Z"
+            "started_at": "2026-09-29T05:35:40.859562Z",
+            "finished_at": "2026-09-29T05:35:41.162195Z"
           }
         },
         {
@@ -170,7 +170,7 @@
         }
       ],
       "process": {
-        "started_at": "2026-09-28T03:15:51.181770Z",
+        "started_at": "2026-09-29T05:35:41.752771Z",
         "runs_total": 0,
         "runs_by_status": {
           "RUNNING": 0,

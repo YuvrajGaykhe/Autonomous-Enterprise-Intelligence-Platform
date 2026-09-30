@@ -1,6 +1,7 @@
 /**
  * The query layer (spec §6.7): every query returns its data with the calls behind it, and the
- * writes invalidate exactly the keys §6.7 names. `countAssessments` reads a total in one request.
+ * writes invalidate exactly the keys §6.7 names. `countAssessments` and `countRuns` read a total in
+ * one request.
  */
 
 import { QueryClient } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ import {
   entitiesQuery,
   entityTotalQuery,
   invalidateAfterAssessment,
+  invalidateAfterIngestion,
   invalidateAfterDecision,
   metricsQuery,
   queryKeys,
@@ -23,6 +25,7 @@ import {
   sourceHealthQuery,
   sourcesQuery,
 } from '@/api/queries';
+import { countRuns } from '@/api/ingestion';
 import { countAssessments } from '@/api/risk';
 
 import { EXCHANGE_FILES, loadExchanges, type RecordedExchange } from '../support/fixtures';
@@ -155,5 +158,27 @@ describe('invalidation (§6.7)', () => {
     const client = seeded();
     await invalidateAfterAssessment(client);
     expect(stale(client)).toEqual(['assessments/2026-08-27', 'assessments/2026-09-18']);
+  });
+
+  it('after an ingestion run: the runs, the metrics, and every record count and list', async () => {
+    const client = seeded();
+    for (const key of [
+      queryKeys.runs,
+      queryKeys.metrics,
+      queryKeys.entityTotal('customers'),
+      queryKeys.entities('deals'),
+    ])
+      client.setQueryData(key, { data: null, calls: [] });
+    await invalidateAfterIngestion(client);
+    expect(stale(client)).toEqual(['entities/deals', 'entity-total/customers', 'metrics', 'runs']);
+  });
+});
+
+describe('countRuns (R-F-7)', () => {
+  it('reads the total of every run with a single-row request', async () => {
+    const counted = await countRuns();
+    expect(paths.at(-1)).toBe('/api/v1/ingestion/runs?limit=1&offset=0');
+    expect(counted.total).toBe(1);
+    expect(counted.call.requestId).toBe('rid-query');
   });
 });

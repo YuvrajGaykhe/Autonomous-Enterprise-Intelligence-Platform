@@ -19,7 +19,7 @@ import { useCamera } from '@/state/camera';
 import { useSession } from '@/state/session';
 
 import { briefBodies, briefId, flowExchange, hang, refuse } from '../support/api';
-import { loadExchanges, recordedBody } from '../support/fixtures';
+import { recordedBody } from '../support/fixtures';
 import { renderRoute } from '../support/render';
 import { answer, server } from '../support/server';
 
@@ -553,26 +553,5 @@ describe('the WebGL fallback (§9.11, AC-F-8)', () => {
     expect(office()).toHaveAttribute('data-world', 'loading');
     act(() => props().onReady());
     expect(office()).toHaveAttribute('data-world', 'ready');
-  });
-});
-
-describe('Run assessment from the office (§8.2)', () => {
-  it("shows the run's snapshot in the office inbox", async () => {
-    const run = loadExchanges('assessment-runs.json')[0]?.body as Record<string, unknown>;
-    server.use(
-      http.post('*/api/v1/risk/assessments', () => HttpResponse.json(run, { status: 201 })),
-    );
-    const { router } = await openOffice('/?as_of=2026-09-18&still=1');
-
-    await userEvent.click(screen.getByRole('button', { name: 'Run assessment' }));
-
-    await waitFor(() =>
-      expect(router.state.location.search).toBe('?as_of=2026-09-18&still=1&inbox=1'),
-    );
-    expect(router.state.location.pathname).toBe('/');
-    // The inbox opens as a modal drawer, so the run's outcome under the HUD is behind it.
-    const status = screen.getByRole('status', { name: 'Assessment run', hidden: true });
-    expect(status).toHaveTextContent('Assessed');
-    expect(await screen.findByRole('dialog', { name: 'CEO inbox' })).toBeInTheDocument();
   });
 });

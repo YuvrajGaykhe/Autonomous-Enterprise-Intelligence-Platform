@@ -1453,6 +1453,180 @@ F4. F4's record carries that ruling.
 
 **Next:** F4, which starts only on the owner's instruction.
 
+### F4 — Life: CLOSED 2026-09-29
+
+**The owner's ruling on motion (DIRECTED 2026-09-29).** After checking F3's running site the owner
+directed how the agents move, and F4 is built on it:
+- an agent at work is at its desk;
+- an agent handing something to another agent **walks to that agent**;
+- an agent not at work is in the **Break Area**, and the Break Area gets more to do;
+- agents work only during a real run and a bannered replay; the HUD gets a **Replay** button, and
+  nothing replays on its own (a finished run replays its own results).
+
+The ruling refines §9.4–§9.7 without replacing them: WORKING and HANDOFF still occur only during an
+in-flight tracked request or a bannered replay (D-F-1, AC-F-2), and ambient walks still go only
+between desks and Break Area places (§9.7).
+
+**What F4 produced.**
+- **Walking (`src/domain/walkGrid.ts`, `walker.ts`, `layout.ts`).** A walk grid of 0.25-unit cells
+  cut from the floor plan: walls block except at open doors, locked doors stay shut, and furniture
+  blocks its footprint grown by an agent's reach. A\* over eight neighbours, never cutting a blocked
+  corner, then pulled tight. Only the largest free region counts as open floor, so no walk ends in a
+  pocket shut in by furniture, or in a locked room. An agent walks at 4 units a second and hurries,
+  up to 1.8 times that, when a cue needs it somewhere by a given moment.
+- **The Break Area (`breakArea.ts`, `floorPlan.ts`, `kit/furniture.ts`).** Eighteen places, one
+  agent each: the coffee machine, the water cooler, the fridge, the arcade cabinet, the vending
+  machine, both ends of the ping-pong table, the window, three sofa seats, an armchair, three bean
+  bags, two café chairs, and MEMORY's charging pad. New furniture, all procedural: a fridge, an
+  arcade cabinet, a ping-pong table, a TV console, a lounge rug, an armchair, bean bags, a café table
+  and chairs, a pizza box and a charging pad. MEMORY is a robot: it takes standing places only.
+- **Ambient life (`ambient.ts`).** An idle agent takes a free place, stays 7 to 16 seconds after
+  arriving, then walks to another. Choices come from a generator seeded by the agent's id, so the
+  same office always starts the same way. `?still=1` keeps every agent at its first place.
+- **Episodes (`episodes.ts`, §9.5).** The assessment episode's eight stages and the ingestion
+  episode, each step with `source: { route, path }`, each emitted only when its data exists.
+- **The Director (`director.ts`).** A pure timeline per show:
+  - **live** while a POST is in flight: the stage agents walk to their desks and light up in stage
+    order, captioned `ASSESSING…` or `INGESTING…`;
+  - **hold** between the POST's answer and its replay: at their desks, idle;
+  - **replay** under the banner: everyone in the episode first walks to their desk; each stage
+    works at its desk with its caption; **a finished stage walks its result to the next stage's
+    agents under a cyan arrow labelled with its own caption**; the analysts meet at the debate
+    table for a conflict under a red arrow; the RECONCILER rules; BRIEF_WRITER carries the briefs
+    to the CEO's tray, one sheet per inbox row; everyone cheers; the show ends and they walk back to
+    the Break Area.
+- **The world (`src/world/`).** `Crowd.tsx` draws every body as instanced parts rewritten each
+  frame, with limbs that swing (walk, type, work, present, play, sip, cheer, carry), the working
+  glow's hull, the bulb, and a carried sheet. Name tags, bubbles, click targets and the open panel's
+  ring follow each body. `Arrows.tsx` draws the neon arcs, `Stamp.tsx` the decision stamp and the
+  approval's confetti. An idle agent in the Break Area wears a smaller tag.
+- **The page.** The Director store (`src/state/director.ts`); the replay banner, which ends the
+  replay when dismissed; the HUD's **Replay** and **Sound** (office only); **Run ingestion** in a
+  connector's panel (R-F-6); the stamp after a recorded decision; Web Audio clicks and a stamp's
+  thump when sound is on (§9.12).
+  - **Run assessment in the office** no longer opens the inbox drawer over the world: the run
+    replays, and its status line links **Show the inbox**. Classic view opens the inbox as before.
+  - **Run ingestion** is offered only while the source's health check says `healthy`. An answer
+    that never arrived, or a 500, is an unknown outcome: the panel re-reads the source's runs
+    before it offers a retry (R-F-7).
+- **Tests.** `tests/unit/life.test.ts` (47), `tests/component/life.test.tsx` (19), additions to
+  `world.test.ts` and `queries.test.ts`, and `tests/e2e/life.spec.ts`, a third Playwright project
+  that runs after Classic. `npm run perf` now measures during a replay (see below).
+- **Fixtures.** `tools/record-fixtures.ts` also records `POST /api/v1/ingestion/runs` for
+  `csv_demo`, last, into `ingestion-run.json` (a `NOOP` run). Every fixture was re-recorded; apart
+  from the new file, only ids, timestamps and request ids changed.
+- **Docs.** `frontend/README.md` describes the office's life, and `THIRD_PARTY_NOTICES.md` now says
+  the walk grid was written here, not adapted. No file outside `frontend/` and this record changed,
+  and F4 adds no dependency.
+
+**Owner rulings.** The motion ruling above. No other ruling was needed while F4 was built.
+
+**Choices made in F4 (PROPOSED; each stands unless replaced).**
+- **The walk grid is written here, not vendored from Claw3D (§14's F4 row, §9.9).** Fetching
+  Claw3D's module is an outward action that needs its own approval, and a grid A\* is small. So
+  `src/vendor/` still does not exist and the notices list no code.
+- **drei and postprocessing stay unused.** `@react-three/drei`, `@react-three/postprocessing` and
+  `postprocessing` are installed but not imported. Removing them is a dependency change, left for
+  the owner.
+- **Motion numbers.** Walk speed 4 units a second, hurrying up to 1.8 times that; a Break Area stay
+  of 7 to 16 seconds. One frame walks at most 0.5 seconds' worth, so a long pause (a hidden tab,
+  where Chrome slows animation frames to about one a second) resumes as a short step, not a jump
+  across the office.
+- **Nobody walks under `still` or reduced motion.** Agents are placed where the timeline puts them
+  at once, limbs keep their pose without swinging, and no confetti flies (§9.11). Under `perf=1`
+  an idle agent moves on within 0.3 seconds of arriving, so the performance record has every agent
+  moving.
+- **Test infrastructure.**
+  - Playwright gains a third project, `life`, which runs after Classic: it records a decision and
+    an ingestion run, which Classic's screenshots must not see.
+  - The component setup ends any show and clears the stamp between tests, and restores the
+    Director's clock.
+  - `npm run perf` starts a Replay after the warm-up and fails if the replay ends before the 30
+    seconds do.
+- **The Classic baseline `agent-csv-demo`** was re-recorded: CSV_DEMO_AGENT's panel gained the Run
+  ingestion card. The other five Classic baselines are unchanged. The three office baselines were
+  re-recorded, because idle agents now stand in the Break Area rather than at their desks.
+
+**The baseline (§13), measured read-only at F4's start.**
+- `HEAD` is `2b43522` (the F3 commit) and `origin/main` is `39c2fe3`, so local `main` is 1 ahead.
+  There are 553 tracked files.
+- **The development database** (read-only GETs): 52 customers and 1 assessment, at `as_of
+  2026-09-27`. Both responses were saved for AC-F-17.
+- Every fixture was saved before re-recording, to compare the new recording against.
+
+**The gate (§13).**
+1. **Frontend.**
+   - `tsc` reports 0 on both projects, ESLint 0 errors and 0 warnings, and Prettier is clean.
+   - **Vitest:** 547 passed, 0 failed, 0 skipped. By layer: unit 252, component 171, contract 68,
+     guards 34, tools 22.
+   - **Coverage:** `src/api/**` and `src/domain/**` are at 100% of lines, branches, functions and
+     statements (1311 statements, 598 branches). All of `src/` outside `src/world/` is 97.1% of
+     statements and 98.0% of lines; `src/lib/sound.ts` is the gap, because jsdom has no Web Audio.
+     `src/world/` is 33.7%: its part kit is 98.9% under unit tests, and its React Three Fiber
+     components run only in the end-to-end tests.
+   - **Playwright:** 39 passed, 0 skipped, on two consecutive runs over a recreated database. The
+     8 new life tests cover:
+     - every agent not at work in the Break Area with a smaller tag, and strolling on;
+     - Run assessment at `2026-09-18`: the "already assessed" banner, the agents walking to their
+       desks, MEMORY's snapshot handed to LINKER_AGENT under a cyan arrow, the analysts' conflict
+       over DEAL-001 under a red arrow, the RECONCILER's ruling, the tray filling to 3, and
+       everyone back in the Break Area when the show ends;
+     - approving CUST-007 from the office: the stamp, the chain one longer, and the corkboard's
+       new note;
+     - Replay under its banner, ended by dismissing it, and placed at once under reduced motion;
+     - Run ingestion from CSV_DEMO_AGENT's panel (a `NOOP` run), handed to MEMORY in the replay,
+       and the button disabled for the unhealthy `odoo_mock`.
+   - **axe:** 0 serious and 0 critical on the replay banner over the office and on the ingestion
+     outcome in CSV_DEMO_AGENT's drawer, as well as on every page checked before.
+   - **Bundle:** initial JavaScript is 198.7 KB gzip of the 250 KB budget (F3: 189.6). The world
+     chunk is 253.0 KB gzip of 900 KB (F3: 247.2), and the world assets are 0 of 5 MB. CSS is
+     19.5 KB gzip.
+   - **Performance** (`npm run perf`: every agent moving, measured for 30 seconds during a Replay,
+     `?perf=1`, 1920×1080 at device pixel ratio 1, after a 3-second warm-up). The reference machine
+     is F3's: the owner's MacBook Air (`Mac14,15`, M2, 8 GB), running the installed Chrome 153
+     headless on ANGLE Metal (Apple M2).
+
+     | Mode | Frames | Median | p95 | Draw calls (max) | Triangles (max) |
+     |---|---|---|---|---|---|
+     | Pixel | 1795 | 16.70 ms | 18.10 ms | 74 | 118,186 |
+     | Smooth | 1797 | 16.70 ms | 18.20 ms | 43 | 75,518 |
+
+     Both are within §9.10 (median ≤ 16.7 ms, p95 ≤ 25 ms, ≤ 150 draw calls). Against F3's static
+     scene, p95 rose by 0.5 and 0.8 ms and the draw calls by 12 and 6.
+2. **The backend.** `git diff --stat 733b19b -- app config migrations alembic.ini data tests scripts
+   Dockerfile docker-compose.yml docker .env.example pyproject.toml` lists only
+   `scripts/secret_scan.py | 2 ++` (F1, ruling 3). F4 changes nothing under a frozen path. The full
+   backend suite is not run in F4 (§13 runs it at F1, F5 and F6).
+3. **The four repository-scanning backend test files** pass on the staged tree: 256 passed and
+   0 failed, with the 2 known warnings (the working tree gave the same). They ran in the repository
+   `.venv`, with the caches and the coverage file kept out of the repository.
+4. **The secret scan.** `scan_text` over every new or changed path reports 0 findings: 67 text
+   files (this record included) and 4 PNG baselines skipped as binary. Nothing was deleted.
+   - **Staged `make secret-scan`:** 564 files scanned, 12 binary files skipped (576 tracked, which
+     is 553 + 23 new) and 0 findings.
+5. **Anchors.** The golden sha, the one migration head `070e4968a497` and the strategy diff sha all
+   equal §3.
+6. **`git status`** shows only `frontend/`, this document and the unstaged strategy document.
+
+**AC-F-17.**
+- The development database's `GET /risk/assessments` and `GET /entities/customers` responses are
+  byte-identical before and after F4's gate (52 customers; 1 assessment, at `as_of 2026-09-27`).
+- F4 used `<database>_frontend_e2e`, for the fixtures, the end-to-end tests and the performance
+  record, and `<database>_frontend`, through the `make frontend-backend` started for the owner's
+  check of F3, to look at the office in a browser. It used nothing else.
+
+**Known in F4, carried forward.**
+- React Three Fiber still logs three's `THREE.Clock` deprecation once per load.
+- The office's baselines follow Chrome and the GPU, like Classic's.
+- The Break Area's strolls are seeded but depend on frame timing, so the end-to-end test checks
+  that agents move, not where they go.
+
+**Not run in F4.**
+- The full backend suite (F5, F6).
+
+**Next:** F5 (hosting), which starts only on the owner's instruction, with each external action
+approved separately.
+
 ---
 
 ## Appendix A: fixed copy

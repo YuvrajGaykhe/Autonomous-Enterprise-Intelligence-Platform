@@ -57,6 +57,7 @@ import {
 } from './BriefDetail';
 import { BandChip, DecisionStatusChip, ExecutiveBadge, NameTag } from './chips';
 import { DocumentSpanLink, EvidenceList, RecordLink, RecordLinks } from './evidence';
+import { RunIngestion } from './RunIngestion';
 
 const AVATARS: Record<AgentKind, LucideIcon> = {
   connector: HardHat,
@@ -241,6 +242,9 @@ function useConnectorBody(source: string): Body {
             ]}
           />
         ))}
+      </Section>
+      <Section id="connector-ingest" title="Run ingestion">
+        <RunIngestion source={source} healthy={health.data?.data.status === 'healthy'} />
       </Section>
       <Section id="connector-runs" title="Latest ingestion runs">
         {queryBody(runs, 'the ingestion runs', ({ data }) => {

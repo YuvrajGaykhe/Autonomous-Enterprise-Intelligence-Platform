@@ -1,11 +1,11 @@
 [
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/98737bd0-b029-4732-97bd-861dd6e1a68d",
+    "path": "/api/v1/risk/briefs/1e8672b5-3c16-4996-9e04-4322214fbad1",
     "status": 200,
     "body": {
-      "id": "98737bd0-b029-4732-97bd-861dd6e1a68d",
-      "assessment_id": "bc48f0b3-606c-4a0e-8f48-d016fb1254da",
+      "id": "1e8672b5-3c16-4996-9e04-4322214fbad1",
+      "assessment_id": "b33dfa40-6f18-40f8-888a-a3c3bc719a0b",
       "status": "DRAFT",
       "decision_status": "PENDING",
       "policy_version": 1,
@@ -2263,11 +2263,11 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/25d77cce-33c0-434f-b0ac-78132713be39",
+    "path": "/api/v1/risk/briefs/180b7c6c-d95f-4c0c-965f-120c4a5c5ac6",
     "status": 200,
     "body": {
-      "id": "25d77cce-33c0-434f-b0ac-78132713be39",
-      "assessment_id": "a4946455-681f-4116-8e89-73160652916f",
+      "id": "180b7c6c-d95f-4c0c-965f-120c4a5c5ac6",
+      "assessment_id": "344e54e7-461f-48d1-9316-e4374c6771b8",
       "status": "DRAFT",
       "decision_status": "PENDING",
       "policy_version": 1,
@@ -2816,11 +2816,11 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/24d3b006-3f21-4570-b5e6-eff7cbc968df",
+    "path": "/api/v1/risk/briefs/3c3503fe-9be2-41e2-8d82-87f49edf6cf8",
     "status": 200,
     "body": {
-      "id": "24d3b006-3f21-4570-b5e6-eff7cbc968df",
-      "assessment_id": "3f29c780-5894-445d-acbb-214bb42d472e",
+      "id": "3c3503fe-9be2-41e2-8d82-87f49edf6cf8",
+      "assessment_id": "3a10d523-10c1-4d89-bd34-d806aae95091",
       "status": "DRAFT",
       "decision_status": "PENDING",
       "policy_version": 1,
@@ -3233,11 +3233,11 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/a5ddc54f-8c14-4682-9873-89583a6afdcf",
+    "path": "/api/v1/risk/briefs/df30b0b2-e397-4005-96a1-6fb9c45298c1",
     "status": 200,
     "body": {
-      "id": "a5ddc54f-8c14-4682-9873-89583a6afdcf",
-      "assessment_id": "0acdfdb4-7f52-4d83-accb-88736da89ffb",
+      "id": "df30b0b2-e397-4005-96a1-6fb9c45298c1",
+      "assessment_id": "0c25616e-d69a-4db4-a9be-77facdb36496",
       "status": "DRAFT",
       "decision_status": "PENDING",
       "policy_version": 1,
@@ -5305,11 +5305,11 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/34ccbf24-a379-4f73-ba06-0d1e8f06d556",
+    "path": "/api/v1/risk/briefs/5d6dcc19-f4db-4ee5-87c3-244f3bc132b0",
     "status": 200,
     "body": {
-      "id": "34ccbf24-a379-4f73-ba06-0d1e8f06d556",
-      "assessment_id": "c7d5ddce-9915-4e6f-9503-d9f9bb2b1b5f",
+      "id": "5d6dcc19-f4db-4ee5-87c3-244f3bc132b0",
+      "assessment_id": "34d796b2-9562-4566-b453-2d65139a033b",
       "status": "DRAFT",
       "decision_status": "PENDING",
       "policy_version": 1,
@@ -5858,11 +5858,11 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/0951d888-68f9-477b-beed-c7c9470bdc05",
+    "path": "/api/v1/risk/briefs/e6bbd46f-8f2d-430e-95ad-1a4799e4dffb",
     "status": 200,
     "body": {
-      "id": "0951d888-68f9-477b-beed-c7c9470bdc05",
-      "assessment_id": "bb7501f9-2a08-43f1-a03e-6e79c3fabe8e",
+      "id": "e6bbd46f-8f2d-430e-95ad-1a4799e4dffb",
+      "assessment_id": "a452d1e5-40d6-4258-829f-992ad98f419d",
       "status": "DRAFT",
       "decision_status": "PENDING",
       "policy_version": 1,
@@ -6275,11 +6275,11 @@
   },
   {
     "method": "GET",
-    "path": "/api/v1/risk/briefs/a8d4f1ad-f8bb-4820-ba6f-5d3d8d1a6357",
+    "path": "/api/v1/risk/briefs/e9b2f6b6-fad7-4de3-8cd0-95e2773161c7",
     "status": 200,
     "body": {
-      "id": "a8d4f1ad-f8bb-4820-ba6f-5d3d8d1a6357",
-      "assessment_id": "04c733d3-353a-460a-88ae-7cf60eb407aa",
+      "id": "e9b2f6b6-fad7-4de3-8cd0-95e2773161c7",
+      "assessment_id": "daf26157-0132-43b1-991e-234b310ac561",
       "status": "DRAFT",
       "decision_status": "PENDING",
       "policy_version": 1,
