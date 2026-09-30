@@ -10,11 +10,11 @@
  * and an ingestion run.
  */
 
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import { COPY, fill } from '../../src/copy';
 
-import { baseUrl, briefIds, chainOf, expectAccessible } from './support';
+import { baseUrl, briefIds, chainOf, expectAccessible, test } from './support';
 
 test.describe.configure({ mode: 'serial' });
 

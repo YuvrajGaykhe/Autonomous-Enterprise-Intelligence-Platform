@@ -10,11 +10,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import { COPY } from '../../src/copy';
 
-import { apiUrl, baseUrl, briefIds, expectAccessible, fontsReady } from './support';
+import { apiUrl, baseUrl, briefIds, expectAccessible, fontsReady, test } from './support';
 
 test.describe.configure({ mode: 'serial' });
 

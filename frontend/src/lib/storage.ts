@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   view: 'aiceohq.view',
   pixel: 'aiceohq.pixel',
   sound: 'aiceohq.sound',
+  tour: 'aiceohq.tour',
 } as const;
 
 export function readStored(key: string): string | null {

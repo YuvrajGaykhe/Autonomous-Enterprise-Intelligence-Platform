@@ -5,7 +5,9 @@
  * The world is a lazy chunk that only this page loads (§9.10). The page checks for WebGL first and
  * sends a reader whose device cannot start it, or whose context was lost twice, to the Classic twin
  * of the same address with the fallback notice (§9.11). A reader who chose Classic view goes there
- * too. The panels, the staff directory and the view controls are HTML over the canvas.
+ * too, and so does a window narrower than the office needs (§14 F6: phones get Classic), live: a
+ * window narrowed below it leaves the office. The panels, the staff directory and the view controls
+ * are HTML over the canvas.
  */
 
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
@@ -25,6 +27,7 @@ import {
 import { yawDegrees } from '@/domain/officeCamera';
 import { useReducedMotion } from '@/lib/motion';
 import { STORAGE_KEYS, readStored } from '@/lib/storage';
+import { useNarrowWindow } from '@/lib/viewport';
 import { canCreateWebGL } from '@/lib/webgl';
 import { AgentPanel } from '@/panels/AgentPanel';
 import { BriefDetail } from '@/panels/BriefDetail';
@@ -33,7 +36,7 @@ import { useCamera } from '@/state/camera';
 import { useDirector } from '@/state/director';
 import { usePreferences } from '@/state/preferences';
 import { useSession } from '@/state/session';
-import { EmptyState, LoadingState } from '@/states/states';
+import { EmptyState, LoadingArt, LoadingState } from '@/states/states';
 import { ROLE_LINES } from '@/copy';
 
 import { CameraControls, CONTROLS_HELP, useCameraKeys, useViewportPointer } from './CameraControls';
@@ -55,7 +58,8 @@ export function OfficePage() {
   const [preferred] = useState(() => rememberedView(readStored(STORAGE_KEYS.view)));
   const [webgl] = useState(canCreateWebGL);
   const failed = useSession((state) => state.webglFailed);
-  if (preferred === 'classic') {
+  const narrow = useNarrowWindow();
+  if (preferred === 'classic' || narrow) {
     return <Navigate to={twinAddress('classic', pathname, search)} replace />;
   }
   if (failed || !webgl) return <FallBack />;
@@ -167,9 +171,7 @@ function Office() {
             <Suspense
               fallback={
                 <div className="grid h-full place-items-center">
-                  <div className="w-64">
-                    <LoadingState label="the 3D office" />
-                  </div>
+                  <LoadingArt label="the 3D office" caption="Setting up the office" />
                 </div>
               }
             >
@@ -214,7 +216,10 @@ function Office() {
         ) : sources.isPending ? (
           <LoadingState label="the agent roster" />
         ) : (
-          <EmptyState message={`No agent named ${agentId ?? ''} works in this office.`} />
+          <EmptyState
+            message={`No agent named ${agentId ?? ''} works in this office.`}
+            art="desk"
+          />
         )}
       </OfficeDialog>
       <OfficeDialog

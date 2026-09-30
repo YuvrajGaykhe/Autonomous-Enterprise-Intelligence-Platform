@@ -3,7 +3,9 @@
  */
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+
+import { test } from './support';
 
 function environment(name: string): string {
   const value = process.env[name];

@@ -1,5 +1,6 @@
 /**
  * The four states every panel and Classic page has (spec §8.7): loading, empty, error, success.
+ * The main surfaces' empty states, and the office while it loads, carry pixel art (F6).
  */
 
 import type { UseQueryResult } from '@tanstack/react-query';
@@ -9,6 +10,8 @@ import type { ReactNode } from 'react';
 import { describeFailure } from '@/api/failures';
 import { Button } from '@/ui/button';
 import { Skeleton } from '@/ui/skeleton';
+
+import { PixelArt, type ArtName } from './art';
 
 export function LoadingState({ label, lines = 3 }: { label: string; lines?: number }) {
   return (
@@ -21,7 +24,40 @@ export function LoadingState({ label, lines = 3 }: { label: string; lines?: numb
   );
 }
 
-export function EmptyState({ message }: { message: string }) {
+/**
+ * The office's loading screen: an agent at work beside a desk while the 3D world downloads. The
+ * status is the same as `LoadingState`'s for assistive technology.
+ */
+export function LoadingArt({ label, caption }: { label: string; caption: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="flex flex-col items-center gap-3 text-sm text-[#f3e6c9]"
+    >
+      <span className="sr-only">{`Loading ${label}…`}</span>
+      <div className="flex items-end gap-3">
+        <PixelArt name="agent" className="h-20 animate-bounce" />
+        <PixelArt name="desk" className="h-20" />
+      </div>
+      <p aria-hidden="true" className="font-pixel text-xs tracking-wide uppercase">
+        {caption}
+      </p>
+    </div>
+  );
+}
+
+/** An empty state. On a main surface, `art` adds its picture above the words. */
+export function EmptyState({ message, art }: { message: string; art?: ArtName }) {
+  if (art !== undefined) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm">
+        <PixelArt name={art} className="h-14" />
+        <p>{message}</p>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center gap-3 rounded-lg border border-dashed p-4 text-sm">
       <Inbox aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />

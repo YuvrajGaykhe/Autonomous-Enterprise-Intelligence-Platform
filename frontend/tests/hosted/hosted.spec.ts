@@ -7,9 +7,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, type APIRequestContext } from '@playwright/test';
 
 import { COPY } from '../../src/copy';
+import { test } from '../e2e/support';
 
 test.describe.configure({ mode: 'serial' });
 

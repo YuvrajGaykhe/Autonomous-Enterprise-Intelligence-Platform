@@ -1522,8 +1522,13 @@ ingests the demo dataset through the hosted API (`POST /api/v1/ingestion/runs`) 
 
 ### A five-minute demo
 
-1. **Arrive.** Agents not at work stroll round the Break Area. The HUD shows the API's health and
-   `as_of 2026-09-18`.
+Reset the demo database before a review, and open the site once a minute or two before you
+present: the API runs as a Vercel Function, and its first request after a quiet spell takes a few
+seconds while the function starts.
+
+1. **Arrive.** A browser's first visit opens a three-step tour of the agents, Run assessment and
+   the CEO inbox; walk through it or close it, and the HUD's **Tour** brings it back. Agents not at
+   work stroll round the Break Area. The HUD shows the API's health and `as_of 2026-09-18`.
 2. **Click MEMORY.** It holds Layer 1's canonical records, by entity type.
 3. **Press Run assessment.** The demo is already assessed, so the API answers 200 and the banner
    says "Already assessed: replaying recorded results". The agents walk to their desks. MEMORY
@@ -1538,6 +1543,13 @@ ingests the demo dataset through the hosted API (`POST /api/v1/ingestion/runs`) 
 7. **Switch to Classic view.** The same data appears as plain pages. **Show the API call** names
    the route and request id behind a panel, and `/docs` is the API's own reference.
 8. **Point at the locked rooms.** Each opens with a later slice.
+
+Rehearsed on the hosted site on 2026-10-01, with 20 seconds of narration per step, the eight
+steps took 3 minutes 22 seconds. The replay in step 3 takes about 45 seconds, and no other step
+waits more than 7.
+
+The office needs a window at least 768 pixels wide. On a phone the site opens in Classic view,
+where steps 2 and 4 to 7 work the same from its pages.
 
 ---
 

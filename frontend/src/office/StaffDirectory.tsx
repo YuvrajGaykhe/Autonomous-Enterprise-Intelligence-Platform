@@ -9,6 +9,8 @@ import { Link } from 'react-router';
 
 import { COPY } from '@/copy';
 import { addressOf } from '@/domain/views';
+import { cn } from '@/lib/utils';
+import { useTourSpot } from '@/state/tour';
 
 import { StatusBadge } from './StatusBadge';
 import type { WorldAgent } from './worldTypes';
@@ -29,9 +31,12 @@ export function StaffDirectory({
   inboxOpen: boolean;
   loadingConnectors: boolean;
 }) {
+  const agentsSpot = useTourSpot('agents');
+  const inboxSpot = useTourSpot('inbox');
   return (
     <nav
       aria-label="Staff directory"
+      data-tour-spot={agentsSpot}
       className="flex w-60 shrink-0 flex-col gap-1 overflow-y-auto border-r bg-card p-2"
     >
       <h2 className="px-2 pt-1 font-pixel text-xs tracking-wide uppercase">Staff directory</h2>
@@ -40,7 +45,8 @@ export function StaffDirectory({
           <Link
             to={addressOf('office', { kind: 'inbox' }, search)}
             aria-current={inboxOpen ? 'true' : undefined}
-            className={entry}
+            data-tour-spot={inboxSpot}
+            className={cn(entry, inboxSpot === 'on' && 'bg-card')}
           >
             <Inbox aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             <span className="text-sm font-medium">CEO inbox</span>

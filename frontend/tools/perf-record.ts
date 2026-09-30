@@ -21,6 +21,8 @@ import { chromium } from '@playwright/test';
 import { preview } from 'vite';
 
 import type { PerfSummary } from '../src/domain/perf.ts';
+import { TOUR_SEEN } from '../src/domain/tour.ts';
+import { STORAGE_KEYS } from '../src/lib/storage.ts';
 
 import { E2E_SUFFIX, EnvironmentRefused, freePort, startIsolatedBackend } from './lib/isolated.ts';
 import { configuredDatabaseUrl } from './lib/settings.ts';
@@ -59,6 +61,11 @@ async function measure(baseUrl: string, mode: 'pixel' | 'smooth'): Promise<Measu
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
     const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: 1 });
+    // A returning reader: the tour (F6) stays closed, so nothing covers the office.
+    await page.addInitScript(([key, value]) => window.localStorage.setItem(key, value), [
+      STORAGE_KEYS.tour,
+      TOUR_SEEN,
+    ] as const);
     await page.goto(`${baseUrl}/?perf=1&pixel=${mode === 'pixel' ? '1' : '0'}`);
     await page.getByTestId('office').and(page.locator('[data-world="ready"]')).waitFor();
     await page.waitForTimeout(WARM_UP_MS);

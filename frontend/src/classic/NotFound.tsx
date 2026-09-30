@@ -1,9 +1,12 @@
 import { Link, useLocation } from 'react-router';
 
+import { PixelArt } from '@/states/art';
+
 export function NotFound() {
   const { search } = useLocation();
   return (
     <div className="mx-auto max-w-2xl space-y-3">
+      <PixelArt name="agent" />
       <h1 className="text-xl font-semibold">Page not found</h1>
       <p className="text-sm">No page lives at this address.</p>
       <Link className="text-sm underline" to={{ pathname: '/classic', search }}>

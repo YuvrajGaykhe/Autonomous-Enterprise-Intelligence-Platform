@@ -12,7 +12,7 @@ import { COPY } from '@/copy';
 import { chainEntries } from '@/domain/decisionChain';
 import { formatTimestamp } from '@/domain/dates';
 import { SHORT_FINGERPRINT } from '@/domain/inbox';
-import { QueryView } from '@/states/states';
+import { EmptyState, QueryView } from '@/states/states';
 
 export function decisionAnchor(id: string): string {
   return `decision-${id}`;
@@ -61,7 +61,7 @@ function Entry({ entry }: { entry: ReturnType<typeof chainEntries>[number] }) {
 }
 
 export function DecisionChainView({ items }: { items: readonly DecisionResponse[] }) {
-  if (items.length === 0) return <p className="text-sm">{COPY.emptyDecisionChain}</p>;
+  if (items.length === 0) return <EmptyState message={COPY.emptyDecisionChain} art="corkboard" />;
   return (
     <ol aria-label="Decision chain, first to head" className="space-y-0">
       {chainEntries(items).map((entry) => (

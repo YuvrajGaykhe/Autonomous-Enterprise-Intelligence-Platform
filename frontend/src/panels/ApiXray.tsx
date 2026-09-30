@@ -22,7 +22,7 @@ export function ApiXray({ calls }: { calls: readonly ApiCall[] }) {
         {calls.length === 0 ? (
           <p className="text-muted-foreground">No request has completed yet.</p>
         ) : (
-          <table className="w-full text-left font-mono text-xs">
+          <table className="w-full text-left font-mono text-xs wrap-anywhere">
             <caption className="sr-only">Requests behind this panel</caption>
             <thead className="text-muted-foreground">
               <tr>

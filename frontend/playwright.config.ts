@@ -13,10 +13,11 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/e2e',
   // The office runs first: it writes nothing, and its screenshots need the database as the global
-  // setup left it, before Classic's scenario records decisions (F3). Life runs last (F4): it records
-  // a decision from the office and an ingestion run, which Classic's screenshots must not see.
+  // setup left it, before Classic's scenario records decisions (F3). F6's tour and phone tests run
+  // with it, for the same reason. Life runs last (F4): it records a decision from the office and an
+  // ingestion run, which Classic's screenshots must not see.
   projects: [
-    { name: 'office', testMatch: 'office.spec.ts' },
+    { name: 'office', testMatch: ['office.spec.ts', 'polish.spec.ts'] },
     { name: 'classic', testMatch: ['classic.spec.ts', 'smoke.spec.ts'], dependencies: ['office'] },
     { name: 'life', testMatch: 'life.spec.ts', dependencies: ['classic'] },
   ],

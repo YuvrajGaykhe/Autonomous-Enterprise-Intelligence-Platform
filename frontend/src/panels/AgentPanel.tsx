@@ -295,7 +295,7 @@ function useMemoryBody(): Body {
   } else if (totals.some((query) => query.data === undefined)) {
     recordTotals = <LoadingState label="the record totals" lines={4} />;
   } else if (totals.every((query) => query.data?.data === 0)) {
-    recordTotals = <EmptyState message={COPY.memoryNoRecords} />;
+    recordTotals = <EmptyState message={COPY.memoryNoRecords} art="cabinet" />;
   } else {
     recordTotals = (
       <Facts
@@ -409,9 +409,9 @@ function SelectionFallback({ state }: { state: Exclude<SelectedRowState, { statu
     case 'error':
       return <ErrorState error={state.error} onRetry={state.retry} />;
     case 'no-assessment':
-      return <EmptyState message={COPY.inboxNoAssessment} />;
+      return <EmptyState message={COPY.inboxNoAssessment} art="tray" />;
     case 'no-brief':
-      return <EmptyState message={COPY.inboxNoBrief} />;
+      return <EmptyState message={COPY.inboxNoBrief} art="tray" />;
   }
 }
 

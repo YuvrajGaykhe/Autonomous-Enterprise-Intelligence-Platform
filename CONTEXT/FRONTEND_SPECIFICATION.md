@@ -1811,6 +1811,234 @@ The site is same-origin with no CORS header, and `demo-reset` is proven twice on
 
 **Next:** F6 (polish), which starts only on the owner's instruction.
 
+### F6 — Polish: CLOSED 2026-10-01
+
+**Owner rulings (2026-10-01).**
+1. **The tour opens once per browser, on the first visit, and the HUD's "?" opens it again.** Its
+   flag is a new browser-storage key, `aiceohq.tour`, kept like §11's others: a convenience, inside
+   try/catch. §11's list gains it.
+2. **F6 may edit the README's `## Frontend and demo` section, and only that section** (§4 allowed
+   README edits in F5 only). R-F-4 still applies.
+3. **The timed rehearsal is driven here and watched by the owner,** on the production domain. It
+   records one approval, so the owner resets the demo database afterwards.
+4. **The unused `@react-three/drei`, `@react-three/postprocessing` and `postprocessing` are
+   removed** (F4 had left them for the owner). §5's runtime list loses them.
+5. Each outward action was approved as it came: one production deployment of F6's working tree,
+   the rehearsal and its one approval, the reset, and (after the commit) a production deployment
+   from the F6 commit itself.
+6. **The backend suite's intermittent third warning passes the gate and is carried forward**
+   (below, under "Known in F6"). The gate counts the run that equals the baseline; the record keeps
+   both runs.
+
+**What F6 produced.**
+- **The tour (`src/domain/tour.ts`, `src/state/tour.ts`, `src/hud/Tour.tsx`).** Three steps, each
+  pointing at a part of the page that both views have:
+  1. **Meet the agents** rings the staff directory;
+  2. **Watch a run** rings Run assessment (and, in the office, Replay);
+  3. **Decide as the CEO** rings the CEO inbox entry.
+
+  It is a modal dialog with Back, Next and "Start exploring", a close button, and Escape. The
+  ringed part is lifted above the dimmed page (`data-tour-spot`, styled in the theme; its pulse
+  stops under reduced motion). It opens on arrival at either view's home, never on a deep link, and
+  closing it by any means marks it seen. The HUD's **Tour** button (a "?" icon and the word) opens
+  it at step 1 and gets the focus back when it closes.
+- **Small screens (`src/lib/viewport.ts`).** The office needs a window at least 768 pixels wide
+  (`min-width: 768px`, followed live). Narrower, every office address goes to its Classic twin,
+  the Classic layout says why, and the HUD's view switch offers Classic only (Office is shown
+  disabled, with its reason for screen readers). A window narrowed while in the office leaves it
+  the same way, and the world chunk is never requested. Two tables that were wider than a
+  375-pixel phone (the brief's escalation edges and **Show the API call**) now wrap their long
+  identifiers, so no Classic page scrolls sideways.
+- **Art (`src/states/art.tsx`).** Six pixel pictures drawn in code, as rows of palette letters
+  rendered to SVG rectangles, with no image file and no request: an agent, a desk, an in-tray, a
+  corkboard, a filing cabinet and a stamp. The outline takes the text colour, so the art follows
+  the light and dark schemes, and every picture is hidden from assistive technology.
+  - **Empty states:** the inbox with no assessment or no brief (the tray, also in the agent panels
+    that need a selected brief), the empty decision chain (the corkboard), MEMORY with no records
+    (the cabinet), a brief or an office agent that is not there (the desk), and Classic's
+    not-found page (the agent). Smaller empty states keep F2's icon.
+  - **Loading:** while the world chunk downloads, the office shows an agent beside a desk and
+    "Setting up the office", with the same status for screen readers as before.
+  - **The tour** shows the agent, the desk and the stamp beside its three steps.
+- **The copy review.** Every literal in `src/` was searched for claims the system does not make
+  ("AI", "intelligent", "smart", "learn", "predict", "probability", "model", "automatic",
+  "autonomous", "decides" and the like). Nothing needed a change: "AI" occurs only in the product
+  name (D-F-13), "language model" only in the About line that denies one, "probability" only in
+  the band legend's denial and as the deals' own CRM field in the evidence, and "automatically"
+  only in comments about POSTs never being retried. The tour's copy was written under the same
+  rule, and a unit test holds it to it.
+- **The performance pass.**
+  - The three packages above are gone: 37 entries leave `package-lock.json` (3 direct, 34 that only
+    they pulled in). The bundles do not change, because nothing imported them.
+  - The measurements are below, under the gate. The tour and the art cost 2.3 KB gzip of initial
+    JavaScript. The world chunk and the frame times are unchanged.
+  - **The hosted site** was measured with read-only requests. The API's first request after a quiet
+    spell took 3.9 seconds (the function starting); later ones took 0.28 to 0.37 seconds, and the
+    assessment list 0.9 seconds. The README's demo now says to open the site a minute or two before
+    presenting. Hashed assets are served `cache-control: public, max-age=0, must-revalidate`, so a
+    return visit revalidates them (Vercel's edge answers from its cache). Marking `/assets/` as
+    immutable would need `headers` in `vercel.json`, which §4 does not open in F6; it is carried
+    forward, not changed.
+- **Docs.** The README's `## Frontend and demo` section: before a review, reset and warm the site;
+  step 1 now meets the tour; the rehearsal's time; a phone opens in Classic view. `frontend/README.md`: the F6 status, a
+  section on the tour and small screens, and the tests.
+- **Tests.**
+  - `tests/unit/polish.test.ts` (14): the tour's steps, its first-visit rule and its bounds; its
+    copy states no model, no score and no execution, and repeats no Appendix A string; every
+    picture is a rectangle in the palette.
+  - `tests/component/polish.test.tsx` (15): the tour's three steps and rings in Classic view and in
+    the office, no tour on a deep link or for a returning reader, the HUD's Tour, Escape and focus,
+    storage that refuses writes; a narrow window's redirect without the world, the view switch, a
+    window narrowed and widened live, the WebGL notice winning over the narrow one; each picture
+    on its empty state, and the loading art.
+  - `tests/e2e/polish.spec.ts` (7), run with the office project because it writes nothing: the tour
+    over the real office, with axe; no tour on a deep link; a phone sent from
+    `/?agent=linker` to `/classic/agents/linker` without the world chunk; all 13 Classic pages at
+    375 × 812 with every **Show the API call** open, no sideways scroll and axe clean; the phone
+    inbox's screenshot; the tour on a phone; and 768 pixels getting the office, 767 Classic view.
+  - Every end-to-end page now opens as a returning reader's: `tests/e2e/support.ts` exports a
+    `test` whose pages mark the tour seen, unless a test sets `tourSeen: false`. The hosted smoke
+    test and `npm run perf` do the same, so nothing covers the office while it is measured.
+
+**Choices made in F6 (PROPOSED; each stands unless replaced).**
+- The tour's copy and its three spots, above. Its button reads "Tour" beside the "?" icon, so the
+  visible label is in its accessible name.
+- The tour waits on a deep link: a reader who followed a link to a brief came for that brief.
+- The narrow-window notice is new, fixed copy, not Appendix A's: "The 3D office needs a window at
+  least 768 pixels wide, so this is Classic view. Every panel works the same." When WebGL has
+  failed too, only the WebGL notice shows.
+- Which empty states carry art: the main surfaces only, as listed. Smaller ones keep the icon.
+- **The screenshot baselines were re-recorded, all nine,** because the HUD gained **Tour** on every
+  page and the empty decision chain its corkboard. The differences were reviewed: those two
+  changes, and the office's strollers at other places in the Break Area. `phone-inbox.png` is new.
+
+**The rehearsal (the hosted gate).** On 2026-10-01 the F6 working tree was deployed to production
+(`dpl_CEFoBLMwVBco8Hd3DJkWs7m3tZS2`; `git archive 457494b` plus F6's 46 files, 591 files in all,
+no `.env`), and `@clean` passed 3/3 on it. The owner's browser pane was hidden, which slows a page's
+animation frames to about one a second, so the rehearsal ran in the installed Chrome instead
+(headless, 1280 × 800, a first visit), following the README's eight steps. Each step waited for what
+a presenter waits for, then held 20 seconds for narration; the tour's three steps shared step 1's
+20 seconds, and step 3 is narrated over the replay.
+
+| Step | Waited for | Machine time | At |
+|---|---|---|---|
+| 1. Arrive | the world drawn, the API healthy, the tray at 3, the tour open | 6.8 s | 0:07 |
+| 2. MEMORY | its record totals | 0.6 s | 0:28 |
+| 3. Run assessment | HTTP 200 and "Already assessed: replaying recorded results" | 4.5 s | 0:53 |
+| | the red arrow `CONFLICT DEAL-001`, then `CONF-001 → SUPPORT PREVAILS` | 25.5 s, 2.5 s | 1:21 |
+| | the show's end, three briefs in the tray | 16.0 s | 1:37 |
+| 4. The CEO's desk | CUST-007 pinned `CRITICAL · EXECUTIVE`, two WATCH | 0.6 s | 1:37 |
+| 5. CUST-007's brief | every section and the decision form | 0.8 s | 1:58 |
+| 6. Approve | the stamp, and ① "Demo rehearsal" in the chain | 1.2 s | 2:20 |
+| 7. Classic view | the inbox and **Show the API call** | 0.8 s | 2:41 |
+| 8. The locked rooms | the office drawn again | 1.0 s | 3:02 |
+
+**The whole demo took 3 minutes 22 seconds** (201.7 s), inside the 5 minutes. The replay is 44
+seconds from the API's answer to the show's end; every other wait is under 7 seconds. The same
+script against the local isolated stack, without narration, took 62 seconds.
+
+After the rehearsal, CUST-007's chain on the live site held the rehearsal's approval and one the
+owner recorded while looking at the site. The owner then ran `make demo-reset`:
+1. the first attempt stopped while parsing `DEMO_DATABASE_URL` (the clipboard held other text),
+   before any connection, and changed nothing;
+2. the second answered `HTTP 201` twice (the ingestion and the assessment at 2026-09-18);
+3. `@clean` then passed 3/3: the site is clean again.
+
+**The gate (§13).**
+1. **Frontend.**
+   - `tsc` reports 0 on both projects, ESLint 0 errors and 0 warnings, and Prettier is clean.
+   - **Vitest:**
+     580 passed, 0 failed, 0 skipped. By layer: unit 267, component 189, contract 68, guards 34,
+     tools 22. `src/api/**` and `src/domain/**` are at 100% of lines, branches, functions and
+     statements (1317 statements, 598 branches). All of `src/` outside `src/world/` is 97.2% of
+     statements and 98.0% of lines. An earlier run, while the load average stood at 19 to 68 (the
+     backend suite and the desktop's own work), timed six component tests out at 20 seconds with
+     no assertion failing. It is not counted.
+   - **Playwright:**
+     46 passed, 0 skipped, on two consecutive runs over a recreated database (F5: 39; the 7 new
+     are F6's).
+   - **axe:** 0 serious and 0 critical on the tour over the office (steps 1 and 3), the tour on a
+     phone, and every Classic page at 375 pixels, as well as on every page checked before.
+   - **Bundle:** initial JavaScript is 201.0 KB gzip of the 250 KB budget (F5: 198.7). The world
+     chunk is 253.0 KB of 900 KB (unchanged) and the world assets 0 of 5 MB. CSS is 19.8 KB gzip
+     (F5: 19.5).
+   - **Performance** (`npm run perf`, as F4 and F5: a Replay, every agent moving, 1920×1080, 30
+     seconds per mode, the owner's MacBook Air `Mac14,15`, the installed Chrome headless on ANGLE
+     Metal):
+
+     | Mode | Frames | Median | p95 | Draw calls (max) | Triangles (max) |
+     |---|---|---|---|---|---|
+     | Pixel | 1793 | 16.70 ms | 17.40 ms | 74 | 118,114 |
+     | Smooth | 1798 | 16.70 ms | 17.50 ms | 43 | 75,566 |
+
+     Both are within §9.10, and level with F5 (p95 17.60 and 17.50 ms).
+2. **The backend.** The frozen-path diff against `733b19b` lists only `scripts/secret_scan.py | 2 ++`
+   (F1, ruling 3). F6 changes nothing under a frozen path.
+   **The full backend suite** ran twice in the repository `.venv` (Python 3.11.5): each time 6771
+   passed (unit 5287, contract 185, integration 1214, e2e 85), 0 failed and 0 skipped, `app/` 100%
+   over 7456 statements. The second run reported the baseline's 2 warnings. The first reported 3;
+   the third is intermittent and is described under "Known in F6, carried forward".
+3. **The four repository-scanning backend test files:**
+   256 passed and 0 failed, with the 2 known warnings, on the staged tree (the working tree gave
+   the same). They ran in the repository `.venv`, with the caches and the coverage file kept out
+   of the repository.
+4. **The secret scan.** `scan_text` over every new or changed path reports 0 findings: 46 paths,
+   36 text files and 10 PNG baselines skipped as binary, before this record was written, and 47
+   paths with it.
+   - **Staged `make secret-scan`:** 578 files scanned, 13 binary files skipped (591 tracked, which
+     is 582 + 9 new) and 0 findings.
+5. **Anchors.** The golden sha, the one migration head `070e4968a497` and the strategy diff sha all
+   equal §3.
+6. **`git status`** shows only F6's allowed paths (`frontend/`, the README's section, this
+   document), the unstaged strategy document and the untracked `.claude/launch.json`, which is
+   never staged.
+
+**The acceptance criteria (§15), with their evidence.** Every criterion holds.
+
+| # | Holds, because |
+|---|---|
+| AC-F-1 | The guards find no domain id in `src/` (§12.4); every episode step's `source` resolves in its fixture (F4's unit tests). F6's tour and art hold no data at all |
+| AC-F-2 | The Director's unit tests and F4's life tests; the rehearsal saw WORKING only inside the bannered replay |
+| AC-F-3 | The no-score guard over every literal in `src/`, the tour's copy test, and the component tests of the band chips |
+| AC-F-4 | The inbox unit tests over the recorded lists; F2's Classic test and the rehearsal's step 4 |
+| AC-F-5 | F2's Classic scenario over a clean isolated database, run twice at this gate; the rehearsal's steps 4 to 6 on the hosted site |
+| AC-F-6 | The decision and run component tests for every §7.6 row, and F2's two 409 end-to-end tests |
+| AC-F-7 | The office test's network assertion, and F6's: a phone never downloads the world chunk |
+| AC-F-8 | The performance record above; the WebGL fallback and lost-context end-to-end tests |
+| AC-F-9 | The frozen-path diff, the four repository tests and the full backend suite (item 2) |
+| AC-F-10 | F5's record: one origin, no CORS, `demo-reset` proven twice; F6's `@clean` runs before and after the rehearsal |
+| AC-F-11 | The notices guard: `src/vendor/` and `public/models/` do not exist, and every shadcn/ui file is listed. F6 adds no third-party code or asset |
+| AC-F-12 | axe as above; the staff directory and the tour are reachable by keyboard; the tour returns the focus; reduced motion stops walking, confetti and the tour's pulse |
+| AC-F-13 | `scan_text` over F6's paths, the staged `make secret-scan`, and the backend hygiene test over every tracked file |
+| AC-F-14 | The component tests: every surface in all four states, F6's art included |
+| AC-F-15 | The honesty guard: every Appendix A string once in `src/`, and each rendered where §8 and Appendix A say; the mock-source caption on the hosted site (`@clean`) |
+| AC-F-16 | The contract tests: §3's payload hashes, the pinned fingerprint, and CUST-007's golden narrative byte for byte |
+| AC-F-17 | The tooling tests (the suffix refusal and exit 2 without PostgreSQL), and the development database below |
+
+**AC-F-17.**
+- The development database's `GET /risk/assessments` and `GET /entities/customers` responses are
+  byte-identical before and after F6 (52 customers; 1 assessment, at `as_of 2026-09-27`).
+- F6 used `<database>_frontend` (the development server and the rehearsal's dry run),
+  `<database>_frontend_e2e` (Playwright and the performance record), the backend suite's own
+  `_test` database, and the hosted Neon database (the rehearsal). It used nothing else.
+
+**Known in F6, carried forward.**
+- **An intermittent third warning in the backend suite.** The first full run at this gate reported
+  6771 passed with 3 warnings, not the baseline's 2. The third is pydantic's
+  `UnsupportedFieldAttributeWarning`, raised inside
+  `tests/integration/test_m8_api.py::test_two_concurrent_identical_requests_converge_on_one_result_set`,
+  when two concurrent requests build a schema at once. Nothing under a frozen path, and nothing in
+  the repository `.venv`, changed since F5. Run alone eight times, the test gave the third warning
+  three times. It is a race in frozen code and its frozen test, not an F6 effect. Removing it would
+  be a backend milestone.
+- Hashed assets are revalidated on every visit (above).
+- The API's first request after a quiet spell takes a few seconds while the function starts.
+- On a phone, Classic view's agent list comes before the page's content.
+- React Three Fiber still logs three's `THREE.Clock` deprecation once per load.
+- The hosted site has no authentication (§16). Reset before each review.
+
+**Next:** F7 (industry-readiness), which needs its own backend milestones approved and closed first.
+
 ---
 
 ## Appendix A: fixed copy

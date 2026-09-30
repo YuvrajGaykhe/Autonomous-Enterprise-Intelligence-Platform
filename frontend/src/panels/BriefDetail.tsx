@@ -634,7 +634,7 @@ function EscalationSection({ view }: { view: BriefView }) {
             </th>
           </tr>
         </thead>
-        <tbody className="font-mono">
+        <tbody className="font-mono wrap-anywhere">
           {path.edges.map((edge, index) => (
             <tr key={index} className="border-t">
               <td className="pr-2">{edge.edge}</td>
@@ -732,7 +732,7 @@ function BriefSections({ view, customerName }: { view: BriefView; customerName: 
 function NotFound({ inboxHref }: { inboxHref: To }) {
   return (
     <div className="space-y-3">
-      <EmptyState message="No brief exists at this address." />
+      <EmptyState message="No brief exists at this address." art="desk" />
       <Link className="text-sm underline" to={inboxHref}>
         Return to the inbox
       </Link>

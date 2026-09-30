@@ -1,12 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 
 import { cleanup, configure } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
+import { TOUR_SEEN } from '@/domain/tour';
+import { STORAGE_KEYS } from '@/lib/storage';
 import { initialCamera, useCamera } from '@/state/camera';
 import { directorClock, useDirector } from '@/state/director';
 import { storedPreferences, usePreferences } from '@/state/preferences';
 import { initialSession, useSession } from '@/state/session';
+import { initialTour, useTour } from '@/state/tour';
 
 import { server } from '../support/server';
 
@@ -15,11 +18,14 @@ import { server } from '../support/server';
 configure({ asyncUtilTimeout: 5000 });
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+// Every test is a returning reader, who has seen the tour (F6); the tour's own tests clear this.
+beforeEach(() => window.localStorage.setItem(STORAGE_KEYS.tour, TOUR_SEEN));
 afterEach(() => {
   cleanup();
   server.resetHandlers();
   // The session store and browser storage outlive a render; every test starts clean.
   useSession.setState(initialSession);
+  useTour.setState(initialTour);
   useCamera.setState(initialCamera);
   useDirector.getState().end();
   useDirector.setState({ stamp: null });

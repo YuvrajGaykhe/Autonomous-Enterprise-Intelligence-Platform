@@ -135,7 +135,7 @@ function InboxBody({ state }: { state: InboxState }) {
       if (state.snapshot === null) {
         return (
           <div className="space-y-3">
-            <EmptyState message={COPY.inboxNoAssessment} />
+            <EmptyState message={COPY.inboxNoAssessment} art="tray" />
             <RunAssessmentButton />
           </div>
         );
@@ -144,7 +144,7 @@ function InboxBody({ state }: { state: InboxState }) {
         <div className="space-y-3">
           <SnapshotHeader asOf={state.asOf} snapshots={state.snapshots} snapshot={state.snapshot} />
           {state.rows.length === 0 ? (
-            <EmptyState message={COPY.inboxNoBrief} />
+            <EmptyState message={COPY.inboxNoBrief} art="tray" />
           ) : (
             <>
               <p className="text-sm text-muted-foreground">

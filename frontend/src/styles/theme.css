@@ -91,6 +91,25 @@
   }
 }
 
+/*
+ * The tour's spot (F6): the part of the page a tour step describes is lifted above the tour's
+ * dimmed overlay (z-40) and ringed. It stays under the tour's card (z-50).
+ */
+[data-tour-spot='on'] {
+  position: relative;
+  z-index: 45;
+  outline: 3px solid var(--color-neon-handoff);
+  outline-offset: 3px;
+  animation: tour-spot 1.6s ease-in-out infinite;
+}
+
+@keyframes tour-spot {
+  50% {
+    outline-color: var(--color-bulb-working);
+    outline-offset: 5px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

@@ -2,7 +2,7 @@
  * The HUD's view switches (spec §8.2): Office or Classic (D-F-6), and, in the office, Pixel or
  * Smooth (D-F-5) and Sound (off by default, D-F-19). Each choice is remembered in this browser
  * (§11). The view switch goes to the twin of the current address, so the open panel or brief
- * stays open.
+ * stays open. A window too narrow for the office offers Classic only (F6).
  */
 
 import { Volume2, VolumeX } from 'lucide-react';
@@ -11,6 +11,7 @@ import { Link, useLocation, useSearchParams } from 'react-router';
 import { OFFICE_PARAMS, pixelArt, twinAddress, viewOf, type ViewName } from '@/domain/views';
 import { STORAGE_KEYS, writeStored } from '@/lib/storage';
 import { cn } from '@/lib/utils';
+import { OFFICE_MIN_WIDTH, useNarrowWindow } from '@/lib/viewport';
 import { usePreferences } from '@/state/preferences';
 
 const segment =
@@ -19,16 +20,27 @@ const segment =
 export function ViewSwitch() {
   const { pathname, search } = useLocation();
   const current = viewOf(pathname);
-  const item = (view: ViewName, label: string) => (
-    <Link
-      to={current === view ? { pathname, search } : twinAddress(view, pathname, search)}
-      aria-current={current === view ? 'page' : undefined}
-      onClick={() => writeStored(STORAGE_KEYS.view, view)}
-      className={segment}
-    >
-      {label}
-    </Link>
-  );
+  const narrow = useNarrowWindow();
+  const item = (view: ViewName, label: string) =>
+    view === 'office' && narrow ? (
+      <span
+        aria-disabled="true"
+        title={`The office needs a window at least ${OFFICE_MIN_WIDTH} pixels wide`}
+        className={cn(segment, 'cursor-not-allowed text-muted-foreground hover:bg-transparent')}
+      >
+        {label}
+        <span className="sr-only"> (needs a wider window)</span>
+      </span>
+    ) : (
+      <Link
+        to={current === view ? { pathname, search } : twinAddress(view, pathname, search)}
+        aria-current={current === view ? 'page' : undefined}
+        onClick={() => writeStored(STORAGE_KEYS.view, view)}
+        className={segment}
+      >
+        {label}
+      </Link>
+    );
   return (
     <nav aria-label="View" className="flex rounded-md border bg-card p-0.5">
       {item('office', 'Office')}

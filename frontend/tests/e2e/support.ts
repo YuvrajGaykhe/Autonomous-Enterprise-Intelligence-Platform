@@ -1,19 +1,46 @@
 /**
  * End-to-end helpers: the servers the global setup started, the API read directly (to learn ids
- * and to check what a page wrote), and axe.
+ * and to check what a page wrote), and axe. Every test imports `test` from here: its pages open
+ * as a returning reader's, who has seen the tour (F6), unless the test sets `tourSeen: false`.
  */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import { test as base, expect, type APIRequestContext, type Page } from '@playwright/test';
+
+import { TOUR_SEEN } from '../../src/domain/tour';
+import { STORAGE_KEYS } from '../../src/lib/storage';
 
 function environment(name: string): string {
   const value = process.env[name];
   if (value === undefined) throw new Error(`${name} is not set: run through playwright test`);
   return value;
 }
+
+/** Mark the tour seen in this page's storage before any script of the page runs. */
+export async function markTourSeen(page: Page): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      try {
+        window.localStorage.setItem(key, value);
+      } catch {
+        // Without storage the tour opens; a test that meets it closes it.
+      }
+    },
+    [STORAGE_KEYS.tour, TOUR_SEEN] as const,
+  );
+}
+
+export const test = base.extend<{ tourSeen: boolean }>({
+  tourSeen: [true, { option: true }],
+  // Playwright's fixture callback, named so that the React hooks rule does not take it for `use`.
+  page: async ({ page, tourSeen }, provide) => {
+    if (tourSeen) await markTourSeen(page);
+    await provide(page);
+  },
+});
 
 export const baseUrl = () => environment('AICEOHQ_E2E_BASE_URL');
 export const apiUrl = () => environment('AICEOHQ_E2E_API_URL');
