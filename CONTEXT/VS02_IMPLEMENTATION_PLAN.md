@@ -12,7 +12,7 @@ to produce it.**
 
 | Milestone | Status | Evidence |
 |---|---|---|
-| **VS02-M0** — pre-flight baseline | NOT STARTED | — |
+| **VS02-M0** — pre-flight baseline | COMPLETE (2026-10-01) | §0.11; measured at `b0fcaa2`; recorded by the commit `VS-02: record the M0 baseline` |
 | **VS02-M1** — FX foundation | NOT STARTED | — |
 | **VS02-M2** — pipeline facts and aggregation | NOT STARTED | — |
 | **VS02-M3** — concentration, risk-band cross-tabulation, the view | NOT STARTED | — |
@@ -53,7 +53,8 @@ it that carries no tag of its own; an item's own tag replaces the heading's.
 **Standing in v2.1.** On 2026-10-01 the owner decided SD-1…SD-6 and approved MD-1…MD-22 as specified
 (§0.10). They bind as written. Their tags stay on the statements they govern, so that §0.8 can still
 say what a later change would reopen. The owner also authorised exactly ten T-VS02 rows (§B2.1).
-U-1 is open in part: its date and source note are an owner input at VS02-M0 (§0.9).
+U-1 was open in part in v2.1; the owner supplied its date and source note at VS02-M0, and it is
+closed (§0.9, §0.11).
 
 **What makes a statement REQUIRED.** Two kinds of source:
 
@@ -394,13 +395,13 @@ dependants are not approved until the decision is.
 
 | ID | What is unknown | What closes it | Standing on 2026-10-01 | Blocks |
 |---|---|---|---|---|
-| **U-1** | The rate set's authored content: the USD and EUR rates against the base, the date they are stated for, and the source note. No rate exists in code, configuration or data | The owner supplies all of it | **Rates closed:** USD `85` and EUR `100`, in INR per unit. They are illustrative, authored rates and come from no market source. **Date and source note open:** the owner supplies both during VS02-M0 (§B6). Neither is invented or defaulted | the close of VS02-M0, and so VS02-M1 |
+| **U-1** | The rate set's authored content: the USD and EUR rates against the base, the date they are stated for, and the source note. No rate exists in code, configuration or data | The owner supplies all of it | **Rates closed:** USD `85` and EUR `100`, in INR per unit. They are illustrative, authored rates and come from no market source. **Date and source note closed at VS02-M0:** the owner supplied both, and they are recorded verbatim in §A7.3 (§0.11). Neither was invented or defaulted | nothing |
 | **U-2** | The project proposal PDF could not be read (no PDF tooling). Any commitment it makes about revenue or pipeline beyond what the strategy quotes is unknown | The owner's direction | **Closed.** The owner directs that the PDF be treated as making no revenue or pipeline commitment beyond this specification. No requirement is taken from it | nothing |
 | **U-3** | Whether VS-01 is "accepted" in strategy §10's sense. The only record was M9's closure and the push of `523210a` | The owner's statement | **Closed.** VS-01 is accepted as the predecessor baseline for VS-02 | nothing |
 | **U-4** | The organization's fiscal calendar. None is defined in data or documents | Not needed while MD-6 stands | **Closed.** No fiscal-calendar requirement; MD-6's calendar months stand | nothing |
 | **U-5** | The frontend phase: its agent, its panel, and whether it waits for F7 | A later frontend specification (SD-6) | No action now | nothing in this plan |
 | **U-6** | When, and whether, the hosted site receives VS-02 | The owner's separate approval per outward action (§B4) | No hosted action is part of this specification | nothing in this plan |
-| **U-7** | Whether any frozen test beyond §B2's list is tripped by a new package, route or error code | VS02-M0's pin census (§B6). An unlisted failure stops the milestone and is put to the owner before anything is changed | Open until M0 | VS02-M1 |
+| **U-7** | Whether any frozen test beyond §B2's list is tripped by a new package, route or error code | VS02-M0's pin census (§B6). An unlisted failure stops the milestone and is put to the owner before anything is changed | **Closed by VS02-M0.** The census, by reading and by a scratch run, found no frozen test tripped outside the ten authorised rows of §B2.1 (§0.11) | nothing |
 
 ## 0.10 The owner's decisions of 2026-10-01, and what v2.1 changed
 
@@ -452,6 +453,36 @@ acceptance criterion or security control except as these items state.
    table, an empty source system always answers `200` (§A17.1);
    `scripts/vs01_acceptance.py` and `migrations/` are stated as frozen (§B1); §B2.3 lists the
    migration and head pins among those expected to pass unchanged.
+
+## 0.11 The VS02-M0 record (2026-10-01)
+
+VS02-M0 (§B6) ran on 2026-10-01 at `b0fcaa2`, one commit ahead of `origin/main` (`523210a`). It
+changed no production code, test, configuration, migration, data, frontend or README file, and it
+started nothing of VS02-M1. This amendment is its only output (§B6 step 7). §0.10 stays as the
+record of v2.1; where it says U-1's date and source note are not yet supplied, this record is the
+later one.
+
+**Owner input (U-1).** The owner supplied both open fields, and §A7.3 records them verbatim:
+`as_of_date` is `2026-10-01`, and `source_note` is the owner's sentence as written there. Neither
+was invented, defaulted or reworded. The rates are unchanged: base INR, USD `85`, EUR `100`,
+illustrative and owner-authored. The rate set is fully pinned, and it lives in configuration only
+(SD-2, v2's "Variant C"): no table, migration or registration path exists.
+
+| Check | Result (OBSERVED 2026-10-01) |
+|---|---|
+| Baseline suite (§B5) | 6771 passed (unit 5287, contract 185, integration 1214, e2e 85), 0 failed, 0 skipped, 2 warnings, both the known ones; `app/` coverage 100% over 7456 statements |
+| Lint, types, secrets, head | ruff 69; mypy 9; secret scan 0; one head, `070e4968a497`. All equal to the baseline of §0.1 |
+| VS-01 | `make verify-vs01` exits 0; the golden file's hash and the three payload hashes are unchanged; the pinned fingerprint is matched |
+| Pin census, by reading | all ten authorised rows of §B2.1 match the repository at the lines cited |
+| Pin census, by scratch run | nine frozen tests fail over the stubbed copy, each under a row of §B2.1: T-VS02-1a to 1c one test, T-VS02-2 two, T-VS02-3a one, T-VS02-3b two, T-VS02-5 two, T-VS02-10 one. T-VS02-3c and T-VS02-4 add content and have no failing test behind them. **No other frozen test failed: no further row is proposed, and no new authorisation is needed (U-7).** The copy is deleted |
+| Dataset | `data/demo/` reconciles with Part A and Appendix 1: 233 rows over 7 entity types; 44 deals, 30 open and all valued, 14 closed |
+| Arithmetic | Appendix 1 and Appendix 2 are reproduced in full by a calculation independent of any VS-02 code; the base-currency figures are pinned (§A26, Appendix 2) |
+| Substrate (§0.2 items 4 to 7) | present as assumed |
+| Security and boundaries (§A21) | every control is satisfiable against the frozen substrate; no violation |
+| Allowed and frozen paths (§B1) | every frozen path is byte-identical to `523210a`; none of the new paths exists |
+
+**Gate.** VS02-M0 is closed. VS02-M1 is authorised by the gate and has not started; it begins only
+on the owner's instruction.
 
 ---
 
@@ -564,8 +595,8 @@ A rate set is an immutable value with exactly these authored fields, and one der
 |---|---|---|
 | `rate_set_version` | string, 1–50 characters | Identifies the set. The first is `"1"` |
 | `base_currency` | ISO 4217 code in the frozen D1 vocabulary | `INR` ([SD-1]) |
-| `as_of_date` | calendar date | The date the assumption is stated for. One date for the whole set. [U-1]: open, supplied by the owner at VS02-M0 |
-| `source_note` | string, 1–500 characters, no line break | Where the assumption comes from, in the owner's words. [U-1]: open, supplied by the owner at VS02-M0 |
+| `as_of_date` | calendar date | The date the assumption is stated for. One date for the whole set. [U-1]: `2026-10-01`, supplied by the owner at VS02-M0 |
+| `source_note` | string, 1–500 characters, no line break | Where the assumption comes from, in the owner's words. [U-1]: supplied by the owner at VS02-M0, verbatim in §A7.3 |
 | `rates` | mapping currency → positive `Decimal` | `rate_to_base`: units of base currency per **one** unit of the currency. At most 8 decimal places and at most 10 integer digits. Values ([U-1], approved): USD `85`, EUR `100`, INR `1` |
 | `digest` | 64 lowercase hex characters | Derived (§A7.4) |
 
@@ -590,8 +621,9 @@ rate-set version is named.
 version: 1                      # file format
 rate_set_version: "1"
 base_currency: INR              # SD-1
-as_of_date: <date>              # U-1, open: the owner's, recorded at VS02-M0
-source_note: "<owner's words>"  # U-1, open: the owner's, recorded at VS02-M0
+as_of_date: 2026-10-01          # U-1: the owner's, recorded at VS02-M0
+# U-1: the owner's words, recorded at VS02-M0
+source_note: "Owner-authored illustrative rates for VS-02 deterministic demo calculations and acceptance testing; not sourced from a live market feed."
 rates:
   INR: "1"
   USD: "85"                     # U-1
@@ -1615,9 +1647,10 @@ The form is VS-01's (plan §A27). Four criteria restate the brief's own acceptan
 16. Regression: the full suite passes with 0 failed and 0 skipped; `app/` coverage is 100%; ruff 69;
     mypy 9; secret scan 0; one migration head.
 
-Base-currency **numbers** are not criteria until VS02-M0 pins them. The rates are approved (U-1), and
-M0 computes the base figures from them and records them here, by the approved amendment of §B6. They
-then join criteria 3, 6 and 8.
+Base-currency **numbers** are criteria: VS02-M0 pinned them on 2026-10-01. The rates are approved
+(U-1), and M0 computed the base figures from them and recorded them, by the approved amendment of
+§B6: the open pipeline is INR 73,442,577.10 unweighted and INR 32,375,999.45 weighted, and Appendix
+2 holds every pinned figure. They join criteria 3, 6 and 8.
 
 ### A27. The acceptance command [MD-16]
 
@@ -1823,6 +1856,9 @@ iterate `Base.metadata` (no model is added); `tests/integration/test_m8_migratio
 `tests/integration/test_h3_migrations.py` and `tests/unit/test_vs01_acceptance.py` (no migration or
 table is added, and the head does not move).
 
+Confirmed by VS02-M0 on 2026-10-01: the scratch run's nine failing frozen tests all fall under rows
+of §B2.1, and no other frozen test failed (§0.11).
+
 **Anything not in §B2.1 is not authorised.** A further contradiction is reported, and
 implementation stops until the owner rules.
 
@@ -1918,6 +1954,8 @@ One commit per milestone, verified before the next begins. Dependency order:
 7. **Output:** an amendment to this plan only — the status row, any §B2.1 additions, the rate set's
    date and note in §A7.3, the pinned base figures in §A26 and Appendix 2 — committed alone on the
    owner's approval.
+
+Closed on 2026-10-01: §0.11 is its record.
 
 **VS02-M1 — FX foundation.**
 - *Change.* `app/fx/`; `fx_rates.yaml`.
@@ -2046,15 +2084,15 @@ currencies: CUST-029, CUST-042 and CUST-050. The order of the buckets depends on
 
 **DOC-004.** Citable span `[170, 187)` reads `INR 47,342,500.00`.
 
-## Appendix 2 — Base-currency figures at the approved rates (not yet pinned)
+## Appendix 2 — Base-currency figures at the approved rates (pinned at VS02-M0)
 
 **The rates are the owner's decision of 2026-10-01 (U-1): base INR; `USD = 85`, `EUR = 100`,
 `INR = 1`. They are illustrative, authored rates: a stated assumption that comes from no market
-source and no document. The set's date and source note are still open (U-1); no figure here depends
-on either.**
+source and no document. The set's date, `2026-10-01`, and its source note are the owner's, supplied
+at VS02-M0 (U-1, §A7.3); no figure here depends on either.**
 
-The figures below are this plan's calculation. They are not acceptance criteria until VS02-M0
-recomputes them independently and pins them into §A26 (§B6).
+The figures below were this plan's calculation. VS02-M0 recomputed them independently on
+2026-10-01, found every one equal, and pinned them (§0.11, §A26, §B6). They are acceptance figures.
 
 | Figure | Unweighted | Weighted |
 |---|---|---|
@@ -2091,13 +2129,14 @@ U-7; the authorisation of ten test evolutions (§B2.1); the three clarifications
 approval to commit this file alone as `VS-02: finalize specification`. Nothing in that list needs a
 further ruling.
 
+### Supplied at VS02-M0
+
+| # | Input | Supplied | Reference |
+|---|---|---|---|
+| 1 | **U-1** The rate set's date and its source note | by the owner on 2026-10-01, in the owner's words, and recorded verbatim. Neither was invented | §0.9, §0.11, §A7.2, §A7.3, §B6 |
+
 ### Still required
 
-| # | Input | Needed | Reference |
-|---|---|---|---|
-| 1 | **U-1** The rate set's date and its source note | the owner's words, supplied during VS02-M0. Neither is invented. M0 does not close, and VS02-M1 does not begin, without both | §0.9, §A7.2, §B6 |
-
-Nothing else in this document needs a ruling before VS02-M0. M0 is a separate task and begins only
-on the owner's instruction. If its census finds a frozen-test contradiction outside the ten
-authorised rows, M0 stops there until the owner authorises it (U-7). U-5 and U-6 block nothing in
-this plan.
+Nothing. VS02-M0 is closed (§0.11): its census found no frozen-test contradiction outside the ten
+authorised rows (U-7). VS02-M1 is authorised by the gate, is a separate task and begins only on the
+owner's instruction. U-5 and U-6 block nothing in this plan.
