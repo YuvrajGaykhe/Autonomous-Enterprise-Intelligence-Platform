@@ -13,7 +13,7 @@ to produce it.**
 | Milestone | Status | Evidence |
 |---|---|---|
 | **VS02-M0** — pre-flight baseline | COMPLETE (2026-10-01) | §0.11; measured at `b0fcaa2`; recorded by the commit `VS-02: record the M0 baseline` |
-| **VS02-M1** — FX foundation | NOT STARTED | — |
+| **VS02-M1** — FX foundation | COMPLETE (2026-10-05) | §B6; T-VS02-1a and T-VS02-3a applied; gate of §B5 measured on 2026-10-05: 7311 tests, `app/` 100%; recorded by the commit `VS02-M1: add the FX foundation` |
 | **VS02-M2** — pipeline facts and aggregation | NOT STARTED | — |
 | **VS02-M3** — concentration, risk-band cross-tabulation, the view | NOT STARTED | — |
 | **VS02-M4** — API | NOT STARTED | — |

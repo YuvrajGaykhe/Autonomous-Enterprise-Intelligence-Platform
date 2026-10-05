@@ -1,0 +1,33 @@
+# =============================================================================
+# The FX rate set (VS-02 plan A7).
+#
+# Loaded and validated by app/fx/rates.py, on first use and never at startup.
+# This file is the one place a rate set is authored and the one place it
+# lives: there is no table and no stored copy. It holds exactly one rate set,
+# the current one.
+#
+# A rate set is a STATED ASSUMPTION, never a fact. These are illustrative,
+# authored rates and come from no market source (plan 0.9, U-1). They are
+# not matched to any as_of.
+#
+# A version's content never changes. Changing any field below - a rate, the
+# date, the note or the base currency - needs a new rate_set_version, and
+# tests/unit/test_vs02_fx.py pins each version's digest, so an edit without
+# one fails the build.
+#
+# A rate is units of the base currency per ONE unit of the currency. Write
+# every rate as a quoted string. An unquoted decimal is a YAML float and is
+# refused: a binary float is not the number the author wrote. An unquoted
+# integer is read as YAML resolves it (0125 is octal for 85), so quote it too.
+# =============================================================================
+
+version: 1                      # file format
+rate_set_version: "1"
+base_currency: INR              # SD-1
+as_of_date: 2026-10-01          # U-1: the owner's, recorded at VS02-M0
+# U-1: the owner's words, recorded at VS02-M0
+source_note: "Owner-authored illustrative rates for VS-02 deterministic demo calculations and acceptance testing; not sourced from a live market feed."
+rates:
+  INR: "1"
+  USD: "85"                     # U-1
+  EUR: "100"                    # U-1
