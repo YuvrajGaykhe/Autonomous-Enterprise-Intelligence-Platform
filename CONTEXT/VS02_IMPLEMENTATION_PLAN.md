@@ -17,6 +17,12 @@ M2 pre-implementation audit on the owner's decisions of §0.12. APPROVED BY THE 
 for commit, alone, as `VS02-M2: finalize the M2 specification`. It changes no code, test,
 configuration, migration, frontend or README file.**
 
+**The amendment of 2026-10-07 is a documentation-only hardening of the VS02-M3 contract. It records
+the owner's five decisions OD-M3-1…OD-M3-5 on the VS02-M3 pre-implementation audit (§0.14). The
+owner directed its commit, alone, as `VS02: harden M3 specification`. The version stays v2.2, as it
+did for OD-9 (§0.13). It changes no code, test, fixture, configuration, migration, frontend or
+README file, and it starts nothing of VS02-M3.**
+
 | Milestone | Status | Evidence |
 |---|---|---|
 | **VS02-M0** — pre-flight baseline | COMPLETE (2026-10-01) | §0.11; measured at `b0fcaa2`; recorded by the commit `VS-02: record the M0 baseline` |
@@ -32,7 +38,8 @@ approved, and **VS02-M0 does not begin until this file is committed on its own.*
 separate task and begins only on the owner's instruction. The rate set's date and source note (U-1)
 are an owner input during M0 (§B6): M0 cannot close without both, and VS02-M1 cannot begin until M0
 closes. VS02-M2 does not begin until the v2.2 revision is approved by the owner and committed on its
-own (§0.12, §B7).
+own (§0.12, §B7). VS02-M3 does not begin until the hardening of its contract is committed on its own
+(§0.14, §B7), and then only on the owner's instruction.
 
 > Strategy context: `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` §6.3, §10.2 (status **PROPOSED**)
 > VS-01 specification and conventions: `CONTEXT/VS01_IMPLEMENTATION_PLAN.md`
@@ -57,6 +64,7 @@ it that carries no tag of its own; an item's own tag replaces the heading's.
 | **[R]** | **REQUIRED** | Binding without a further choice inside VS-02. The source is named. |
 | **[SD-n]**, **[MD-n]**, **T-VS02-n** | **PROPOSED OWNER DECISION** | Authored by this specification where no authority exists. Every one has an id and is listed in §0.6 (six shaping decisions), §0.7 (methodology) or §B2.1 (edits to frozen tests). It binds nothing until the owner approves it. |
 | **[OD-n]** | **OWNER DECISION OF 2026-10-06** | One of the nine decisions the owner took on 2026-10-06: six on the VS02-M2 pre-implementation audit, two in the final hardening pass that followed it, and one, OD-9, after VS02-M2 closed, which closes U-8. OD-1 to OD-8 are recorded in §0.12 and OD-9 in §0.13, and §0.8 says what a later change would reopen. |
+| **[OD-M3-n]** | **OWNER DECISION OF 2026-10-07** | One of the five decisions the owner took on 2026-10-07 on the VS02-M3 pre-implementation audit, OD-M3-1 to OD-M3-5. They are recorded in §0.14, and §0.8 says what a later change would reopen. The series is its own: it continues no number of OD-1 to OD-9 and reuses none. |
 | **[U-n]** | **UNKNOWN/OPEN** | No authority exists and this specification proposes no value. §0.9 states what closes it. |
 
 **Standing in v2.1.** On 2026-10-01 the owner decided SD-1…SD-6 and approved MD-1…MD-22 as specified
@@ -74,6 +82,13 @@ v2.2. The other hardenings of v2.2 refine statements that already carry an **[MD
 statements keep it (§0.12). The wording v2.2 adds binds when the owner approves v2.2. U-8 was new
 and open in v2.2, and blocked VS02-M3 only; the owner decided it on 2026-10-06, after VS02-M2
 closed, as OD-9, and it is closed (§0.9, §0.13). OD-9 binds as the owner stated it.
+
+**Standing after the M3 hardening (2026-10-07).** The owner took five decisions on the VS02-M3
+pre-implementation audit, OD-M3-1…OD-M3-5 (§0.14). A statement one of them governs carries its
+**[OD-M3-n]** tag, and they bind as the owner stated them. The amendment's two other hardenings, the
+reconciliation of `deal_counts` (§A14.5) and the independence of the caller's Decimal context (§A9.1
+item 5), refine statements that already carry an **[MD-n]** tag, and those statements keep it. No
+**[U-n]** was added, and none is open.
 
 **What makes a statement REQUIRED.** Two kinds of source:
 
@@ -418,6 +433,11 @@ dependants are not approved until the decision is.
 | OD-7 | §A10.5 items 3 and 6, the three stages and their precedence; §A10.1 item 4; the sentence on M2 under §A7.5 item 4; §A17.1's second consequence; its row of §A17.2; coverage row C-19 |
 | OD-8 | §A10.1 item 3; the `ALL` entry of §A14.1 item 7; its row of §A17.2; the `ALL` entry of §A29; the `ALL` cases of coverage row C-11 |
 | OD-9 | §A14.5's rule for a stage outside the vocabulary, with its table; the `deal_counts` entry of §A10.2 item 4; its clause of §A17.1 step 5; its row of §A17.2; its entry among §B6's M3 tests; the closure of U-8 (§0.9) |
+| OD-M3-1 | the order inside step 5 of §A17.1, with its table; the *When* entry of §A12.3 item 2; the last entry of §A10.5 item 6; its row of §A17.2; coverage row C-35 |
+| OD-M3-2 | §A12.3 item 2; the scope of §A10.5 item 5 and its entry on the entity; the `entity` parameter of `PipelineDataError` in §B6's M3 change list; its row of §A17.2; test 27; coverage row C-22 |
+| OD-M3-3 | §A13.2 item 4; the entry under §A12.3 item 4; the `data_quality` paragraph of §A14.11; its row of §A17.2; coverage rows C-41 and C-42 |
+| OD-M3-4 | §B6's M3 change list and its entry on M2's substrate; the wording of two rows of §B1; the last paragraph of §B2.2; the last entry of §A22.5 item 3; part 4 of §A25.2; coverage row C-44 |
+| OD-M3-5 | §A25.2; the tests and gate entries of §B6's M3 |
 
 ## 0.9 Unknown and open
 
@@ -691,6 +711,191 @@ are. The reserved keys of §A14.1 item 7 are the same eight.
 Decisions). VS02-M3 has not started. It is a separate task and begins only on the owner's
 instruction.
 
+## 0.14 The VS02-M3 pre-implementation audit and the M3 hardening (2026-10-07)
+
+**The audit.** It ran on 2026-10-06 at `99ab280` (`VS02: freeze U-8 for M3`), before any M3 code
+existed. One auditor worked alone. It changed no code, test, configuration or plan file, and it ran
+neither the suite nor the gate. It made one measurement, in the suite's own `_test` harness
+database, from a scratch file kept outside the repository.
+
+| Check | Result (OBSERVED 2026-10-06) |
+|---|---|
+| Contradictions inside this plan | one: §A14.11 and §A13.2 disagreed about the scope note of an empty view. OD-M3-3 closes it |
+| Frozen substrate | sufficient, and nothing is blocked. `RiskBand`, `RecordCitation`, `canonical_json`, `decimal_text`, `resolve_scope`, `Scope.to_payload`, `default_risk_rules`, `log_event` and entries 9 and 10 of the fixture package are present as this plan assumes. The nine deal fields §A18.2 cites are all citable |
+| M2's substrate | every M2 output that M3 consumes exists in the shape M3 needs. M3 cannot be built by consuming it unchanged: stage 1 of §A10.5 runs only inside the one aggregation call, and the customer's `source_id` has to join that stage's reserved-key check (§A10.5 item 1). OD-M3-4 settles it |
+| Arithmetic | every M3 figure of Appendix 1 and Appendix 2 reproduced from `data/demo/` by a calculation independent of `app/`: the counts, the band table and its base figures, the 23 customer buckets, `risk_coincidence` and the concentration figures |
+| Persisted bands, measured | after VS-01's assessment run at 2026-09-18 the harness database holds 50 assessments at the identity of §A12.2: CUST-007 `CRITICAL`, CUST-025 and CUST-036 `WATCH`, every other `NONE`. None joins at another `as_of`, or once the fingerprint has moved. With DOC-004 removed and the corpus assessed again, every customer's band and verdict is what it was, so the two arms of test 3 can be built as §A18.4 item 4 says |
+| Frozen tests, by reading, against M3's surface | only T-VS02-3a is tripped, and no further row is proposed. Not confirmed by a scratch run: VS02-M0's census stubbed no path of M3. Lint, types, coverage and the secret scan were not run; the M3 gate measures them |
+| Left open by this plan | the points this amendment closes, below |
+
+**The owner's decisions.** The audit put five points to the owner, who decided all five on
+2026-10-07. Each is recorded once, here.
+
+| ID | Decision (2026-10-07) | Specified in |
+|---|---|---|
+| OD-M3-1 | **The order of the data-validity conditions.** Inside step 5 of §A17.1: stage 1 of §A10.5, exactly as M2 executes it; then the check of OD-9; then the check of the stored bands. An earlier condition wins over a later one | §A17.1, §A10.5 item 6, §A12.3 item 2 |
+| OD-M3-2 | **The unknown band.** Every row `band_rows` returns is checked against `RiskBand`. A band outside it fails closed with the existing `PipelineDataError`, which names the entity `customers` and the `source_id` of every such customer, ascending. For that, `PipelineDataError` gains at M3 one keyword-only parameter, `entity`, whose default is `deals` | §A12.3 item 2, §A10.5 item 5, §B6 |
+| OD-M3-3 | **The scope note.** §A13.2 governs: `NO_ASSESSMENT_FOR_SCOPE` is emitted when `band_rows` returns no row, and only then. §A14.11 is aligned with it. No second scope-note state is made | §A13.2 item 4, §A14.11, §A12.3 item 4 |
+| OD-M3-4 | **M2's substrate is evolved in place.** M3 may change the M2-created files the frozen M3 contract requires it to change, and it makes no parallel second entry point. M2's behaviour is preserved for M2-valid inputs | this section, §B6, §B1, §B2.2, §A22.5 item 3, part 4 of §A25.2 |
+| OD-M3-5 | **A coverage table for the M3 gate,** in the form of §A25.1 | §A25.2, §B6 |
+
+**What the owner stated: OD-M3-1.**
+
+| Point | As decided |
+|---|---|
+| The order | Stage 1 of §A10.5, exactly as M2 executes it; then OD-9's check of a stage outside the vocabulary; then the check of an unknown band |
+| Which wins | When more than one condition holds: a failure of stage 1 over a failure of OD-9's check, and a failure of OD-9's check over an unknown band |
+| Stage 1 | Its behaviour is preserved. The decision gives no permission to reorder the checks inside it |
+| The error class | None is added |
+| Not decided | No order is added for the loading of the two configuration files of step 2 of §A17.1 |
+
+*How stage 1 is read.* Stage 1, as M2 executes it, is two checks and then the making of each open
+valued deal's `MoneyValue` (§A10.5 item 3). The two checks raise `PipelineDataError`. A refusal by
+the frozen type is `ContractViolationError`, and it keeps the place M2 gives it: after stage 1's
+checks, and before OD-9's check. OD-9's check and the unknown band raise `PipelineDataError`.
+
+**What the owner stated: OD-M3-2.**
+
+| Point | As decided |
+|---|---|
+| The boundary | `band_rows` is M3's boundary for persisted VS-01 assessments |
+| Which rows | Every row it returns is validated against the frozen `RiskBand` vocabulary |
+| The outcome | A band outside the vocabulary fails closed with the existing `PipelineDataError` |
+| What it identifies | The entity `customers` and the `source_id` of every affected customer, sorted by code point and without repeats. No deal id |
+| Never done | No assessment is silently dropped. An unknown band is not renamed, and it is not mapped to `NONE` or to `UNASSESSED` |
+| The error class | No class is added. M3 is authorised to extend `PipelineDataError`, minimally, with one keyword-only parameter `entity` whose default is `deals` |
+| M2 | For every existing M2 call site the behaviour is equivalent, byte for byte: the default entity stays `deals`; the existing conditions are unchanged; the sorting and de-duplication of `source_id`s are unchanged; the messages are unchanged; and M2's tests continue to pass |
+| §A10.5 | Its requirement of the entity `deals` is scoped to the conditions deals trigger. `deals` is not the entity of every data error. M2's error contract is preserved |
+
+*The substrate finding behind it.* Before the decision was recorded, the frozen error type was read
+against it. OBSERVED at `99ab280` (`app/pipeline/errors.py`): `PipelineDataError` takes a condition,
+`source_id`s and keys; it sets its entity to `deals` for every error and takes no parameter for it;
+and its message names its ids as deals'. M2's tests assert that entity and that message text. The
+type could carry the condition and sorted, de-duplicated ids. It could not say that the ids are
+customers'. The hardening stopped there with nothing edited, and the point was put to the owner,
+who ruled on 2026-10-07 for the minimal extension above and added `app/pipeline/errors.py` to the
+surface of OD-M3-4. The parameter is added at VS02-M3 and not by this amendment.
+
+**What the owner stated: OD-M3-3.**
+
+| Point | As decided |
+|---|---|
+| The governing rule | §A13.2: the scope note is emitted when `band_rows` returns no assessment row for the requested scope |
+| The empty view | Its `data_quality` follows that rule |
+| Assessments without deals | Persisted assessments that have no corresponding open valued deal do not, by themselves, change the scope note |
+| Not done | No second scope-note state is made, and no limitation text is changed |
+
+**What the owner stated: OD-M3-4.**
+
+| Point | As decided |
+|---|---|
+| The rule | M3 may evolve M2-created substrate in place where required by the frozen M3 contract. Such evolution must preserve all M2 behaviour for M2-valid inputs. M3 may supersede M2-era assertions only where the frozen M3 contract explicitly expands or changes the applicable contract |
+| The surface | `app/persistence/repositories/pipeline_queries.py`, `app/pipeline/facts.py`, `app/pipeline/aggregation.py` and `app/pipeline/errors.py`; the existing VS-02 tests that concern them; and the boundary inventories |
+| No second entry point | M3 does not create a parallel second pipeline entry point merely to avoid modifying M2's substrate |
+| Kept | M2's acceptance figures are unchanged. M1 is untouched. M2's interfaces stay compatible unless the frozen M3 contract explicitly extends them |
+| Tests | An existing M2 test that becomes intentionally false because M3 expands the contract may be evolved, under OD-5 and the test evolution this plan authorises for M3 |
+| Not allowed | Any unrelated refactor |
+| What it is | A governance decision. It authorises no implementation by this amendment |
+
+*How it is read.*
+
+- **The surface is the files named.** A production file of M1 or M2 that is not named is outside
+  it: `config.py`, `measures.py` and `__init__.py` of `app/pipeline/`, and all of `app/fx/`. A need
+  to change one is put to the owner before anything is changed, as §B2.3 already rules for a frozen
+  test.
+- **M2-valid inputs.** For an M2-valid input the entry point of §A22.5 item 3 does at M3 what it
+  did at M2: the same four partitions of §A10, figure for figure, or the same error. The frozen M3
+  contract changes the outcome for one kind of input, and this plan has said so since v2.2: an open
+  valued deal whose customer's `source_id` equals a reserved key. §A10.5 item 1 puts that key into
+  the reserved-key check at M3, with `by_customer`. M2's entry point built no customer bucket and
+  took such a deal as ordinary data; from M3 the deal fails stage 1. That is the frozen M3 contract
+  expanding the rule in the place the M2 contract said it would, which the third sentence of the
+  owner's rule allows. No other input changes its outcome.
+- **The entry point.** It stays callable as §A22.5 item 3 describes it. What it returns may gain
+  what §A11 and §A12 add; for an M2-valid input, nothing it returned at M2 is removed or altered.
+- **Superseded assertions.** Part 4 of §A25.2 lists the M2-era assertions the audit found that the
+  frozen M3 contract expands. Each is replaced by the assertion of the contract as M3 has it. That
+  is the governing rule of §B2.1, which replaces only the obsolete assertion. Each replacement
+  asserts the larger contract exactly, as the original asserted M2's.
+
+**What the owner stated: OD-M3-5.**
+
+| Point | As decided |
+|---|---|
+| The table | An explicit coverage table for the M3 gate, in the style of §A25.1 |
+| What it accounts for, at least | The risk-band read; unknown-band validation; the customer partition; concentration; weighted concentration; pseudo-holders; the risk-band cross-tabulation; coincidence; `deal_counts`; the sum of its rows; `UNSTAGED`; OD-9; the missing-rate check of every currency; the service; the event; the transaction and read-only behaviour; deterministic order; the source, linker and `as_of` filters; multi-currency; the empty view; independence of the Decimal context; M2 regression; and error precedence |
+| Kept apart | The frozen tests; the new tests M3 is authorised to write; the evolutions of M2's tests; and M4's tests |
+| Test names | None is invented. A test is named only where this plan already requires it |
+
+**Two further hardenings, by the owner's direction.** Neither is one of the five decisions. Each
+refines a statement that already carries an **[MD-n]** tag.
+
+| # | Hardening | Where | Governed by |
+|---|---|---|---|
+| 1 | `deal_counts` reconciles: the rows' `total` sum to `total`. The identity of valued and unvalued open deals is stated overall, where its keys are, and the wording that put it "in every row" is corrected. No key is added and no shape changes | §A14.5; coverage row C-31 | MD-12, hardened |
+| 2 | Nothing the view states depends on the caller's Decimal context: no `dec` text, share, cumulative share, HHI or other concentration figure. An explicit local context is used wherever one is needed. M1's conversion is not changed, and no global context is altered | §A9.1 item 5, §A11, §A14.1 item 2, §A19 item 8; coverage row C-43 | MD-4, MD-8 and MD-12, hardened |
+
+*Measured for the second* (OBSERVED 2026-10-07, by a scratch run that changed nothing). VS-01's
+`decimal_text` normalises in the context in force: called bare at a precision of 1 it renders
+`73442577.10` as `80000000`, and with `Inexact` trapped it raises. M2's entry point does not have
+the fault: over the committed deals its four partitions are identical under a context of precision
+1, another rounding mode, the narrowest exponents and those traps, and it leaves that context as it
+found it. The hardening therefore binds what M3 adds, and it requires no change to M1 or to M2.
+
+**What this amendment changed.**
+
+| Where | Change |
+|---|---|
+| §A17.1 | the order inside step 5, with its table (OD-M3-1); step 5 names the check of the bands |
+| §A10.5 | item 5 is scoped to the conditions deals trigger, and says what the entity of the unknown band is (OD-M3-2); item 6 points to the order inside step 5 (OD-M3-1) |
+| §A12.3 | item 2 in full: which rows, the outcome, what the error identifies, the error class, when, and that it is not logged (OD-M3-2); one entry under item 4 (OD-M3-3) |
+| §A13.2 | item 4: the one rule of the scope note (OD-M3-3) |
+| §A14.11 | `data_quality` of the empty view, aligned with §A13.2 (OD-M3-3) |
+| §A14.5 | the reconciliation of `deal_counts`, and the corrected wording |
+| §A9.1, §A11, §A14.1 item 2, §A19 | independence of the caller's Decimal context |
+| §A17.2 | three rows |
+| §A22.5 item 3 | one entry: the entry point is evolved in place (OD-M3-4) |
+| §A25.2 | new: the coverage required at the M3 gate (OD-M3-5) |
+| §B1 | the wording of the two rows that hold the files of OD-M3-4 |
+| §B2.2 | one paragraph on M2-era assertions (OD-M3-4) |
+| §B6, VS02-M3 | the change list, the entry on M2's substrate, the tests, the gate and the non-goals |
+| §B7 | this commit |
+| The header, Labels, §0.8, Owner Decisions | the standing of the five decisions |
+
+**What this amendment did not change.** No figure, rate, appendix value or pinned digest. No key or
+shape of the view. No error class, note code or limitation text. No constant, so no entry of the
+methodology pin and no `pipeline_version`. No T-VS02 row, no named test and no acceptance
+criterion: the numbering of §A25 and criterion 14 stand. Nothing of the boundary between M3 and M4:
+the route, its response models, the `ErrorCode` member, the router registration, the README's API
+entries and named tests 24 to 26 are M4's, and the acceptance command is M5's. No record of
+VS02-M0, VS02-M1 or VS02-M2, and no dated entry of §0.12 or §0.13. Where §0.13 says that nothing
+orders stage 1, the unknown band and OD-9's check among themselves, or that nothing is still
+required before VS02-M3, this record is the later one. The version of this plan stays v2.2, as it
+did for OD-9. No code, test, fixture, configuration, migration, frontend or README file changed.
+
+**Noted and left as they are.** None changes what M3 must build.
+
+- §A17.1 step 2 names two configuration files and does not say which is loaded first. A request in
+  which both are refused answers `500` either way. The owner directed that no order be added.
+- OD-M3-1 orders the conditions where the service examines them, in step 5. Which error a pure
+  builder raises when a test hands it an unknown band and a currency with no rate together is
+  implementation-private, as the builders' signatures are (§A22.5). Through `pipeline_view` the
+  unknown band always comes first, because step 5 comes before step 6.
+- §A17.1 step 3 says that scope resolution cannot fail with an explicit `as_of`. OBSERVED: the
+  frozen `Scope` refuses a `source_system` made of whitespace alone, with `ContractViolationError`.
+  That is a `500`, as it is on VS-01's own route for the same field.
+- §A20 names `open_deal_count` and `unvalued_deal_count` without naming the view keys they equal.
+  §A8.2 and §A8.3 define an open and an unvalued deal, the view states those two counts as
+  `deal_counts.open` and `deal_counts.open_unvalued`, and coverage row C-37 says so.
+- The second note of §0.13 stands: no rule refuses a stage vocabulary that itself holds `UNSTAGED`,
+  and no decision is made for it. `UNSTAGED` is still for a null stage and for nothing else.
+- Appendix 2 pins no weighted concentration figure by owner, and by customer only the leader and the
+  HHI. §A25.2 covers the rest by a calculation independent of VS-02's code.
+
+**Gate.** Nothing is still required of the owner before VS02-M3 (Owner Decisions). VS02-M3 has not
+started. It begins only on the owner's instruction, after this amendment is committed on its own
+(§B7).
+
 ---
 
 # Part A — Specification
@@ -950,6 +1155,22 @@ They carry no amount in the view.
    context of item 2, so no aggregate can be rounded by the process default context. The frozen
    `MoneyValue.total` adds in whatever context is current, so VS-02 calls it inside that context.
    (Hardened in v2.2: v2.1 named only multiplication and division.)
+5. [MD-4] **The caller's context changes nothing.** Nothing the view states depends, in any
+   respect, on the Decimal context in force when it is built. Its precision, its rounding mode and
+   the signals it traps are the caller's to set, and none of them changes a figure, a text, or
+   whether the view is built.
+   - It covers every figure of items 2 and 4; every share, cumulative share and HHI of §A11, whose
+     divisions, squares and sums run in the context of item 2; and the text of every `dec` (§A14.1
+     item 2).
+   - VS-01's `decimal_text` normalises in the context in force (OBSERVED). VS-02 therefore calls it
+     inside an explicit local context in which the result is exact, as the rate-set digest (§A7.4)
+     and the methodology digest (§A22.3 item 3) already do.
+   - Every context VS-02 uses is local to the computation that needs it. VS-02 never sets or alters
+     the caller's context or the process default.
+   - M1's `convert` and its arithmetic context are not changed.
+
+   (Hardened on 2026-10-07, §0.14: items 2 and 4 already governed the figures of §A9 and §A10. This
+   item adds the view's text, the arithmetic of §A11 and the traps of the caller's context.)
 
 #### A9.2 Per-deal native values [MD-3]
 
@@ -1134,11 +1355,24 @@ which conditions are examined is fixed.
    partition is returned, complete or partial, including the partitions the offending value does not
    touch. No deal is dropped, moved or re-bucketed. No key is renamed, escaped or prefixed. No bucket
    is invented or overwritten. No vocabulary is widened.
-5. [OD-3] **What the error identifies.** The entity `deals` and the `source_id` of every deal that
-   triggers the condition reported, ascending and without repeats. For a reserved key in the stage
-   vocabulary itself, which no deal triggers, it names that key. It states no amount. When both
-   conditions hold, the reserved-key collision is the one reported. How the error carries this is
-   implementation-private (§A22.5); that it does is tested (§A25.1).
+5. [OD-3] **What the error identifies.** For a condition that deals trigger: the entity `deals` and
+   the `source_id` of every deal that triggers the condition reported, ascending and without
+   repeats. The conditions of items 1 and 2 are such conditions, and so is the check of §A14.5
+   (OD-9). For a reserved key in the stage vocabulary itself, which no deal triggers, it names that
+   key. It states no amount. When both conditions hold, the reserved-key collision is the one
+   reported. How the error carries this is implementation-private (§A22.5); that it does is tested
+   (§A25.1).
+   - [OD-M3-2] **`deals` is not the entity of every data error.** It is the entity of the
+     conditions deals trigger. The unknown band of §A12.3 is a condition of a stored assessment and
+     not of a deal, and its error names the entity `customers` and the `source_id`s of customers
+     (§A12.3 item 2). So that the one class can say which, `PipelineDataError` takes the entity, from
+     M3, as a keyword-only parameter whose default is `deals`. That parameter and its default are
+     the owner's decision; the rest of how the error carries what it identifies stays
+     implementation-private.
+   - [OD-M3-2] **M2's error contract is as it was.** Every error the M2 entry point raises names the
+     entity `deals` and identifies what this item says, with the condition, ids, keys and message it
+     had at M2. (Scoped on 2026-10-07, §0.14: this item had stated the entity `deals` without
+     saying of which conditions.)
 6. [OD-7] **Precedence.** A data-validity error, then a missing rate, then aggregation. A
    data-validity error is any error stage 1 raises.
    - Facts that hold both an M2-invalid data condition and a currency with no rate raise the
@@ -1157,6 +1391,10 @@ which conditions are examined is fixed.
      request that would fail both answers `500`, not `409`.
    - No error class is added. `PipelineDataError`, `ContractViolationError` and
      `FxRateMissingError` are the existing ones.
+   - [OD-M3-1] **M3, inside step 5.** Step 5 holds two checks that are not stage 1's: that of
+     §A14.5 on the stage of every deal `deal_counts` counts, and that of §A12.3 on the stored bands.
+     Stage 1 comes first, exactly as this item and item 3 order it; then the first of those two; then
+     the second. §A17.1 states the order, and it changes nothing inside stage 1.
 7. [R] (plan §A24) **Determinism.** The same facts, supplied in any order, raise the same error
    identifying the same deals.
 
@@ -1188,6 +1426,9 @@ which conditions are examined is fixed.
    score, and it is never combined with a band.
 
 - *If MD-8 is rejected.* Strike HHI, or name the measure. The brief says "measures" and names none.
+- *The context.* [MD-8] Every division, square and sum of item 5 runs in the arithmetic context of
+  §A9.1 item 2, and no share, cumulative share or HHI depends on the caller's Decimal context
+  (§A9.1 item 5). (Hardened on 2026-10-07, §0.14.)
 - *The constants and M2.* [OD-2] `SHARE_QUANTUM`, `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS` are
   defined at VS02-M2, because the methodology digest pinned at M2 covers them (§A22.3). Nothing else
   of this section is built before M3.
@@ -1231,12 +1472,38 @@ coverage buckets.
 
 1. The band vocabulary and its rank are the frozen `RiskBand` enum's (`app.intelligence`), not a
    list VS-02 declares.
-2. A stored band that is not a `RiskBand` value raises `PipelineDataError` and fails the request
-   (`500`). It cannot occur while VS-01's writer is frozen, and it is not mapped to any bucket.
+2. [OD-M3-2] **A stored band outside the vocabulary.** A stored band that is not a `RiskBand` value
+   raises `PipelineDataError` and fails the request (`500`). It is not mapped to any bucket.
+   - *Which rows.* `band_rows` is where persisted assessments enter VS-02, and every row it returns
+     is checked: the row of a customer who holds an open valued deal, of one who holds only closed
+     or unvalued deals, and of one who holds no deal at all.
+   - *The outcome.* Fail closed. No view is returned, complete or partial.
+   - *Never done.* The row is not dropped or skipped. The band is not renamed, and it is not mapped
+     to `NONE`, to `UNASSESSED` or to any other bucket.
+   - *What the error identifies.* The entity `customers`, and the `source_id` of every customer
+     whose returned row holds such a band, ascending by code point and without repeats. It
+     identifies no deal and states no amount. Several such rows raise it once, and the same rows in
+     any order identify the same customers.
+   - *The error class.* The existing `PipelineDataError`; no class is added. At M3 it gains one
+     keyword-only parameter, `entity`, whose default is `deals` (§A10.5 item 5). No M2 call site
+     passes it, so every error M2 raises keeps its condition, its entity `deals`, its sorted and
+     de-duplicated ids and keys, and its message.
+   - *When.* In step 5 of §A17.1, after stage 1 of §A10.5 and after the check of §A14.5 (OD-M3-1).
+     Step 5 comes before the missing-rate check, so a request that holds such a band and also lacks
+     a rate answers `500` and never `409`.
+   - *Not logged.* A request that fails emits no event (§A20 item 3). OBSERVED: the frozen handler
+     of an unhandled error logs the error's class name and nothing of its message
+     (`app/api/errors.py`). No log line VS-02 writes holds a customer identifier (§A20 item 1).
+   - *Reach.* It cannot occur while VS-01's writer is frozen. OBSERVED 2026-10-06:
+     `risk_assessments.band` carries no constraint of its own, so a test can store such a band.
 3. `UNASSESSED` is never merged into `NONE` (D-7).
 4. When `band_rows` returns no row for the identity, every linked deal is `UNASSESSED`, the totals
    are unchanged, and the scope-level note `NO_ASSESSMENT_FOR_SCOPE` is emitted. This is not an
    error.
+   - [OD-M3-3] The note has that one rule. When `band_rows` returns one row or more it is not
+     emitted, whichever customers the rows belong to and whether or not any of them holds an open
+     valued deal. A linked deal whose customer has no returned row is still `UNASSESSED` (§A13.2
+     item 4, §A14.11).
 
 #### A12.4 The no-blend invariant [R]
 
@@ -1322,6 +1589,10 @@ Placeholders: `{stages}` is the vocabulary's values ascending by code point, joi
 3. [MD-19] A deal with a null stage draws no mismatch note. Owner, customer and close-date notes are
    emitted for valued deals only, because only they sit in the partitions those notes explain. A
    deal may draw several notes.
+4. [OD-M3-3] **The scope note has one rule.** `NO_ASSESSMENT_FOR_SCOPE` is emitted when `band_rows`
+   returns no row for the identity of §A12.2, and only then. Whether the scope holds a deal, an open
+   valued deal or a customer does not enter into it. There is no second scope-level note and no
+   second state of this one. The empty view follows the same rule (§A14.11).
 
 ### A14. The view contract [MD-12]
 
@@ -1331,7 +1602,8 @@ This section is the whole output. Nothing may be added, renamed or omitted.
 
 1. JSON values only: object, list, string, integer, boolean, `null`. **No JSON float anywhere.**
 2. `dec` — a string, VS-01's `decimal_text` of a `Decimal`: plain notation, no exponent, no trailing
-   zeros, `"0"` for zero.
+   zeros, `"0"` for zero. The text is the same whatever Decimal context the caller is in (§A9.1
+   item 5). (Hardened on 2026-10-07, §0.14.)
 3. `date` — a string, `YYYY-MM-DD`.
 4. `id` — a canonical `source_id` string.
 5. **Every key of every object is always present.** `null` appears only where a type says
@@ -1465,8 +1737,24 @@ Each extension adds keys to Bucket and removes none:
 | `by_stage` | list of `{stage: string, total: integer, open: integer, closed: integer}` |
 
 `by_stage` has one row per D1 stage value, ascending, always present, and then a final row
-`UNSTAGED` for deals with a null stage, always present. `open = open_valued + open_unvalued` and
-`total = open + closed`, in every row and overall.
+`UNSTAGED` for deals with a null stage, always present.
+
+**Reconciliation.** Every `deal_counts` that is built satisfies all four of these. (Hardened on
+2026-10-07, §0.14.)
+
+1. Overall, `open = open_valued + open_unvalued` and `total = open + closed`.
+2. In every row of `by_stage`, `total = open + closed`. A row has no `open_valued` and no
+   `open_unvalued` key, so the first identity of item 1 is stated overall and not per row. (The
+   earlier wording put both identities "in every row and overall".)
+3. Across the rows, the `total`s sum to the overall `total`. This follows from the three cases of
+   OD-9, below. A deal whose stage is a value of the vocabulary is counted in that value's row. A
+   deal whose stage is null is counted in `UNSTAGED`. A deal whose stage is anything else leaves no
+   `deal_counts` to state. So every deal counted is in exactly one row.
+4. In the same way the rows' `open` sum to the overall `open`, and the rows' `closed` to the overall
+   `closed`: a row divides its deals by `is_active`, as the overall counts do (§A8.2, §A10.2
+   item 3).
+
+No key is added and no shape changes. The table above is the whole of `deal_counts`.
 
 [OD-4] `deal_counts` is built at VS02-M3, with the view. M2 builds no count structure. What M3 needs
 for it, each deal's classification as open or closed and as valued or unvalued, is already in the
@@ -1607,8 +1895,15 @@ For a source system with no deal: `deal_counts` all zero, with its stage rows pr
 `open_pipeline` empty; `by_currency` `[]`; `by_stage` three empty buckets; `by_owner` the two
 pseudo-buckets, empty; `by_expected_close` fifteen empty buckets; `by_risk_band` six empty buckets;
 `by_customer` the `UNLINKED` bucket, empty; `risk_coincidence` `[]`; the four concentration blocks
-in their zero form; `open_deals` and `closed_deals` `[]`; `data_quality` the scope note alone;
-`fx`, `scope`, `versions` and `limitations` as always.
+in their zero form; `open_deals` and `closed_deals` `[]`; `fx`, `scope`, `versions` and
+`limitations` as always.
+
+[OD-M3-3] `data_quality` of the empty view follows §A13.2 item 4 and nothing else. With no deal
+there is no deal-level note. So the list holds the scope note `NO_ASSESSMENT_FOR_SCOPE` alone when
+`band_rows` returns no row for the identity, and it is `[]` when `band_rows` returns one row or
+more. A source system with no row at all is the first case. A source system that holds assessments
+at the identity and no deal is the second. (Aligned with §A13.2 on 2026-10-07, §0.14: this section
+had said "the scope note alone" of every empty view.)
 
 ### A15. API
 
@@ -1707,12 +2002,33 @@ A request is evaluated in this order, and the first failing step decides the res
    `500`.
 3. Scope resolution. With an explicit `as_of` it cannot fail.
 4. The rate set: the content loaded at step 2. Nothing further can fail here.
-5. Facts and data validity: deals, edges and bands are read, stage 1 of §A10.5 is run, and the
-   stage of every deal `deal_counts` counts is checked (§A14.5, OD-9). A reserved-key collision, a
-   stage outside the stage vocabulary on an open valued deal, such a stage on any other deal
-   `deal_counts` counts, a refusal by the frozen `MoneyValue` or an unknown band → `500`.
+5. Facts and data validity: deals, edges and bands are read, stage 1 of §A10.5 is run, the stage of
+   every deal `deal_counts` counts is checked (§A14.5, OD-9), and the band of every row `band_rows`
+   returns is checked (§A12.3, OD-M3-2). A reserved-key collision, a stage outside the stage
+   vocabulary on an open valued deal, such a stage on any other deal `deal_counts` counts, a
+   refusal by the frozen `MoneyValue` or an unknown band → `500`.
 6. The missing-rate check of §A7.5 item 4 → `409 FX_RATE_MISSING`.
 7. The view, its hash, the event → `200`.
+
+**Inside step 5 [OD-M3-1].** The data-validity conditions are examined in this order. Each is
+examined over everything it applies to before the next begins, and the first that fails is the one
+raised.
+
+| Order | What is examined | What it raises |
+|---|---|---|
+| 1 | Stage 1 of §A10.5, exactly as the M2 entry point executes it: the reserved-key check, then the stage of each open valued deal, then the making of each open valued deal's `MoneyValue` | `PipelineDataError` from either check, naming the entity `deals`; then the frozen type's `ContractViolationError` |
+| 2 | The stage of every deal `deal_counts` counts (§A14.5, OD-9) | `PipelineDataError`, naming the entity `deals` |
+| 3 | The band of every row `band_rows` returns (§A12.3 item 2, OD-M3-2) | `PipelineDataError`, naming the entity `customers` |
+
+- A failure of stage 1 wins over a failure of OD-9's check, and a failure of OD-9's check over an
+  unknown band. This is so whichever rows carry the conditions, and in whatever order the rows
+  arrive.
+- Stage 1 is not reordered. Its own order is §A10.5's, and it is what M2 built. At M3 its
+  reserved-key check also covers the customer's `source_id`, as §A10.5 item 1 says; nothing else in
+  it changes.
+- All three come before step 6. None is ever reported as a missing rate.
+- No error class is added for the order. `PipelineDataError` and `ContractViolationError` are the
+  existing ones.
 
 Consequence: an empty source system answers `200` with the empty view (§A14.11), which still names
 its base currency and its rate set, because step 2 has loaded them.
@@ -1736,7 +2052,10 @@ does not perform step 6's check of every currency.
 | A generated bucket key equal to a reserved key | `PipelineDataError`; `500`; no partial view (§A14.1 item 7) | [MD-12] |
 | Open valued deal in the currency `ALL`, which Layer 1 admits | the same. The deal is valid Layer 1 data and is not valid input to the view (§A10.1 item 3) | [OD-8] |
 | A data-validity error and a missing rate in one request | the data-validity error: `500`, never `409` (§A10.5 item 6) | [OD-7] |
+| More than one data-validity condition in one request | the first in the order of §A17.1's step 5: stage 1, then OD-9's check, then the unknown band | [OD-M3-1] |
+| A stored band outside `RiskBand`, in any row `band_rows` returns | `PipelineDataError` naming the entity `customers` and every such customer; `500`; no partial view (§A12.3 item 2) | [OD-M3-2] |
 | No assessment for the scope, or partial coverage | `UNASSESSED` | [MD-9] |
+| Assessments at the identity, and no deal | `200`, the empty view, with `data_quality` `[]` (§A14.11) | [OD-M3-3] |
 | Invalid `fx_rates.yaml` or `pipeline_rules.yaml` | refused at first use naming the broken key; `500`; no partial view; other routes unaffected | [R] plan §A23 |
 | `as_of` before all data, or in the future | permitted | [R] plan §A23 |
 | Concurrent ingestion during a request | the request sees one REPEATABLE READ snapshot | [R] frozen `read_snapshot` |
@@ -1835,6 +2154,8 @@ structurally, as VS-01 cites a policy rule by its id.
    transaction covering the fingerprint, the deals, the edges and the bands. The transaction cannot
    write.
 7. [MD-11] Loaded configuration is cached per process and loaded lazily (§A7.3).
+8. [MD-4] A view does not depend on the Decimal context of its caller, and building one leaves that
+   context as it was (§A9.1 item 5). (Hardened on 2026-10-07, §0.14.)
 
 ### A20. Observability
 
@@ -2120,6 +2441,9 @@ A name outside these fails the boundary test, as an unlisted import does.
    same module with §A11 and §A12, and `view.py` consumes it. It works in the three stages of
    §A10.5 item 3, data validity first (OD-7). At M2 it builds the four partitions and no count:
    `deal_counts` is the view's (OD-4).
+   - [OD-M3-4] At M3 this callable is evolved in place. No second entry point is made beside it. It
+     stays callable as this item describes, and for every M2-valid input it returns what it returned
+     at M2 (§0.14).
 
 Every other internal signature is implementation-private: names, parameter order, return types and
 helpers are the implementer's, unless a section of this plan freezes one by name, as it does for
@@ -2249,6 +2573,105 @@ M2 gate, beside the named tests.
 | C-19 | **Error precedence.** §A10.5 items 3 and 6. Facts that hold a data-validity condition on one deal and a currency with no rate on another raise the data-validity error and never `FxRateMissingError`. This is shown in both input orders, for each condition in turn: a reserved key, a stage outside the vocabulary, and a currency outside the D1 vocabulary. With a failed check and a refusal by the frozen `MoneyValue` together, the failed check is the one raised | constructed |
 
 No row reaches §A11 or §A12: none concerns a band, the customer partition, concentration or a count.
+
+#### A25.2 Coverage required at the VS02-M3 gate [OD-M3-5]
+
+The M3 pre-implementation audit (§0.14) found that the named tests first passing at M3 (2–6, 8–12,
+18–21 and 27) leave part of what M3 computes unproved. None of them reads `deal_counts` against
+Appendix 1, the order of `by_customer`, the order of `risk_coincidence` inside a band, concentration
+by owner or by weighted exposure, the reserved customer key before M4, the `source_system` or
+`linker_version` of the band identity, or the event. The rows of part 3 are therefore requirements
+of the M3 gate, beside the named tests.
+
+- Each row is met by at least one test function in `tests/unit/test_vs02_*.py` or
+  `tests/integration/test_vs02_*.py`, and the milestone's report names that function against the row.
+- They add no named test. The numbering of §A25's table and criterion 14 are unchanged. This section
+  names no test function: the names are the implementer's.
+- The row ids continue §A25.1's, so that no id is used twice.
+- **Dataset** means the committed dataset, ingested into the harness database, assessed by VS-01's
+  assessment run at `as_of` 2026-09-18, and viewed through `pipeline_view` at that date with the
+  committed rate set.
+- **Constructed** means facts and band rows built in the test and passed to the pure builders, with
+  a rate set loaded through the path loader and the stage vocabulary passed as §A22.5 item 2 allows.
+- **Stored** means rows that a fixture of §A24 puts in the harness database, read through
+  `band_rows`, through `facts.py` or through `pipeline_view`.
+
+The section has five parts, and they are kept apart: the frozen tests; the named tests; the new
+coverage M3 is authorised to write; the M2-era assertions M3 supersedes; and what stays M4's.
+
+**1. The frozen tests.** These are the tests that were in the repository at `523210a`. M3 evolves
+the subject of exactly one: the README's per-layer counts, T-VS02-3a (§B2.2). Every other frozen
+test passes unchanged at the M3 gate. By reading, M3's surface trips none of them: it adds no route,
+no `ErrorCode` member, no model, no migration and no new importer of `app.intelligence`, and the one
+`log_event` call of `service.py` names its fields as literal keywords, which the frozen G2 scan
+requires. A frozen test that fails for any other reason stops the milestone and is put to the owner
+(§B2.3).
+
+**2. The named tests of §A25 that first pass at M3.** Tests 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 18,
+19, 20, 21 and 27, as §A25 words them, and the part of test 15 that §A25 defers to M3. They are not
+restated here. The last column of part 3 says which of them a row stands beside.
+
+**3. The coverage rows.**
+
+| # | Requirement | Input | Beside |
+|---|---|---|---|
+| C-20 | **Risk-band read.** `band_rows` returns plain rows of `(customer_source_id, band, executive_worthy)`: one for each assessment at the identity of §A12.2 whose customer exists. An assessment whose customer was set null is not returned. The rows are in code-point order of the customer's `source_id`, shown with ids that a case-insensitive or locale-aware order would arrange differently. On the dataset it returns no row before VS-01's assessment run, and after it the bands of Appendix 1: CUST-007 `CRITICAL`, CUST-025 and CUST-036 `WATCH`, and no customer `ELEVATED` | stored; dataset | 11 |
+| C-21 | **Source, linker and `as_of` filters.** A stored assessment that differs from the identity of §A12.2 in exactly one of `source_system`, `as_of`, `layer1_fingerprint`, `rules_version` and `linker_version` is not returned by `band_rows` and is not joined. This is shown for each of the five in turn; test 12 names three of them. With only such assessments stored, every linked deal is `UNASSESSED` and the scope note is present | stored | 12 |
+| C-22 | **Unknown-band validation** (OD-M3-2). A stored band outside `RiskBand` raises `PipelineDataError` and yields no view, whichever row holds it: that of a customer holding an open valued deal, of one holding only closed or unvalued deals, and of one holding no deal. The error names the entity `customers` and the `source_id` of every such customer, ascending by code point and once each, and it names no deal. Several such rows raise it once, and the same rows in another order identify the same customers. The band is given no bucket, neither `NONE` nor `UNASSESSED`, and its row is not skipped. An error M2's entry point raises still names the entity `deals`, with the condition, ids, keys and message it had | constructed; stored, through `pipeline_view` | 27 |
+| C-23 | **Risk-band cross-tabulation.** Appendix 1's by-band table in full: the six buckets in their order; each bucket's customer count and deal count, with the ids the table names; and its native unweighted figure per currency. Appendix 2's `CRITICAL`, `WATCH` and `NONE` base figures, unweighted and weighted. `ELEVATED`, `UNASSESSED` and `UNLINKED` present and empty. CUST-025 is `WATCH`, holds no deal and is in no bucket. On a constructed input: a deal with no customer is in `UNLINKED`, and a deal whose customer has no assessment is in `UNASSESSED`; neither bucket is merged with `NONE` or with the other | dataset; constructed | 4, 10, 11 |
+| C-24 | **Customer partition.** On the dataset: 23 `CUSTOMER` buckets, and `UNLINKED`, present, empty and last; the buckets in the order of §A12.6; each bucket's `kind`, and its `band` and `executive_worthy` equal to the stored assessment's. Test 17's equality with VS-01's `exposure_by_currency`, taken over `by_customer`. On a constructed input: two customers with equal base unweighted exposure are ordered by key ascending; a customer with only closed or unvalued deals has no bucket; a deal with no customer is in `UNLINKED`, whose `band` and `executive_worthy` are `null`; a customer with no assessment has `band` `UNASSESSED` and `executive_worthy` `null` | dataset; constructed | 4, 19 |
+| C-25 | **Reserved customer key.** §A14.1 item 7 and §A10.5 item 1. A customer whose `source_id` is a reserved key and who holds an open valued deal raises `PipelineDataError` in stage 1, identifies what §A10.5 item 5 says, and yields no partition and no view: with fixture 10, and for another reserved key on a constructed input. When an employee's key and a customer's key both collide, one error names every colliding key and every colliding deal. The same customer holding only closed or unvalued deals raises nothing. Test 24 shows fixture 10 over HTTP at M4; this row shows it at the M3 gate | fixture 10; constructed | — |
+| C-26 | **Coincidence.** On the dataset `risk_coincidence` is `[CUST-007, CUST-036]`. On a constructed input: across bands the order is `CRITICAL`, `ELEVATED`, `WATCH`; inside a band it is base unweighted exposure descending and then id ascending, shown with a tie; a customer in one of those bands with no open valued deal is absent, and so are a `NONE` customer and an unassessed one; with no such customer the list is `[]`. Every id in it is the key of a `CUSTOMER` bucket of `by_customer`, and the list states no figure | dataset; constructed | — |
+| C-27 | **Concentration.** Appendix 2's unweighted figures in full. By customer: 23 holders; the five `top` entries, with their keys in order and their shares; the three cumulative shares; the HHI. By owner: 4 holders; the four shares in order; the cumulative share at 5 holders; the HHI. Each block's `total` is the open pipeline's base figure in its measure, and each names the base currency and the rate-set version. Every share, cumulative share and HHI of the four blocks equals the value that a calculation using no VS-02 code gives from the holders' amounts | dataset | 18 |
+| C-28 | **Weighted concentration.** The two weighted blocks are computed from weighted base amounts and from nothing else. On the dataset, by customer, CUST-015 leads at 0.2767 and the HHI is 0.1369, while CUST-042 leads the unweighted block. Appendix 2 pins no other weighted figure; the rest of both weighted blocks equals what a calculation using no VS-02 code gives. On a constructed input: a holder with exposure in the unweighted measure and none in the weighted, a deal at probability 0, is a holder of the one block and not of the other | dataset; constructed | 18 |
+| C-29 | **Pseudo-holders, and fewer or more than five.** §A11 items 4 to 6 and §A14.7. `UNLINKED`, `UNASSIGNED` and `UNRESOLVED` with an amount above zero are holders flagged `pseudo: true`, and are counted in `holder_count` and in `T`; with an amount of zero they are not holders. With fewer than five holders `top` holds them all, and `cumulative` still has its three entries with `holders` 1, 3 and 5. With more than five, `top` holds five. Two holders with equal amounts are ordered by key ascending. A cumulative share is taken from summed amounts, shown where the sum of rounded shares differs. A zero total gives the zero form: `total` `"0"`, `holder_count` `0`, `top` and `cumulative` `[]`, `hhi` `null` and `reason` `NO_OPEN_EXPOSURE` | constructed | 18 |
+| C-30 | **`deal_counts`.** Appendix 1's counts in full: `total` 44, `open` 30, `open_valued` 30, `open_unvalued` 0, `closed` 14, `unvalued_deal_ids` `[]`, and the four rows of `by_stage` in order, as total / open / closed: `negotiation` 14 / 14 / 0, `qualification` 16 / 16 / 0, `won` 14 / 0 / 14, `UNSTAGED` 0 / 0 / 0. With fixtures 1 and 2 the unvalued deals are counted in `open_unvalued` and listed, ascending, in `unvalued_deal_ids` and in `open_deals`: test 15's assertions, repeated over the view (OD-4). With fixture 6 an open deal in a closed stage is counted in that stage's `open`, and a closed deal in an open stage in that stage's `closed` | dataset; fixtures 1, 2 and 6 | 15 |
+| C-31 | **`deal_counts` reconciles.** The four identities of §A14.5, on the dataset and on a constructed input that holds an open valued, an open unvalued and a closed deal in a vocabulary stage, and an open and a closed deal with a null stage. Overall, `open = open_valued + open_unvalued` and `total = open + closed`. In every row, `total = open + closed`. **The rows' `total` sum to the overall `total`,** and the rows' `open` and `closed` to the overall `open` and `closed`. No row has a key beyond `stage`, `total`, `open` and `closed` | dataset; constructed | — |
+| C-32 | **`UNSTAGED`.** A deal whose stage is null, open or closed, is counted in the `UNSTAGED` row and raises nothing. The row is present when it is empty, and it is last. No deal with a non-null stage is ever counted in it | constructed | — |
+| C-33 | **OD-9.** The entry of §B6. A closed deal, and an open unvalued deal, whose non-null stage is outside the vocabulary each raise `PipelineDataError` naming the entity `deals`, and neither a `deal_counts` nor a view is returned. Several such deals raise it once, identifying every one ascending, and the same facts in another order identify the same deals. Given the same deals, M2's aggregation entry point still raises nothing (C-12) | constructed | — |
+| C-34 | **Missing rate, every currency.** §A7.5 item 4. Through `pipeline_view`: with fixture 8 it raises `FxRateMissingError` once, carrying `GBP` and the rate-set version; with two such currencies it carries both, ascending. No view is returned, and nothing partial. A closed deal, or an open unvalued deal, in a currency with no rate raises nothing. The error is the existing class, raised by the service and not caught by it. Its `409` is the route's, at M4 | fixture 8; stored | 9 |
+| C-35 | **Error precedence** (OD-M3-1). Through `pipeline_view`, with two conditions present at once on different rows, and in both orders of those rows. A stage-1 condition with OD-9's: stage 1's error, with its own condition and ids. This is shown for a reserved key; for a stage outside the vocabulary on an open valued deal, where the error names that deal and not the closed one; and for a refusal by the frozen `MoneyValue`, which is raised as `ContractViolationError`. A stage-1 condition with an unknown band: stage 1's error. OD-9's condition with an unknown band: OD-9's error, naming the entity `deals`. Each of the three in turn with a currency that has no rate: that error, and never `FxRateMissingError`. A refused configuration file with any of them: the configuration error (§A17.1 step 2) | stored | — |
+| C-36 | **The service.** `pipeline_view(session, *, as_of, source_system)` returns the view of §A14.2, its hash, the limitation texts and the citations, with every key of §A14 present. `view_hash` is the SHA-256 of the canonical JSON of the view it returned (§A14.10 item 3). `scope` is `Scope.to_payload()`, with `as_of_source` `EXPLICIT`. `versions` holds the `pipeline_version` of the committed rules file and VS-01's current `rules_version` and `linker_version`. `fx` states the committed rate set, with its digest equal to the pin and `used_currencies` EUR, INR and USD. The stage rows are the D1 vocabulary's. `limitation_texts` gives the nine texts of §A13.1 in order, character for character, with their placeholders filled. The service obtains the default rate set and rules itself: its signature takes neither | dataset | 2, 5, 6, 20, 21 |
+| C-37 | **The event.** §A20. A view that is built emits `vs02.pipeline_view_built` exactly once, at INFO, through `log_event`, with exactly the eight fields of §A20 item 2, in that order. `source_system`, `as_of`, `layer1_fingerprint`, `pipeline_version`, `rate_set_version` and `view_hash` equal the view's. `open_deal_count` and `unvalued_deal_count` are the numbers of open and of unvalued deals as §A8.2 and §A8.3 define them, which the view states as `deal_counts.open` and `deal_counts.open_unvalued`. The line holds no monetary value and no customer identifier. A request that fails at step 2, 5 or 6 of §A17.1 emits nothing | dataset; a refused file, a data error and a missing rate | — |
+| C-38 | **Transaction and read-only behaviour.** §A21.2 and §A19 item 5. Building a view leaves the row count of every table as it was (test 20): on the dataset, on an empty source system, and for a request that fails. Every statement a view executes is a `select`, over the tables §A21.1 item 1 names and over no other. The service runs on the session it is given, and neither commits, rolls back, flushes, begins nor closes it. The boundary test's rows for `band_rows`, `view.py` and `service.py` hold, each with its negative control (§A25) | dataset; stored | 20 |
+| C-39 | **Deterministic order.** As C-16, for what M3 adds. The facts and the band rows supplied in reversed order, and in one other fixed permutation, give an identical view and one `view_hash`. Each list is in its stated order: the six buckets of `by_risk_band` and their `customer_ids`; `by_customer`; `risk_coincidence`; `top` and `cumulative`; `deal_counts.by_stage` and `unvalued_deal_ids`; `open_deals` and `closed_deals`; `data_quality`, by code and then id, a null id first; `limitations` and `limitation_texts`; `citations`, by id and then field; `fx.rates` and `fx.used_currencies`. An error names the same ids under any order of its rows (C-22, C-33) | constructed; stored | — |
+| C-40 | **Multi-currency.** CUST-029, CUST-042 and CUST-050 each hold open deals in two currencies. Each of their buckets states one native Amount per currency, ascending and never summed, and one `base` Amount equal to the sum of its deals' per-deal base values; test 19 names CUST-042. The `NONE` band bucket states three native Amounts. Every concentration figure is in the base currency alone. On a constructed input with a rate that is not an integer: a customer's `base` and a band's `base` are each the sum of their deals' converted values and differ from the native totals converted once, and the shares are taken from those `base` amounts | dataset; constructed | 19 |
+| C-41 | **Empty view.** §A14.11 in full, through `pipeline_view`, with every key of §A14 present, for a source system with no row. Beside it, a source system whose deals are none of them open and valued: the partitions and the four concentration blocks are in the same empty form (§A17.2), while `deal_counts`, `open_deals` and `closed_deals` state those deals. Test 25 serves the empty view over HTTP at M4; this row proves it at the M3 gate | stored | — |
+| C-42 | **Scope note** (OD-M3-3). `NO_ASSESSMENT_FOR_SCOPE` is in `data_quality` when `band_rows` returns no row, and only then, with `entity` and `id` `null`, `fields` `[]` and `key` `null`. Present: before any assessment, on the dataset and on the empty source system, where it is the only note. Absent: after the assessment run; when every returned row belongs to a customer holding no open valued deal; and for a source system that holds assessments at the identity and no deal, whose `data_quality` is `[]` | dataset; stored | 11 |
+| C-43 | **Decimal-context independence.** §A9.1 item 5. The thread's Decimal context is set, before the call, to a hostile one: a precision of 1, a rounding mode other than half-even, and `Inexact` and `Rounded` trapped. `pipeline_view` then returns the same view and the same `view_hash` as in the default context, and so do the pure builders on a constructed input with a rate that is not an integer. It is asserted in particular of every `dec` text, every `share`, every cumulative share, every `hhi`, and every `total` and `amount` of the concentration blocks. After the call the caller's context is as it was set. The rate-set digest and the methodology digest are unchanged under the same context | dataset; constructed | — |
+| C-44 | **M2 regression.** Named tests 1, 7, 13–17 and 22 pass, and every row C-1 to C-19 is still met. The four partitions of §A10 hold the figures they held at M2: Appendix 1's and Appendix 2's are unchanged. Every error M2's entry point raised, it raises as before: the same class, condition, entity `deals`, ids, keys and message. The one input it accepted at M2 and refuses at M3 is that of C-25. The entry point is still called as §A22.5 item 3 describes. The methodology pin holds its one entry, unedited, and no entry is added (OD-2). The rate-set pin and every test over `app/fx/` are unchanged, and no file of `app/fx/` is edited | — | 1, 7, 13–17, 22 |
+
+**4. M2-era assertions that M3 supersedes [OD-M3-4].** They are in VS-02's own test files, which
+are not frozen tests (§B2.2). The audit found the ones below. OBSERVED at `99ab280`: each asserts
+something this plan froze for M2 and schedules to grow at M3. Each is replaced by the assertion of
+the contract as M3 has it. No assertion over `app/fx/` is among them, and the test around each is as
+strict as it was.
+
+| File | What the M2-era assertion says | What it says at M3 | The frozen M3 contract that expands it |
+|---|---|---|---|
+| `tests/unit/test_vs02_config.py` | `SHARE_QUANTUM`, `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS` are read by nothing but the methodology digest | they are read by the digest and by M3's concentration, and are defined once and redefined nowhere | §A22.3 item 2 (OD-2), §A11 |
+| `tests/integration/test_vs02_dataset.py` | `pipeline_queries.py` names `Deal` alone and holds no `band_rows` | it names `Deal`, `RiskAssessment` and `Customer` and no other model, and holds `deal_rows` and `band_rows` | §A16.2 |
+| `tests/unit/test_vs02_boundary.py` | the inventories of M2's surface, among them: six modules in the package; one model in the repository, and a statement that filters and orders; one module that accepts a session; the session handed to `deal_rows` and `edges_of_type`; no module that names `FxRateMissingError`; no module that logs | the same inventories over M3's surface: eight modules, `view.py` and `service.py` among them; the three models, and the join `band_rows` needs; two modules that accept a session, `facts.py` and `service.py`; the session handed also to `band_rows`, and by `service.py` to `resolve_scope` and to `facts.py`; `service.py` raising `FxRateMissingError` and holding the one `log_event` call. Each inventory is extended and none is relaxed (OD-5) | §A19 item 5, §A21.1, §A21.2 item 3, §A22.4, §A20, §A7.5 item 4 |
+| `tests/integration/test_vs02_dataset.py`, and its proof in `tests/fixtures/vs02/manifest.yaml` | with fixture 10 the entry point returns the four partitions, because a customer's `source_id` is not yet a generated key | with fixture 10 the entry point raises `PipelineDataError` in stage 1 (C-25) | §A10.5 item 1, §A14.1 item 7 |
+
+Two more are superseded only if M3's change makes them false, and then in the same way:
+
+- in `tests/unit/test_vs02_pipeline.py`, that the entry point's result holds the four partitions and
+  nothing more, if that result gains what §A11 and §A12 add (§A22.5 item 3);
+- in `tests/integration/test_vs02_dataset.py`, that the facts reader runs exactly three `select`
+  statements over three tables, if the band read joins the function that test calls (§A22.2).
+
+The rule is the owner's and not this list: an M2-era assertion is superseded only where the frozen
+M3 contract explicitly expands or changes what it asserts. One that fails at M3 for any other reason
+is reported, and the work stops until the owner rules (§B5, gate rule 3).
+
+**5. What stays M4's.** Named tests 24, 25 and 26 are M4's and are not required at the M3 gate. What
+they prove over HTTP of something M3 already computes is required at M3, at the level of the
+service, by the rows above: fixture 10's refusal (C-25), the empty view (C-41) and the missing
+rate's currencies (C-34). The `409` and its details, the `422`, the `500` envelope and its request
+id, the served representation of §A14.10 item 5, the route's read-only transaction, the secret
+canary, and the isolation of a refused configuration file from other routes are proved at M4, and
+by nothing in this section.
 
 ### A26. Acceptance criteria (binary) [MD-16]
 
@@ -2397,8 +2820,8 @@ table's content is MD-21, and approving it authorises each additive edit to a fr
 | Path | VS-02 may | Scope |
 |---|---|---|
 | `app/fx/{__init__,rates,convert,errors}.py` | create | §A22.1 |
-| `app/pipeline/{__init__,config,errors,facts,measures,aggregation,view,service}.py` | create | §A22.2 |
-| `app/persistence/repositories/pipeline_queries.py` | create | §A16.2 |
+| `app/pipeline/{__init__,config,errors,facts,measures,aggregation,view,service}.py` | create; at M3, evolve `errors.py`, `facts.py` and `aggregation.py` in place (OD-M3-4) | §A22.2, §0.14 |
+| `app/persistence/repositories/pipeline_queries.py` | create; at M3, evolve in place with `band_rows` (OD-M3-4) | §A16.2, §0.14 |
 | `app/api/v1/pipeline.py`, `app/api/v1/pipeline_schemas.py` | create | §A15 |
 | `config/intelligence/fx_rates.yaml`, `config/intelligence/pipeline_rules.yaml` | create | §A7.3, §A22.3 |
 | `scripts/vs02_acceptance.py` | create | §A27 |
@@ -2480,6 +2903,13 @@ target needs its `.PHONY` entry, a recipe and a `make <target>` help line
 in an earlier one. Such a file was not in the repository at `523210a` and is not a frozen test.
 `tests/unit/test_vs02_boundary.py` grows this way at M2 (§A25). The governing rule of §B2.1 holds for
 these files all the same: an assertion is extended, and the surrounding test is never weakened.
+
+[OD-M3-4] At M3 some assertions that M2 wrote in these files describe a contract which the frozen M3
+contract explicitly expands: what the repository names, who reads the three constants of §A11, and
+whether a customer's `source_id` is a generated key. Such an assertion is superseded: it is replaced
+by the assertion of the contract as M3 has it. This is the governing rule's replacement of the
+obsolete assertion and nothing wider. It applies only where the frozen M3 contract explicitly
+expands or changes the contract asserted. Part 4 of §A25.2 lists the ones the audit found.
 
 #### B2.3 Expected to pass unchanged [U-7]
 
@@ -2626,14 +3056,23 @@ Closed on 2026-10-01: §0.11 is its record.
     4, OD-7), and the event;
   - the route, its response models and the `ErrorCode` member, which are M4's.
 
-**VS02-M3 — Concentration, the band cross-tabulation and the view.**
+**VS02-M3 — Concentration, the band cross-tabulation and the view.** Its contract was hardened on
+2026-10-07 (§0.14).
 - *Change.* `pipeline_queries.band_rows` and the band read in `facts.py`; §A11 and §A12 in
-  `aggregation.py`; `view.py`, with `deal_counts` (OD-4); `service.py`. M3 consumes the constants M2
-  defined and adds no entry to the methodology pin (OD-2). U-8 was decided before M3 began:
-  `deal_counts` fails closed on a stage outside the vocabulary (OD-9, §A14.5).
-- *Tests.* Named tests 2–6, 8–12, 18–21 and 27; the limitation texts as literals; the rule of
-  §A14.5 for a stage outside the vocabulary (OD-9), as the next entry states it; the boundary rows
-  for the new modules.
+  `aggregation.py`, with the customer's `source_id` joining the reserved-key check of stage 1
+  (§A10.5 item 1); the keyword-only `entity` parameter of `PipelineDataError` in `errors.py`, whose
+  default is `deals` (OD-M3-2); `view.py`, with `deal_counts` (OD-4); `service.py`. M3 consumes the
+  constants M2 defined and adds no entry to the methodology pin (OD-2). U-8 was decided before M3
+  began: `deal_counts` fails closed on a stage outside the vocabulary (OD-9, §A14.5).
+- *M2's substrate.* [OD-M3-4] The four M2-created files of that list, `pipeline_queries.py`,
+  `facts.py`, `aggregation.py` and `errors.py`, are evolved in place, where the frozen M3 contract
+  requires it and no further. No second entry point is made beside M2's. M2's behaviour is preserved
+  for M2-valid inputs, M2's figures are unchanged, and nothing of M1 is touched. No unrelated
+  refactor is made (§0.14).
+- *Tests.* Named tests 2–6, 8–12, 18–21 and 27; every row of §A25.2 (OD-M3-5); the limitation
+  texts as literals; the rule of §A14.5 for a stage outside the vocabulary (OD-9), as the next
+  entry states it; the boundary rows for the new modules; and the M2-era assertions that the frozen
+  M3 contract expands, superseded as part 4 of §A25.2 says (OD-M3-4).
 - *OD-9.* It adds no named test: the numbering of §A25 and criterion 14 are unchanged. With
   constructed facts, and the stage vocabulary passed to the builder (§A22.5 item 2):
   - a closed deal, and an open unvalued deal, whose non-null stage is outside the vocabulary each
@@ -2646,7 +3085,11 @@ Closed on 2026-10-01: §0.11 is its record.
   with no rate, the service raises `PipelineDataError` and never `FxRateMissingError` (§A17.1
   step 5).
 - *Evolutions.* §B2.2's M3 row.
-- *Non-goals.* The route.
+- *Gate.* §B5. In addition, the milestone's report names, for each row of §A25.2, the test that
+  meets it.
+- *Non-goals.* The route, its response models, the `ErrorCode` member, the router registration, the
+  README's API entries and named tests 24–26, which are M4's; and the acceptance command, which is
+  M5's.
 
 **VS02-M4 — API.**
 - *Change.* `pipeline.py`, `pipeline_schemas.py`, the `ErrorCode` member, the router registration,
@@ -2685,6 +3128,10 @@ The v2.2 revision of this file (§0.12) is one more commit,
 The record of OD-9 (§0.13) is one more commit, `VS02: freeze U-8 for M3`: this file only, alone, on
 the owner's decision of 2026-10-06. It comes after the milestone's `VS02-M2: …` commit and before
 `VS02-M3: …`.
+
+The hardening of the M3 contract (§0.14) is one more commit, `VS02: harden M3 specification`: this
+file only, alone, on the owner's decisions of 2026-10-07. It comes after `VS02: freeze U-8 for M3`
+and before `VS02-M3: …`.
 
 ---
 
@@ -2823,7 +3270,18 @@ Recorded in §0.13: OD-9, which closes U-8. Building `deal_counts` fails closed 
 `PipelineDataError` when a deal it counts has a non-null stage outside the stage vocabulary, and
 `UNSTAGED` is for a null stage only. It needs no further ruling.
 
+### Decided on 2026-10-07
+
+Recorded in §0.14: OD-M3-1 to OD-M3-5, taken on the VS02-M3 pre-implementation audit; the owner's
+ruling that `PipelineDataError` gains a keyword-only `entity` parameter at M3; and the owner's
+direction that the amendment also freeze the reconciliation of `deal_counts` and the independence
+of the caller's Decimal context. None of them needs a further ruling.
+
 ### Still required
+
+**As of the M3 hardening (2026-10-07).** Nothing. The five points the VS02-M3 pre-implementation
+audit put are decided (§0.14). VS02-M3 is a separate task. It begins only on the owner's
+instruction, after that amendment is committed on its own.
 
 **As of OD-9 (2026-10-06, after VS02-M2 closed).** Nothing. U-8 is closed (§0.9, §0.13). VS02-M3
 is a separate task and begins only on the owner's instruction.
