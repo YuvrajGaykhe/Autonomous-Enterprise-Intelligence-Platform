@@ -1,0 +1,2 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-967,Fixture - Deal With No Expected Close Date,CUST-012,EMP-010,qualification,6000.00,USD,75.00,,true

@@ -54,7 +54,7 @@ ALLOWED_LAYER2_IMPORTS = {"app.relationships"}
 #: The Layer 2 packages permitted to import M1's foundation. Extended when a
 #: milestone legitimately becomes a consumer, never relaxed to a substring.
 LAYER2_PACKAGES = ("app/relationships/", "app/evidence/", "app/analysts/", "app/decisions/",
-                   "app/api/v1/risk.py", "scripts/vs01_acceptance.py", "app/fx/")
+                   "app/api/v1/risk.py", "scripts/vs01_acceptance.py", "app/fx/", "app/pipeline/")
 #: Session methods that would write. The package reads; the caller owns the
 #: transaction, matching the repository convention.
 FORBIDDEN_WRITES = {"commit", "rollback", "add", "add_all", "flush", "delete", "merge",

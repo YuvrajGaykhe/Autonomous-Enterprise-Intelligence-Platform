@@ -1,0 +1,3 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-963,Fixture - Deal With No Owner,CUST-010,,qualification,2000.00,INR,25.00,2027-01-10,true
+DEAL-964,Fixture - Deal Owned By No Known Employee,CUST-010,EMP-960,qualification,3000.00,INR,50.00,2027-02-10,true

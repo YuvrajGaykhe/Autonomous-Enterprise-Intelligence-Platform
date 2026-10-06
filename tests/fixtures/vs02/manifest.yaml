@@ -1,0 +1,213 @@
+# The VS-02 fixture package (plan A24): the baseline and its ten entries.
+#
+# Every entry records the plan A24 entry it is, its origin (quoted from the
+# plan), its form, the rows it adds or removes, the effect
+# tests/integration/test_vs02_fixtures.py asserts, and the tests that prove
+# the behaviour the entry exists for.
+#
+# Forms:
+#   baseline  data/demo/, reused unchanged, through the clean full-dataset path.
+#   delta     a directory of the seven csv_demo files, ingested with run_ingestion
+#             and an entities filter naming exactly the files it adds to.
+#   loader    an operation Layer 1 cannot express, run in SQLAlchemy Core over a
+#             session the caller owns.
+#
+# The form of each entry was measured at VS02-M2: a row D1 and D2 accept is a
+# delta, and what they cannot express is a loader. Every row of entries 1 to 6,
+# 8 and 10 is accepted by Layer 1 with nothing rejected and nothing
+# quarantined, so all eight are deltas. Layer 1 raises one warning of its own,
+# UNRESOLVED_REFERENCE for DEAL-966, and keeps the row. Entry 7 is a loader
+# because other_demo is not a D1 source system, and entry 9 because Layer 1
+# has no deletes.
+#
+# A fixture that changes the csv_demo snapshot records it under
+# `fingerprint: changed`.
+#
+# Reserved ids: DEAL-960 to DEAL-979. EMP-960 and CUST-960 exist in no
+# csv_demo row. The customer id UNLINKED is the reserved bucket key of plan
+# A14.1 item 7, used as a customer id on purpose.
+#
+# Entries 9 and 10 are built here with the package (plan B6) and first serve a
+# named test at VS02-M3 (tests 3 and 24). Until then the proofs they list are
+# the effect and the M2 behaviour: M2 reads no document, and a customer's id
+# is not yet a generated key.
+
+version: 1
+
+baseline:
+  origin: data/demo, built through the clean full-dataset path
+  form: baseline
+  directory: data/demo
+  rows: 233
+  entity_counts:
+    organizations: 1
+    employees: 24
+    customers: 50
+    deals: 44
+    projects: 22
+    support_tickets: 80
+    documents: 12
+  fingerprint: 1d891b0b543f961836b0a33abbe4ac563ee7229154a4caeca63594bd76357b00
+
+fixtures:
+  - name: unvalued_deals
+    entry: 1
+    origin: an open deal with a null amount, and one with a null probability
+    form: delta
+    entities: [deals]
+    rows:
+      added:
+        deals: [DEAL-960, DEAL-961]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores both deals open, DEAL-960 with a NULL amount and DEAL-961
+      with a NULL probability; every other row is unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_unvalued_deals_are_counted_excluded_from_money_listed_and_noted
+
+  - name: negative_amount
+    entry: 2
+    origin: an open deal with a negative amount
+    form: delta
+    entities: [deals]
+    rows:
+      added:
+        deals: [DEAL-962]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores DEAL-962 open with the amount -1500.00 USD; every other
+      row is unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_unvalued_deals_are_counted_excluded_from_money_listed_and_noted
+      - tests/integration/test_vs02_dataset.py::test_a_negative_amount_is_the_whole_difference_between_vs02_and_vs01
+
+  - name: owner_keys
+    entry: 3
+    origin: an open deal whose owner_source_id is null, and one naming no employee
+    form: delta
+    entities: [deals]
+    rows:
+      added:
+        deals: [DEAL-963, DEAL-964]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores DEAL-963 with a NULL owner_source_id and DEAL-964 with the
+      key EMP-960, which names no csv_demo employee; every other row is
+      unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_unassigned_and_unresolved_owners_stay_distinct_with_their_notes
+
+  - name: customer_keys
+    entry: 4
+    origin: an open deal with a null customer_source_id, and one with an unresolved one
+    form: delta
+    entities: [deals]
+    rows:
+      added:
+        deals: [DEAL-965, DEAL-966]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores both deals with a NULL customer FK: DEAL-965 with a NULL
+      customer_source_id, and DEAL-966 with the key CUST-960 kept, which names
+      no csv_demo customer and draws Layer 1's own UNRESOLVED_REFERENCE
+      warning; every other row is unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_a_deal_with_no_customer_draws_a_missing_or_an_unresolved_note
+
+  - name: undated_deal
+    entry: 5
+    origin: an open deal with a null expected_close_date
+    form: delta
+    entities: [deals]
+    rows:
+      added:
+        deals: [DEAL-967]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores DEAL-967 open with a NULL expected_close_date; every other
+      row is unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_an_undated_deal_is_in_the_undated_bucket_and_noted
+
+  - name: stage_activity_mismatch
+    entry: 6
+    origin: a deal that is active with stage won, and one inactive with stage negotiation
+    form: delta
+    entities: [deals]
+    rows:
+      added:
+        deals: [DEAL-968, DEAL-969]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores DEAL-968 active in stage won and DEAL-969 inactive in
+      stage negotiation; every other row is unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_a_deal_is_classified_by_its_activity_and_its_disagreeing_stage_is_noted
+
+  - name: second_source_system
+    entry: 7
+    origin: >-
+      a deal and an employee in a second source system (M2's other_demo
+      precedent), the employee carrying the source_id that a deal of the first
+      source system names as its owner, so that only the scoping of the join
+      keeps that deal UNRESOLVED
+    form: loader
+    requires: [owner_keys]
+    rows:
+      added:
+        other_demo:
+          employees: [EMP-960]
+          deals: [DEAL-001]
+    fingerprint: unchanged
+    effect: >-
+      other_demo gains the employee EMP-960, the id DEAL-964 of csv_demo names
+      as its owner, and one open valued deal that carries the id of csv_demo's
+      DEAL-001; no csv_demo row changes.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_another_source_systems_employee_is_never_joined_as_an_owner
+      - tests/integration/test_vs02_dataset.py::test_a_second_source_systems_deals_appear_in_no_figure
+
+  - name: gbp_deal
+    entry: 8
+    origin: an open valued deal in GBP, a D1 currency the rate set does not hold
+    form: delta
+    entities: [deals]
+    rows:
+      added:
+        deals: [DEAL-970]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores DEAL-970 open and valued in GBP, a currency the committed
+      rate set holds no rate for; every other row is unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_an_open_valued_deal_in_a_currency_without_a_rate_fails_the_whole_aggregation
+
+  - name: no_doc004
+    entry: 9
+    origin: the corpus without DOC-004
+    form: loader
+    rows:
+      removed:
+        documents: [DOC-004]
+    fingerprint: changed
+    effect: >-
+      DOC-004 is removed; 11 documents remain and every other row is unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_removing_doc004_changes_no_fact_and_no_figure
+
+  - name: reserved_customer
+    entry: 10
+    origin: a customer whose source_id is the reserved key UNLINKED, holding one open valued deal
+    form: delta
+    entities: [customers, deals]
+    rows:
+      added:
+        customers: [UNLINKED]
+        deals: [DEAL-971]
+    fingerprint: changed
+    effect: >-
+      Layer 1 stores a customer whose source_id is UNLINKED and the open valued
+      deal DEAL-971, whose customer FK resolves to it; every other row is
+      unchanged.
+    proofs:
+      - tests/integration/test_vs02_dataset.py::test_a_customer_id_is_not_a_generated_key_before_the_customer_partition_exists

@@ -1,0 +1,2 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-970,Fixture - Deal In A Currency Without A Rate,CUST-016,EMP-009,negotiation,9000.00,GBP,30.00,2026-11-30,true
