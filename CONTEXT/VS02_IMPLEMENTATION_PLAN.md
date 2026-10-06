@@ -56,7 +56,7 @@ it that carries no tag of its own; an item's own tag replaces the heading's.
 |---|---|---|
 | **[R]** | **REQUIRED** | Binding without a further choice inside VS-02. The source is named. |
 | **[SD-n]**, **[MD-n]**, **T-VS02-n** | **PROPOSED OWNER DECISION** | Authored by this specification where no authority exists. Every one has an id and is listed in §0.6 (six shaping decisions), §0.7 (methodology) or §B2.1 (edits to frozen tests). It binds nothing until the owner approves it. |
-| **[OD-n]** | **OWNER DECISION OF 2026-10-06** | One of the eight decisions the owner took on 2026-10-06: six on the VS02-M2 pre-implementation audit, and two in the final hardening pass that followed it. Each is recorded in §0.12, and §0.8 says what a later change would reopen. |
+| **[OD-n]** | **OWNER DECISION OF 2026-10-06** | One of the nine decisions the owner took on 2026-10-06: six on the VS02-M2 pre-implementation audit, two in the final hardening pass that followed it, and one, OD-9, after VS02-M2 closed, which closes U-8. OD-1 to OD-8 are recorded in §0.12 and OD-9 in §0.13, and §0.8 says what a later change would reopen. |
 | **[U-n]** | **UNKNOWN/OPEN** | No authority exists and this specification proposes no value. §0.9 states what closes it. |
 
 **Standing in v2.1.** On 2026-10-01 the owner decided SD-1…SD-6 and approved MD-1…MD-22 as specified
@@ -71,8 +71,9 @@ of them governs carries its **[OD-n]** tag. OD-2…OD-8 bind as the owner stated
 owner's decision that the methodology digest's canonical form
 is frozen in this plan and is not left to the implementer; the form itself (§A22.3) is authored by
 v2.2. The other hardenings of v2.2 refine statements that already carry an **[MD-n]** tag, and those
-statements keep it (§0.12). The wording v2.2 adds binds when the owner approves v2.2. U-8 is new and
-open (§0.9); it blocks VS02-M3 only.
+statements keep it (§0.12). The wording v2.2 adds binds when the owner approves v2.2. U-8 was new
+and open in v2.2, and blocked VS02-M3 only; the owner decided it on 2026-10-06, after VS02-M2
+closed, as OD-9, and it is closed (§0.9, §0.13). OD-9 binds as the owner stated it.
 
 **What makes a statement REQUIRED.** Two kinds of source:
 
@@ -411,11 +412,12 @@ dependants are not approved until the decision is.
 | OD-1 | §A22.3 item 3, the methodology digest's canonical form; the pin of §A22.3 item 4; coverage row C-18 |
 | OD-2 | §A22.3 item 2, the eight constants defined at M2; the last line of §A11; §B6's M2 and M3 entries |
 | OD-3 | §A10.2 item 4, including which deals the rule applies to; §A10.5 items 2, 4 and 5; §A17.1 step 5; its row of §A17.2; coverage row C-12 |
-| OD-4 | §A14.5's last paragraph; tests 15 and 17 as worded for M2; §A22.5 item 3's last sentence; §B6's M2 non-goals; U-8 |
+| OD-4 | §A14.5's paragraph tagged OD-4; tests 15 and 17 as worded for M2; §A22.5 item 3's last sentence; §B6's M2 non-goals; U-8, and OD-9, which closes it |
 | OD-5 | §A25's boundary paragraphs; §B1's VS-02 tests row; the last paragraph of §B2.2 |
 | OD-6 | §A21.1; §A21.2; the two rows of §A21's table they complete; §A5's sentence on the relationship rows; §A16.2's paragraph on statements; §A22.4's rules on names |
 | OD-7 | §A10.5 items 3 and 6, the three stages and their precedence; §A10.1 item 4; the sentence on M2 under §A7.5 item 4; §A17.1's second consequence; its row of §A17.2; coverage row C-19 |
 | OD-8 | §A10.1 item 3; the `ALL` entry of §A14.1 item 7; its row of §A17.2; the `ALL` entry of §A29; the `ALL` cases of coverage row C-11 |
+| OD-9 | §A14.5's rule for a stage outside the vocabulary, with its table; the `deal_counts` entry of §A10.2 item 4; its clause of §A17.1 step 5; its row of §A17.2; its entry among §B6's M3 tests; the closure of U-8 (§0.9) |
 
 ## 0.9 Unknown and open
 
@@ -428,7 +430,7 @@ dependants are not approved until the decision is.
 | **U-5** | The frontend phase: its agent, its panel, and whether it waits for F7 | A later frontend specification (SD-6) | No action now | nothing in this plan |
 | **U-6** | When, and whether, the hosted site receives VS-02 | The owner's separate approval per outward action (§B4) | No hosted action is part of this specification | nothing in this plan |
 | **U-7** | Whether any frozen test beyond §B2's list is tripped by a new package, route or error code | VS02-M0's pin census (§B6). An unlisted failure stops the milestone and is put to the owner before anything is changed | **Closed by VS02-M0.** The census, by reading and by a scratch run, found no frozen test tripped outside the ten authorised rows of §B2.1 (§0.11) | nothing |
-| **U-8** | How `deal_counts.by_stage` (§A14.5) counts a closed deal, or an open unvalued deal, whose non-null stage is outside the D1 stage vocabulary. Such a deal has no stage row and is not `UNSTAGED`. OD-3 decides the matter for open valued deals only | The owner's decision, before VS02-M3 begins | **Open, recorded on 2026-10-06** by the VS02-M2 pre-implementation audit (§0.12). No such row can exist while Layer 1 is frozen, because D1 admits only the vocabulary's values. M2 builds no count (OD-4), so M2 is not affected | VS02-M3 only |
+| **U-8** | How `deal_counts.by_stage` (§A14.5) counts a closed deal, or an open unvalued deal, whose non-null stage is outside the D1 stage vocabulary. Such a deal has no stage row and is not `UNSTAGED`. OD-3 decides the matter for open valued deals only | The owner's decision, before VS02-M3 begins | **Closed by the owner on 2026-10-06, as OD-9 (§0.13).** `deal_counts` does not count such a deal: building it fails closed with `PipelineDataError`, and the deal is never counted as `UNSTAGED` (§A14.5). U-8 was recorded as open on 2026-10-06 by the VS02-M2 pre-implementation audit (§0.12), and it blocked VS02-M3 only. No such row can exist while Layer 1 is frozen, because D1 admits only the vocabulary's values. M2 builds no count (OD-4), so M2 is not affected | nothing |
 
 ## 0.10 The owner's decisions of 2026-10-01, and what v2.1 changed
 
@@ -606,6 +608,88 @@ must build.
 
 **Gate.** VS02-M2 has not started. It begins only on the owner's instruction, after v2.2 is approved
 and committed on its own (§B7).
+
+## 0.13 The owner's decision on U-8 (2026-10-06)
+
+**The decision.** On 2026-10-06, after VS02-M2 closed, the owner decided U-8, the one thing §0.12
+left open. It was taken at `b44394f` (`VS02-M2: implement pipeline foundation`), before any M3 code
+existed. This amendment is its only output. It changed no code, test, configuration, migration,
+frontend or README file, and it started nothing of VS02-M3. §0.12 stays as the record of v2.2;
+where it, or another dated entry of this file, says U-8 is open, this record is the later one.
+
+**The question (U-8, §0.9).** How `deal_counts.by_stage` counts a closed deal, or an open unvalued
+deal, whose non-null stage is outside the D1 stage vocabulary. Such a deal has no stage row and is
+not `UNSTAGED`, and OD-3 decides the matter for open valued deals only.
+
+**How it was put.** An analysis of 2026-10-06 found that this plan did not determine the answer, and
+put three options to the owner. The owner chose the first: fail closed.
+
+| ID | Decision (2026-10-06) | Specified in |
+|---|---|---|
+| OD-9 | **Fail closed.** A deal whose non-null stage is outside the stage vocabulary is invalid input to `deal_counts`. Building `deal_counts` raises the existing `PipelineDataError`, which identifies every such deal in ascending order. `UNSTAGED` is for a null stage and for nothing else | §A14.5, §A10.2 item 4, §A17 |
+
+**What the owner stated.**
+
+| Point | As decided |
+|---|---|
+| The three cases | A deal whose stage is null is classified as `UNSTAGED`. A deal whose stage is a value of the frozen D1 stage vocabulary is counted under that stage. A deal whose stage is non-null and outside that vocabulary is invalid |
+| Which deals | Closed deals, open unvalued deals, and any other M3-eligible deal whose stage `deal_counts` consumes |
+| Never done | Such a deal is not counted under `UNSTAGED`, not silently dropped, not renamed, not rebucketed, and not placed in a further pseudo-stage |
+| The error | The existing `PipelineDataError`. No error class is added |
+| What it identifies | Every offending deal, deterministically, in ascending order |
+| The invariant kept | `by_stage` holds the vocabulary's values, and `UNSTAGED` for a null stage, and nothing else |
+| The vocabulary | The frozen D1 stage vocabulary is not changed. `UNSTAGED` is added to no D1 or Layer 1 vocabulary, and no new reserved-key namespace is made. `UNSTAGED` is given no owner decision of its own: only what it means is stated |
+| M2 | No M2 behaviour changes |
+| What it authorises | It governs M3's `deal_counts`. It builds nothing, and it does not begin VS02-M3 |
+
+**The two rules, kept apart.** OD-9 does not widen OD-3, and the two are not one rule.
+
+| | M2: the aggregation entry point (OD-3) | M3: `deal_counts` (OD-9) |
+|---|---|---|
+| Why the stage is read | to choose an open valued deal's `by_stage` bucket | to choose a deal's row of `deal_counts.by_stage` |
+| Whose stage is checked | an open valued deal's, and no other deal's | that of every deal `deal_counts` counts |
+| A non-null stage outside the vocabulary | `PipelineDataError`, in stage 1 of §A10.5 | `PipelineDataError`, when `deal_counts` is built |
+| A closed deal, or an open unvalued deal, with such a stage | not checked; nothing is raised; no bucket is made (§A10.2 item 4, C-12) | invalid; `deal_counts` is not built |
+| A null stage | the deal is not an open valued deal (§A8.3) and is in no partition | counted under `UNSTAGED` |
+
+An open valued deal is one of the deals `deal_counts` counts. OD-3's rule applies to it at M2's
+stage 1 as before. OD-9 does not replace that rule and takes nothing from it.
+
+**The placement at the route.** The option the owner chose was described with its check in step 5
+of §A17.1, so that a request which holds such a deal and also lacks a rate answers `500` and not
+`409`. §A17.1 and §A14.5 record it there. `deal_counts` needs the facts and the vocabulary and no
+rate.
+
+**What this amendment changed.**
+
+| Where | Change |
+|---|---|
+| §A14.5 | the rule, under the tag OD-9; the last sentence of the OD-4 paragraph |
+| §A10.2 item 4 | its `deal_counts` entry names the decision. The table of M2's behaviour is as it was |
+| §A17.1 step 5 | names the check and its condition |
+| §A17.2 | one row |
+| §B6, VS02-M3 | U-8 as decided; what M3's tests show for OD-9. No named test is added |
+| §B7 | this commit |
+| Labels, §0.8, §0.9, Owner Decisions | the standing of U-8 and of OD-9 |
+
+**What this amendment did not change.** No figure, rate, appendix value or pinned digest. No key or
+row of the view: `deal_counts.by_stage` is as §A14.5 already had it. No error class and no note
+code. No constant, so no entry of the methodology pin and no `pipeline_version`. No T-VS02 row, no
+named test, no acceptance criterion and no path of §B1. No record of VS02-M0, VS02-M1 or VS02-M2.
+Nothing of the M2 contract: §A10.5, coverage row C-12 and the code VS02-M2 committed stand as they
+are. The reserved keys of §A14.1 item 7 are the same eight.
+
+**Noted and left as they are.** Neither changes what OD-9 decides.
+
+- §A17.1 puts step 5 before step 6, and §A10.5 orders the conditions inside stage 1. Nothing
+  orders stage 1, the unknown band of §A12.3 and this check among themselves. Each answers `500`,
+  and OD-9 adds no order between them.
+- No rule refuses a stage vocabulary that itself holds the value `UNSTAGED`. The frozen D1
+  vocabulary holds no such value, and the owner directed that no decision be made for it.
+
+**Gate.** U-8 is closed, and nothing is still required of the owner before VS02-M3 (Owner
+Decisions). VS02-M3 has not started. It is a separate task and begins only on the owner's
+instruction.
 
 ---
 
@@ -970,8 +1054,10 @@ zeros.
      is null (§A8.3, `INCOMPLETE_DEAL`) or compare it with `closed_stages`
      (`STAGE_ACTIVITY_MISMATCH`, §A13.2). None compares it with the vocabulary, and all are
      unchanged.
-   - *Not `deal_counts`.* How M3 counts a closed or unvalued deal with such a stage is U-8. M2
-     neither decides it nor builds anything for it.
+   - *Not `deal_counts`.* How M3 counts a closed or unvalued deal with such a stage was U-8. The
+     owner decided it after M2 closed (OD-9): building `deal_counts` fails closed (§A14.5). That is
+     a rule of M3's count structure and not of this entry point. M2 neither decides it nor builds
+     anything for it, and the table above stands as it is.
    - *Reach.* It cannot occur while Layer 1 is frozen. OBSERVED: D1 declares `deals.stage` an enum of
      the vocabulary's values (`config/mappings/normalization.yaml`), though the `deals` table carries
      no constraint of its own.
@@ -1384,7 +1470,42 @@ Each extension adds keys to Bucket and removes none:
 
 [OD-4] `deal_counts` is built at VS02-M3, with the view. M2 builds no count structure. What M3 needs
 for it, each deal's classification as open or closed and as valued or unvalued, is already in the
-facts M2 produces (§A8, §B6). U-8 is decided before M3 builds it.
+facts M2 produces (§A8, §B6). U-8 was decided before M3 built it (OD-9, below).
+
+[OD-9] **A stage outside the vocabulary.** `deal_counts` reads the stage of every deal it counts, to
+choose that deal's row of `by_stage`. The stage vocabulary is the one its builder is given (§A22.5
+item 2), which at the route is the frozen D1 vocabulary. There are three cases, and they are never
+merged:
+
+| The deal's stage | In `deal_counts` |
+|---|---|
+| null | counted in the `UNSTAGED` row |
+| a value of the stage vocabulary | counted in that value's row |
+| non-null and outside the stage vocabulary | **Invalid.** `deal_counts` is not built: it fails closed with `PipelineDataError` |
+
+- *Which deals.* Every deal whose stage `deal_counts` reads: a closed deal, an open unvalued deal,
+  and any other deal it counts. For an open valued deal the rule of OD-3 applies as well, at M2's
+  stage 1 (§A10.2 item 4), and this decision does not replace it.
+- *`UNSTAGED`.* It is the row of the deals whose stage is null, and of no other deal. A non-null
+  stage outside the vocabulary is never `UNSTAGED`.
+- *Never done.* Such a deal is not counted under `UNSTAGED` or under another stage. It is not
+  silently dropped, whether from every count or from `by_stage` alone. Its stage is not renamed. No
+  further row or pseudo-stage is made for it, and the vocabulary is never widened from the data.
+  `by_stage` therefore holds one row per value of the vocabulary and the `UNSTAGED` row, and
+  nothing else, which is what this section already says of it.
+- *The error.* The existing `PipelineDataError`; no error class is added. It identifies the deals
+  in the form §A10.5 item 5 gives that error: the entity `deals` and the `source_id` of every such
+  deal, ascending by code point and without repeats, with no amount. The same facts in any order
+  identify the same deals. Nothing partial is returned: no `deal_counts` and no view.
+- *At the route.* `500`. The check is part of step 5 of §A17.1, which comes before the missing-rate
+  check of step 6: `deal_counts` needs the facts and the vocabulary and no rate. A request that
+  holds such a deal and also lacks a rate therefore answers `500` and never `409`.
+- *M2 is unchanged.* The check belongs to the building of `deal_counts`, which is M3's (OD-4). It
+  is not added to stage 1 of the aggregation entry point. Given a closed deal or an open unvalued
+  deal with such a stage, that entry point still checks nothing, raises nothing and returns the
+  partitions of the other deals (§A10.2 item 4, coverage row C-12).
+- *Reach.* As for OD-3: it cannot occur while Layer 1 is frozen, because D1 admits only the
+  vocabulary's values.
 
 #### A14.6 `risk_coincidence`
 
@@ -1586,9 +1707,10 @@ A request is evaluated in this order, and the first failing step decides the res
    `500`.
 3. Scope resolution. With an explicit `as_of` it cannot fail.
 4. The rate set: the content loaded at step 2. Nothing further can fail here.
-5. Facts and data validity: deals, edges and bands are read, and stage 1 of §A10.5 is run. A
-   reserved-key collision, a stage outside the stage vocabulary on an open valued deal, a refusal by
-   the frozen `MoneyValue` or an unknown band → `500`.
+5. Facts and data validity: deals, edges and bands are read, stage 1 of §A10.5 is run, and the
+   stage of every deal `deal_counts` counts is checked (§A14.5, OD-9). A reserved-key collision, a
+   stage outside the stage vocabulary on an open valued deal, such a stage on any other deal
+   `deal_counts` counts, a refusal by the frozen `MoneyValue` or an unknown band → `500`.
 6. The missing-rate check of §A7.5 item 4 → `409 FX_RATE_MISSING`.
 7. The view, its hash, the event → `200`.
 
@@ -1610,6 +1732,7 @@ does not perform step 6's check of every currency.
 | Deal with no owner, or an unresolved owner key | the two owner pseudo-buckets | [MD-7] |
 | Deal with no customer | `UNLINKED`, with the missing or unresolved note | [SD-3] |
 | Open valued deal whose stage is outside the stage vocabulary | `PipelineDataError`; `500`; no partial view (§A10.5) | [OD-3] |
+| Closed deal, or open unvalued deal, whose non-null stage is outside the stage vocabulary | `PipelineDataError` when `deal_counts` is built; `500`; no partial view (§A14.5). The M2 aggregation entry point does not check it (§A10.2 item 4) | [OD-9] |
 | A generated bucket key equal to a reserved key | `PipelineDataError`; `500`; no partial view (§A14.1 item 7) | [MD-12] |
 | Open valued deal in the currency `ALL`, which Layer 1 admits | the same. The deal is valid Layer 1 data and is not valid input to the view (§A10.1 item 3) | [OD-8] |
 | A data-validity error and a missing rate in one request | the data-validity error: `500`, never `409` (§A10.5 item 6) | [OD-7] |
@@ -2506,9 +2629,22 @@ Closed on 2026-10-01: §0.11 is its record.
 **VS02-M3 — Concentration, the band cross-tabulation and the view.**
 - *Change.* `pipeline_queries.band_rows` and the band read in `facts.py`; §A11 and §A12 in
   `aggregation.py`; `view.py`, with `deal_counts` (OD-4); `service.py`. M3 consumes the constants M2
-  defined and adds no entry to the methodology pin (OD-2). U-8 is decided before M3 begins.
-- *Tests.* Named tests 2–6, 8–12, 18–21 and 27; the limitation texts as literals; the boundary rows
+  defined and adds no entry to the methodology pin (OD-2). U-8 was decided before M3 began:
+  `deal_counts` fails closed on a stage outside the vocabulary (OD-9, §A14.5).
+- *Tests.* Named tests 2–6, 8–12, 18–21 and 27; the limitation texts as literals; the rule of
+  §A14.5 for a stage outside the vocabulary (OD-9), as the next entry states it; the boundary rows
   for the new modules.
+- *OD-9.* It adds no named test: the numbering of §A25 and criterion 14 are unchanged. With
+  constructed facts, and the stage vocabulary passed to the builder (§A22.5 item 2):
+  - a closed deal, and an open unvalued deal, whose non-null stage is outside the vocabulary each
+    raise `PipelineDataError`, and no `deal_counts` is returned;
+  - several such deals raise it once, identifying every one of them ascending, and the same facts
+    in another order identify the same deals;
+  - a deal whose stage is null is counted under `UNSTAGED` and raises nothing.
+
+  And through the service: where such a deal is present and an open valued deal is in a currency
+  with no rate, the service raises `PipelineDataError` and never `FxRateMissingError` (§A17.1
+  step 5).
 - *Evolutions.* §B2.2's M3 row.
 - *Non-goals.* The route.
 
@@ -2545,6 +2681,10 @@ The commits, in order [MD-16]:
 The v2.2 revision of this file (§0.12) is one more commit,
 `VS02-M2: finalize the M2 specification`: this file only, alone, approved by the owner on
 2026-10-06. It comes after `VS02-M1: …` and before the milestone's own `VS02-M2: …` commit.
+
+The record of OD-9 (§0.13) is one more commit, `VS02: freeze U-8 for M3`: this file only, alone, on
+the owner's decision of 2026-10-06. It comes after the milestone's `VS02-M2: …` commit and before
+`VS02-M3: …`.
 
 ---
 
@@ -2677,7 +2817,16 @@ direction that this revision harden the M2 contract in eight respects; and OD-7 
 the final hardening pass with the two clarifications made there. None of the eight needs a further
 ruling.
 
+### Decided on 2026-10-06, after VS02-M2 closed
+
+Recorded in §0.13: OD-9, which closes U-8. Building `deal_counts` fails closed with the existing
+`PipelineDataError` when a deal it counts has a non-null stage outside the stage vocabulary, and
+`UNSTAGED` is for a null stage only. It needs no further ruling.
+
 ### Still required
+
+**As of OD-9 (2026-10-06, after VS02-M2 closed).** Nothing. U-8 is closed (§0.9, §0.13). VS02-M3
+is a separate task and begins only on the owner's instruction.
 
 **As of v2.2 (2026-10-06).** One thing: U-8, before VS02-M3 begins (§0.9). The owner approved this
 revision on 2026-10-06 for commit, alone, as `VS02-M2: finalize the M2 specification`. VS02-M2
