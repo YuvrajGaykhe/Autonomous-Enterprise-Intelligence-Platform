@@ -1,20 +1,27 @@
-# VS-02 — Revenue & Pipeline Intelligence (FX): Implementation Plan (v2.1)
+# VS-02 — Revenue & Pipeline Intelligence (FX): Implementation Plan (v2.2)
 **Group 11 | Final Year Project | B.E. Computer Engineering, SPPU**
 **v1 2026-10-01, drafted from the VS-02 Takeover Audit · v2 2026-10-01, after the adversarial
 consistency audit of v1: four blocking and twenty-nine non-blocking findings repaired (§0.3) ·
 v2.1 2026-10-01, after the owner's decisions: the rate set is configuration (SD-2), the table
-alternative is removed, and three clarifications are made (§0.10)**
+alternative is removed, and three clarifications are made (§0.10) · v2.2 2026-10-06, after the
+VS02-M2 pre-implementation audit: the owner's eight decisions OD-1…OD-8 are recorded and the M2
+contract is hardened (§0.12)**
 
 **Status of this document: APPROVED BY THE OWNER on 2026-10-01 for commit as
 `VS-02: finalize specification`. Specification only. The owner's decisions are recorded in §0.10.**
 **Nothing in it is built. No code, test, migration, configuration, frontend or README file was changed
 to produce it.**
 
+**v2.2 (2026-10-06) is a documentation-only revision of the VS02-M2 contract. It was drafted from the
+M2 pre-implementation audit on the owner's decisions of §0.12. APPROVED BY THE OWNER on 2026-10-06
+for commit, alone, as `VS02-M2: finalize the M2 specification`. It changes no code, test,
+configuration, migration, frontend or README file.**
+
 | Milestone | Status | Evidence |
 |---|---|---|
 | **VS02-M0** — pre-flight baseline | COMPLETE (2026-10-01) | §0.11; measured at `b0fcaa2`; recorded by the commit `VS-02: record the M0 baseline` |
 | **VS02-M1** — FX foundation | COMPLETE (2026-10-05) | §B6; T-VS02-1a and T-VS02-3a applied; gate of §B5 measured on 2026-10-05: 7311 tests, `app/` 100%; recorded by the commit `VS02-M1: add the FX foundation` |
-| **VS02-M2** — pipeline facts and aggregation | NOT STARTED | — |
+| **VS02-M2** — pipeline facts and aggregation | NOT STARTED | §0.12: audited before implementation on 2026-10-06, and its contract hardened in v2.2. No code exists |
 | **VS02-M3** — concentration, risk-band cross-tabulation, the view | NOT STARTED | — |
 | **VS02-M4** — API | NOT STARTED | — |
 | **VS02-M5** — acceptance, evaluation and hardening | NOT STARTED | — |
@@ -24,7 +31,8 @@ this table says so and names a commit. No milestone begins until the previous on
 approved, and **VS02-M0 does not begin until this file is committed on its own.** M0 is then a
 separate task and begins only on the owner's instruction. The rate set's date and source note (U-1)
 are an owner input during M0 (§B6): M0 cannot close without both, and VS02-M1 cannot begin until M0
-closes.
+closes. VS02-M2 does not begin until the v2.2 revision is approved by the owner and committed on its
+own (§0.12, §B7).
 
 > Strategy context: `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` §6.3, §10.2 (status **PROPOSED**)
 > VS-01 specification and conventions: `CONTEXT/VS01_IMPLEMENTATION_PLAN.md`
@@ -48,6 +56,7 @@ it that carries no tag of its own; an item's own tag replaces the heading's.
 |---|---|---|
 | **[R]** | **REQUIRED** | Binding without a further choice inside VS-02. The source is named. |
 | **[SD-n]**, **[MD-n]**, **T-VS02-n** | **PROPOSED OWNER DECISION** | Authored by this specification where no authority exists. Every one has an id and is listed in §0.6 (six shaping decisions), §0.7 (methodology) or §B2.1 (edits to frozen tests). It binds nothing until the owner approves it. |
+| **[OD-n]** | **OWNER DECISION OF 2026-10-06** | One of the eight decisions the owner took on 2026-10-06: six on the VS02-M2 pre-implementation audit, and two in the final hardening pass that followed it. Each is recorded in §0.12, and §0.8 says what a later change would reopen. |
 | **[U-n]** | **UNKNOWN/OPEN** | No authority exists and this specification proposes no value. §0.9 states what closes it. |
 
 **Standing in v2.1.** On 2026-10-01 the owner decided SD-1…SD-6 and approved MD-1…MD-22 as specified
@@ -55,6 +64,15 @@ it that carries no tag of its own; an item's own tag replaces the heading's.
 say what a later change would reopen. The owner also authorised exactly ten T-VS02 rows (§B2.1).
 U-1 was open in part in v2.1; the owner supplied its date and source note at VS02-M0, and it is
 closed (§0.9, §0.11).
+
+**Standing in v2.2.** On 2026-10-06 the owner took six decisions on the VS02-M2 pre-implementation
+audit, OD-1…OD-6, and two more in the final hardening pass, OD-7 and OD-8 (§0.12). A statement one
+of them governs carries its **[OD-n]** tag. OD-2…OD-8 bind as the owner stated them. OD-1 is the
+owner's decision that the methodology digest's canonical form
+is frozen in this plan and is not left to the implementer; the form itself (§A22.3) is authored by
+v2.2. The other hardenings of v2.2 refine statements that already carry an **[MD-n]** tag, and those
+statements keep it (§0.12). The wording v2.2 adds binds when the owner approves v2.2. U-8 is new and
+open (§0.9); it blocks VS02-M3 only.
 
 **What makes a statement REQUIRED.** Two kinds of source:
 
@@ -379,7 +397,7 @@ dependants are not approved until the decision is.
 | MD-9 | §A12.2; `band_rows`; tests 11 and 12; `V2.2` |
 | MD-10 | §A6; the `as_of` parameter; X5; test 24 |
 | MD-11 | §A7.2–§A7.4; the `fx` object; test 8; the digest pin |
-| MD-12 | §A14; §A15; tests 24 and 25; T-VS02-2 |
+| MD-12 | §A14, including the order and reserved-key rules of §A14.1 items 6 and 7 as v2.2 hardened them; §A10.5 item 1; §A15; tests 24 and 25; T-VS02-2 |
 | MD-13 | §A8.1; §A19 item 5; §A22; §B1; T-VS02-1 |
 | MD-14 | §A7.5; §A15's status table; §A17; tests 9 and 24; T-VS02-10 |
 | MD-15 | §A14.10; `view_hash` in §A15 and §A20; tests 3, 8, 20 and 25; criteria 4, 11 and 12 |
@@ -389,7 +407,15 @@ dependants are not approved until the decision is.
 | MD-19 | §A13.2; `data_quality`; test 15 |
 | MD-20 | §A20 |
 | MD-21 | §B1 |
-| MD-22 | §A24; the MD-22 rows of §A25; §A28 |
+| MD-22 | §A24; the MD-22 rows of §A25; §A25.1; §A28 |
+| OD-1 | §A22.3 item 3, the methodology digest's canonical form; the pin of §A22.3 item 4; coverage row C-18 |
+| OD-2 | §A22.3 item 2, the eight constants defined at M2; the last line of §A11; §B6's M2 and M3 entries |
+| OD-3 | §A10.2 item 4, including which deals the rule applies to; §A10.5 items 2, 4 and 5; §A17.1 step 5; its row of §A17.2; coverage row C-12 |
+| OD-4 | §A14.5's last paragraph; tests 15 and 17 as worded for M2; §A22.5 item 3's last sentence; §B6's M2 non-goals; U-8 |
+| OD-5 | §A25's boundary paragraphs; §B1's VS-02 tests row; the last paragraph of §B2.2 |
+| OD-6 | §A21.1; §A21.2; the two rows of §A21's table they complete; §A5's sentence on the relationship rows; §A16.2's paragraph on statements; §A22.4's rules on names |
+| OD-7 | §A10.5 items 3 and 6, the three stages and their precedence; §A10.1 item 4; the sentence on M2 under §A7.5 item 4; §A17.1's second consequence; its row of §A17.2; coverage row C-19 |
+| OD-8 | §A10.1 item 3; the `ALL` entry of §A14.1 item 7; its row of §A17.2; the `ALL` entry of §A29; the `ALL` cases of coverage row C-11 |
 
 ## 0.9 Unknown and open
 
@@ -402,6 +428,7 @@ dependants are not approved until the decision is.
 | **U-5** | The frontend phase: its agent, its panel, and whether it waits for F7 | A later frontend specification (SD-6) | No action now | nothing in this plan |
 | **U-6** | When, and whether, the hosted site receives VS-02 | The owner's separate approval per outward action (§B4) | No hosted action is part of this specification | nothing in this plan |
 | **U-7** | Whether any frozen test beyond §B2's list is tripped by a new package, route or error code | VS02-M0's pin census (§B6). An unlisted failure stops the milestone and is put to the owner before anything is changed | **Closed by VS02-M0.** The census, by reading and by a scratch run, found no frozen test tripped outside the ten authorised rows of §B2.1 (§0.11) | nothing |
+| **U-8** | How `deal_counts.by_stage` (§A14.5) counts a closed deal, or an open unvalued deal, whose non-null stage is outside the D1 stage vocabulary. Such a deal has no stage row and is not `UNSTAGED`. OD-3 decides the matter for open valued deals only | The owner's decision, before VS02-M3 begins | **Open, recorded on 2026-10-06** by the VS02-M2 pre-implementation audit (§0.12). No such row can exist while Layer 1 is frozen, because D1 admits only the vocabulary's values. M2 builds no count (OD-4), so M2 is not affected | VS02-M3 only |
 
 ## 0.10 The owner's decisions of 2026-10-01, and what v2.1 changed
 
@@ -484,6 +511,102 @@ illustrative and owner-authored. The rate set is fully pinned, and it lives in c
 **Gate.** VS02-M0 is closed. VS02-M1 is authorised by the gate and has not started; it begins only
 on the owner's instruction.
 
+## 0.12 The VS02-M2 pre-implementation audit and v2.2 (2026-10-06)
+
+**The audit.** It ran on 2026-10-06 at `5d07e24` (`VS02-M1: add the FX foundation`), before any M2
+code existed. It only read: it changed no code, test, configuration or plan file, and it ran no
+suite. Six auditors worked independently, on the specification, the frozen substrate, the tests, the
+arithmetic, the security boundary and the test seams.
+
+| Check | Result (OBSERVED 2026-10-06) |
+|---|---|
+| Contradictions inside v2.1 | none found |
+| Frozen substrate | every M2 requirement can be met without editing a frozen file. All nine columns `deal_rows` names exist under those names. The frozen `edges_of_type(edge_type, session, scope, …)` needs a `Scope`, so the M2 facts reader is handed one |
+| Arithmetic | Appendix 1 and Appendix 2 reproduced again in full, 203 checks, by a calculation independent of `app/`. The four M2 partitions reconcile exactly |
+| Frozen tests, by reading, against M2's real surface | only T-VS02-1b and T-VS02-3a are tripped, and no further row is proposed. Lint, types, coverage and the secret scan were not run; the M2 gate measures them |
+| Import closure of what §A22.4 lets `app/pipeline/` import | 62 first-party modules, with no connector, ingestion, security, API or outbound module among them |
+| Left open by v2.1 | the eight points this revision closes, below |
+
+**The owner's decisions.** OD-1 to OD-6 were taken on the audit. OD-7 and OD-8 were taken in the
+final hardening pass, described below.
+
+| ID | Decision (2026-10-06) | Specified in |
+|---|---|---|
+| OD-1 | The methodology digest's canonical form is **not** delegated to the implementer. It is frozen in this plan before M2 begins | §A22.3 item 3 |
+| OD-2 | `SHARE_QUANTUM`, `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS` are defined at M2, as constants only. M2 builds no concentration | §A22.3 item 2, §A11, §B6 |
+| OD-3 | An open valued deal whose stage is outside the supplied stage vocabulary fails closed with `PipelineDataError` | §A10.2 item 4, §A10.5, §A17 |
+| OD-4 | `deal_counts` stays in M3. M2 builds no count structure | §A14.5, §A25 tests 15 and 17, §B6 |
+| OD-5 | VS-02's own boundary test may grow at M2 under §A25. That is not an evolution of a frozen test and needs no T-VS02 row | §A25, §B1, §B2.2 |
+| OD-6 | M2's boundary is stricter than v2.1 stated it: relationship access is limited to `edges_of_type` with two edge types, and every form of write is forbidden | §A21.1, §A21.2, §A5, §A16.2, §A22.4 |
+| OD-7 | Error precedence is fixed: a data-validity error wins over a missing FX rate, and both come before aggregation. M2 does not perform M3's check of every currency | §A10.5 items 3 and 6, §A17.1 |
+| OD-8 | A deal in the currency `ALL` is valid Layer 1 data and is not valid M2 analytical input. When it is open and valued, M2 fails closed. No Layer 1 restriction is added, and the reserved-key design is unchanged | §A10.1 item 3, §A14.1 item 7, §A29 |
+
+**What v2.2 changed.** The owner directed eight hardenings. Each is made in the section that is the
+authority for it, and the wording it replaces is replaced there, not contradicted from elsewhere.
+
+| # | Hardening | Where | Governed by |
+|---|---|---|---|
+| 1 | Methodology digest: keys, value forms, serialisation, bytes, hash, and what the version is to it | §A22.3 items 2 to 4 | OD-1, OD-2 |
+| 2 | Stage outside the vocabulary: when it is detected, what it raises, what it identifies, and that nothing partial is returned | §A10.2 item 4, §A10.5, §A17.1, §A17.2 | OD-3 |
+| 3 | Write boundary: the forbidden capability in every form it can take | §A21.2, §A16.2, §A19 item 5 | OD-6 |
+| 4 | Document and ticket boundary: the whole of what may be read | §A21.1, §A5, §A18.4, §A22.4 | OD-6 |
+| 5 | Test 22: a precision-sensitive fixture, with its own control | §A25 test 22 | MD-22, hardened |
+| 6 | M2 coverage: the four partitions, currency, arithmetic, data quality and reconciliation | §A25.1, §B6 | MD-22, hardened |
+| 7 | Order: code-point order in the statement and in the builders; months chronological | §A14.1 item 6, §A16.2, §A10.4 | MD-12, MD-13 and MD-6, hardened |
+| 8 | Reserved keys: every generated key, including the currency code `ALL` | §A14.1 item 7, §A10.1, §A10.3, §A10.5, §A29 | MD-12, hardened; OD-8 for `ALL` |
+
+Also changed, because the audit showed each is needed for M2 to prove what it claims:
+
+- addition is brought inside the explicit arithmetic context (§A9.1 item 4);
+- §A21 says which of its rows are rules over a module's own imports and which over its closure;
+- fixture 7 is worded so that the scoped join is what tests 14 and 16 exercise (§A24);
+- tests 15 and 17 say what they assert at M2, given OD-4 (§A25);
+- U-8 is recorded (§0.9).
+
+**The final hardening pass.** A review of the draft found four points still to close. All four were
+closed on 2026-10-06, before v2.2 was put to the owner for approval.
+
+| # | Closure | Where | Governed by |
+|---|---|---|---|
+| 1 | The currency `ALL`: valid Layer 1 data, not valid M2 analytical input. It fails closed, and no Layer 1 restriction is added | §A10.1 item 3, §A14.1 item 7, §A17.2, §A29 | OD-8 |
+| 2 | Error precedence: a data-validity error, then a missing rate, then aggregation; and how M2's single-currency error relates to M3's check of every currency | §A10.5 items 3 and 6, §A10.1 item 4, §A7.5 item 4, §A17.1 | OD-7 |
+| 3 | The scope of the unknown-stage rule: open valued deals, and no other | §A10.2 item 4 | OD-3, clarified |
+| 4 | The canonical text of the methodology digest, verified mechanically | §A22.3 item 3 | OD-1 |
+
+*Verification of the canonical text* (OBSERVED 2026-10-06, from §A22.3's own text, with no
+application code and no digest computed):
+
+- the block holds one line of 235 characters, which is 235 bytes in UTF-8, all ASCII;
+- it holds no whitespace, forty U+0022 quotation marks and no quotation mark of any other kind;
+- its nine keys are the table's nine, lowercase, in ascending code-point order;
+- every value is a string or a list of strings, and equals both the table's column and the constant
+  this plan states in §A7.5, §A9, §A10.4 and §A11;
+- the line is exactly what the serialisation of §A14.10 item 2 gives for those values.
+
+The definition was not changed. Two clarifications were added to §A22.3: that the three spaces
+before the line in this file are Markdown indent and not part of the text, and how a string is
+escaped.
+
+**What v2.2 did not change.** No figure, rate, appendix value or pinned digest. No T-VS02 row, and no
+path of §B1 beyond the wording of the VS-02 tests row. No record of VS02-M0 or VS02-M1. No
+milestone's scope: M2 gains no behaviour of M3. This plan states no methodology digest value;
+VS02-M2 computes it from §A22.3 and pins it.
+
+**Noted by the audit and left as they are.** These are documentation points. None changes what M2
+must build.
+
+- §A8.3 item 3 says the valued deals and VS-01's describable deals differ exactly by the negative
+  amounts. VS-01's `DealSignal` also refuses a probability outside 0 to 100 and a blank stage. Layer 1
+  admits neither, so the statement holds on every row Layer 1 can produce.
+- §B6's M2 change list does not name `app/pipeline/__init__.py`, which §B1 allows.
+- §B5 calls the frozen-path diff "empty". After an authorised evolution it holds exactly that
+  evolution.
+- Appendix 1 pins no per-period weighted figure, and Appendix 2 no owner or period base figure.
+  §A25.1 covers those figures by reconciliation.
+
+**Gate.** VS02-M2 has not started. It begins only on the owner's instruction, after v2.2 is approved
+and committed on its own (§B7).
+
 ---
 
 # Part A — Specification
@@ -538,6 +661,10 @@ What is out of scope is listed once, in §A30.
 | `config/intelligence/pipeline_rules.yaml` | a new loader (§A22.3) | [MD-13] |
 | `rules_version`, `linker_version` | VS-01's `default_risk_rules()`, read and never written | [R] frozen |
 | the D1 stage vocabulary and currency codes | `app.normalization.config.default_config()` | [R] frozen |
+
+[OD-6] The two relationship rows are exhaustive. VS-02 calls `edges_of_type` with those two edge
+types and uses nothing else of the relationship model: no other edge type, and none of its
+neighbourhood, escalation-path or policy-document queries (§A21.1).
 
 **Never an input to any figure [R]** (strategy §7.5, §2.4, §2.7): the text of any document; any
 ticket attribute; any clock; any environment variable; any other source system's rows.
@@ -666,6 +793,8 @@ a version bump therefore fails the build.
 4. [MD-14] A rate is required only for the currency of an open, valued deal. Before any figure is
    computed, the service checks every such currency and raises the same error once, carrying **all**
    missing currencies. The whole view then fails (§A17). No partial base figure is produced.
+   - [OD-7] *At M2.* This check is the service's and arrives at M3. M2 does not perform it. At M2 a
+     missing rate is `convert`'s own error of item 3, raised in stage 2 of §A10.5.
 5. [R] (strategy §14 item 4) Base amounts are summed with `MoneyValue.total(base_currency, …)` and
    native amounts with `MoneyValue.total(currency, …)`. No VS-02 code adds two `MoneyValue` objects
    of different currencies, and no VS-02 module catches `CurrencyMismatchError`.
@@ -733,6 +862,10 @@ They carry no amount in the view.
    `ARITHMETIC_PRECISION = 50`, rounding `ROUND_HALF_EVEN`. The process default context is never
    relied on (D-3).
 3. [R] (plan §A24) Rounding to a quantum is always an explicit `quantize`.
+4. [MD-4] Addition is covered as well. Every sum of amounts, native or base, is taken inside the
+   context of item 2, so no aggregate can be rounded by the process default context. The frozen
+   `MoneyValue.total` adds in whatever context is current, so VS-02 calls it inside that context.
+   (Hardened in v2.2: v2.1 named only multiplication and division.)
 
 #### A9.2 Per-deal native values [MD-3]
 
@@ -788,6 +921,30 @@ zeros.
 1. [R] (the brief; strategy §3) Exposure is reported per currency.
 2. [MD-12] One bucket per currency held by an open valued deal, ascending by code. No bucket for a
    currency no deal holds. Each carries the rate applied.
+3. [OD-8] **The currency `ALL`.** A currency code is a generated key (§A14.1 item 7). `ALL` is a
+   reserved bucket-key token, and it is also an ISO 4217 code of the frozen D1 vocabulary
+   (OBSERVED: `config/mappings/normalization.yaml`). The two meet in `by_currency`. The conflict is
+   settled deliberately; it is not left as an accident of implementation.
+   - **Layer 1.** A deal whose currency is `ALL` is valid Layer 1 data. D1 admits it. This plan adds
+     no Layer 1 restriction: the D1 currency vocabulary is not changed, and `ALL` is not removed
+     from it.
+   - **M2.** When such a deal is open and valued, it is not valid M2 analytical input. Its
+     `by_currency` bucket would have to carry the key `ALL`, and `ALL` cannot be emitted as a
+     generated key.
+   - **Outcome.** M2 fails closed with `PipelineDataError`, in stage 1 of §A10.5, identifying every
+     such deal. The key is not renamed, escaped or prefixed. The deal is not dropped, skipped or
+     moved to another bucket. No second namespace is introduced, and the reserved-key design is
+     unchanged.
+   - **Determinism.** The outcome does not depend on the rate set. It is the same whether or not the
+     rate set holds an `ALL` rate, because stage 1 comes before every conversion (OD-7).
+   - **Not affected.** A closed deal, or an open unvalued deal, in `ALL` sits in no partition,
+     generates no key and fails nothing.
+   - **Documented.** §A29 lists it as a known limitation, and §A17.2 as a situation.
+4. [OD-7] A currency code outside the D1 vocabulary cannot become a `MoneyValue`: the frozen type
+   raises `ContractViolationError` (X9). VS-02 neither catches nor translates that error, so such a
+   deal is never bucketed and never skipped. It arises in stage 1 of §A10.5, where every open valued
+   deal's amount is made a `MoneyValue` before anything is converted, so it is never reported as a
+   missing rate. Layer 1 admits no such code.
 
 #### A10.2 By stage
 
@@ -795,6 +952,29 @@ zeros.
 2. [MD-12] One bucket per value of the D1 stage vocabulary, **always present**, ascending by code
    point. OBSERVED: the vocabulary is an unordered set, `{negotiation, qualification, won}`.
 3. [MD-1] An open deal in a closed stage is counted under that stage and carries the mismatch note.
+4. [OD-3] **A stage outside the vocabulary.** At M2 the stage vocabulary is consulted for one
+   purpose: to place an open valued deal in `by_stage`. The rule applies exactly where that purpose
+   does, and nowhere else.
+
+   | Deal | Its stage at M2 |
+   |---|---|
+   | open and valued | **Required and checked.** The stage selects the deal's `by_stage` bucket, so it is checked against the supplied vocabulary. A stage outside it is a data error and fails closed with `PipelineDataError` (§A10.5) |
+   | open and unvalued | **Not checked.** The deal sits in no partition (§A8.3) and has no `by_stage` bucket. It draws its `INCOMPLETE_DEAL` or `NEGATIVE_AMOUNT` note as it always does |
+   | closed | **Not checked.** The deal sits in no partition and has no `by_stage` bucket |
+
+   - *For the open valued deal.* It is not dropped and is not treated as unvalued. It is not counted
+     under another stage. No new or `UNKNOWN` bucket is made for it. The vocabulary is never widened
+     from the data. No partition is returned at all (§A10.5 item 4).
+   - *For the other two.* The presence of the row in the dataset does not make M2 validate its
+     stage, and M2 makes no bucket for it. The other M2 rules that read a stage ask only whether it
+     is null (§A8.3, `INCOMPLETE_DEAL`) or compare it with `closed_stages`
+     (`STAGE_ACTIVITY_MISMATCH`, §A13.2). None compares it with the vocabulary, and all are
+     unchanged.
+   - *Not `deal_counts`.* How M3 counts a closed or unvalued deal with such a stage is U-8. M2
+     neither decides it nor builds anything for it.
+   - *Reach.* It cannot occur while Layer 1 is frozen. OBSERVED: D1 declares `deals.stage` an enum of
+     the vocabulary's values (`config/mappings/normalization.yaml`), though the `deals` table carries
+     no constraint of its own.
 
 #### A10.3 By owner
 
@@ -814,6 +994,9 @@ zeros.
    source system is `UNRESOLVED`.
 4. [R] (plan §A9.2) Ownership is not composed. VS-02 groups deals by their owner. It derives no
    customer–employee association from deal ownership and does not walk to an owner's manager.
+5. [MD-12] An employee's `source_id` is a generated key (§A14.1 item 7). One that equals a reserved
+   key, on an employee who would head an `EMPLOYEE` bucket, fails the data checks of §A10.5. It is
+   never merged into `UNASSIGNED` or `UNRESOLVED`.
 
 #### A10.4 By expected-close period
 
@@ -830,7 +1013,8 @@ zeros.
 3. [MD-6] A deal expected on `as_of` itself is in its month. A deal earlier in `as_of`'s own month
    is `OVERDUE`. Month keys are computed arithmetically on (year, month) and never by constructing a
    date, so an `as_of` late in year 9999 yields keys in year 10000, written with five digits; nothing
-   fails.
+   fails. The twelve `MONTH` buckets are listed chronologically, `as_of`'s month first. Across that
+   year boundary this is not the code-point order of their keys, and chronological order is the rule.
 4. [MD-6] No quarter, half or fiscal-year roll-up is produced. No fiscal calendar is defined
    anywhere ([U-4]); a consumer can sum months.
 
@@ -838,6 +1022,57 @@ zeros.
   returns the same fifteen buckets.
 - *If MD-6 is rejected.* Name the period, the calendar and the horizon. Nothing else in Part A
   changes.
+
+#### A10.5 Data checks before any figure
+
+Some data makes a correct partition impossible. Every such condition fails closed, and the order in
+which conditions are examined is fixed.
+
+1. [MD-12] **Reserved keys.** The rule of §A14.1 item 7, for the keys M2 generates: the `source_id`
+   of an employee who would head an `EMPLOYEE` bucket, the currency code of an open valued deal, and
+   every value of the supplied stage vocabulary. The customer's `source_id` joins them at M3, with
+   `by_customer`. The currency `ALL` is the case §A10.1 item 3 settles.
+2. [OD-3] **Stage outside the vocabulary.** The rule of §A10.2 item 4, for open valued deals only.
+3. [OD-7] **Three stages.** The aggregation entry point (§A22.5 item 3) works in three stages, in
+   this order. A stage begins only when the one before it has finished, without error, for every
+   fact it is given.
+
+   | Stage | What it does | What it can raise |
+   |---|---|---|
+   | 1. Data validity | the checks of items 1 and 2, over all the facts; then each open valued deal's amount and currency are made a `MoneyValue` | `PipelineDataError` from a check; then the frozen `MoneyValue`'s `ContractViolationError`, not caught and not translated (§A10.1 item 4) |
+   | 2. Weighting and conversion | the per-deal values of §A9.2 and §A9.3 | `FxRateMissingError`, from `convert` (§A7.5 item 3) |
+   | 3. Aggregation | the four partitions, each a sum of per-deal values | no error of its own |
+
+   At the route, stage 1 belongs to step 5 of §A17.1.
+4. [OD-3] **Outcome of a failed check.** `PipelineDataError`, and the whole calculation stops. No
+   partition is returned, complete or partial, including the partitions the offending value does not
+   touch. No deal is dropped, moved or re-bucketed. No key is renamed, escaped or prefixed. No bucket
+   is invented or overwritten. No vocabulary is widened.
+5. [OD-3] **What the error identifies.** The entity `deals` and the `source_id` of every deal that
+   triggers the condition reported, ascending and without repeats. For a reserved key in the stage
+   vocabulary itself, which no deal triggers, it names that key. It states no amount. When both
+   conditions hold, the reserved-key collision is the one reported. How the error carries this is
+   implementation-private (§A22.5); that it does is tested (§A25.1).
+6. [OD-7] **Precedence.** A data-validity error, then a missing rate, then aggregation. A
+   data-validity error is any error stage 1 raises.
+   - Facts that hold both an M2-invalid data condition and a currency with no rate raise the
+     data-validity error. This is so whichever deals carry the two conditions, and in whatever order
+     the facts are supplied. A data-validity error is never reported as a missing rate.
+   - Within stage 1, a failed check of item 1 or 2 is reported in preference to a refusal by the
+     frozen type.
+   - **M2.** The only FX check at M2 is `convert` itself, in stage 2. A missing rate surfaces as
+     `convert`'s own error, naming the one currency it was asked for (§A7.5 item 3). M2 does not
+     perform the check of §A7.5 item
+     4, which examines every currency and names all that are missing: that check is `service.py`'s
+     and arrives at M3. Which single currency M2's error names, when several lack a rate, is
+     therefore not part of the M2 contract.
+   - **M3.** The route keeps the same precedence. Stage 1 is part of step 5 of §A17.1 and the
+     service's check is step 6, so the service examines the rates only after stage 1 has passed. A
+     request that would fail both answers `500`, not `409`.
+   - No error class is added. `PipelineDataError`, `ContractViolationError` and
+     `FxRateMissingError` are the existing ones.
+7. [R] (plan §A24) **Determinism.** The same facts, supplied in any order, raise the same error
+   identifying the same deals.
 
 ### A11. Concentration
 
@@ -867,6 +1102,9 @@ zeros.
    score, and it is never combined with a band.
 
 - *If MD-8 is rejected.* Strike HHI, or name the measure. The brief says "measures" and names none.
+- *The constants and M2.* [OD-2] `SHARE_QUANTUM`, `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS` are
+  defined at VS02-M2, because the methodology digest pinned at M2 covers them (§A22.3). Nothing else
+  of this section is built before M3.
 
 ### A12. Exposure by risk band
 
@@ -1012,10 +1250,28 @@ This section is the whole output. Nothing may be added, renamed or omitted.
 4. `id` — a canonical `source_id` string.
 5. **Every key of every object is always present.** `null` appears only where a type says
    "or null".
-6. Every list has the total order stated for it. "Ascending" means by Unicode code point.
-7. The reserved keys `UNASSIGNED`, `UNRESOLVED`, `UNLINKED`, `OVERDUE`, `LATER`, `UNDATED`, `ALL`
-   and `UNASSESSED` name pseudo-buckets. A canonical `source_id` equal to one of them, where it
-   would be a bucket key, raises `PipelineDataError` (`500`).
+6. Every list has the total order stated for it. "Ascending" means by Unicode code point, compared
+   in the builder that produces the list. No order in the view is taken from the database, from a
+   collation, from a locale, or from the order in which rows or dictionary entries happen to arrive:
+   the same facts supplied in any order give the same lists (§A16.2, §A19 item 3). (Hardened in
+   v2.2.)
+7. **Reserved keys.** `UNASSIGNED`, `UNRESOLVED`, `UNLINKED`, `OVERDUE`, `LATER`, `UNDATED`, `ALL`
+   and `UNASSESSED` name pseudo-buckets. They are one namespace, and there is no second one.
+   - A **generated key** is a bucket `key` taken from data or from a vocabulary: an employee's
+     `source_id` (`by_owner`), a customer's `source_id` (`by_customer`), a currency code
+     (`by_currency`) and a stage value (`by_stage`).
+   - A generated key equal to any reserved key raises `PipelineDataError` (`500`). It is never
+     renamed, escaped, prefixed, merged into the pseudo-bucket or allowed to overwrite it.
+   - A `source_id` or a currency code is a generated key only where it would be a bucket key: on the
+     owner, the customer or the currency of an open valued deal. A stage value is one whenever it is
+     in the vocabulary, because its bucket is always present.
+   - `ALL` is the key of `open_pipeline` and also an ISO 4217 code of the frozen D1 vocabulary.
+     §A10.1 item 3 settles that conflict (OD-8): a deal in that currency is valid Layer 1 data, and
+     when it is open and valued it is not valid input to the view, which fails closed (§A29).
+   - A month key is digits and one hyphen, and can equal no reserved key.
+   - §A10.5 says when the check runs and what the error identifies.
+
+   (Hardened in v2.2: v2.1 named only a canonical `source_id`.)
 8. The view contains no database id, no timestamp and no ingestion provenance (D-11), so two
    independently built databases with the same content yield the same view.
 
@@ -1125,6 +1381,10 @@ Each extension adds keys to Bucket and removes none:
 `by_stage` has one row per D1 stage value, ascending, always present, and then a final row
 `UNSTAGED` for deals with a null stage, always present. `open = open_valued + open_unvalued` and
 `total = open + closed`, in every row and overall.
+
+[OD-4] `deal_counts` is built at VS02-M3, with the view. M2 builds no count structure. What M3 needs
+for it, each deal's classification as open or closed and as valued or unvalued, is already in the
+facts M2 produces (§A8, §B6). U-8 is decided before M3 builds it.
 
 #### A14.6 `risk_coincidence`
 
@@ -1291,11 +1551,24 @@ A new persistence-only module, `app/persistence/repositories/pipeline_queries.py
 
 | Function | Returns |
 |---|---|
-| `deal_rows(session, source_system)` | every row of `deals` with that `source_system` and `source_entity = 'deals'`, as plain rows of `(source_id, stage, is_active, amount, currency, probability, expected_close_date, owner_source_id, customer_source_id)`, ordered by `source_id` |
-| `band_rows(session, *, source_system, as_of, layer1_fingerprint, rules_version, linker_version)` | `(customer_source_id, band, executive_worthy)` for the identity of §A12.2, inner-joined to `customers`, ordered by customer `source_id`. An assessment whose customer was set null has no customer to attach a deal to and is not returned |
+| `deal_rows(session, source_system)` | every row of `deals` with that `source_system` and `source_entity = 'deals'`, as plain rows of `(source_id, stage, is_active, amount, currency, probability, expected_close_date, owner_source_id, customer_source_id)`, ordered by `source_id` ascending by code point |
+| `band_rows(session, *, source_system, as_of, layer1_fingerprint, rules_version, linker_version)` | `(customer_source_id, band, executive_worthy)` for the identity of §A12.2, inner-joined to `customers`, ordered by customer `source_id` ascending by code point. An assessment whose customer was set null has no customer to attach a deal to and is not returned |
 
 It imports no `app.intelligence`, `app.fx` or `app.pipeline` module, names no domain type, decides
 nothing, writes nothing and logs nothing. `risk_queries.py` is not edited.
+
+**Order [MD-13].** Each function orders inside its statement, with the `C` collation on the
+`source_id` column: `collate("C")`, the form `risk_queries.py` already uses for a source id. `C`
+compares bytes, which for UTF-8 text is code-point order, so the order never depends on the
+database's default collation. It is not left as a choice between the database's order and a sort in
+Python. No VS-02 module relies on the order rows arrive in for the order of anything it states
+(§A14.1 item 6). (Hardened in v2.2.)
+
+**Statements [OD-6].** The module holds `select` statements and nothing else (§A21.2). `deal_rows`
+selects exactly the nine columns above and filters on `source_system` and `source_entity`; it reads
+no other column of `deals`, the deal's `name` included. Of `app.persistence.models` the module names
+`Deal` alone at M2; `band_rows` adds `RiskAssessment` and `Customer` at M3 (§A21.1). It creates no
+engine, connection or session: the session is the caller's.
 
 #### A16.3 Writes [SD-2]
 
@@ -1313,12 +1586,19 @@ A request is evaluated in this order, and the first failing step decides the res
    `500`.
 3. Scope resolution. With an explicit `as_of` it cannot fail.
 4. The rate set: the content loaded at step 2. Nothing further can fail here.
-5. Facts: deals, edges, bands. A reserved-key collision or an unknown band → `500`.
+5. Facts and data validity: deals, edges and bands are read, and stage 1 of §A10.5 is run. A
+   reserved-key collision, a stage outside the stage vocabulary on an open valued deal, a refusal by
+   the frozen `MoneyValue` or an unknown band → `500`.
 6. The missing-rate check of §A7.5 item 4 → `409 FX_RATE_MISSING`.
 7. The view, its hash, the event → `200`.
 
 Consequence: an empty source system answers `200` with the empty view (§A14.11), which still names
 its base currency and its rate set, because step 2 has loaded them.
+
+Consequence [OD-7]: a request that would fail at both step 5 and step 6 answers `500`. A
+data-validity error is never reported as a missing rate (§A10.5 item 6). At M2 there is no service
+and no route. The aggregation entry point keeps the same precedence through its three stages, and it
+does not perform step 6's check of every currency.
 
 #### A17.2 Situations
 
@@ -1329,6 +1609,10 @@ its base currency and its rate set, because step 2 has loaded them.
 | Open deal that cannot be valued | counted, excluded from money, noted | [MD-2] |
 | Deal with no owner, or an unresolved owner key | the two owner pseudo-buckets | [MD-7] |
 | Deal with no customer | `UNLINKED`, with the missing or unresolved note | [SD-3] |
+| Open valued deal whose stage is outside the stage vocabulary | `PipelineDataError`; `500`; no partial view (§A10.5) | [OD-3] |
+| A generated bucket key equal to a reserved key | `PipelineDataError`; `500`; no partial view (§A14.1 item 7) | [MD-12] |
+| Open valued deal in the currency `ALL`, which Layer 1 admits | the same. The deal is valid Layer 1 data and is not valid input to the view (§A10.1 item 3) | [OD-8] |
+| A data-validity error and a missing rate in one request | the data-validity error: `500`, never `409` (§A10.5 item 6) | [OD-7] |
 | No assessment for the scope, or partial coverage | `UNASSESSED` | [MD-9] |
 | Invalid `fx_rates.yaml` or `pipeline_rules.yaml` | refused at first use naming the broken key; `500`; no partial view; other routes unaffected | [R] plan §A23 |
 | `as_of` before all data, or in the future | permitted | [R] plan §A23 |
@@ -1389,7 +1673,8 @@ structurally, as VS-01 cites a policy rule by its id.
    the `Document` model, any document repository nor `app.evidence`, and call no function that
    returns a document's title or body. A boundary test asserts it. The one frozen function they call
    that touches the `documents` table is `resolve_scope`, which reads `source_id` and `record_hash`
-   for the fingerprint (§A5).
+   for the fingerprint (§A5). §A21.1 states the whole of what they may read and names the
+   relationship queries they may not call.
 3. [MD-17] **Reproduction.** In a named test and in the acceptance command: the INR native
    unweighted total of the open pipeline, rendered with two decimal places and comma grouping as
    `INR 47,342,500.00`, equals the text of DOC-004's citable span `[170, 187)`. OBSERVED: that span
@@ -1422,7 +1707,7 @@ structurally, as VS-01 cites a policy rule by its id.
    a `Session`: `facts.py`, which reads, and `service.py`, which passes the caller's session to
    `resolve_scope` and to `facts.py`. No module of `app/fx/` accepts one. Every other VS-02 module
    is pure and imports no SQLAlchemy name. No VS-02 module commits, rolls back, flushes, begins or
-   closes.
+   closes. §A21.2 states the read-only boundary in full.
 6. [SD-5] **The route** reads through the frozen `read_snapshot`: one REPEATABLE READ, read-only
    transaction covering the fingerprint, the deals, the edges and the bands. The transaction cannot
    write.
@@ -1444,21 +1729,108 @@ Sources: strategy §9.1; plan §A22; context §17.3. Each row is asserted by
 
 **What is REQUIRED here.** The concern in each row, which is the control objective. The control that
 realises it is governed by the decision concerned: the import and module lists by MD-13; the
-no-document and no-ticket row by MD-17; the read-only row by SD-5; what the view's prose is, in the
-prompt-injection and reflected-input rows, by MD-15 and MD-18; and the tests that assert the rows by
-MD-22.
+no-document and no-ticket row by MD-17 and, for the whole of what may be read, by OD-6 (§A21.1); the
+read-only row by SD-5 and, for the forbidden capability in full, by OD-6 (§A21.2); what the view's
+prose is, in the prompt-injection and reflected-input rows, by MD-15 and MD-18; and the tests that
+assert the rows by MD-22.
 
 | Concern | Control |
 |---|---|
 | No executor | Over the transitive import closure of `app/fx/` and `app/pipeline/`: no outbound HTTP, SMTP or socket module, and no `app.connectors`, `app.ingestion`, `app.core.security` or `app.api` |
-| Read-only | No session write method in either package |
+| Read-only | §A21.2: nothing in either package or in `pipeline_queries.py` can change a row, a schema or a transaction, whether by a session method, a statement construct, textual SQL or an ORM call |
 | No clock, no randomness | The M1 boundary rules, applied to both packages |
-| No document text, no ticket attribute | Neither package imports the `Document` or `SupportTicket` model, a document or ticket repository, `app.evidence`, `app.analysts` or `app.decisions` |
+| No document text, no ticket attribute | Neither package imports the `Document` or `SupportTicket` model, a document or ticket repository, `app.evidence`, `app.analysts` or `app.decisions`; and both reach the database only as §A21.1 allows |
 | VS-01 isolation | No Layer 1 or VS-01 package imports `app.fx` or `app.pipeline` |
 | Prompt injection | Structurally impossible: no model and no prompt. The view holds no free-text business field of any record or document: no name, title, note or body. What it takes from records is identifiers, source keys, vocabulary values, numbers and dates, served as JSON strings and never interpreted. Its only prose is the rate set's authored `source_note`; limitation texts are fixed templates rendered outside the view |
 | Reflected input | `{source_system}` in a limitation text is the request's own value, length-bounded, served as a JSON string and never interpreted |
 | Disclosure | The route publishes amounts that `GET /api/v1/entities/deals` already publishes, and bands that `GET /api/v1/risk/assessments` already publishes. The hosted site has no authentication, VS-01's standing limitation |
 | Secret hygiene | The canary check of the frozen G2 suite is repeated for the new route by test 24 |
+
+**Own imports and the closure [MD-13].** Only the no-executor row is a rule over the import closure.
+Every other row, and every list of §A22.4, is a rule over what a module itself imports, names and
+calls. OBSERVED 2026-10-06: the frozen `app.intelligence` package loads its scope module, and with
+it SQLAlchemy and every canonical model, whenever any of its modules is imported. A closure reading
+of those rows could therefore not be met without editing a frozen file, and M1's boundary test reads
+them as rules over a module's own imports. §A21.1 is what closes the distance: it bounds what VS-02
+may call and name, not only what it imports.
+
+#### A21.1 What VS-02 may read [OD-6]
+
+This subsection and the next bind VS-02's production code: every module of `app/fx/` and
+`app/pipeline/`, `app/persistence/repositories/pipeline_queries.py` and, from M4, the two route
+modules. Tests, the fixture package and the acceptance command are governed by §A18.4, §A24 and
+§A27.
+
+1. **The whole of what is read from the database.**
+
+   | What | Through | From |
+   |---|---|---|
+   | nine columns of `deals`, filtered by `source_system` and `source_entity` | `deal_rows` (§A16.2) | M2 |
+   | the `deal_owned_by` and `customer_has_deal` edges | `edges_of_type(EdgeType.DEAL_OWNED_BY, …)` and `edges_of_type(EdgeType.CUSTOMER_HAS_DEAL, …)` | M2 |
+   | the scope: `source_id` and `record_hash` of the seven entity tables | the frozen `resolve_scope`, always with an explicit date (§A6) | M3, in `service.py`. At M2 only a test resolves a scope, and hands it to the facts reader |
+   | band, verdict and customer of the persisted assessments | `band_rows` (§A16.2) | M3 |
+
+   Nothing else is read. OBSERVED: the two edge reads select `source_id` columns of `deals`,
+   `employees` and `customers`, and touch no other table (`app/relationships/edges.py`).
+2. **The relationship model.** `edges_of_type` is the only function of `app.relationships` that
+   VS-02 calls, and those two are the only edge types it is called with.
+   - No other member of `EdgeType` is named, and none is obtained indirectly: `EdgeType` is not
+     called, indexed or iterated, and `all_edge_types` is not named.
+   - VS-02 does not call `neighbourhood`, `escalation_path`, `policy_documents`,
+     `canonical_fk_edges` or `source_key_edges`, and does not name `EDGE_SPECS` or `spec_for`.
+   - No relationship is followed beyond one edge. An owner's manager, a customer's tickets or
+     projects and a customer's own owner are never reached (§A10.3 item 4).
+3. **Documents and tickets.** No column of `documents` or `support_tickets` reaches VS-02, other
+   than the `source_id` and `record_hash` that `resolve_scope` reads for the fingerprint (§A5). That
+   excludes a document's title, body and policy content; a ticket's status, priority, dates,
+   assignee and text; and every free-text field of every record.
+4. **Models.** No module of `app/fx/` or `app/pipeline/` names an ORM model or the model registry
+   `ENTITY_MODELS`, or imports `app.persistence.models`. `pipeline_queries.py` names the models
+   §A16.2 allows it and no other.
+5. **Other sources.** No row of another source system (§A10.3 item 3). No engine, connection or
+   session of VS-02's own making: every module that reaches the database is handed the caller's
+   session (§A19 item 5), so VS-02 cannot be pointed at a database its caller did not choose. No
+   file but the configuration files that the frozen loaders and VS-02's two loaders read. No
+   environment variable, clock or network (§A19 item 2).
+6. **Later milestones.** A milestone that must read more says so in this plan first. M3's band read
+   is already in the table.
+7. **Assertion.** From M2 the boundary test (§A25) asserts items 2, 4 and 5 over every production
+   module that exists, each with a negative control: for example an edit that calls
+   `policy_documents`, names `EdgeType.CUSTOMER_HAS_TICKET`, iterates `EdgeType`, names `Document`
+   or creates an engine.
+
+#### A21.2 Read-only, in full [OD-6]
+
+1. **The forbidden capability** is changing anything a database holds, in whatever form the change
+   is written:
+   - **a row:** INSERT, UPDATE, DELETE, an upsert (`INSERT … ON CONFLICT`) or MERGE;
+   - **the schema:** CREATE, ALTER, DROP, TRUNCATE or any other DDL; any change to a table, index,
+     constraint, sequence or extension; any migration (SD-2);
+   - **a transaction:** commit, rollback, flush, begin, a savepoint, close, a row lock, or a change
+     of isolation level or of the read-only setting. The session and its transaction are the
+     caller's (§A19 item 5).
+2. **Every form is covered:**
+   - a SQLAlchemy construct: `insert`, `update`, `delete`, a dialect insert with a conflict clause,
+     a merge, a DDL element, `create_all`, `drop_all`, a table's or an index's `create` or `drop`,
+     `with_for_update`;
+   - textual SQL of any content: `text` and `exec_driver_sql`, which the frozen G2 suite already
+     refuses across `app/`;
+   - an ORM persistence call: `add`, `add_all`, `merge`, `delete`, `flush`, the `bulk_` methods, or
+     assignment to an attribute of a loaded object. VS-02 loads no ORM object: `deal_rows` and
+     `band_rows` return plain rows;
+   - `session.execute`, `scalars`, `scalar`, or a connection's `execute`, given anything but a
+     `select`.
+3. **What is permitted.** `pipeline_queries.py` builds `select` statements over the columns §A16.2
+   names and executes them on the caller's session. No other VS-02 module executes a statement.
+   `facts.py` passes the session to `deal_rows`, to `edges_of_type` and, from M3, to `band_rows`.
+   `service.py` passes it to `resolve_scope` and to `facts.py`. No module of `app/fx/` receives one.
+4. **The observable guarantee.** Computing anything VS-02 computes leaves every table's rows and
+   the schema as they were. Test 20 asserts it by row counts at M3, and at M4 the route's
+   transaction cannot write (§A19 item 6). At M2 the boundary test asserts items 1 to 3 statically
+   over `app/pipeline/` and `pipeline_queries.py`, each with a negative control. M1's rows over
+   `app/fx/` stand as they are, and none is weakened.
+5. **What this does not restrict.** The fixture package and the tests write to the harness
+   database, behind the guard of §A24. They are not production code.
 
 ### A22. Packages and dependency direction [MD-13]
 
@@ -1478,7 +1850,7 @@ MD-22.
 | `errors.py` | `PipelineError`, `PipelineConfigError`, `PipelineDataError` |
 | `facts.py` | `DealFact`; the function that takes a session and reads deals, edges and bands; the classification of each deal (open, valued, owner state, customer state) and the deal-level notes of §A13.2 |
 | `measures.py` | per-deal values and their constants; pure; receives no band |
-| `aggregation.py` | the six partitions, concentration and coincidence; pure |
+| `aggregation.py` | the six partitions, the data checks of §A10.5, concentration and coincidence; pure |
 | `view.py` | the canonical object, `view_hash`, citations, the scope-level note, limitation codes and texts; pure |
 | `service.py` | `pipeline_view(session, *, as_of, source_system)`: the evaluation order of §A17.1, and the event. It returns the view, its hash, the limitation texts and the citations |
 
@@ -1491,13 +1863,82 @@ closed_stages: [won]  # each must be a D1 stage value
 ```
 
 1. Unknown keys are refused. The file names no rate-set version (§A7.3).
-2. Every other parameter is a named constant in code: `ARITHMETIC_PRECISION`, the rounding mode,
-   `WEIGHT_QUANTUM`, `BASE_QUANTUM`, `SHARE_QUANTUM`, `PERIOD_HORIZON`, `CONCENTRATION_TOP_N` and
-   `CUMULATIVE_POINTS`.
-3. **The methodology digest.** `sha256(canonical_json(...))` over `closed_stages` ascending and every
-   constant of item 2, each as a string. `tests/unit/test_vs02_config.py` pins a literal map from
-   `pipeline_version` to that digest, with the same never-edit rule as §A7.4. Changing a constant or
-   `closed_stages` without bumping `pipeline_version` fails the build.
+2. Every other parameter is a named constant in code, eight in all: `ARITHMETIC_PRECISION`, the
+   rounding mode, `WEIGHT_QUANTUM`, `BASE_QUANTUM`, `SHARE_QUANTUM`, `PERIOD_HORIZON`,
+   `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS`.
+   - [OD-2] All eight exist, with their final values, from VS02-M2. `ARITHMETIC_PRECISION`, the
+     rounding mode (`ROUNDING_MODE`) and `BASE_QUANTUM` are M1's, in `app/fx/convert.py`; they are
+     imported and never restated. The other five are module-level constants of `app/pipeline/`, each
+     defined once, with the values §A9.2, §A10.4 and §A11 give them.
+   - [OD-2] `SHARE_QUANTUM`, `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS` belong to §A11, which M2
+     does not build. M2 defines them and does nothing more with them: at M2 their only reader is the
+     digest of item 3. M3 consumes them and does not redefine them.
+   - *Why.* The digest is pinned at M2, and a pinned entry is never edited (item 4). A digest that
+     covered only the constants M2 uses would force M3 either to edit that entry or to bump
+     `pipeline_version` for a change that alters no figure.
+3. [OD-1] **The methodology digest.** Its canonical form is frozen here in full, so that two
+   implementations written from this plan alone produce the same value. It reuses the one convention
+   of §A7.4 and §A14.10 and adds no other.
+
+   `methodology_digest = sha256(canonical_json(M).encode("utf-8")).hexdigest()`
+
+   `M` is a JSON object with exactly these nine keys. Every value is a JSON string or a list of JSON
+   strings. `M` holds no JSON number, boolean, `null` or nested object.
+
+   | Key | Taken from | Value | For `pipeline_version` 1 |
+   |---|---|---|---|
+   | `arithmetic_precision` | `ARITHMETIC_PRECISION` | the integer, in base 10 | `"50"` |
+   | `base_quantum` | `BASE_QUANTUM` | its `decimal_text` | `"0.01"` |
+   | `closed_stages` | the file's `closed_stages` | a list: the distinct values, ascending by code point | `["won"]` |
+   | `concentration_top_n` | `CONCENTRATION_TOP_N` | the integer, in base 10 | `"5"` |
+   | `cumulative_points` | `CUMULATIVE_POINTS` | a list: each point as an integer in base 10, in the constant's own order and not re-sorted | `["1","3","5"]` |
+   | `period_horizon` | `PERIOD_HORIZON` | the integer, in base 10 | `"12"` |
+   | `rounding` | the rounding mode | the mode's name, as the standard `decimal` module spells it | `"ROUND_HALF_EVEN"` |
+   | `share_quantum` | `SHARE_QUANTUM` | its `decimal_text` | `"0.0001"` |
+   | `weight_quantum` | `WEIGHT_QUANTUM` | its `decimal_text` | `"0.01"` |
+
+   - **Integers.** ASCII digits only: no sign, no leading zero, no separator and no exponent.
+   - **Decimals.** VS-01's `decimal_text`, imported and not copied: plain notation, no exponent and
+     no trailing zeros. The text must not depend on the Decimal context in force when the digest is
+     computed.
+   - **Strings.** Used exactly as loaded: no trimming, no case folding and no Unicode normalisation.
+     Each closed stage is a D1 stage value.
+   - **Serialisation.** VS-01's `canonical_json`, imported and not copied: keys ascending by code
+     point; `,` and `:` as the only separators; no whitespace anywhere outside a string; a non-ASCII
+     character written as itself and not as an escape; no NaN and no infinity. This is the form
+     §A14.10 item 2 states: Python's standard `json.dumps` with `sort_keys=True`, separators
+     `(",", ":")`, `ensure_ascii=False` and `allow_nan=False`. Inside a string, a quotation mark, a
+     backslash and a control character are escaped as that function escapes them. None of the three
+     occurs in `pipeline_version` 1.
+   - **Bytes and hash.** The text is encoded as UTF-8, with no byte-order mark and no trailing
+     newline. SHA-256 is taken over exactly those bytes. The digest is its 64 lowercase hexadecimal
+     characters.
+   - **The version.** `pipeline_version` is not inside `M`, and neither is `version`, the file
+     format. The version is the key a digest is pinned under (item 4). Two versions may therefore
+     share a digest; one version never has two.
+   - **Live values.** The digest is computed from the constants themselves and from the loaded file,
+     never from literals that restate them, so that a changed constant changes the digest.
+
+   For `pipeline_version` 1 the canonical text is exactly this one line, 235 ASCII characters:
+
+   ```
+   {"arithmetic_precision":"50","base_quantum":"0.01","closed_stages":["won"],"concentration_top_n":"5","cumulative_points":["1","3","5"],"period_horizon":"12","rounding":"ROUND_HALF_EVEN","share_quantum":"0.0001","weight_quantum":"0.01"}
+   ```
+
+   The three spaces before `{` in this file are the Markdown indent of this list item. They are not
+   part of the text. The text begins with `{` and ends with `}`. It is 235 bytes in UTF-8. It holds
+   no space, tab or line break, and its forty quotation marks are all the ASCII character U+0022.
+   It was verified mechanically against the table above and against the constants this plan states
+   (§0.12).
+
+   This plan states no digest value. VS02-M2 computes it from this definition and pins it (item 4),
+   and a reviewer can derive the same value from the line above with any SHA-256 tool.
+4. [MD-13] **The pin.** `tests/unit/test_vs02_config.py` pins a literal map from `pipeline_version`
+   to that digest, with the same never-edit rule as §A7.4: the committed file's `pipeline_version`
+   must be a key, its digest must equal the pinned value, an entry is never edited or removed, and a
+   new version adds an entry. Changing a constant or `closed_stages` without bumping
+   `pipeline_version` therefore fails the build. The first entry is written at VS02-M2 and already
+   covers all eight constants, so M3 adds no entry and edits none (OD-2).
 
 #### A22.4 Import allow-lists
 
@@ -1509,7 +1950,7 @@ library and the third-party packages VS-01's boundary tests already exempt (`sql
 |---|---|
 | `app/api/v1/pipeline.py` | `app.api.dependencies`, `app.api.errors`, `app.api.v1.pipeline_schemas`, `app.pipeline`, `app.fx.errors` |
 | `app/api/v1/pipeline_schemas.py` | nothing first-party |
-| `app/pipeline/*` | `app.pipeline` (siblings), `app.fx`, `app.relationships`, `app.intelligence` **except** `app.intelligence.signals`, `app.intelligence.bands` and `app.intelligence.windows` (VS-02 never computes a signal or a band, §A12.2), `app.normalization.config`, `app.persistence.repositories.pipeline_queries`, `app.core.logging` |
+| `app/pipeline/*` | `app.pipeline` (siblings), `app.fx`, `app.relationships`, `app.intelligence` **except** `app.intelligence.signals`, `app.intelligence.bands` and `app.intelligence.windows` (VS-02 never computes a signal or a band, §A12.2), `app.normalization.config`, `app.persistence.repositories.pipeline_queries` (`facts.py` alone), `app.core.logging` (`service.py` alone, §A20; no M2 module logs) |
 | `app/fx/*` | `app.fx` (siblings), `app.intelligence`, `app.normalization.config` |
 | the new persistence module, `pipeline_queries.py` | `app.persistence.models`, `app.core.database` |
 
@@ -1517,6 +1958,17 @@ And the reverse: `app.fx` does not import `app.pipeline`; nothing under `app/per
 either package; no Layer 1 or VS-01 package imports either package. The route catches
 `FxRateMissingError`, importing it from `app.fx.errors` directly; it is not re-exported to disguise
 the import (plan §0.7.12's rule).
+
+**Names [OD-6].** An allowed import does not allow every name in it. At every milestone:
+
+- from `app.relationships`, a module of `app/pipeline/` names only `edges_of_type`, `EdgeType`,
+  `Edge` and `EdgeBasis`, and of `EdgeType` only the members `DEAL_OWNED_BY` and
+  `CUSTOMER_HAS_DEAL` (§A21.1 item 2);
+- no module of `app/fx/` or `app/pipeline/` names an ORM model or `ENTITY_MODELS` (§A21.1 item 4);
+- `pipeline_queries.py` names only the models §A16.2 gives it, and calls nothing of
+  `app.core.database` that opens an engine or a session.
+
+A name outside these fails the boundary test, as an unlisted import does.
 
 #### A22.5 Test seams
 
@@ -1542,7 +1994,9 @@ the import (plan §0.7.12's rule).
 3. **An aggregation-level entry point at M2.** From VS02-M2, `aggregation.py` exposes a callable
    that takes the classified deal facts, the rate set, the stage vocabulary and `as_of`, and returns
    the partitions of §A10. Tests 1 and 13–17 call it at M2, before `view.py` exists. M3 extends the
-   same module with §A11 and §A12, and `view.py` consumes it.
+   same module with §A11 and §A12, and `view.py` consumes it. It works in the three stages of
+   §A10.5 item 3, data validity first (OD-7). At M2 it builds the four partitions and no count:
+   `deal_counts` is the view's (OD-4).
 
 Every other internal signature is implementation-private: names, parameter order, return types and
 helpers are the implementer's, unless a section of this plan freezes one by name, as it does for
@@ -1573,7 +2027,10 @@ unvalued, unowned, unlinked, overdue or undated deal):
 4. an open deal with a null `customer_source_id`, and one with an unresolved one;
 5. an open deal with a null `expected_close_date`;
 6. a deal that is active with stage `won`, and one inactive with stage `negotiation`;
-7. a deal and an employee in a second source system (M2's `other_demo` precedent);
+7. a deal and an employee in a second source system (M2's `other_demo` precedent), the employee
+   carrying the `source_id` that a deal of the first source system names as its owner, so that only
+   the scoping of the join keeps that deal `UNRESOLVED` (hardened in v2.2: otherwise the test of
+   §A10.3 item 3 passes vacuously);
 8. an open valued deal in `GBP`, a D1 currency the rate set does not hold;
 9. the corpus without DOC-004;
 10. a customer whose `source_id` is the reserved key `UNLINKED`, holding one open valued deal.
@@ -1601,14 +2058,14 @@ A test labelled [R] proves a REQUIRED statement; the rest are [MD-22].
 | 12 | **Stale assessments ignored.** An assessment at another `as_of`, fingerprint or rules version is not joined | view | M3 | [MD-22] |
 | 13 | **Periods and the horizon.** Always fifteen buckets. At `2026-09-18`: Appendix 1. At `2027-01-15`: 11 overdue, 19 in the window. At `2025-01-01` and at `1900-01-01`: all 30 in `LATER`. A deal expected on `as_of` is in its month; a null date is `UNDATED` | aggregation | M2 | [MD-22] |
 | 14 | **Owners.** `UNASSIGNED` and `UNRESOLVED` stay distinct, with their notes; another source system's employee is never joined | aggregation | M2 | [MD-22] |
-| 15 | **Unvalued deals.** Fixtures 1 and 2 are counted, excluded from money, listed and noted; `open_valued + open_unvalued = open` | aggregation | M2 | [R] |
+| 15 | **Unvalued deals.** Fixtures 1 and 2 are counted, excluded from money, listed and noted; `open_valued + open_unvalued = open`. At M2 this is asserted over the classified facts, their notes and the four partitions. `deal_counts`, `unvalued_deal_ids` and `open_deals` are the view's and arrive at M3, where the same assertions are repeated over them (OD-4) | aggregation | M2 | [R] |
 | 16 | **Scope isolation.** A second source system's deals appear in no figure | aggregation | M2 | [R] |
-| 17 | **VS-01 equivalence.** For every customer with no negative-amount open deal, VS-02's native unweighted open exposure per currency equals VS-01's `exposure_by_currency`. On the committed dataset that is every customer. With fixture 2, the difference is exactly that deal | aggregation | M2 | [MD-22] |
+| 17 | **VS-01 equivalence.** For every customer with no negative-amount open deal, VS-02's native unweighted open exposure per currency equals VS-01's `exposure_by_currency`. On the committed dataset that is every customer. With fixture 2, the difference is exactly that deal. At M2 the test forms VS-02's per-customer figure itself, from the open valued facts grouped on `DealFact.customer`; `by_customer` is M3 (OD-4) | aggregation | M2 | [MD-22] |
 | 18 | **Concentration.** Shares, cumulative shares and HHI equal hand-computed values; fewer than five holders; a zero total gives the zero form | view | M3 | [MD-22] |
 | 19 | **Multi-currency customer.** CUST-042's bucket shows INR and USD natively and one base amount | view | M3 | [MD-22] |
 | 20 | **Determinism and read-only.** Two processes return one `view_hash`; building a view changes no row count in any table | service | M3 | [R] |
 | 21 | **Citations.** Every citation resolves under §A18.2 item 3 | view | M3 | [R] |
-| 22 | **Arithmetic bound.** The largest amount `Numeric(15, 2)` holds, at probability `99.99` and a rate with 10 integer digits and 8 decimal places, weights and converts to the exact expected value | unit | M2 | [MD-22] |
+| 22 | **Arithmetic bound and precision.** The largest amount `Numeric(15, 2)` holds, at probability `99.99` and a rate with 10 integer digits and 8 decimal places, weights and converts to the exact expected value. The rate is **precision-sensitive**: the same weighting and conversion carried out in a 28-digit Decimal context gives a base figure that differs from the exact one by at least 0.01. The test asserts that difference as its own control, so the fixture is proved able to detect a lost context. It derives the expected values by exact arithmetic that uses no VS-02 code. OBSERVED 2026-10-06: the largest such rate, `9999999999.99999999`, is not precision-sensitive, and `9999999979.49999999` is. (Hardened in v2.2.) | unit | M2 | [MD-22] |
 | 23 | **Withdrawn in v2.1.** It tested rate-set registration, which SD-2 removed. The number is not reused | — | — | — |
 | 24 | **Status semantics.** Over HTTP: `200` and the empty view; `422` for a missing or malformed `as_of`; an unknown query parameter ignored; `409 FX_RATE_MISSING` with its details; `500` for a refused configuration and for fixture 10; the envelope and request id; the read-only transaction; the secret canary | HTTP | M4 | [MD-22] |
 | 25 | **Served representation.** §A14.10 item 5; every key of §A14 present, on the committed dataset, the empty view and the fixtures | HTTP | M4 | [MD-22] |
@@ -1618,6 +2075,57 @@ A test labelled [R] proves a REQUIRED statement; the rest are [MD-22].
 **Boundary tests [MD-22].** `tests/unit/test_vs02_boundary.py` asserts every row of §A21 and every
 line of §A22.4, each with a negative control in M8's style: a forbidden edit to a copy of the real
 source must be caught. The file exists from M1 and gains each milestone's rows as its modules arrive.
+
+[OD-5] That growth includes extending what an earlier milestone wrote in the file, when a later
+milestone legitimately becomes a consumer. At M2: the list of packages that may import `app.fx`
+gains `app/pipeline/`; the import closure is taken from both packages; and the check that every
+rule has a negative control covers the pipeline rules as well. An assertion is extended, never
+relaxed to a prefix or a substring, and no M1 rule over `app/fx/` is weakened or removed. This is
+not an evolution of §B2 and needs no T-VS02 row: the file is VS-02's own and was not in the
+repository at `523210a`.
+
+[OD-6] From M2 the file also asserts §A21.1 and §A21.2, over `app/pipeline/` and over
+`pipeline_queries.py`, each with its negative control.
+
+#### A25.1 Coverage required at the VS02-M2 gate [MD-22]
+
+The M2 pre-implementation audit found that the named tests first passing at M2 (1, 7, 13–17 and 22)
+leave most of what M2 computes unproved. OBSERVED on the committed dataset: rounding once per bucket
+instead of once per deal changes exactly one figure, EMP-010's USD weighted exposure (43,129.52
+becomes 43,129.51), and no named M2 test reads it. The rows below are therefore requirements of the
+M2 gate, beside the named tests.
+
+- Each row is met by at least one test function in `tests/unit/test_vs02_*.py` or
+  `tests/integration/test_vs02_*.py`, and the milestone's report names that function against the row.
+- They add no named test. The numbering of the table above and criterion 14 are unchanged.
+- **Dataset** means the committed dataset, ingested into the harness database and read through
+  `facts.py`, at `as_of` 2026-09-18 with the committed rate set.
+- **Constructed** means `DealFact`s built in the test and passed to the aggregation entry point,
+  with a rate set loaded through the path loader.
+
+| # | Requirement | Input |
+|---|---|---|
+| C-1 | **By currency.** Appendix 1's by-currency table in full: count, native unweighted and native weighted. Appendix 2's three "from" rows, unweighted and weighted, as each bucket's `base`. Each bucket's `rate_to_base` | dataset |
+| C-2 | **By stage.** Appendix 1's by-stage table in full, per currency, unweighted and weighted. Appendix 2's `negotiation` and `qualification` base figures. `won` present and empty | dataset |
+| C-3 | **By owner.** Appendix 1's by-owner table in full, including EMP-010's USD weighted 43,129.52. `UNASSIGNED` and `UNRESOLVED` present and empty. Each `EMPLOYEE` bucket's `basis` and `carrier_field` | dataset |
+| C-4 | **By expected close.** Appendix 1's table: fifteen buckets in order, the eight counts with their native unweighted figures per currency, and the other seven empty | dataset |
+| C-5 | **Reconciliation.** For each of the four partitions separately: the bucket counts sum to the number of open valued deals; every open valued deal's id is in exactly one bucket's `deal_ids`, and no other id is in any; for each currency the buckets' native unweighted and native weighted figures sum to that currency's total; the buckets' base unweighted and base weighted figures sum to the base total. And the by-currency `base` figures sum to the base total. All exactly, with no tolerance. On the dataset the totals are the pinned ones: 30 deals, Appendix 1's per-currency totals, INR 73,442,577.10 and INR 32,375,999.45. On a constructed input they are the sums of the per-deal values of §A9.2 and §A9.3 | dataset; and a constructed input with three currencies, a rate that is not an integer, and a deal in every kind of bucket |
+| C-6 | **Multi-currency bucket.** A bucket whose deals hold more than one currency states one native Amount per currency, ascending and never summed, and one `base` Amount equal to the sum of its deals' per-deal base values | dataset (`qualification` holds three currencies); constructed |
+| C-7 | **Rounding is per deal, at the weight.** In a constructed bucket where rounding the unrounded weighted sum once gives a different figure from summing the per-deal rounded weights, the bucket states the latter. A weight that is an exact half-cent tie rounds half-even, shown in both directions: to the even cent below and to the even cent above | constructed |
+| C-8 | **Rounding is per deal, at the conversion.** With a rate that is not an integer, a bucket's base figure is the sum of its deals' converted values and differs from the native total converted once. `base_weighted` converts the rounded weight, shown where converting the unrounded weight would differ. OBSERVED: the committed rates are integers, so the dataset cannot show either | constructed |
+| C-9 | **The explicit context governs.** Every figure of the four partitions is unchanged when the thread's Decimal context is set, before the call, to a precision below what the figures need and to another rounding mode. With test 22 this covers multiplication, division and addition (§A9.1) | constructed |
+| C-10 | **Missing rate.** For an open valued deal in a currency the rate set does not hold, the entry point raises `FxRateMissingError` naming it and returns no partition. No default rate is used and the deal is not skipped. A closed deal or an open unvalued deal in such a currency raises nothing (§A7.5 item 4). M2 does not perform the check that names every missing currency: that is the service's, at M3, and which one currency M2's error names when several lack a rate is not part of the M2 contract (§A10.5 item 6) | constructed, with one missing currency; fixture 8 |
+| C-11 | **Reserved keys.** §A14.1 item 7, for each key M2 generates: an employee heading an `EMPLOYEE` bucket whose `source_id` is `UNASSIGNED`, `UNRESOLVED` or `ALL`; an open valued deal in the currency `ALL`, once with a rate set that holds an `ALL` rate and once with one that does not, with the same outcome both times (§A10.1 item 3); a stage vocabulary that contains a reserved key. Each raises `PipelineDataError`, identifies what §A10.5 item 5 says, and returns no partition. The same employee or currency on a closed or unvalued deal raises nothing | constructed |
+| C-12 | **Stage outside the vocabulary.** §A10.2 item 4 and §A10.5. For an open valued deal: `PipelineDataError` identifying every such deal, ascending, and no partition returned. For a closed deal and for an open unvalued deal with such a stage: nothing is raised, no `by_stage` bucket is made for it, the partitions are those of the other deals, and its notes are what they would be for any stage | constructed |
+| C-13 | **Empty pipeline.** With no deal, and with deals of which none is open and valued: `by_currency` is empty, `by_stage` holds one empty bucket per stage, `by_owner` the two empty pseudo-buckets, and `by_expected_close` fifteen empty buckets, each in the empty form of §A14.4 | constructed |
+| C-14 | **Unvalued deals.** Beyond test 15's fixtures: a null stage and a null currency are each classified unvalued, sit in no bucket, and draw `INCOMPLETE_DEAL` naming exactly the null fields, ascending. A deal with two null fields draws one note naming both | constructed |
+| C-15 | **Notes.** Each deal-level code of §A13.2 appears with its trigger, `fields` and `key`, and is absent without its trigger. Among them: `STAGE_ACTIVITY_MISMATCH` in both directions (fixture 6), `CUSTOMER_KEY_MISSING` and `CUSTOMER_KEY_UNRESOLVED` (fixture 4), `EXPECTED_CLOSE_MISSING` (fixture 5) | fixtures; constructed |
+| C-16 | **Order.** The facts supplied in reversed order, and in one other fixed permutation, give an identical result. Each list is in its stated order: the buckets of each partition (§A10), `deal_ids`, `native` and `unresolved_keys`. The twelve months are chronological across a change of year. `deal_rows` returns code-point order for `source_id`s that a case-insensitive or locale-aware order would arrange differently | constructed; loader rows for `deal_rows` |
+| C-17 | **Source-system isolation, not vacuously.** Tests 14 and 16 use fixture 7 as §A24 words it: the other system's employee carries the id an in-scope deal names as its owner, so that deal is `UNRESOLVED` only because the join is scoped | fixture 7 |
+| C-18 | **Methodology identity.** The digest of the committed `pipeline_rules.yaml` equals the pin. The canonical text for `pipeline_version` 1 equals the line of §A22.3 item 3, character for character. Changing any one of the eight constants, or `closed_stages`, changes the digest. The digest is unchanged under an altered Decimal context | unit |
+| C-19 | **Error precedence.** §A10.5 items 3 and 6. Facts that hold a data-validity condition on one deal and a currency with no rate on another raise the data-validity error and never `FxRateMissingError`. This is shown in both input orders, for each condition in turn: a reserved key, a stage outside the vocabulary, and a currency outside the D1 vocabulary. With a failed check and a refusal by the frozen `MoneyValue` together, the failed check is the one raised | constructed |
+
+No row reaches §A11 or §A12: none concerns a band, the customer partition, concentration or a count.
 
 ### A26. Acceptance criteria (binary) [MD-16]
 
@@ -1715,7 +2223,7 @@ Not targeted: `service.py`, the route and the response models, which the milesto
 
 Source: strategy §14 item 7: limitations are documented. That duty is what is REQUIRED. Each entry
 below is conditional on the decision that generates it (among them MD-2, MD-6, MD-8, MD-9, MD-11,
-MD-20, MD-22 and SD-5) and stands only while that decision stands. This is the documentation list;
+MD-20, MD-22, SD-5 and OD-8) and stands only while that decision stands. This is the documentation list;
 the nine codes of §A13.1 are the subset the view itself states. The README carries this list.
 
 No lost stage, so no win rate or conversion; no actual close date; no deal history, so `as_of` does
@@ -1727,8 +2235,10 @@ fingerprint covers all seven entity types, so any Layer 1 change gives the view 
 assessment has been run for the same date and snapshot; a band joined under a rules version is not
 revalidated; a negative-amount deal is described by VS-01 and not valued by VS-02; the view is not
 persisted, so there is no history of past views; the log event is not transactional; the mutation
-audit does not cover the service or the route; the dataset is synthetic, 233 rows; the route is
-unauthenticated.
+audit does not cover the service or the route; a deal in the currency whose ISO 4217 code is `ALL`
+is valid Layer 1 data, but when it is open and valued the view cannot represent it, because `ALL` is
+a reserved bucket key, so the view fails closed for a source system that holds one (OD-8, §A10.1
+item 3); the dataset is synthetic, 233 rows; the route is unauthenticated.
 
 ### A30. Out of scope
 
@@ -1769,7 +2279,7 @@ table's content is MD-21, and approving it authorises each additive edit to a fr
 | `app/api/v1/pipeline.py`, `app/api/v1/pipeline_schemas.py` | create | §A15 |
 | `config/intelligence/fx_rates.yaml`, `config/intelligence/pipeline_rules.yaml` | create | §A7.3, §A22.3 |
 | `scripts/vs02_acceptance.py` | create | §A27 |
-| `tests/unit/test_vs02_*.py`, `tests/unit/vs02_support.py`, `tests/integration/test_vs02_*.py`, `tests/e2e/test_vs02_scenario.py`, `tests/fixtures/vs02/` | create | §A24, §A25 |
+| `tests/unit/test_vs02_*.py`, `tests/unit/vs02_support.py`, `tests/integration/test_vs02_*.py`, `tests/e2e/test_vs02_scenario.py`, `tests/fixtures/vs02/` | create, and extend in later milestones (OD-5) | §A24, §A25 |
 | `app/api/v1/router.py` (frozen) | edit, additively | one import and one `include_router` |
 | `app/api/errors.py` (frozen) | edit, additively | `FX_RATE_MISSING` appended after M8's members |
 | `Makefile` (frozen) | edit | one new target, `verify-vs02`: its `.PHONY` entry, one `help` line and its recipe. No other line changes |
@@ -1842,6 +2352,11 @@ that milestone's single commit. The last column is the state the gate must show.
 Not evolutions, because the frozen tests already state the rule a new file must meet: a new Make
 target needs its `.PHONY` entry, a recipe and a `make <target>` help line
 (`tests/unit/test_i1_verify_units.py:1170`); a recipe that runs Python uses `.venv/bin/`.
+
+[OD-5] Also not an evolution: an edit, in a later milestone, to a test file that VS-02 itself created
+in an earlier one. Such a file was not in the repository at `523210a` and is not a frozen test.
+`tests/unit/test_vs02_boundary.py` grows this way at M2 (§A25). The governing rule of §B2.1 holds for
+these files all the same: an assertion is extended, and the surrounding test is never weakened.
 
 #### B2.3 Expected to pass unchanged [U-7]
 
@@ -1965,17 +2480,33 @@ Closed on 2026-10-01: §0.11 is its record.
 - *Evolutions.* §B2.2's M1 rows.
 - *Non-goals.* Any deal read, any route.
 
-**VS02-M2 — Pipeline facts and aggregation.**
+**VS02-M2 — Pipeline facts and aggregation.** Its contract was hardened in v2.2 (§0.12).
 - *Change.* `pipeline_queries.deal_rows`; `app/pipeline/{config,errors,facts,measures}`; the four
-  partitions of §A10 in `aggregation.py`; `pipeline_rules.yaml` and the methodology digest pin; the
-  fixture package.
-- *Tests.* Named tests 1, 7, 13–17 and 22; the boundary rows that concern `app/pipeline/`.
+  partitions of §A10 (by currency, by stage, by owner and by expected-close period) and the three
+  stages of §A10.5 in `aggregation.py` (OD-7); `pipeline_rules.yaml`; the eight methodology
+  constants (§A22.3 item 2, OD-2); the methodology digest in its canonical form (§A22.3 item 3,
+  OD-1) and its pin; the fixture package.
+- *Tests.* Named tests 1, 7, 13–17 and 22; every row of §A25.1; the boundary rows that concern
+  `app/pipeline/` and `pipeline_queries.py`, §A21.1 and §A21.2 among them, with the growth of M1's
+  rows that §A25 describes (OD-5).
 - *Evolutions.* §B2.2's M2 rows.
-- *Non-goals.* Bands, the customer partition, concentration, the view, the route.
+- *Gate.* §B5. In addition, the milestone's report names, for each row of §A25.1, the test that
+  meets it.
+- *Non-goals.* Everything below is M3's or later, and M2 builds none of it:
+  - bands, `band_rows` and the band read in `facts.py`;
+  - the customer partition, concentration and coincidence. Their three constants are defined
+    (OD-2), and at M2 nothing reads them but the digest;
+  - `deal_counts` and any other count structure (OD-4);
+  - `view.py` and the view: `open_pipeline`, `open_deals`, `closed_deals`, the ordered
+    `data_quality` list with its scope note, the limitations, the citations and `view_hash`;
+  - `service.py`: scope resolution, the missing-rate check that names every currency (§A7.5 item
+    4, OD-7), and the event;
+  - the route, its response models and the `ErrorCode` member, which are M4's.
 
 **VS02-M3 — Concentration, the band cross-tabulation and the view.**
 - *Change.* `pipeline_queries.band_rows` and the band read in `facts.py`; §A11 and §A12 in
-  `aggregation.py`; `view.py`; `service.py`.
+  `aggregation.py`; `view.py`, with `deal_counts` (OD-4); `service.py`. M3 consumes the constants M2
+  defined and adds no entry to the methodology pin (OD-2). U-8 is decided before M3 begins.
 - *Tests.* Named tests 2–6, 8–12, 18–21 and 27; the limitation texts as literals; the boundary rows
   for the new modules.
 - *Evolutions.* §B2.2's M3 row.
@@ -2010,6 +2541,10 @@ The commits, in order [MD-16]:
    changes.
 4. `docs: close VS-02 implementation plan` — this file's status table and closure notes, and the
    phase record appended to `CONTEXT/AI_CEO_PROJECT_CONTEXT.md`.
+
+The v2.2 revision of this file (§0.12) is one more commit,
+`VS02-M2: finalize the M2 specification`: this file only, alone, approved by the owner on
+2026-10-06. It comes after `VS02-M1: …` and before the milestone's own `VS02-M2: …` commit.
 
 ---
 
@@ -2135,8 +2670,20 @@ further ruling.
 |---|---|---|---|
 | 1 | **U-1** The rate set's date and its source note | by the owner on 2026-10-01, in the owner's words, and recorded verbatim. Neither was invented | §0.9, §0.11, §A7.2, §A7.3, §B6 |
 
+### Decided on 2026-10-06
+
+Recorded in §0.12: OD-1 to OD-6, taken on the VS02-M2 pre-implementation audit; the owner's
+direction that this revision harden the M2 contract in eight respects; and OD-7 and OD-8, taken in
+the final hardening pass with the two clarifications made there. None of the eight needs a further
+ruling.
+
 ### Still required
 
+**As of v2.2 (2026-10-06).** One thing: U-8, before VS02-M3 begins (§0.9). The owner approved this
+revision on 2026-10-06 for commit, alone, as `VS02-M2: finalize the M2 specification`. VS02-M2
+begins only on the owner's instruction.
+
+**As recorded when VS02-M0 closed (2026-10-01).**
 Nothing. VS02-M0 is closed (§0.11): its census found no frozen-test contradiction outside the ten
 authorised rows (U-7). VS02-M1 is authorised by the gate, is a separate task and begins only on the
 owner's instruction. U-5 and U-6 block nothing in this plan.
