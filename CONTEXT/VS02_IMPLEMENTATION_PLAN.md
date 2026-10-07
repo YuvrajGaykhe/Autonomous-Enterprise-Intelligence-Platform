@@ -23,6 +23,13 @@ owner directed its commit, alone, as `VS02: harden M3 specification`. The versio
 did for OD-9 (§0.13). It changes no code, test, fixture, configuration, migration, frontend or
 README file, and it starts nothing of VS02-M3.**
 
+**A second amendment of 2026-10-07 records the owner's decision OD-M3-6 (§0.15). It was taken when
+the VS02-M3 implementation pre-flight stopped, before any code was written:
+`app/pipeline/measures.py` is opened for an additive extension, so that the arithmetic of §A11 has
+a home the boundary test allows. The owner directed its commit, alone, as
+`VS02: authorize M3 arithmetic substrate`. The version stays v2.2. It changes no code, test,
+fixture, configuration, migration, frontend or README file, and it starts nothing of VS02-M3.**
+
 | Milestone | Status | Evidence |
 |---|---|---|
 | **VS02-M0** — pre-flight baseline | COMPLETE (2026-10-01) | §0.11; measured at `b0fcaa2`; recorded by the commit `VS-02: record the M0 baseline` |
@@ -38,8 +45,9 @@ approved, and **VS02-M0 does not begin until this file is committed on its own.*
 separate task and begins only on the owner's instruction. The rate set's date and source note (U-1)
 are an owner input during M0 (§B6): M0 cannot close without both, and VS02-M1 cannot begin until M0
 closes. VS02-M2 does not begin until the v2.2 revision is approved by the owner and committed on its
-own (§0.12, §B7). VS02-M3 does not begin until the hardening of its contract is committed on its own
-(§0.14, §B7), and then only on the owner's instruction.
+own (§0.12, §B7). VS02-M3 does not begin until the hardening of its contract, and the amendment
+that followed it, are each committed on their own (§0.14, §0.15, §B7), and then only on the owner's
+instruction.
 
 > Strategy context: `CONTEXT/AI_CEO_POST_LAYER1_STRATEGY.md` §6.3, §10.2 (status **PROPOSED**)
 > VS-01 specification and conventions: `CONTEXT/VS01_IMPLEMENTATION_PLAN.md`
@@ -64,7 +72,7 @@ it that carries no tag of its own; an item's own tag replaces the heading's.
 | **[R]** | **REQUIRED** | Binding without a further choice inside VS-02. The source is named. |
 | **[SD-n]**, **[MD-n]**, **T-VS02-n** | **PROPOSED OWNER DECISION** | Authored by this specification where no authority exists. Every one has an id and is listed in §0.6 (six shaping decisions), §0.7 (methodology) or §B2.1 (edits to frozen tests). It binds nothing until the owner approves it. |
 | **[OD-n]** | **OWNER DECISION OF 2026-10-06** | One of the nine decisions the owner took on 2026-10-06: six on the VS02-M2 pre-implementation audit, two in the final hardening pass that followed it, and one, OD-9, after VS02-M2 closed, which closes U-8. OD-1 to OD-8 are recorded in §0.12 and OD-9 in §0.13, and §0.8 says what a later change would reopen. |
-| **[OD-M3-n]** | **OWNER DECISION OF 2026-10-07** | One of the five decisions the owner took on 2026-10-07 on the VS02-M3 pre-implementation audit, OD-M3-1 to OD-M3-5. They are recorded in §0.14, and §0.8 says what a later change would reopen. The series is its own: it continues no number of OD-1 to OD-9 and reuses none. |
+| **[OD-M3-n]** | **OWNER DECISION OF 2026-10-07** | One of the six decisions the owner took on 2026-10-07 for VS02-M3. Five were taken on its pre-implementation audit, OD-M3-1 to OD-M3-5, and are recorded in §0.14. One was taken when its implementation pre-flight stopped, OD-M3-6, and is recorded in §0.15. §0.8 says what a later change would reopen. The series is its own: it continues no number of OD-1 to OD-9 and reuses none. |
 | **[U-n]** | **UNKNOWN/OPEN** | No authority exists and this specification proposes no value. §0.9 states what closes it. |
 
 **Standing in v2.1.** On 2026-10-01 the owner decided SD-1…SD-6 and approved MD-1…MD-22 as specified
@@ -89,6 +97,12 @@ pre-implementation audit, OD-M3-1…OD-M3-5 (§0.14). A statement one of them go
 reconciliation of `deal_counts` (§A14.5) and the independence of the caller's Decimal context (§A9.1
 item 5), refine statements that already carry an **[MD-n]** tag, and those statements keep it. No
 **[U-n]** was added, and none is open.
+
+**Standing after OD-M3-6 (2026-10-07).** The owner took one more decision the same day, OD-M3-6, on
+the contradiction the VS02-M3 implementation pre-flight found (§0.15). A statement it governs
+carries its **[OD-M3-6]** tag, and it binds as the owner stated it. It changes no measure, figure
+or constant of §A11: it says where that section's arithmetic is computed. No **[U-n]** was added,
+and none is open.
 
 **What makes a statement REQUIRED.** Two kinds of source:
 
@@ -438,6 +452,7 @@ dependants are not approved until the decision is.
 | OD-M3-3 | §A13.2 item 4; the entry under §A12.3 item 4; the `data_quality` paragraph of §A14.11; its row of §A17.2; coverage rows C-41 and C-42 |
 | OD-M3-4 | §B6's M3 change list and its entry on M2's substrate; the wording of two rows of §B1; the last paragraph of §B2.2; the last entry of §A22.5 item 3; part 4 of §A25.2; coverage row C-44 |
 | OD-M3-5 | §A25.2; the tests and gate entries of §B6's M3 |
+| OD-M3-6 | §A9.1 item 6; the *Where it is computed* entry of §A11; the entry under §A12.4 item 4; the wording of the `measures.py` and `aggregation.py` rows of §A22.2 and of §A28; the clause of §A22.5 item 3 that names it; the `measures.py` clause of §B1's row; §B6's M3 change list and its entry on `measures.py`; the amended entry of §0.14 on the surface; the paragraph of part 4 of §A25.2 on the arithmetic rules; and the wording of coverage rows C-27 and C-44 that names it |
 
 ## 0.9 Unknown and open
 
@@ -800,9 +815,11 @@ surface of OD-M3-4. The parameter is added at VS02-M3 and not by this amendment.
 *How it is read.*
 
 - **The surface is the files named.** A production file of M1 or M2 that is not named is outside
-  it: `config.py`, `measures.py` and `__init__.py` of `app/pipeline/`, and all of `app/fx/`. A need
-  to change one is put to the owner before anything is changed, as §B2.3 already rules for a frozen
-  test.
+  it: `config.py` and `__init__.py` of `app/pipeline/`, and all of `app/fx/`. A need to change one
+  is put to the owner before anything is changed, as §B2.3 already rules for a frozen test. This
+  entry first listed `measures.py` among them. Such a need arose for it the same day, was put to
+  the owner, and was decided as OD-M3-6: `measures.py` may be extended additively, and changed in
+  no other way (§0.15). (Amended on 2026-10-07, §0.15.)
 - **M2-valid inputs.** For an M2-valid input the entry point of §A22.5 item 3 does at M3 what it
   did at M2: the same four partitions of §A10, figure for figure, or the same error. The frozen M3
   contract changes the outcome for one kind of input, and this plan has said so since v2.2: an open
@@ -891,6 +908,117 @@ did for OD-9. No code, test, fixture, configuration, migration, frontend or READ
   and no decision is made for it. `UNSTAGED` is still for a null stage and for nothing else.
 - Appendix 2 pins no weighted concentration figure by owner, and by customer only the leader and the
   HHI. §A25.2 covers the rest by a calculation independent of VS-02's code.
+
+**Gate.** Nothing is still required of the owner before VS02-M3 (Owner Decisions). VS02-M3 has not
+started. It begins only on the owner's instruction, after this amendment is committed on its own
+(§B7).
+
+## 0.15 The VS02-M3 implementation pre-flight and the arithmetic substrate (2026-10-07)
+
+**The pre-flight.** On 2026-10-07 the owner instructed VS02-M3 to begin, at `fa8294a`
+(`VS02: harden M3 specification`). Its first step was to read this plan in full, and the code,
+tests and fixtures it builds on. It stopped there. It edited no file, ran neither the suite nor the
+gate, and made no commit: VS02-M3 has not started. It found one contradiction, and the owner decided
+it the same day. This amendment is its only output. It changed no code, test, fixture,
+configuration, migration, frontend or README file. §0.14 stays as the record of the hardening;
+where it says that nothing is still required before VS02-M3, this record is the later one.
+
+**The finding.** OBSERVED 2026-10-07, at `fa8294a`.
+
+| Point | As found |
+|---|---|
+| What §A11 needs | For each share, cumulative share and HHI: a division in the arithmetic context of §A9.1 item 2, and a rounding to `SHARE_QUANTUM` by `quantize`. The HHI also squares and sums |
+| What the boundary test allows | Since VS02-M2, `tests/unit/test_vs02_boundary.py` holds a rule over every module of `app/pipeline/` except `measures.py`: no call of `quantize` or of `convert`, no `MoneyValue.total`, and no import of `convert` or of `arithmetic_context`. A second rule refuses the builtin `sum` in every module, and a third refuses any band in `measures.py`. Each has its negative control, among them an edit in which `aggregation.py` rounds a figure |
+| Where M2 put the constants | `SHARE_QUANTUM` is defined in `measures.py`, and `tests/unit/test_vs02_config.py` pins that it is defined there and nowhere else. `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS` are defined in `aggregation.py` |
+| What §A12.4 item 4 says | `measures.py` holds every arithmetic rule and receives no band |
+| What the hardening had recorded | §0.14 read the surface of OD-M3-4 as the four files the owner named, and listed `measures.py` outside it. §B6 placed §A11 in `aggregation.py` |
+
+So the arithmetic of §A11 had no permitted home. `aggregation.py` may not round, and `measures.py`
+was not to be changed. The VS02-M3 pre-implementation audit did not see it: it checked that every
+M2 output exists in the shape M3 needs, and not where §A11's arithmetic is allowed to run.
+
+**How it was put.** Two options were put to the owner. The first opened `measures.py` for an
+additive change and left every boundary rule as it is. The second kept `measures.py` closed and
+narrowed the M2 boundary rule, so that `aggregation.py` could round. The owner chose the first.
+
+| ID | Decision (2026-10-07) | Specified in |
+|---|---|---|
+| OD-M3-6 | **The arithmetic substrate.** `app/pipeline/measures.py` is opened for an additive M3 extension. M3 may make additive extensions to `measures.py` where required to implement frozen §A11 concentration arithmetic. Existing M2 measures and constants remain unchanged. The boundary rule M2 wrote is not weakened, and concentration arithmetic is not moved into `aggregation.py` | §A9.1 item 6, §A11, §A12.4 item 4, §A22.2, §B1, §B6 |
+
+**What the owner stated.**
+
+| Point | As decided |
+|---|---|
+| The ruling | `app/pipeline/measures.py` is opened for an additive M3 extension |
+| What the extension keeps | Every existing M2 function, every existing M2 constant and all existing M2 behaviour |
+| What the extension is | Pure arithmetic. It uses the frozen arithmetic context, and it implements the M3 concentration arithmetic §A11 requires |
+| What the extension is not | It introduces no risk-band semantics and no customer semantics. It performs no aggregation, classifies no deal and reads no repository |
+| The separation | `measures.py`: arithmetic rules and numeric calculations. `aggregation.py`: aggregation structure, classification, ordering, holders, top-N selection, and customer and risk-band semantics |
+| `aggregation.py` must not | import `arithmetic_context`; perform direct M3 quantization; implement its own concentration arithmetic; or duplicate the arithmetic policy |
+| `measures.py` must not | read repositories; inspect `RiskBand`; inspect customer identity; perform aggregation; or own customer classification |
+| The boundary test | It remains authoritative and is not weakened. This amendment does not modify it |
+| §A11 | It is not redesigned. The amendment only provides a legal implementation home for its already-frozen arithmetic. The share, the cumulative share, the HHI, the frozen Decimal context, the frozen quantization, the half-even rounding, the zero-exposure form and the existing concentration constants are preserved. No metric is added |
+| §A12.4 | The meaning of its no-band rule is not changed |
+| Governance | A new owner decision, recorded in the way OD-9 was. No existing decision number is reused, and the version is not bumped |
+| What it authorises | It builds nothing, and it does not begin VS02-M3 |
+
+*How it is read.*
+
+- **OD-M3-4 and OD-M3-6.** They do not overlap, and neither takes from the other. OD-M3-4 lets M3
+  evolve four M2-created files in place where the frozen M3 contract requires it. OD-M3-6 adds a
+  fifth file on narrower terms: `measures.py` may only gain. Nothing it held at M2 is changed,
+  removed or renamed. The rest of OD-M3-4 holds for it as written: M2's behaviour and figures are
+  unchanged, and no unrelated refactor is made. `config.py` and `__init__.py` of `app/pipeline/`,
+  and all of `app/fx/`, stay outside both.
+- **What is added.** Helpers that are given amounts and return a ratio or an index: the divisions,
+  the squares, the sums and the rounding of §A11 item 5. How many they are, what they are named and
+  what they take are implementation-private, as every internal signature is (§A22.5). That they are
+  given no band, no customer and no holder's identity is not implementation-private: it is the
+  owner's.
+- **What stays in `aggregation.py`.** Everything of §A11 that is not arithmetic: which buckets are
+  holders, the `pseudo` flag, the order of the holders, the `top` list, the cumulative points and
+  the zero form of §A11 item 6.
+- **The boundary test.** No rule of it is relaxed for this decision. The rules that concern
+  `measures.py` and `aggregation.py` stand as M2 wrote them. At M3 the file still grows as part 4 of
+  §A25.2 says, for the modules and reads M3 adds. That growth changes none of those rules.
+
+**The other observations of the pre-flight.** The pre-flight listed five further points. The owner
+directed that each be recorded only where this plan needs it, and that nothing be decided for them
+beyond what is written here.
+
+| # | Point | As recorded |
+|---|---|---|
+| A | `app/pipeline/__init__.py` | It stays closed. M3 does not edit it (§0.14) |
+| B | `app/pipeline/errors.py` | Nothing is added to OD-M3-2. The extension already authorised stands: one keyword-only `entity` parameter whose default is `deals`; `customers` for the unknown-band error; M2's behaviour unchanged |
+| C | Test fixtures | No entry is added to the manifest of §A24. A fixture loader is added at M3 only if an acceptance case this plan already freezes requires one (§A25.2) |
+| D | The reserved key `ALL` | This amendment makes no exemption. If the implementation needs one, it is narrowly scoped, and the exact named constant and the exact boundary exception are documented when it is made. No broad exemption is created |
+| E | Two band rows for one customer | No rule is made for it. §A12.2 states that VS-01's unique constraint guarantees at most one such row per customer, and that guarantee stands. If the implementation finds it insufficient, it stops, and the point is put to the owner |
+
+**What this amendment changed.**
+
+| Where | Change |
+|---|---|
+| §A9.1 | item 6: where the arithmetic over amounts is done |
+| §A11 | one entry: where the arithmetic of item 5 is computed, and what stays `aggregation.py`'s |
+| §A12.4 item 4 | one entry: the rule covers what `measures.py` gains. Its meaning is as it was |
+| §A22.2, §A28 | the wording of the `measures.py` and `aggregation.py` rows |
+| §A22.5 item 3 | one clause: §A11's arithmetic is left to `measures.py` |
+| §A25.2 | the definition of *Stored* (point C); one paragraph of part 4; and wording added to coverage rows C-27 and C-44. No row is added, and no row's number changes |
+| §B1 | the `measures.py` clause of the row for `app/pipeline/` |
+| §B6, VS02-M3 | the change list, one entry on `measures.py`, and one clause of the tests |
+| §B7 | this commit |
+| §0.14 | its entry on the surface no longer lists `measures.py` as outside it |
+| The header, Labels, §0.8, Owner Decisions | the standing of OD-M3-6 |
+
+**What this amendment did not change.** No figure, rate, appendix value or pinned digest. No
+measure of §A11: the share, the cumulative share and the HHI are defined as they were, with the
+context, the quantum, the rounding mode, the zero form and the three constants they had. No key or
+shape of the view. No error class, note code or limitation text. No constant, so no entry of the
+methodology pin and no `pipeline_version`. No T-VS02 row, no named test and no acceptance
+criterion; no coverage row is added, and the numbering of §A25.2 stands. No rule of the boundary
+test, and no test file. Nothing of the boundary between M3 and M4. No record of VS02-M0, VS02-M1 or
+VS02-M2. The five decisions OD-M3-1 to OD-M3-5 stand as §0.14 records them. The version of this
+plan stays v2.2. No code, test, fixture, configuration, migration, frontend or README file changed.
 
 **Gate.** Nothing is still required of the owner before VS02-M3 (Owner Decisions). VS02-M3 has not
 started. It begins only on the owner's instruction, after this amendment is committed on its own
@@ -1171,6 +1299,21 @@ They carry no amount in the view.
 
    (Hardened on 2026-10-07, §0.14: items 2 and 4 already governed the figures of §A9 and §A10. This
    item adds the view's text, the arithmetic of §A11 and the traps of the caller's context.)
+6. [OD-M3-6] **Where the arithmetic is.** In `app/pipeline/` the arithmetic over amounts is
+   `measures.py`'s and no other module's: the weighting of §A9.2, the conversion of §A9.3 through
+   M1's `convert`, every sum of amounts, and from VS02-M3 the divisions, the squares and the
+   rounding of §A11.
+   - No other module of the package rounds to a quantum, calls `convert`, or imports M1's
+     arithmetic context (`arithmetic_context`, in `app/fx/convert.py`).
+   - This is not new at M3. OBSERVED 2026-10-07: since VS02-M2 `tests/unit/test_vs02_boundary.py`
+     has asserted those three things over the modules of `app/pipeline/`, and that amounts are
+     summed through `measures.py` alone, each rule with its negative control. It stands as it is,
+     and M3 relaxes none of it (§0.15).
+   - A context that a module states only for the text of a `dec` (item 5) is not the context of
+     item 2, and nothing is rounded in it.
+
+   (Recorded on 2026-10-07, §0.15: the rule was the boundary test's and §A12.4 item 4's. This item
+   states it where the arithmetic is specified.)
 
 #### A9.2 Per-deal native values [MD-3]
 
@@ -1429,6 +1572,24 @@ which conditions are examined is fixed.
 - *The context.* [MD-8] Every division, square and sum of item 5 runs in the arithmetic context of
   §A9.1 item 2, and no share, cumulative share or HHI depends on the caller's Decimal context
   (§A9.1 item 5). (Hardened on 2026-10-07, §0.14.)
+- *Where it is computed.* [OD-M3-6] The arithmetic of item 5 is done in
+  `app/pipeline/measures.py`: each sum of holders' amounts, each division by `T`, each square, the
+  sum of the squares, and each rounding to `SHARE_QUANTUM`. M3 adds to that module the pure helpers
+  this needs, and changes nothing the module already holds.
+  - The helpers are given amounts and return a ratio or an index. They are given no band, no
+    customer and no holder's identity. They aggregate nothing, classify nothing and read nothing.
+  - Everything else of this section is `aggregation.py`'s: which buckets are holders, the `pseudo`
+    flag, the order of the holders, the `top` list, the cumulative points, and the zero form of
+    item 6.
+  - `aggregation.py` does not import the arithmetic context, does not round, and holds no
+    arithmetic of its own for a share or an index (§A9.1 item 6). It restates none of the
+    arithmetic policy: not the precision, the rounding mode or the quantum, each of which is
+    defined once (§A22.3 item 2).
+  - Nothing of items 1 to 8 is changed. The measures, the context, the quantum, the half-even
+    rounding, the zero form and the three constants are as they were. When `T` is zero the block
+    takes its zero form, and no share, cumulative share or HHI is computed.
+
+  (Recorded on 2026-10-07, §0.15.)
 - *The constants and M2.* [OD-2] `SHARE_QUANTUM`, `CONCENTRATION_TOP_N` and `CUMULATIVE_POINTS` are
   defined at VS02-M2, because the methodology digest pinned at M2 covers them (§A22.3). Nothing else
   of this section is built before M3.
@@ -1517,6 +1678,11 @@ Sources: strategy §4.3; the frozen plan §A25 test 5.
    Strategy §4.3 permits commercial impact to order equally-banded customers.
 4. [MD-13] `app/pipeline/measures.py`, which holds every arithmetic rule, receives no band and
    imports no band type. `aggregation.py` uses `RiskBand` for bucket keys and rank only.
+   - [OD-M3-6] From VS02-M3 the arithmetic of §A11 is among those rules, and `measures.py` holds
+     it (§A11). The rule of this item is what it was, and it covers what is added: no helper of
+     `measures.py` is given a band, and the module still imports no band type. Nor is a helper
+     given a customer or a holder's identity. `aggregation.py` still uses `RiskBand` for bucket
+     keys and rank only, and does none of that arithmetic itself (§0.15).
 5. [MD-16] VS-02 changes nothing VS-01 computes. Risk ranking, band assignment, executive-worthiness
    and the three pinned payload hashes are regression checks at every gate.
 
@@ -2293,8 +2459,8 @@ modules. Tests, the fixture package and the acceptance command are governed by �
 | `config.py` | the lazy loader for `pipeline_rules.yaml`, and the methodology digest |
 | `errors.py` | `PipelineError`, `PipelineConfigError`, `PipelineDataError` |
 | `facts.py` | `DealFact`; the function that takes a session and reads deals, edges and bands; the classification of each deal (open, valued, owner state, customer state) and the deal-level notes of §A13.2 |
-| `measures.py` | per-deal values and their constants; pure; receives no band |
-| `aggregation.py` | the six partitions, the data checks of §A10.5, concentration and coincidence; pure |
+| `measures.py` | per-deal values and their constants; from M3, the arithmetic of §A11: the share, the cumulative share and the HHI (OD-M3-6); pure; receives no band |
+| `aggregation.py` | the six partitions; the data checks of §A10.5; the structure of concentration, that is its holders, their order, the top and the cumulative points, with its arithmetic left to `measures.py` (OD-M3-6); coincidence; pure |
 | `view.py` | the canonical object, `view_hash`, citations, the scope-level note, limitation codes and texts; pure |
 | `service.py` | `pipeline_view(session, *, as_of, source_system)`: the evaluation order of §A17.1, and the event. It returns the view, its hash, the limitation texts and the citations |
 
@@ -2438,9 +2604,9 @@ A name outside these fails the boundary test, as an unlisted import does.
 3. **An aggregation-level entry point at M2.** From VS02-M2, `aggregation.py` exposes a callable
    that takes the classified deal facts, the rate set, the stage vocabulary and `as_of`, and returns
    the partitions of §A10. Tests 1 and 13–17 call it at M2, before `view.py` exists. M3 extends the
-   same module with §A11 and §A12, and `view.py` consumes it. It works in the three stages of
-   §A10.5 item 3, data validity first (OD-7). At M2 it builds the four partitions and no count:
-   `deal_counts` is the view's (OD-4).
+   same module with §A11 and §A12, leaving the arithmetic of §A11 to `measures.py` (OD-M3-6), and
+   `view.py` consumes it. It works in the three stages of §A10.5 item 3, data validity first
+   (OD-7). At M2 it builds the four partitions and no count: `deal_counts` is the view's (OD-4).
    - [OD-M3-4] At M3 this callable is evolved in place. No second entry point is made beside it. It
      stays callable as this item describes, and for every M2-valid input it returns what it returned
      at M2 (§0.14).
@@ -2594,7 +2760,10 @@ of the M3 gate, beside the named tests.
 - **Constructed** means facts and band rows built in the test and passed to the pure builders, with
   a rate set loaded through the path loader and the stage vocabulary passed as §A22.5 item 2 allows.
 - **Stored** means rows that a fixture of §A24 puts in the harness database, read through
-  `band_rows`, through `facts.py` or through `pipeline_view`.
+  `band_rows`, through `facts.py` or through `pipeline_view`. Where a named test of §A25 or a row
+  of part 3 needs rows that none of §A24's ten entries holds, a loader of that package stores them,
+  in the loader form §A24 defines and behind its guard. Such a loader is added only where one of
+  them requires it, and no entry is added to the manifest (§0.15).
 
 The section has five parts, and they are kept apart: the frozen tests; the named tests; the new
 coverage M3 is authorised to write; the M2-era assertions M3 supersedes; and what stays M4's.
@@ -2622,7 +2791,7 @@ restated here. The last column of part 3 says which of them a row stands beside.
 | C-24 | **Customer partition.** On the dataset: 23 `CUSTOMER` buckets, and `UNLINKED`, present, empty and last; the buckets in the order of §A12.6; each bucket's `kind`, and its `band` and `executive_worthy` equal to the stored assessment's. Test 17's equality with VS-01's `exposure_by_currency`, taken over `by_customer`. On a constructed input: two customers with equal base unweighted exposure are ordered by key ascending; a customer with only closed or unvalued deals has no bucket; a deal with no customer is in `UNLINKED`, whose `band` and `executive_worthy` are `null`; a customer with no assessment has `band` `UNASSESSED` and `executive_worthy` `null` | dataset; constructed | 4, 19 |
 | C-25 | **Reserved customer key.** §A14.1 item 7 and §A10.5 item 1. A customer whose `source_id` is a reserved key and who holds an open valued deal raises `PipelineDataError` in stage 1, identifies what §A10.5 item 5 says, and yields no partition and no view: with fixture 10, and for another reserved key on a constructed input. When an employee's key and a customer's key both collide, one error names every colliding key and every colliding deal. The same customer holding only closed or unvalued deals raises nothing. Test 24 shows fixture 10 over HTTP at M4; this row shows it at the M3 gate | fixture 10; constructed | — |
 | C-26 | **Coincidence.** On the dataset `risk_coincidence` is `[CUST-007, CUST-036]`. On a constructed input: across bands the order is `CRITICAL`, `ELEVATED`, `WATCH`; inside a band it is base unweighted exposure descending and then id ascending, shown with a tie; a customer in one of those bands with no open valued deal is absent, and so are a `NONE` customer and an unassessed one; with no such customer the list is `[]`. Every id in it is the key of a `CUSTOMER` bucket of `by_customer`, and the list states no figure | dataset; constructed | — |
-| C-27 | **Concentration.** Appendix 2's unweighted figures in full. By customer: 23 holders; the five `top` entries, with their keys in order and their shares; the three cumulative shares; the HHI. By owner: 4 holders; the four shares in order; the cumulative share at 5 holders; the HHI. Each block's `total` is the open pipeline's base figure in its measure, and each names the base currency and the rate-set version. Every share, cumulative share and HHI of the four blocks equals the value that a calculation using no VS-02 code gives from the holders' amounts | dataset | 18 |
+| C-27 | **Concentration.** Appendix 2's unweighted figures in full. By customer: 23 holders; the five `top` entries, with their keys in order and their shares; the three cumulative shares; the HHI. By owner: 4 holders; the four shares in order; the cumulative share at 5 holders; the HHI. Each block's `total` is the open pipeline's base figure in its measure, and each names the base currency and the rate-set version. Every share, cumulative share and HHI of the four blocks equals the value that a calculation using no VS-02 code gives from the holders' amounts. The divisions, the squares and the rounding are done by helpers of `measures.py`, which are given amounts alone (OD-M3-6) | dataset | 18 |
 | C-28 | **Weighted concentration.** The two weighted blocks are computed from weighted base amounts and from nothing else. On the dataset, by customer, CUST-015 leads at 0.2767 and the HHI is 0.1369, while CUST-042 leads the unweighted block. Appendix 2 pins no other weighted figure; the rest of both weighted blocks equals what a calculation using no VS-02 code gives. On a constructed input: a holder with exposure in the unweighted measure and none in the weighted, a deal at probability 0, is a holder of the one block and not of the other | dataset; constructed | 18 |
 | C-29 | **Pseudo-holders, and fewer or more than five.** §A11 items 4 to 6 and §A14.7. `UNLINKED`, `UNASSIGNED` and `UNRESOLVED` with an amount above zero are holders flagged `pseudo: true`, and are counted in `holder_count` and in `T`; with an amount of zero they are not holders. With fewer than five holders `top` holds them all, and `cumulative` still has its three entries with `holders` 1, 3 and 5. With more than five, `top` holds five. Two holders with equal amounts are ordered by key ascending. A cumulative share is taken from summed amounts, shown where the sum of rounded shares differs. A zero total gives the zero form: `total` `"0"`, `holder_count` `0`, `top` and `cumulative` `[]`, `hhi` `null` and `reason` `NO_OPEN_EXPOSURE` | constructed | 18 |
 | C-30 | **`deal_counts`.** Appendix 1's counts in full: `total` 44, `open` 30, `open_valued` 30, `open_unvalued` 0, `closed` 14, `unvalued_deal_ids` `[]`, and the four rows of `by_stage` in order, as total / open / closed: `negotiation` 14 / 14 / 0, `qualification` 16 / 16 / 0, `won` 14 / 0 / 14, `UNSTAGED` 0 / 0 / 0. With fixtures 1 and 2 the unvalued deals are counted in `open_unvalued` and listed, ascending, in `unvalued_deal_ids` and in `open_deals`: test 15's assertions, repeated over the view (OD-4). With fixture 6 an open deal in a closed stage is counted in that stage's `open`, and a closed deal in an open stage in that stage's `closed` | dataset; fixtures 1, 2 and 6 | 15 |
@@ -2639,7 +2808,7 @@ restated here. The last column of part 3 says which of them a row stands beside.
 | C-41 | **Empty view.** §A14.11 in full, through `pipeline_view`, with every key of §A14 present, for a source system with no row. Beside it, a source system whose deals are none of them open and valued: the partitions and the four concentration blocks are in the same empty form (§A17.2), while `deal_counts`, `open_deals` and `closed_deals` state those deals. Test 25 serves the empty view over HTTP at M4; this row proves it at the M3 gate | stored | — |
 | C-42 | **Scope note** (OD-M3-3). `NO_ASSESSMENT_FOR_SCOPE` is in `data_quality` when `band_rows` returns no row, and only then, with `entity` and `id` `null`, `fields` `[]` and `key` `null`. Present: before any assessment, on the dataset and on the empty source system, where it is the only note. Absent: after the assessment run; when every returned row belongs to a customer holding no open valued deal; and for a source system that holds assessments at the identity and no deal, whose `data_quality` is `[]` | dataset; stored | 11 |
 | C-43 | **Decimal-context independence.** §A9.1 item 5. The thread's Decimal context is set, before the call, to a hostile one: a precision of 1, a rounding mode other than half-even, and `Inexact` and `Rounded` trapped. `pipeline_view` then returns the same view and the same `view_hash` as in the default context, and so do the pure builders on a constructed input with a rate that is not an integer. It is asserted in particular of every `dec` text, every `share`, every cumulative share, every `hhi`, and every `total` and `amount` of the concentration blocks. After the call the caller's context is as it was set. The rate-set digest and the methodology digest are unchanged under the same context | dataset; constructed | — |
-| C-44 | **M2 regression.** Named tests 1, 7, 13–17 and 22 pass, and every row C-1 to C-19 is still met. The four partitions of §A10 hold the figures they held at M2: Appendix 1's and Appendix 2's are unchanged. Every error M2's entry point raised, it raises as before: the same class, condition, entity `deals`, ids, keys and message. The one input it accepted at M2 and refuses at M3 is that of C-25. The entry point is still called as §A22.5 item 3 describes. The methodology pin holds its one entry, unedited, and no entry is added (OD-2). The rate-set pin and every test over `app/fx/` are unchanged, and no file of `app/fx/` is edited | — | 1, 7, 13–17, 22 |
+| C-44 | **M2 regression.** Named tests 1, 7, 13–17 and 22 pass, and every row C-1 to C-19 is still met. The four partitions of §A10 hold the figures they held at M2: Appendix 1's and Appendix 2's are unchanged. Every error M2's entry point raised, it raises as before: the same class, condition, entity `deals`, ids, keys and message. The one input it accepted at M2 and refuses at M3 is that of C-25. The entry point is still called as §A22.5 item 3 describes. The methodology pin holds its one entry, unedited, and no entry is added (OD-2). The rate-set pin and every test over `app/fx/` are unchanged, and no file of `app/fx/` is edited. `measures.py` gains only the arithmetic of §A11 (OD-M3-6): every function and constant it held at M2 is unchanged, in name, signature, value and behaviour. The boundary rules M2 wrote over the arithmetic hold as written, each with its negative control, and none is relaxed | — | 1, 7, 13–17, 22 |
 
 **4. M2-era assertions that M3 supersedes [OD-M3-4].** They are in VS-02's own test files, which
 are not frozen tests (§B2.2). The audit found the ones below. OBSERVED at `99ab280`: each asserts
@@ -2664,6 +2833,12 @@ Two more are superseded only if M3's change makes them false, and then in the sa
 The rule is the owner's and not this list: an M2-era assertion is superseded only where the frozen
 M3 contract explicitly expands or changes what it asserts. One that fails at M3 for any other reason
 is reported, and the work stops until the owner rules (§B5, gate rule 3).
+
+[OD-M3-6] No rule the boundary test holds over the arithmetic is superseded, and none is relaxed.
+That no module of `app/pipeline/` but `measures.py` rounds to a quantum, calls `convert` or imports
+the arithmetic context, and that `measures.py` receives no band, stand as M2 wrote them.
+`measures.py` gains the arithmetic of §A11 under those rules, and not by an exception to them
+(§0.15).
 
 **5. What stays M4's.** Named tests 24, 25 and 26 are M4's and are not required at the M3 gate. What
 they prove over HTTP of something M3 already computes is required at M3, at the level of the
@@ -2756,8 +2931,8 @@ killed, or proved equivalent in writing. The mutant list is fixed and hashed bef
 | Target | Files, each in full |
 |---|---|
 | FX | `app/fx/rates.py`, `app/fx/convert.py`, `config/intelligence/fx_rates.yaml` |
-| Per-deal measures | `app/pipeline/measures.py` |
-| Partitions, concentration, coincidence | `app/pipeline/aggregation.py`, `config/intelligence/pipeline_rules.yaml` |
+| Per-deal measures, and the arithmetic of concentration (OD-M3-6) | `app/pipeline/measures.py` |
+| Partitions, the structure of concentration, coincidence | `app/pipeline/aggregation.py`, `config/intelligence/pipeline_rules.yaml` |
 | Fact classification | `app/pipeline/facts.py` |
 | The reads, including the band identity filter | `app/persistence/repositories/pipeline_queries.py` |
 | The view, its hash, notes and citations | `app/pipeline/view.py` |
@@ -2820,7 +2995,7 @@ table's content is MD-21, and approving it authorises each additive edit to a fr
 | Path | VS-02 may | Scope |
 |---|---|---|
 | `app/fx/{__init__,rates,convert,errors}.py` | create | §A22.1 |
-| `app/pipeline/{__init__,config,errors,facts,measures,aggregation,view,service}.py` | create; at M3, evolve `errors.py`, `facts.py` and `aggregation.py` in place (OD-M3-4) | §A22.2, §0.14 |
+| `app/pipeline/{__init__,config,errors,facts,measures,aggregation,view,service}.py` | create; at M3, evolve `errors.py`, `facts.py` and `aggregation.py` in place (OD-M3-4), and extend `measures.py` additively for the arithmetic of §A11 (OD-M3-6) | §A22.2, §0.14, §0.15 |
 | `app/persistence/repositories/pipeline_queries.py` | create; at M3, evolve in place with `band_rows` (OD-M3-4) | §A16.2, §0.14 |
 | `app/api/v1/pipeline.py`, `app/api/v1/pipeline_schemas.py` | create | §A15 |
 | `config/intelligence/fx_rates.yaml`, `config/intelligence/pipeline_rules.yaml` | create | §A7.3, §A22.3 |
@@ -3057,22 +3232,30 @@ Closed on 2026-10-01: §0.11 is its record.
   - the route, its response models and the `ErrorCode` member, which are M4's.
 
 **VS02-M3 — Concentration, the band cross-tabulation and the view.** Its contract was hardened on
-2026-10-07 (§0.14).
-- *Change.* `pipeline_queries.band_rows` and the band read in `facts.py`; §A11 and §A12 in
-  `aggregation.py`, with the customer's `source_id` joining the reserved-key check of stage 1
-  (§A10.5 item 1); the keyword-only `entity` parameter of `PipelineDataError` in `errors.py`, whose
+2026-10-07 (§0.14), and amended the same day to give the arithmetic of §A11 its home (§0.15).
+- *Change.* `pipeline_queries.band_rows` and the band read in `facts.py`; §A12 and the structure
+  of §A11 in `aggregation.py`, with the customer's `source_id` joining the reserved-key check of
+  stage 1 (§A10.5 item 1); the arithmetic of §A11 in `measures.py`, as an additive extension
+  (OD-M3-6); the keyword-only `entity` parameter of `PipelineDataError` in `errors.py`, whose
   default is `deals` (OD-M3-2); `view.py`, with `deal_counts` (OD-4); `service.py`. M3 consumes the
   constants M2 defined and adds no entry to the methodology pin (OD-2). U-8 was decided before M3
   began: `deal_counts` fails closed on a stage outside the vocabulary (OD-9, §A14.5).
-- *M2's substrate.* [OD-M3-4] The four M2-created files of that list, `pipeline_queries.py`,
+- *M2's substrate.* [OD-M3-4] Four M2-created files of that list, `pipeline_queries.py`,
   `facts.py`, `aggregation.py` and `errors.py`, are evolved in place, where the frozen M3 contract
   requires it and no further. No second entry point is made beside M2's. M2's behaviour is preserved
   for M2-valid inputs, M2's figures are unchanged, and nothing of M1 is touched. No unrelated
   refactor is made (§0.14).
+- *`measures.py`.* [OD-M3-6] M3 may make additive extensions to `measures.py` where required to
+  implement frozen §A11 concentration arithmetic. Existing M2 measures and constants remain
+  unchanged. What is added is pure arithmetic helpers. They are given amounts, and no band, no
+  customer and no holder's identity. They aggregate nothing, classify nothing and read nothing.
+  `aggregation.py` does none of that arithmetic itself, and no rule of the boundary test is relaxed
+  for it (§0.15).
 - *Tests.* Named tests 2–6, 8–12, 18–21 and 27; every row of §A25.2 (OD-M3-5); the limitation
   texts as literals; the rule of §A14.5 for a stage outside the vocabulary (OD-9), as the next
-  entry states it; the boundary rows for the new modules; and the M2-era assertions that the frozen
-  M3 contract expands, superseded as part 4 of §A25.2 says (OD-M3-4).
+  entry states it; the boundary rows for the new modules, with the rules M2 wrote over the
+  arithmetic left as they are (OD-M3-6); and the M2-era assertions that the frozen M3 contract
+  expands, superseded as part 4 of §A25.2 says (OD-M3-4).
 - *OD-9.* It adds no named test: the numbering of §A25 and criterion 14 are unchanged. With
   constructed facts, and the stage vocabulary passed to the builder (§A22.5 item 2):
   - a closed deal, and an open unvalued deal, whose non-null stage is outside the vocabulary each
@@ -3132,6 +3315,10 @@ the owner's decision of 2026-10-06. It comes after the milestone's `VS02-M2: …
 The hardening of the M3 contract (§0.14) is one more commit, `VS02: harden M3 specification`: this
 file only, alone, on the owner's decisions of 2026-10-07. It comes after `VS02: freeze U-8 for M3`
 and before `VS02-M3: …`.
+
+The record of OD-M3-6 (§0.15) is one more commit, `VS02: authorize M3 arithmetic substrate`: this
+file only, alone, on the owner's decision of 2026-10-07. It comes after
+`VS02: harden M3 specification` and before `VS02-M3: …`.
 
 ---
 
@@ -3277,7 +3464,18 @@ ruling that `PipelineDataError` gains a keyword-only `entity` parameter at M3; a
 direction that the amendment also freeze the reconciliation of `deal_counts` and the independence
 of the caller's Decimal context. None of them needs a further ruling.
 
+### Decided on 2026-10-07, on the VS02-M3 implementation pre-flight
+
+Recorded in §0.15: OD-M3-6. `app/pipeline/measures.py` is opened for an additive M3 extension, for
+the arithmetic of §A11 and for nothing else. Every measure and constant it held at M2 is unchanged.
+The boundary rule M2 wrote is not weakened, and concentration arithmetic is not moved into
+`aggregation.py`. It needs no further ruling.
+
 ### Still required
+
+**As of OD-M3-6 (2026-10-07).** Nothing. The contradiction the VS02-M3 implementation pre-flight
+found is decided (§0.15). VS02-M3 has not started. It is a separate task and begins only on the
+owner's instruction, after that amendment is committed on its own.
 
 **As of the M3 hardening (2026-10-07).** Nothing. The five points the VS02-M3 pre-implementation
 audit put are decided (§0.14). VS02-M3 is a separate task. It begins only on the owner's
