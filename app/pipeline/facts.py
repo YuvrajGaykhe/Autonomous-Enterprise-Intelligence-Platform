@@ -16,18 +16,27 @@ here, never dropped (plan A13.2 item 1).
                 never collapse (A10.3).
     customer    the customer the deal's customer_has_deal edge resolves to.
 
+From VS02-M3 it also reads the bands VS-01 persisted (plan A12.2). A
+BandFact is one stored assessment as it was stored: its customer, its band
+and its verdict. Reading one decides nothing about it. customer_bands is
+where a stored band is held against the frozen RiskBand vocabulary, and it
+is a separate, pure step so that the caller can run it after the checks
+that come before it (plan A17.1, OD-M3-1). A band outside the vocabulary
+fails closed there and names its customers, never a deal (OD-M3-2).
+
 This is one of the two modules of app/pipeline that accept a session (plan
 A19 item 5). read_deal_facts reads through exactly three calls: deal_rows,
-and edges_of_type with the two edge types of plan A5. It follows no
-relationship beyond one edge, reads no document and no ticket, and writes
-nothing: the session and its transaction are the caller's.
+and edges_of_type with the two edge types of plan A5. read_band_facts reads
+through one, band_rows. Neither follows a relationship beyond one edge,
+reads a document or a ticket, or writes anything: the session and its
+transaction are the caller's.
 
-Everything below the reader is pure.
+Everything below the two readers is pure.
 """
 
 from __future__ import annotations
 
-from collections.abc import Collection
+from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -35,12 +44,17 @@ from enum import StrEnum
 
 from sqlalchemy.orm import Session
 
-from app.intelligence import Scope
-from app.persistence.repositories.pipeline_queries import deal_rows
+from app.intelligence import RiskBand, Scope
+from app.persistence.repositories.pipeline_queries import band_rows, deal_rows
+from app.pipeline.errors import PipelineDataError
 from app.relationships import EdgeBasis, EdgeType, edges_of_type
 
 #: The Layer 1 entity every deal-level note names.
 DEALS = "deals"
+#: The entity a stored band belongs to, and the condition its check reports
+#: (plan A12.3 item 2). The ids of that error are customers', never deals'.
+CUSTOMERS = "customers"
+BAND_OUTSIDE_VOCABULARY = "BAND_OUTSIDE_VOCABULARY"
 #: How an owner is known (plan A10.3 item 1): the deal_owned_by edge is a
 #: source-key join over this column. A test pins both to the frozen edge.
 OWNER_BASIS = EdgeBasis.SOURCE_KEY_JOIN
@@ -76,6 +90,23 @@ class ValuedDeal:
     amount: Decimal
     currency: str
     probability: Decimal
+
+
+@dataclass(frozen=True)
+class BandFact:
+    """One persisted assessment as VS-02 reads it: its customer, and its band and verdict as stored."""
+
+    customer: str
+    band: str
+    executive_worthy: bool
+
+
+@dataclass(frozen=True)
+class CustomerBand:
+    """A customer's band, of the frozen vocabulary, and the stored verdict (plan A12.3)."""
+
+    band: RiskBand
+    executive_worthy: bool
 
 
 class DealState(StrEnum):
@@ -148,6 +179,50 @@ def read_deal_facts(session: Session, scope: Scope) -> tuple[DealFact, ...]:
         for row in deal_rows(session, scope.source_system)
     ]
     return tuple(sorted(facts, key=_by_source_id))
+
+
+def read_band_facts(
+    session: Session, scope: Scope, *, rules_version: int, linker_version: str
+) -> tuple[BandFact, ...]:
+    """
+    Every assessment persisted at exactly the scope's identity (plan A12.2).
+
+    The identity is the scope's source system, as_of and Layer 1 snapshot,
+    and the two versions the caller reads from VS-01's configuration. An
+    assessment of another date, snapshot or version is not read. Nothing is
+    assessed, computed or written here, and no band is judged: the rows are
+    returned as stored, ascending by customer.
+    """
+    bands = [
+        BandFact(customer=row.customer_source_id, band=row.band,
+                 executive_worthy=row.executive_worthy)
+        for row in band_rows(session, source_system=scope.source_system, as_of=scope.as_of,
+                             layer1_fingerprint=scope.layer1_fingerprint,
+                             rules_version=rules_version, linker_version=linker_version)
+    ]
+    return tuple(sorted(bands, key=_by_customer))
+
+
+def customer_bands(bands: Iterable[BandFact]) -> Mapping[str, CustomerBand]:
+    """
+    Each assessed customer's band, or an error and nothing (plan A12.3 item 2).
+
+    Every row is checked, whoever its customer is and whether or not that
+    customer holds a deal. A band outside the frozen RiskBand vocabulary is
+    not renamed and is given no bucket, and its row is not skipped: the
+    error names the entity `customers` and every such customer.
+
+    The identity admits one row per customer (plan A12.2), and nothing here
+    chooses between two.
+    """
+    held = tuple(bands)
+    known = {band.value for band in RiskBand}
+    outside = {one.customer for one in held if one.band not in known}
+    if outside:
+        raise PipelineDataError(BAND_OUTSIDE_VOCABULARY, source_ids=outside, entity=CUSTOMERS)
+    return {one.customer: CustomerBand(band=RiskBand(one.band),
+                                       executive_worthy=one.executive_worthy)
+            for one in held}
 
 
 def valued_deal(fact: DealFact) -> ValuedDeal | None:
@@ -229,3 +304,7 @@ def _by_source_id(fact: DealFact) -> str:
 
 def _by_code(note: DealNote) -> str:
     return note.code.value
+
+
+def _by_customer(band: BandFact) -> str:
+    return band.customer

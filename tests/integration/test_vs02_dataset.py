@@ -64,6 +64,7 @@ from app.pipeline import (
     default_pipeline_rules,
     read_deal_facts,
 )
+from app.pipeline.errors import PipelineDataError
 from app.pipeline.facts import OWNER_BASIS, OWNER_CARRIER_FIELD
 from app.relationships import EdgeType, edges_of_type
 from tests.fixtures.vs02 import OTHER_DEAL, OTHER_EMPLOYEE, OTHER_SOURCE, apply
@@ -712,7 +713,8 @@ def test_an_open_valued_deal_in_a_currency_without_a_rate_fails_the_whole_aggreg
 
 
 # ---------------------------------------------------------------------------
-# Fixtures 9 and 10 at M2: what M2 does not read, and does not yet check
+# Fixtures 9 and 10 at the aggregation: no document is read, and from M3 a
+# customer's id is a generated key
 # ---------------------------------------------------------------------------
 
 
@@ -731,22 +733,32 @@ def test_removing_doc004_changes_no_fact_and_no_figure(demo):
     assert (before_scope.entity_counts["documents"], scope.entity_counts["documents"]) == (12, 11)
 
 
-def test_a_customer_id_is_not_a_generated_key_before_the_customer_partition_exists(demo):
+def test_a_customer_whose_id_is_a_reserved_key_fails_the_aggregation_in_stage_one(demo):
     """
-    Plan A10.5 item 1: the customer's source_id joins the reserved-key check
-    at M3, with by_customer. At M2 fixture 10 is ordinary data: its deal is
-    resolved to the customer UNLINKED and sits in the four partitions.
+    Plan A10.5 item 1 and A14.1 item 7, coverage row C-25: from M3 the
+    customer's source_id is a generated key, with by_customer. Fixture 10's
+    deal is resolved to the customer UNLINKED, which would head a bucket
+    under a reserved key, so the entry point raises in stage 1 and returns
+    no partition. At M2 the same facts were ordinary data; this is the one
+    input whose outcome the frozen M3 contract changes (OD-M3-4).
     """
+    before = partition(read(demo)[1])
     apply("reserved_customer", demo)
     _, facts = read(demo)
     reserved = fact_of(facts, "DEAL-971")
 
     assert (reserved.customer_source_id, reserved.customer) == ("UNLINKED", "UNLINKED")
     assert deal_state(reserved) is DealState.OPEN_VALUED
-    partitions = partition(facts)
-    assert "DEAL-971" in by_key(partitions.by_owner)["EMP-010"].deal_ids
-    assert sum(bucket.deal_count for bucket in partitions.by_stage) == 31
     assert notes(facts) == []
+    with pytest.raises(PipelineDataError) as raised:
+        partition(facts)
+    assert (raised.value.condition, raised.value.entity) == ("RESERVED_KEY", "deals")
+    assert raised.value.keys == ("UNLINKED",)
+    assert raised.value.source_ids == ("DEAL-971",)
+    assert str(raised.value) == "RESERVED_KEY; keys UNLINKED; deals DEAL-971"
+
+    # The deal itself is what is refused: without it the same database aggregates as before.
+    assert partition([fact for fact in facts if fact is not reserved]) == before
 
 
 # ---------------------------------------------------------------------------
@@ -852,12 +864,18 @@ def test_deal_rows_returns_a_row_with_every_nullable_value_null(demo):
     assert rows == [("DEAL-A", None, True, None, None, None, None, None, None)]
 
 
-def test_the_repository_names_one_model_and_nothing_of_layer_2():
-    """Plan A16.2 at M2: Deal alone. band_rows adds two more at M3, and no M3 read exists yet."""
+def test_the_repository_names_three_models_and_nothing_of_layer_2():
+    """
+    Plan A16.2: Deal from M2, and RiskAssessment and Customer with band_rows
+    from M3. No other model, no domain type and no third read.
+    """
     assert sorted(name for name in vars(pipeline_queries) if not name.startswith("_")) == [
-        "DEALS", "Deal", "DealRow", "Decimal", "NamedTuple", "Session", "annotations", "date",
-        "deal_rows", "select"]
-    assert not hasattr(pipeline_queries, "band_rows")
+        "BandRow", "Customer", "DEALS", "Deal", "DealRow", "Decimal", "NamedTuple",
+        "RiskAssessment", "Session", "annotations", "band_rows", "date", "deal_rows", "select"]
+    assert sorted(name for name, value in vars(pipeline_queries).items()
+                  if callable(value) and getattr(value, "__module__", None) == (
+                      pipeline_queries.__name__) and not isinstance(value, type)) == [
+        "band_rows", "deal_rows"]
 
 
 # ---------------------------------------------------------------------------

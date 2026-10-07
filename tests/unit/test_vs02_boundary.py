@@ -1,5 +1,5 @@
 """
-VS-02 static boundaries (plan A21, A22.4), as far as VS02-M2 has built.
+VS-02 static boundaries (plan A21, A22.4), as far as VS02-M3 has built.
 
 This file grows with each milestone, as its modules arrive. M1 added app/fx/
 and its rows. M2 adds app/pipeline/ and pipeline_queries.py, whose rows are
@@ -95,6 +95,34 @@ The rows that concern app/pipeline/ and pipeline_queries.py (M2):
                        (A12.4 item 4).
     Isolation          no module outside app/pipeline/ imports it, and
                        nothing under app/persistence/ imports either package.
+
+VS02-M3 adds view.py, service.py and band_rows, and extends the inventories
+M2 wrote (OD-5, OD-M3-4). Each inventory is extended and none is relaxed:
+
+    Where it exists    eight modules, view.py and service.py among them, and
+                       no ninth.
+    What is read       pipeline_queries.py names three models, each with the
+                       columns its read needs and no other, and joins the
+                       assessments to their customers. facts.py hands the
+                       session to band_rows as well.
+    Sessions           two modules accept one (A19 item 5): facts.py, and
+                       service.py, which hands it to resolve_scope and to the
+                       two readers of facts.py and uses it for nothing else.
+    Errors             service.py raises one missing rate, naming every
+                       currency, and catches nothing (A7.5 item 4). No other
+                       module names that error.
+    Output             service.py logs one event through log_event, with its
+                       eight fields written out and no other (A20). No other
+                       module logs.
+    The key ALL        the open pipeline's key is written once, as
+                       OPEN_PIPELINE_KEY in aggregation.py, beside the
+                       reserved keys (A14.2, OD-8). That one statement is
+                       exempt from the no-currency rule and nothing else is.
+
+The rules M2 wrote over the arithmetic are as they were (OD-M3-6): no module
+but measures.py rounds to a quantum, converts or imports the arithmetic
+context, and measures.py receives no band. view.py answers to them as
+aggregation.py does.
 """
 
 from __future__ import annotations
@@ -172,7 +200,9 @@ MUTABLE_BUILDERS = {"dict", "list", "set", "bytearray", "defaultdict", "OrderedD
 #: M2 adds the rules loader and the three reads of the facts reader.
 READS = {"open", "read_text", "read_bytes", "safe_load", "load_rate_set", "default_rate_set",
          "load_pipeline_rules", "default_pipeline_rules", "read_deal_facts", "deal_rows",
-         "edges_of_type"}
+         "edges_of_type",
+         # M3: the band read, the scope and the service itself.
+         "read_band_facts", "band_rows", "resolve_scope", "default_risk_rules", "pipeline_view"}
 
 Rule = Callable[[ast.Module], list[str]]
 
@@ -1229,7 +1259,7 @@ def test_only_the_fx_package_imports_app_fx():
     assert importers, "the scan found no importer, so it would pass if app.fx were unused"
     assert _outside_importers(CODE_SOURCES) == []
     assert {path for path in importers if not path.startswith("app/fx/")} == {
-        P_AGGREGATION, P_CONFIG, P_MEASURES}
+        P_AGGREGATION, P_CONFIG, P_MEASURES, P_SERVICE, P_VIEW}
     assert {"app/main.py", "app/intelligence/money.py", "scripts/vs01_acceptance.py",
             "migrations/env.py"} <= CODE_SOURCES.keys(), "the scan must read what it clears"
 
@@ -1249,6 +1279,8 @@ def test_the_closure_is_static_and_reaches_past_the_package():
             "app.persistence.repositories.pipeline_queries", "app.relationships",
             "app.relationships.edges", "app.relationships.queries"} <= closure, (
         "from M2 the closure is taken from both packages")
+    assert {"app.pipeline.view", "app.pipeline.service", "app.core.logging"} <= closure, (
+        "from M3 the service and what it logs through are inside it")
     assert {"app.intelligence", "app.intelligence.contract", "app.intelligence.money",
             "app.intelligence.scope", "app.normalization.config",
             "app.persistence.models"} <= closure
@@ -1264,46 +1296,68 @@ def test_no_closure_module_imports_an_outbound_http_smtp_or_socket_module():
 
 
 # ===========================================================================
-# VS02-M2: app/pipeline/ and pipeline_queries.py (plan A21, A21.1, A21.2, A22.4)
+# VS02-M2 and M3: app/pipeline/ and pipeline_queries.py (plan A21, A21.1, A21.2, A22.4)
 # ===========================================================================
 
 PIPELINE_DIR = APP_DIR / "pipeline"
 P_PACKAGE, P_AGGREGATION, P_CONFIG, P_ERRORS, P_FACTS, P_MEASURES = (
     "app/pipeline/__init__.py", "app/pipeline/aggregation.py", "app/pipeline/config.py",
     "app/pipeline/errors.py", "app/pipeline/facts.py", "app/pipeline/measures.py")
-#: Plan B1 allows eight modules. M2 builds six; view.py and service.py are M3's (B6).
-PIPELINE_MODULES = (P_PACKAGE, P_AGGREGATION, P_CONFIG, P_ERRORS, P_FACTS, P_MEASURES)
+P_SERVICE, P_VIEW = "app/pipeline/service.py", "app/pipeline/view.py"
+#: Plan B1 allows eight modules. M2 built six; M3 builds view.py and service.py (B6).
+PIPELINE_MODULES = (P_PACKAGE, P_AGGREGATION, P_CONFIG, P_ERRORS, P_FACTS, P_MEASURES, P_SERVICE,
+                    P_VIEW)
 #: Plan A16.2: the one persistence module VS-02 adds.
 QUERIES = "app/persistence/repositories/pipeline_queries.py"
 QUERIES_MODULE = "app.persistence.repositories.pipeline_queries"
 
 #: Plan A22.4's row for app/pipeline/*, exhaustive for first-party imports.
 #: The repository module is facts.py's alone, and app.core.logging is
-#: service.py's alone: no M2 module logs, so no M2 module is granted it.
+#: service.py's alone: no other module logs, so no other module is granted it.
 PIPELINE_ALLOWED_FIRST_PARTY = ("app.pipeline", "app.fx", "app.relationships", "app.intelligence",
                                 "app.normalization.config")
+SERVICE_ALLOWED_FIRST_PARTY = (*PIPELINE_ALLOWED_FIRST_PARTY, "app.core.logging")
 #: The standard-library modules the package imports today, closed as app/fx/'s are.
 PIPELINE_ALLOWED_STDLIB = {"__future__", "collections", "dataclasses", "datetime", "decimal",
                            "enum", "functools", "hashlib", "pathlib", "typing"}
+#: service.py alone also imports the logging module, to name a logger and a level (A20).
+SERVICE_ALLOWED_STDLIB = PIPELINE_ALLOWED_STDLIB | {"logging"}
 #: Who may import app.pipeline, and who may import its repository module.
 PIPELINE_IMPORTERS = ("app/pipeline/",)
 QUERIES_IMPORTERS = (P_FACTS,)
 
-#: Plan A16.2: the model pipeline_queries.py names at M2, and what it reads of
-#: it: the nine columns and the two it filters on. band_rows adds
-#: RiskAssessment and Customer at M3.
-QUERY_MODELS = {"Deal"}
-QUERY_COLUMNS = {"source_id", "stage", "is_active", "amount", "currency", "probability",
-                 "expected_close_date", "owner_source_id", "customer_source_id",
-                 "source_system", "source_entity"}
+#: Plan A16.2: the models pipeline_queries.py names, and what it reads of each.
+#: Of Deal, the nine columns and the two it filters on, as at M2. band_rows
+#: adds two models at M3: of RiskAssessment the band, the verdict, the five
+#: columns of the identity and the key it is joined on; of Customer the
+#: source id and the key it is joined on.
+QUERY_COLUMNS = {
+    "Deal": {"source_id", "stage", "is_active", "amount", "currency", "probability",
+             "expected_close_date", "owner_source_id", "customer_source_id",
+             "source_system", "source_entity"},
+    "RiskAssessment": {"band", "executive_worthy", "customer_id", "source_system", "as_of",
+                       "layer1_fingerprint", "rules_version", "linker_version"},
+    "Customer": {"id", "source_id"},
+}
+QUERY_MODELS = set(QUERY_COLUMNS)
 #: The SQLAlchemy names each module that reaches the database may import.
 FACTS_SQLALCHEMY = {("sqlalchemy.orm", "Session")}
 QUERY_SQLALCHEMY = {("sqlalchemy", "select"), ("sqlalchemy.orm", "Session")}
 #: What a select is built with in pipeline_queries.py. Nothing that locks,
-#: hints or changes how a statement runs.
-QUERY_CHAIN = {"where", "order_by"}
-#: The reads facts.py hands the caller's session to (A21.2 item 3). band_rows joins at M3.
-SESSION_RECEIVERS = {"deal_rows", "edges_of_type"}
+#: hints or changes how a statement runs. M3 adds the one inner join
+#: band_rows needs; an outer join would return an assessment with no customer.
+QUERY_CHAIN = {"where", "order_by", "join"}
+#: The reads facts.py hands the caller's session to (A21.2 item 3). band_rows joined at M3.
+SESSION_RECEIVERS = {"deal_rows", "edges_of_type", "band_rows"}
+#: What service.py hands it to: the frozen scope resolver and facts.py's two readers.
+SERVICE_SESSION_RECEIVERS = {"resolve_scope", "read_deal_facts", "read_band_facts"}
+#: Plan A20 item 2: the one event, and its eight fields in order.
+EVENT = "vs02.pipeline_view_built"
+EVENT_FIELDS = ("source_system", "as_of", "layer1_fingerprint", "pipeline_version",
+                "rate_set_version", "open_deal_count", "unvalued_deal_count", "view_hash")
+#: Plan A14.2 and OD-8: the one name the key ALL may be written under, beside
+#: the reserved keys, and the one module that defines it.
+OPEN_PIPELINE_KEY = "OPEN_PIPELINE_KEY"
 
 #: Plan A21.2 item 2: every form a change can take. Session and connection
 #: methods, statement methods, and schema methods, by attribute name.
@@ -1323,10 +1377,12 @@ EXECUTION = {"execute", "scalars", "scalar", "exec_driver_sql", "query", "stream
 #: error (A10.5 item 4), by name or by a base class.
 PIPELINE_WIDE_HANDLERS = WIDE_HANDLERS | {"ContractViolationError", "FxRateMissingError", "FxError",
                                           "PipelineDataError", "PipelineError"}
-#: Errors no M2 module of the package has any reason to name. M3's service
-#: raises a missing rate of its own and joins this file's rows then.
+#: Errors no module of the package has any reason to name, but one: from M3
+#: service.py raises a missing rate of its own (A7.5 item 4), and it alone
+#: names that error, to raise it and never to catch it.
 UNNAMED_ERRORS = {"CurrencyMismatchError", "ContractViolationError", "IntelligenceError",
                   "FxRateMissingError", "FxError", "suppress"}
+SERVICE_RAISES = "FxRateMissingError"
 #: What sums outside MoneyValue.total, which states the currency it totals.
 SUMMING = {"sum", "fsum", "reduce", "accumulate"}
 
@@ -1371,12 +1427,12 @@ def _pipeline_stdlib_violations(tree: ast.Module) -> list[str]:
             if module.split(".")[0] in sys.stdlib_module_names - PIPELINE_ALLOWED_STDLIB]
 
 
-def _facts_session_violations(tree: ast.Module) -> list[str]:
-    """A21.2 item 3: facts.py is handed the caller's session and only passes it to the reads.
-    It never calls a method on it, never keeps it, and never makes one of its own (A21.1 item 5)."""
+def _handed_on(tree: ast.Module, receivers: set[str]) -> list[str]:
+    """The caller's session is only passed, positionally, to the named reads. It is never
+    called on, never kept, and none is made here (A21.1 item 5)."""
     passed = {id(argument) for node in ast.walk(tree)
               if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
-              and node.func.id in SESSION_RECEIVERS for argument in node.args}
+              and node.func.id in receivers for argument in node.args}
     found = [f"{node.lineno}: the session is used and not handed to a read"
              for node in ast.walk(tree)
              if isinstance(node, ast.Name) and node.id == "session" and id(node) not in passed]
@@ -1384,6 +1440,99 @@ def _facts_session_violations(tree: ast.Module) -> list[str]:
               if isinstance(node, ast.Call) and _dotted(node.func) in {"Session", "sessionmaker"}]
     found += [f"{node.lineno}: {node.arg}" for node in ast.walk(tree)
               if isinstance(node, ast.arg) and node.arg in {"sessions", "engine", "connection"}]
+    return found
+
+
+def _facts_session_violations(tree: ast.Module) -> list[str]:
+    """A21.2 item 3: facts.py is handed the caller's session and only passes it to the reads:
+    deal_rows, edges_of_type and, from M3, band_rows."""
+    return _handed_on(tree, SESSION_RECEIVERS)
+
+
+def _service_session_violations(tree: ast.Module) -> list[str]:
+    """A21.2 item 3: service.py passes the caller's session to resolve_scope and to facts.py's
+    two readers, and to nothing else. It reads through no repository of its own."""
+    return _handed_on(tree, SERVICE_SESSION_RECEIVERS)
+
+
+def _service_first_party_violations(tree: ast.Module) -> list[str]:
+    """A22.4: service.py alone also imports app.core.logging. Not the repository module, and
+    nothing of the API: giving an error a status is the route's."""
+    return _first_party(tree, SERVICE_ALLOWED_FIRST_PARTY)
+
+
+def _service_stdlib_violations(tree: ast.Module) -> list[str]:
+    """Beyond A22.4: service.py's standard library is the package's and the logging module."""
+    return [f"{line}: {module}" for module, _, line in _imports(tree)
+            if module.split(".")[0] in sys.stdlib_module_names - SERVICE_ALLOWED_STDLIB]
+
+
+def _raised(tree: ast.Module) -> set[int]:
+    """The ids of the names that are called to build the exception of a raise statement."""
+    return {id(node.exc.func) for node in ast.walk(tree)
+            if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call)}
+
+
+def _service_error_violations(tree: ast.Module) -> list[str]:
+    """A7.5 item 4, A10.5 item 6: service.py raises one missing rate and catches nothing. It
+    names no other error, and it names that one only to import it and to raise it."""
+    found = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ExceptHandler):
+            continue
+        if node.type is None:
+            found.append(f"{node.lineno}: a bare except")
+            continue
+        caught = node.type.elts if isinstance(node.type, ast.Tuple) else [node.type]
+        found += [f"{node.lineno}: catches {_dotted(one)}" for one in caught
+                  if _dotted(one).rsplit(".", 1)[-1] in PIPELINE_WIDE_HANDLERS]
+    unnamed = UNNAMED_ERRORS - {SERVICE_RAISES}
+    found += [f"{line}: {module}.{name}" for module, name, line in _imports(tree)
+              if name in unnamed or (name == SERVICE_RAISES and module != "app.fx.errors")]
+    found += [f"{node.lineno}: {_dotted(node)}" for node in ast.walk(tree)
+              if isinstance(node, ast.Name | ast.Attribute)
+              and _dotted(node).rsplit(".", 1)[-1] in unnamed]
+    raised = _raised(tree)
+    found += [f"{node.lineno}: {SERVICE_RAISES} named and not raised" for node in ast.walk(tree)
+              if isinstance(node, ast.Name | ast.Attribute)
+              and _dotted(node).rsplit(".", 1)[-1] == SERVICE_RAISES and id(node) not in raised]
+    return found
+
+
+def _is_the_event(call: ast.Call) -> bool:
+    """log_event(logger, logging.INFO, "vs02.pipeline_view_built", <the eight fields, in order>)."""
+    return (len(call.args) == 3 and _dotted(call.args[0]) == "logger"
+            and _dotted(call.args[1]) == "logging.INFO"
+            and isinstance(call.args[2], ast.Constant) and call.args[2].value == EVENT
+            and tuple(keyword.arg for keyword in call.keywords) == EVENT_FIELDS)
+
+
+def _service_logging_violations(tree: ast.Module) -> list[str]:
+    """A20: service.py logs through log_event alone. logging gives it a logger and INFO and
+    nothing else, the logger is only handed to log_event, and every log_event call is the one
+    event with its eight fields written out: no further field, and none passed as a mapping."""
+    found = [f"{node.lineno}: print" for node in ast.walk(tree)
+             if isinstance(node, ast.Name) and node.id == "print"]
+    found += [f"{line}: {module}" + (f".{name}" if name else "")
+              for module, name, line in _imports(tree)
+              if module.split(".")[0] == "logging" and (module, name) != ("logging", None)]
+    found += [f"{line}: {module}.{name}" for module, name, line in _imports(tree)
+              if name == "log_event" and module != "app.core.logging"]
+    found += [f"{node.lineno}: logging.{node.attr}" for node in ast.walk(tree)
+              if isinstance(node, ast.Attribute) and _dotted(node.value) == "logging"
+              and node.attr not in {"getLogger", "INFO"}]
+    events = [node for node in ast.walk(tree)
+              if isinstance(node, ast.Call) and _dotted(node.func) == "log_event"]
+    found += [f"{call.lineno}: a log_event call that is not the one event" for call in events
+              if not _is_the_event(call)]
+    allowed = {id(call.func) for call in events} | {id(call.args[0]) for call in events
+                                                    if call.args}
+    allowed |= {id(target) for node in tree.body if isinstance(node, ast.Assign)
+                for target in node.targets if _dotted(target) == "logger"}
+    found += [f"{node.lineno}: {node.id} used beyond naming the logger and logging the event"
+              for node in ast.walk(tree)
+              if isinstance(node, ast.Name) and node.id in {"logger", "log_event"}
+              and id(node) not in allowed]
     return found
 
 
@@ -1418,11 +1567,18 @@ def _pipeline_handler_violations(tree: ast.Module) -> list[str]:
 
 def _pipeline_currency_violations(tree: ast.Module) -> list[str]:
     """SD-1 and OD-8: no currency code is written into the code. The one exception is the
-    reserved bucket key ALL, and only where the reserved keys are stated."""
+    reserved bucket key ALL, in two statements and no other: where the reserved keys are
+    stated, and, from M3, where the open pipeline's key is named (plan A14.2). The second is
+    the module-level statement `OPEN_PIPELINE_KEY = "ALL"` exactly: that name alone, and a
+    value that is that one string and nothing built around it."""
     docstrings, codes = _docstrings(tree), default_config().currency_codes
     reserved = {id(node) for statement in tree.body if isinstance(statement, ast.Assign)
                 and [_dotted(target) for target in statement.targets] == ["RESERVED_KEYS"]
                 for node in ast.walk(statement.value)}
+    reserved |= {id(statement.value) for statement in tree.body
+                 if isinstance(statement, ast.Assign)
+                 and [_dotted(target) for target in statement.targets] == [OPEN_PIPELINE_KEY]
+                 and isinstance(statement.value, ast.Constant)}
     return [f"{node.lineno}: {node.value!r}" for node in ast.walk(tree)
             if isinstance(node, ast.Constant) and isinstance(node.value, str)
             and id(node) not in docstrings and node.value in codes
@@ -1504,8 +1660,10 @@ def _query_import_violations(tree: ast.Module) -> list[str]:
 
 
 def _query_model_violations(tree: ast.Module) -> list[str]:
-    """A16.2: the model Deal alone, and of it the nine columns and the two filters. Not the
-    deal's name, not its resolved customer FK, and no other table."""
+    """A16.2: three models and no other table, and of each only the columns its read needs.
+    Of Deal the nine columns and the two filters: not the deal's name, and not its resolved
+    customer FK. Of RiskAssessment the band, the verdict and the identity: not its signals,
+    its satisfied rules or its ranking key. Of Customer its source id: not its name."""
     allowed = MODEL_NAMES - QUERY_MODELS
     found = [f"{node.lineno}: {node.id}" for node in ast.walk(tree)
              if isinstance(node, ast.Name) and node.id in allowed]
@@ -1513,11 +1671,16 @@ def _query_model_violations(tree: ast.Module) -> list[str]:
               if name in allowed or (module == "app.persistence.models" and name is None)]
     found += [f"{node.lineno}: {_dotted(node)}" for node in ast.walk(tree)
               if isinstance(node, ast.Attribute) and _dotted(node.value) in QUERY_MODELS
-              and node.attr not in QUERY_COLUMNS]
+              and node.attr not in QUERY_COLUMNS[_dotted(node.value)]]
+    # A model is named whole in one place only: as the target of the join band_rows needs.
+    # Its columns are still named one by one, and no row is selected whole.
+    joined = {id(node.args[0]) for node in ast.walk(tree)
+              if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+              and node.func.attr == "join" and node.args}
     found += [f"{node.lineno}: {node.id} used whole" for node in ast.walk(tree)
               if isinstance(node, ast.Name) and node.id in QUERY_MODELS and id(node) not in {
                   id(attribute.value) for attribute in ast.walk(tree)
-                  if isinstance(attribute, ast.Attribute)}]
+                  if isinstance(attribute, ast.Attribute)} | joined]
     return found
 
 
@@ -1539,8 +1702,9 @@ def _in_c_collation(step: ast.Call) -> bool:
 
 def _query_statement_violations(tree: ast.Module) -> list[str]:
     """A16.2 and A21.2 item 3: the module holds select statements and nothing else. Each is
-    executed on the caller's session, built with where and order_by alone, and ordered in the
-    C collation. The session is used for nothing else, and none is made here."""
+    executed on the caller's session, built with where, order_by and, for the band read, one
+    inner join, and ordered in the C collation. The session is used for nothing else, and
+    none is made here."""
     found = [f"{line}: {module}" + (f".{name}" if name else "")
              for module, name, line in _imports(tree)
              if module.split(".")[0] == "sqlalchemy" and (module, name) not in QUERY_SQLALCHEMY]
@@ -1589,6 +1753,14 @@ _PIPELINE_PURE: tuple[Rule, ...] = (
     *_PIPELINE_SHARED, _pipeline_first_party_violations, _third_party_violations,
     _session_violations, _document_violations,
 )
+#: What service.py answers to in place of three of the shared rules. It alone
+#: logs (A20), so it has its own logging rule, which is stricter than "no
+#: logging" would be elsewhere only in what it permits: one event. It alone
+#: names the missing-rate error, to raise it. And its standard library is
+#: the package's and the logging module.
+_SERVICE_OWN = {_output_violations: _service_logging_violations,
+                _pipeline_stdlib_violations: _service_stdlib_violations,
+                _pipeline_handler_violations: _service_error_violations}
 PIPELINE_RULES: dict[str, tuple[Rule, ...]] = {
     P_PACKAGE: (*_PIPELINE_PURE, _arithmetic_violations),
     P_AGGREGATION: (*_PIPELINE_PURE, _arithmetic_violations),
@@ -1598,6 +1770,13 @@ PIPELINE_RULES: dict[str, tuple[Rule, ...]] = {
     P_FACTS: (*_PIPELINE_SHARED, _arithmetic_violations, _facts_first_party_violations,
               _facts_third_party_violations, _facts_sqlalchemy_violations,
               _facts_session_violations, _facts_persistence_violations),
+    # M3. The view is pure and answers to what aggregation.py answers to.
+    P_VIEW: (*_PIPELINE_PURE, _arithmetic_violations),
+    # M3. The service accepts a session, as facts.py does, and reads through no repository.
+    P_SERVICE: (*(_SERVICE_OWN.get(rule, rule) for rule in _PIPELINE_SHARED),
+                _arithmetic_violations, _document_violations, _service_first_party_violations,
+                _facts_third_party_violations, _facts_sqlalchemy_violations,
+                _service_session_violations),
 }
 QUERY_RULES: tuple[Rule, ...] = (
     _disguise_violations, _filesystem_violations, _state_violations, _clock_violations,
@@ -1627,6 +1806,16 @@ def _outside_query_importers(sources: dict[str, str]) -> list[str]:
             if entry.split(":")[0] not in QUERIES_IMPORTERS]
 
 
+def _key_definers(sources: dict[str, str]) -> list[str]:
+    """A14.2 and OD-8: every module of the two packages that assigns the open pipeline's key."""
+    return sorted(path for path in (*FX_MODULES, *PIPELINE_MODULES)
+                  for node in ast.walk(ast.parse(sources[path]))
+                  for target in (node.targets if isinstance(node, ast.Assign)
+                                 else [node.target] if isinstance(
+                                     node, ast.AnnAssign | ast.AugAssign | ast.NamedExpr) else [])
+                  if _dotted(target) == OPEN_PIPELINE_KEY)
+
+
 def _session_takers(sources: dict[str, str]) -> list[str]:
     """A19 item 5: every module of the package with a parameter that is a session."""
     return sorted(path for path in PIPELINE_MODULES
@@ -1638,10 +1827,22 @@ def _session_takers(sources: dict[str, str]) -> list[str]:
 # Every pipeline rule fails on a forbidden edit to a copy of the real source
 # ---------------------------------------------------------------------------
 
-_MEASURES_IMPORT = "from app.pipeline.measures import DealValues, deal_values, total"
+_MEASURES_IMPORT = ("from app.pipeline.measures import DealValues, cumulative_share, deal_values, "
+                    "hhi, share, total")
 _OWNER_READ = "edges_of_type(EdgeType.DEAL_OWNED_BY, session, scope)"
 _ORDER = '.order_by(Deal.source_id.collate("C"))'
 _LAST_COLUMN = "            Deal.customer_source_id,\n        )"
+# M3: anchors in the band read, the view and the service.
+_BAND_ORDER = '.order_by(Customer.source_id.collate("C"))'
+_BAND_JOIN = ".join(Customer, Customer.id == RiskAssessment.customer_id)"
+_BAND_LAST_COLUMN = "            RiskAssessment.executive_worthy,\n        )"
+_VIEW_CONTEXT = "Context(prec=digits, Emin=MIN_EMIN, Emax=MAX_EMAX)"
+_KEY = 'OPEN_PIPELINE_KEY = "ALL"'
+_SCOPE_READ = "resolve_scope(session, source_system=source_system, as_of=as_of)"
+_EVENT_HEAD = 'logger, logging.INFO, "vs02.pipeline_view_built",'
+_EVENT_TAIL = "        view_hash=built.view_hash,\n    )"
+_EVENT_FIRST_TWO = ("        source_system=scope.source_system,\n"
+                    "        as_of=scope.as_of.isoformat(),\n")
 
 #: (what was done, the rule that must object, the edited copy of a real module).
 PIPELINE_FORBIDDEN_EDITS: list[tuple[str, Rule, str]] = [
@@ -1675,7 +1876,8 @@ PIPELINE_FORBIDDEN_EDITS: list[tuple[str, Rule, str]] = [
     ("a sibling is imported relatively",
      _pipeline_first_party_violations,
      _replaced(P_AGGREGATION, _MEASURES_IMPORT,
-               "from .measures import DealValues, deal_values, total")),
+               "from .measures import DealValues, cumulative_share, deal_values, hhi, share, "
+               "total")),
     ("the package is imported by its top name",
      _pipeline_first_party_violations, _appended(P_PACKAGE, "import app\n")),
     # A22.4: facts.py's row
@@ -2014,13 +2216,13 @@ PIPELINE_FORBIDDEN_EDITS: list[tuple[str, Rule, str]] = [
      _query_import_violations, _appended(QUERIES, "import httpx\n")),
     ("the repository reads a document",
      _query_model_violations,
-     _replaced(QUERIES, "from app.persistence.models import Deal",
-               "from app.persistence.models import Deal, Document")),
+     _replaced(QUERIES, "from app.persistence.models import Customer, Deal, RiskAssessment",
+               "from app.persistence.models import Customer, Deal, Document, RiskAssessment")),
     ("the repository reads a ticket",
      _query_model_violations, _appended(QUERIES, "tickets = SupportTicket\n")),
-    ("the repository reads the assessments before M3",
+    ("the repository reads a brief",
      _query_model_violations,
-     _appended(QUERIES, "from app.persistence.models import RiskAssessment\n")),
+     _appended(QUERIES, "from app.persistence.models import RiskBrief\n")),
     ("the repository reads the deal's name",
      _query_model_violations,
      _replaced(QUERIES, _LAST_COLUMN,
@@ -2066,6 +2268,303 @@ PIPELINE_FORBIDDEN_EDITS: list[tuple[str, Rule, str]] = [
      _appended(QUERIES, "try:\n    pass\nexcept Exception:\n    pass\n")),
     ("the repository stamps its rows with the time",
      _clock_violations, _appended(QUERIES, "from datetime import datetime\nread_at = datetime.now()\n")),
+    # ----------------------------------------------------------------- VS02-M3
+    # A16.2: the band read
+    ("the repository reads the assessment's signals",
+     _query_model_violations,
+     _replaced(QUERIES, _BAND_LAST_COLUMN,
+               "            RiskAssessment.executive_worthy,\n"
+               "            RiskAssessment.signals,\n        )")),
+    ("the repository reads the assessment's own id",
+     _query_model_violations,
+     _replaced(QUERIES, _BAND_LAST_COLUMN,
+               "            RiskAssessment.executive_worthy,\n            RiskAssessment.id,\n"
+               "        )")),
+    ("the repository reads the customer's name",
+     _query_model_violations,
+     _replaced(QUERIES, _BAND_LAST_COLUMN,
+               "            RiskAssessment.executive_worthy,\n            Customer.name,\n"
+               "        )")),
+    ("the repository reads a position",
+     _query_model_violations, _appended(QUERIES, "positions = RiskPosition\n")),
+    ("the band read selects the whole assessment",
+     _query_model_violations,
+     _replaced(QUERIES, "            RiskAssessment.band,\n", "            RiskAssessment,\n")),
+    ("the band read returns the customer whole",
+     _query_model_violations,
+     _appended(QUERIES, "def whole_customer(session):\n    return Customer\n")),
+    ("the band read keeps an assessment whose customer is gone",
+     _query_statement_violations,
+     _replaced(QUERIES, _BAND_JOIN,
+               ".outerjoin(Customer, Customer.id == RiskAssessment.customer_id)")),
+    ("the band read leaves the order to the database's collation",
+     _query_statement_violations,
+     _replaced(QUERIES, _BAND_ORDER, ".order_by(Customer.source_id)")),
+    ("the band read is left unordered",
+     _query_statement_violations, _replaced(QUERIES, _BAND_ORDER, "")),
+    ("the band read takes the first rows only",
+     _query_statement_violations, _replaced(QUERIES, _BAND_ORDER, _BAND_ORDER + ".limit(50)")),
+    ("the band read locks the assessments",
+     _write_violations, _replaced(QUERIES, _BAND_ORDER, _BAND_ORDER + ".with_for_update()")),
+    # A21.2 item 3: facts.py hands the session to band_rows and to nothing new
+    ("facts hands the session to the risk tables' own reader",
+     _facts_session_violations,
+     _appended(P_FACTS, "def listed(session):\n    return list_assessments(session)\n")),
+    ("facts reads the risk tables' own repository",
+     _facts_first_party_violations,
+     _appended(P_FACTS, "from app.persistence.repositories.risk_queries import "
+                        "list_assessments\n")),
+    ("facts computes a band instead of reading one",
+     _facts_first_party_violations,
+     _appended(P_FACTS, "from app.intelligence.bands import assign_band\n")),
+    # A22.4: service.py's row
+    ("the service reads the repository itself",
+     _service_first_party_violations,
+     _appended(P_SERVICE, f"from {QUERIES_MODULE} import deal_rows\n")),
+    ("the service gives an error an API code",
+     _service_first_party_violations,
+     _appended(P_SERVICE, "from app.api.errors import ErrorCode\n")),
+    ("the service computes a signal",
+     _service_first_party_violations,
+     _appended(P_SERVICE, "from app.intelligence.signals import compute_all_signals\n")),
+    ("the service opens a session factory",
+     _service_first_party_violations,
+     _appended(P_SERVICE, "from app.core.database import get_session_factory\n")),
+    ("the service runs an assessment",
+     _service_first_party_violations,
+     _appended(P_SERVICE, "from app.decisions.assessment import run_assessment\n")),
+    ("the service starts a thread",
+     _service_stdlib_violations, _appended(P_SERVICE, "import threading\n")),
+    ("the service reaches for the operating system",
+     _service_stdlib_violations, _appended(P_SERVICE, "import os\n")),
+    ("the service builds a statement of its own",
+     _facts_sqlalchemy_violations, _appended(P_SERVICE, "from sqlalchemy import select\n")),
+    ("the service fetches a rate over HTTP",
+     _facts_third_party_violations, _appended(P_SERVICE, "import httpx\n")),
+    # A21.2 item 3: the service only hands the session on
+    ("the service commits the caller's transaction",
+     _service_session_violations, _appended(P_SERVICE, "def done(session):\n    session.commit()\n")),
+    ("the service executes a statement itself",
+     _service_session_violations,
+     _appended(P_SERVICE, "def count(session):\n    return session.execute(None)\n")),
+    ("the service hands the session to a repository",
+     _service_session_violations,
+     _appended(P_SERVICE, "def more(session):\n    return deal_rows(session, 'csv_demo')\n")),
+    ("the service keeps the session",
+     _service_session_violations,
+     _appended(P_SERVICE, "def keep(session):\n    held = session\n    return held\n")),
+    ("the service hands the session on by keyword",
+     _service_session_violations,
+     _replaced(P_SERVICE, _SCOPE_READ,
+               "resolve_scope(session=session, source_system=source_system, as_of=as_of)")),
+    ("the service makes a session of its own",
+     _service_session_violations, _appended(P_SERVICE, "def own():\n    return Session()\n")),
+    ("the service is handed a session factory",
+     _service_session_violations, _appended(P_SERVICE, "def bound(sessions):\n    return None\n")),
+    # A7.5 item 4, A10.5 item 6: one missing rate raised, and nothing caught
+    ("the service answers a missing rate with a partial view",
+     _service_error_violations,
+     _appended(P_SERVICE, "try:\n    pass\nexcept FxRateMissingError:\n    pass\n")),
+    ("the service swallows a data error",
+     _service_error_violations,
+     _appended(P_SERVICE, "try:\n    pass\nexcept PipelineDataError:\n    pass\n")),
+    ("the service translates the frozen type's refusal",
+     _service_error_violations,
+     _appended(P_SERVICE, "try:\n    pass\nexcept ContractViolationError as exc:\n"
+                          "    raise ValueError('x') from exc\n")),
+    ("the service catches everything",
+     _service_error_violations,
+     _appended(P_SERVICE, "try:\n    pass\nexcept Exception:\n    pass\n")),
+    ("the service has a bare except",
+     _service_error_violations, _appended(P_SERVICE, "try:\n    pass\nexcept:\n    pass\n")),
+    ("the service returns the missing rate instead of raising it",
+     _service_error_violations,
+     _replaced(P_SERVICE, "raise FxRateMissingError(missing",
+               "return FxRateMissingError(missing")),
+    ("the service names the frozen type's refusal",
+     _service_error_violations,
+     _appended(P_SERVICE, "from app.intelligence.errors import ContractViolationError\n")),
+    ("the service takes the missing-rate error from the package and not its module",
+     _service_error_violations,
+     _replaced(P_SERVICE, "from app.fx.errors import FxRateMissingError",
+               "from app.fx import FxRateMissingError")),
+    ("a missing rate is suppressed without a handler",
+     _service_error_violations, _appended(P_SERVICE, "from contextlib import suppress\n")),
+    # A20: one event, through log_event, with its eight fields written out
+    ("the service logs through the logger itself",
+     _service_logging_violations, _appended(P_SERVICE, "logger.info('built')\n")),
+    ("the service prints the view",
+     _service_logging_violations, _appended(P_SERVICE, "print('built')\n")),
+    ("the event is given an amount",
+     _service_logging_violations,
+     _replaced(P_SERVICE, _EVENT_TAIL,
+               "        view_hash=built.view_hash,\n"
+               "        base_total=view['open_pipeline']['base']['unweighted'],\n    )")),
+    ("the event is given the customers at risk",
+     _service_logging_violations,
+     _replaced(P_SERVICE, _EVENT_TAIL,
+               "        view_hash=built.view_hash,\n"
+               "        customers=view['risk_coincidence'],\n    )")),
+    ("the event's fields are passed as a mapping",
+     _service_logging_violations,
+     _appended(P_SERVICE, "log_event(logger, logging.INFO, 'vs02.pipeline_view_built', "
+                          "**{})\n")),
+    ("the event is logged as a warning",
+     _service_logging_violations,
+     _replaced(P_SERVICE, _EVENT_HEAD,
+               'logger, logging.WARNING, "vs02.pipeline_view_built",')),
+    ("the event is given another name",
+     _service_logging_violations,
+     _replaced(P_SERVICE, _EVENT_HEAD, 'logger, logging.INFO, "vs02.view_built",')),
+    ("a second event is logged for a failure",
+     _service_logging_violations,
+     _appended(P_SERVICE, "log_event(logger, logging.INFO, 'vs02.pipeline_view_failed')\n")),
+    ("the event loses a field",
+     _service_logging_violations,
+     _replaced(P_SERVICE, "        rate_set_version=rate_set.rate_set_version,\n", "")),
+    ("the event's fields change order",
+     _service_logging_violations,
+     _replaced(P_SERVICE, _EVENT_FIRST_TWO,
+               "        as_of=scope.as_of.isoformat(),\n"
+               "        source_system=scope.source_system,\n")),
+    ("a level is taken from the logging module by name",
+     _service_logging_violations, _appended(P_SERVICE, "from logging import INFO\n")),
+    ("the service configures logging",
+     _service_logging_violations, _appended(P_SERVICE, "logging.basicConfig()\n")),
+    ("the logger is handed to something that is not log_event",
+     _service_logging_violations, _appended(P_SERVICE, "def other():\n    return [logger]\n")),
+    ("log_event is taken from somewhere else",
+     _service_logging_violations,
+     _replaced(P_SERVICE, "from app.core.logging import log_event",
+               "from app.observability import log_event")),
+    # the shared rules, over the service's own source
+    ("the service names the assessment model",
+     _model_name_violations, _appended(P_SERVICE, "row_type = RiskAssessment\n")),
+    ("the service reads a document",
+     _document_violations, _appended(P_SERVICE, "from app.evidence import citable_text\n")),
+    ("the service reads the canonical models",
+     _document_violations, _appended(P_SERVICE, "from app.persistence.models import Deal\n")),
+    ("the service stores the view it built",
+     _write_violations, _appended(P_SERVICE, "def store(unit, row):\n    unit.add(row)\n")),
+    ("the service converts an amount itself",
+     _arithmetic_violations, _appended(P_SERVICE, "from app.fx.convert import convert\n")),
+    ("the service reads the clock",
+     _clock_violations,
+     _appended(P_SERVICE, "from datetime import datetime\nbuilt_at = datetime.now()\n")),
+    ("the service lets an environment variable choose the rate set",
+     _environment_violations,
+     _appended(P_SERVICE, "import os\nRATES = os.environ.get('FX_RATES')\n")),
+    ("the service loads the rate set when it is imported",
+     _import_time_violations, _appended(P_SERVICE, "CURRENT = default_rate_set()\n")),
+    ("the service resolves a scope as a default argument",
+     _import_time_violations,
+     _appended(P_SERVICE, "def later(scope=resolve_scope(None)):\n    return scope\n")),
+    ("the service walks to an owner's manager",
+     _relationship_violations,
+     _appended(P_SERVICE, "from app.relationships import escalation_path\n")),
+    ("the service keeps the last view in a module global",
+     _state_violations, _appended(P_SERVICE, "_LAST = {}\n")),
+    # the shared rules, over the view's own source
+    ("the view takes a session",
+     _session_violations, _appended(P_VIEW, "def stored(session):\n    return None\n")),
+    ("the view reads the repository",
+     _pipeline_first_party_violations,
+     _appended(P_VIEW, f"from {QUERIES_MODULE} import band_rows\n")),
+    ("the view logs through log_event",
+     _pipeline_first_party_violations,
+     _appended(P_VIEW, "from app.core.logging import log_event\n")),
+    ("the view rounds a share itself",
+     _arithmetic_violations,
+     _appended(P_VIEW, "def rounded(value, quantum, mode):\n"
+                       "    return value.quantize(quantum, rounding=mode)\n")),
+    ("the view imports the arithmetic context",
+     _arithmetic_violations,
+     _appended(P_VIEW, "from app.fx.convert import arithmetic_context\n")),
+    ("the view converts a native total",
+     _arithmetic_violations,
+     _appended(P_VIEW, "def base(value, rate_set):\n    return convert(value, rate_set)\n")),
+    ("the view adds amounts with the builtin sum",
+     _summing_violations, _appended(P_VIEW, "def add_up(amounts):\n    return sum(amounts)\n")),
+    ("a text is taken in a copy of the caller's context",
+     _context_violations,
+     _replaced(P_VIEW, f"with localcontext({_VIEW_CONTEXT}):", "with localcontext():")),
+    ("the text's context inherits its exponent limits",
+     _context_violations, _replaced(P_VIEW, _VIEW_CONTEXT, "Context(prec=digits)")),
+    ("the text's context inherits its precision",
+     _context_violations,
+     _replaced(P_VIEW, _VIEW_CONTEXT, "Context(Emin=MIN_EMIN, Emax=MAX_EMAX)")),
+    ("the view makes the process context precise instead",
+     _context_violations,
+     _appended(P_VIEW, "from decimal import getcontext\ngetcontext().prec = 50\n")),
+    ("the view serialises with json itself",
+     _serialiser_violations, _appended(P_VIEW, "import json\n")),
+    ("decimal_text is copied into the view",
+     _serialiser_violations,
+     _appended(P_VIEW, "def decimal_text(value):\n    return str(value)\n")),
+    ("the view reads a document",
+     _document_violations, _appended(P_VIEW, "from app.evidence import citable_text\n")),
+    ("the view logs its figures",
+     _output_violations, _appended(P_VIEW, "import logging\n")),
+    ("the view names the missing-rate error",
+     _pipeline_handler_violations,
+     _appended(P_VIEW, "from app.fx.errors import FxRateMissingError\n")),
+    ("the view skips a deal whose values cannot be stated",
+     _pipeline_handler_violations,
+     _appended(P_VIEW, "try:\n    pass\nexcept PipelineDataError:\n    pass\n")),
+    ("the view stamps itself with the time",
+     _clock_violations,
+     _appended(P_VIEW, "from datetime import datetime\nbuilt_at = datetime.now()\n")),
+    ("the view gives itself a generated id",
+     _randomness_violations, _appended(P_VIEW, "import uuid\n")),
+    ("the view writes itself to a table",
+     _write_violations, _appended(P_VIEW, "def store(unit, row):\n    unit.add(row)\n")),
+    ("the last view is kept in a module global",
+     _state_violations, _appended(P_VIEW, "_LAST = {}\n")),
+    ("the view states a ratio as a float",
+     _float_violations,
+     _appended(P_VIEW, "def ratio(part, whole):\n    return float(part) / float(whole)\n")),
+    ("the view names the assessment model",
+     _model_name_violations, _appended(P_VIEW, "row_type = RiskAssessment\n")),
+    ("the view reads a customer's tickets",
+     _relationship_violations,
+     _appended(P_VIEW, "from app.relationships import neighbourhood\n")),
+    ("the view is written to a file",
+     _filesystem_violations,
+     _appended(P_VIEW, "def store(path, body):\n    path.write_text(body)\n")),
+    # A12.4 item 4, OD-M3-6: the arithmetic of A11 joins measures.py, and a band does not
+    ("a share is discounted by a band",
+     _band_violations,
+     _appended(P_MEASURES, "def discounted_share(amount, whole, band):\n"
+                           "    return share(amount, whole)\n")),
+    ("the measures read a holder's risk band",
+     _band_violations,
+     _appended(P_MEASURES, "def of(holder):\n    return holder.band\n")),
+    ("aggregation rounds a share itself",
+     _arithmetic_violations,
+     _appended(P_AGGREGATION, "def own_share(amount, whole, quantum, mode):\n"
+                              "    return (amount / whole).quantize(quantum, rounding=mode)\n")),
+    ("aggregation imports the arithmetic context for a share",
+     _arithmetic_violations,
+     _appended(P_AGGREGATION, "from app.fx.convert import arithmetic_context\n")),
+    # A14.2, OD-8: the one further statement in which the key ALL is written
+    ("the open pipeline's key names another currency",
+     _pipeline_currency_violations, _replaced(P_AGGREGATION, _KEY, 'OPEN_PIPELINE_KEY = "INR"')),
+    ("the open pipeline's key becomes a pair of currencies",
+     _pipeline_currency_violations,
+     _replaced(P_AGGREGATION, _KEY, 'OPEN_PIPELINE_KEY = ("ALL", "ALL")')),
+    ("the key ALL is written under another name",
+     _pipeline_currency_violations, _appended(P_AGGREGATION, 'OPEN_PIPELINE = "ALL"\n')),
+    ("the key ALL is written inside a function",
+     _pipeline_currency_violations,
+     _appended(P_AGGREGATION, 'def key():\n    OPEN_PIPELINE_KEY = "ALL"\n'
+                              '    return OPEN_PIPELINE_KEY\n')),
+    ("the key ALL is written beside a second name",
+     _pipeline_currency_violations,
+     _replaced(P_AGGREGATION, _KEY, 'OPEN_PIPELINE_KEY = EVERY_CURRENCY = "ALL"')),
+    ("the view writes the key ALL itself",
+     _pipeline_currency_violations, _appended(P_VIEW, 'def key():\n    return "ALL"\n')),
+    ("the service names a default currency",
+     _pipeline_currency_violations, _appended(P_SERVICE, 'DEFAULT_CURRENCY = "INR"\n')),
 ]
 
 #: A21's isolation row for app.pipeline: an edited copy of a real file outside the package.
@@ -2080,6 +2579,11 @@ FORBIDDEN_PIPELINE_IMPORTERS = [
     ("app/api/v1/risk.py", "from app.pipeline.config import default_pipeline_rules\n"),
     ("scripts/vs01_acceptance.py", "from app.pipeline import read_deal_facts\n"),
     ("migrations/env.py", "import app.pipeline\n"),
+    # M3: the service is the package's too. Its one importer, the route, is VS02-M4's.
+    ("app/api/v1/risk.py", "from app.pipeline.service import pipeline_view\n"),
+    ("app/decisions/assessment.py", "from app.pipeline.service import pipeline_view\n"),
+    ("app/main.py", "from app.pipeline.view import build_view\n"),
+    ("app/api/v1/router.py", "from app.pipeline import service\n"),
 ]
 #: A22.4: the repository module is facts.py's alone.
 FORBIDDEN_QUERY_IMPORTERS = [
@@ -2090,12 +2594,25 @@ FORBIDDEN_QUERY_IMPORTERS = [
     ("app/api/v1/risk.py", f"from {QUERIES_MODULE} import deal_rows\n"),
     ("app/intelligence/signals.py", "from ..persistence.repositories.pipeline_queries import "
                                     "deal_rows\n"),
+    # M3: the band read is facts.py's too.
+    (P_SERVICE, f"from {QUERIES_MODULE} import band_rows\n"),
+    (P_VIEW, f"from {QUERIES_MODULE} import band_rows\n"),
+    ("app/decisions/assessment.py", f"from {QUERIES_MODULE} import band_rows\n"),
 ]
-#: A19 item 5: a module of the package, other than facts.py, given a session.
+#: A19 item 5: a module of the package, other than facts.py and service.py, given a session.
 FORBIDDEN_SESSION_TAKERS = [
     (P_AGGREGATION, "def stored(session):\n    return None\n"),
     (P_MEASURES, "def stored(amount, *, session=None):\n    return None\n"),
     (P_CONFIG, "def stored(sessions):\n    return None\n"),
+    (P_VIEW, "def stored(view, session):\n    return None\n"),
+    (P_ERRORS, "def stored(session):\n    return None\n"),
+]
+#: A14.2, OD-8: a second module that writes the open pipeline's key for itself.
+FORBIDDEN_KEY_DEFINERS = [
+    (P_VIEW, 'OPEN_PIPELINE_KEY = "ALL"\n'),
+    (P_SERVICE, 'OPEN_PIPELINE_KEY = "ALL"\n'),
+    (P_MEASURES, 'OPEN_PIPELINE_KEY: str = "ALL"\n'),
+    (CONVERT, 'OPEN_PIPELINE_KEY = "ALL"\n'),
 ]
 
 #: The closure rules, over the real tree with one forbidden edit that only
@@ -2126,6 +2643,25 @@ PIPELINE_FORBIDDEN_TREES: list[tuple[str, Callable[[dict[str, str]], list[str]],
      _executor_violations,
      _with(app__relationships__queries=APP_SOURCES["app.relationships.queries"]
            + "\nfrom app.core.security import build_client\n")),
+    # M3: the two new modules, and the logger only the service reaches.
+    ("the service reaches the API",
+     _executor_violations,
+     _with(app__pipeline__service=_appended(P_SERVICE, "from app.api.errors import ErrorCode\n"))),
+    ("the service reaches ingestion",
+     _executor_violations,
+     _with(app__pipeline__service=_appended(
+         P_SERVICE, "from app.ingestion.orchestrator import run_ingestion\n"))),
+    ("the view reaches a connector",
+     _executor_violations,
+     _with(app__pipeline__view=_appended(
+         P_VIEW, "from app.connectors.registry import build_connector\n"))),
+    ("the view opens a socket",
+     _outbound_violations, _with(app__pipeline__view=_appended(P_VIEW, "import socket\n"))),
+    ("the service posts the view over HTTP",
+     _outbound_violations, _with(app__pipeline__service=_appended(P_SERVICE, "import httpx\n"))),
+    ("the logger, which only the service reaches, turns outbound",
+     _outbound_violations,
+     _with(app__core__logging=APP_SOURCES["app.core.logging"] + "\nimport smtplib\n")),
 ]
 
 
@@ -2181,10 +2717,18 @@ def test_the_importer_scan_catches_a_second_reader_of_the_repository(path, addit
 
 @pytest.mark.parametrize(("path", "addition"), FORBIDDEN_SESSION_TAKERS,
                          ids=[path for path, _ in FORBIDDEN_SESSION_TAKERS])
-def test_the_session_scan_catches_a_second_module_that_accepts_one(path, addition):
+def test_the_session_scan_catches_a_third_module_that_accepts_one(path, addition):
     edited = {**CODE_SOURCES, path: CODE_SOURCES[path] + "\n" + addition}
 
-    assert _session_takers(edited) == sorted([P_FACTS, path])
+    assert _session_takers(edited) == sorted([P_FACTS, P_SERVICE, path])
+
+
+@pytest.mark.parametrize(("path", "addition"), FORBIDDEN_KEY_DEFINERS,
+                         ids=[path for path, _ in FORBIDDEN_KEY_DEFINERS])
+def test_the_key_scan_catches_a_second_module_that_writes_the_open_pipelines_key(path, addition):
+    edited = {**CODE_SOURCES, path: CODE_SOURCES[path] + "\n" + addition}
+
+    assert _key_definers(edited) == sorted([P_AGGREGATION, path])
 
 
 def test_the_pipeline_scans_read_code_and_not_the_docstrings_explaining_it():
@@ -2197,6 +2741,20 @@ def test_the_pipeline_scans_read_code_and_not_the_docstrings_explaining_it():
     assert _pipeline_currency_violations(ast.parse('RESERVED_KEYS = frozenset({"ALL"})\n')) == []
     assert _pipeline_currency_violations(ast.parse('OTHER_KEYS = frozenset({"ALL"})\n')) == [
         "1: 'ALL'"]
+    # M3's one further exemption is one exact statement, and nothing around it.
+    assert _pipeline_currency_violations(ast.parse('OPEN_PIPELINE_KEY = "ALL"\n')) == []
+    for refused in ('OPEN_PIPELINE_KEY = "USD"\n', 'OPEN_PIPELINE_KEYS = "ALL"\n',
+                    'OPEN_PIPELINE_KEY = ["ALL"]\n', 'OPEN_PIPELINE_KEY = "ALL" + ""\n',
+                    'class Keys:\n    OPEN_PIPELINE_KEY = "ALL"\n',
+                    'OPEN_PIPELINE_KEY = "ALL"\nUSED = "ALL"\n'):
+        assert len(_pipeline_currency_violations(ast.parse(refused))) == 1, refused
+    assert _service_logging_violations(ast.parse(
+        f'log_event(logger, logging.INFO, "{EVENT}", '
+        + ", ".join(f"{name}=1" for name in EVENT_FIELDS) + ")\n")) == []
+    assert _service_session_violations(ast.parse("resolve_scope(session, as_of=1)\n")) == []
+    assert _service_session_violations(ast.parse("resolve_scope(session=session)\n")) != []
+    assert _service_error_violations(ast.parse("raise FxRateMissingError({1}, 'v')\n")) == []
+    assert _service_error_violations(ast.parse("error = FxRateMissingError({1}, 'v')\n")) != []
     assert _relationship_violations(ast.parse(
         "edges_of_type(EdgeType.CUSTOMER_HAS_DEAL, session, scope)\n")) == []
     assert _facts_session_violations(ast.parse("deal_rows(session, 'x')\n")) == []
@@ -2208,12 +2766,13 @@ def test_the_pipeline_scans_read_code_and_not_the_docstrings_explaining_it():
 # ---------------------------------------------------------------------------
 
 
-def test_the_pipeline_package_holds_exactly_the_six_modules_of_m2():
-    """A scan that silently matches nothing proves nothing, and a seventh module is a decision.
-    view.py and service.py are VS02-M3's: this list gains them then, and loses nothing."""
+def test_the_pipeline_package_holds_exactly_its_eight_modules():
+    """A scan that silently matches nothing proves nothing, and a ninth module is a decision.
+    Plan B1 names eight: the six of VS02-M2, and view.py and service.py, which VS02-M3 adds."""
     found = sorted(path.relative_to(REPO).as_posix() for path in PIPELINE_DIR.rglob("*.py"))
 
     assert found == sorted(PIPELINE_MODULES) == sorted(PIPELINE_RULES)
+    assert len(found) == 8 and {P_SERVICE, P_VIEW} < set(found)
     assert (REPO / QUERIES).is_file()
     for relative in (*PIPELINE_MODULES, QUERIES):
         assert [node for node in ast.parse(_source(relative)).body
@@ -2254,7 +2813,8 @@ def test_the_repository_module_breaks_no_rule(rule):
 
 def test_the_pipeline_imports_what_its_row_grants_and_no_package_beyond_it():
     """The allow-lists are not vacuous: the package does read M1, FX, the relationship model,
-    the D1 vocabulary and, in facts.py alone, the repository."""
+    the D1 vocabulary and, in facts.py alone, the repository. From M3 the service also reads
+    the logger and the missing-rate error, and it alone does."""
     imported = {relative: {module for module, _, _ in _imports(ast.parse(_source(relative)))}
                 for relative in PIPELINE_MODULES}
     every = set().union(*imported.values())
@@ -2262,25 +2822,35 @@ def test_the_pipeline_imports_what_its_row_grants_and_no_package_beyond_it():
     assert {"app.fx.convert", "app.fx.rates", "app.intelligence", "app.intelligence.contract",
             "app.intelligence.money", "app.normalization.config", "app.relationships",
             "app.pipeline.aggregation", "app.pipeline.config", "app.pipeline.errors",
-            "app.pipeline.facts", "app.pipeline.measures", QUERIES_MODULE} == {
+            "app.pipeline.facts", "app.pipeline.measures", QUERIES_MODULE,
+            "app.pipeline.view", "app.core.logging", "app.fx.errors"} == {
         module for module in every if module.split(".")[0] == "app"}
     assert [relative for relative, modules in imported.items() if QUERIES_MODULE in modules] == [
         P_FACTS]
+    for service_only in ("app.core.logging", "app.fx.errors", "app.pipeline.view", "logging"):
+        assert [relative for relative, modules in imported.items()
+                if service_only in modules] == [P_SERVICE], service_only
     assert {module.split(".")[0] for module in every
             if module.split(".")[0] not in {"app"} | sys.stdlib_module_names} == {
         "yaml", "sqlalchemy"}
     assert [relative for relative, modules in imported.items()
-            if any(module.split(".")[0] == "sqlalchemy" for module in modules)] == [P_FACTS]
+            if any(module.split(".")[0] == "sqlalchemy" for module in modules)] == [
+        P_FACTS, P_SERVICE]
     assert [relative for relative, modules in imported.items() if "yaml" in modules] == [P_CONFIG]
     assert {module.split(".")[0] for module in every
+            if module.split(".")[0] in sys.stdlib_module_names} == SERVICE_ALLOWED_STDLIB
+    assert {module.split(".")[0] for relative, modules in imported.items()
+            if relative != P_SERVICE for module in modules
             if module.split(".")[0] in sys.stdlib_module_names} == PIPELINE_ALLOWED_STDLIB
 
 
-def test_the_repository_imports_one_model_and_two_sqlalchemy_names():
+def test_the_repository_imports_three_models_and_two_sqlalchemy_names():
+    """Plan A16.2: Deal at M2; RiskAssessment and Customer with band_rows at M3; no fourth."""
     imported = {(module, name) for module, name, _ in _imports(ast.parse(_source(QUERIES)))}
 
     assert {pair for pair in imported if pair[0].split(".")[0] in {"app", "sqlalchemy"}} == {
-        ("app.persistence.models", "Deal"), *QUERY_SQLALCHEMY}
+        ("app.persistence.models", "Customer"), ("app.persistence.models", "Deal"),
+        ("app.persistence.models", "RiskAssessment"), *QUERY_SQLALCHEMY}
 
 
 def test_the_facts_reader_names_only_what_a21_1_allows_of_the_relationship_model():
@@ -2295,7 +2865,7 @@ def test_the_facts_reader_names_only_what_a21_1_allows_of_the_relationship_model
     assert sorted(node.func.id for node in ast.walk(tree)
                   if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
                   and node.func.id in SESSION_RECEIVERS) == [
-        "deal_rows", "edges_of_type", "edges_of_type"]
+        "band_rows", "deal_rows", "edges_of_type", "edges_of_type"]
 
 
 def test_the_edge_types_and_names_this_file_allows_exist_in_the_frozen_model():
@@ -2314,9 +2884,18 @@ def test_the_model_names_this_file_refuses_are_every_model_there_is():
     import app.persistence.models as models
 
     assert MODEL_NAMES == {*models.__all__, "ENTITY_MODELS", "Base"}
-    assert QUERY_MODELS < MODEL_NAMES
-    assert QUERY_COLUMNS <= set(models.Deal.__table__.columns.keys())
-    assert "name" in models.Deal.__table__.columns.keys() and "name" not in QUERY_COLUMNS
+    assert QUERY_MODELS < MODEL_NAMES and QUERY_MODELS == {"Deal", "RiskAssessment", "Customer"}
+    for model, columns in QUERY_COLUMNS.items():
+        assert columns <= set(getattr(models, model).__table__.columns.keys()), model
+    assert "name" in models.Deal.__table__.columns.keys()
+    assert "name" not in QUERY_COLUMNS["Deal"] and "customer_id" not in QUERY_COLUMNS["Deal"]
+    assert len(QUERY_COLUMNS["Deal"]) == 11, "the nine columns and the two filters, as at M2"
+    # What band_rows must not read exists, so the rule that refuses it is not vacuous.
+    assert {"signals", "satisfied_rules", "ranking_key", "id"} <= set(
+        models.RiskAssessment.__table__.columns.keys())
+    assert not {"signals", "satisfied_rules", "ranking_key", "id"} & QUERY_COLUMNS["RiskAssessment"]
+    assert "name" in models.Customer.__table__.columns.keys()
+    assert QUERY_COLUMNS["Customer"] == {"id", "source_id"}
 
 
 def test_each_loader_reads_one_file_one_way():
@@ -2337,9 +2916,99 @@ def test_each_loader_reads_one_file_one_way():
 # ---------------------------------------------------------------------------
 
 
-def test_facts_is_the_only_module_of_the_package_that_accepts_a_session():
-    """A19 item 5: at M2 exactly one. service.py is the second, at M3."""
-    assert _session_takers(CODE_SOURCES) == [P_FACTS]
+def test_facts_and_the_service_are_the_two_modules_of_the_package_that_accept_a_session():
+    """A19 item 5: exactly two. facts.py reads, and from M3 service.py hands the session on."""
+    assert _session_takers(CODE_SOURCES) == [P_FACTS, P_SERVICE]
+
+
+def test_the_service_hands_the_session_to_the_scope_and_the_two_readers_and_nothing_else():
+    """A21.2 item 3, not vacuously: service.py does call all three, once each."""
+    tree = ast.parse(_source(P_SERVICE))
+
+    assert sorted(node.func.id for node in ast.walk(tree)
+                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                  and node.func.id in SERVICE_SESSION_RECEIVERS) == [
+        "read_band_facts", "read_deal_facts", "resolve_scope"]
+    assert len([node for node in ast.walk(tree)
+                if isinstance(node, ast.Name) and node.id == "session"]) == 3
+    assert not SERVICE_SESSION_RECEIVERS & SESSION_RECEIVERS, (
+        "the service reads through facts.py and through no repository of its own")
+
+
+def test_the_service_logs_the_one_event_and_no_other_module_logs():
+    """A20: one log_event call in the two packages, with the eight fields of the plan."""
+    calls = {relative: [node for node in ast.walk(ast.parse(_source(relative)))
+                        if isinstance(node, ast.Call) and _dotted(node.func) == "log_event"]
+             for relative in (*FX_MODULES, *PIPELINE_MODULES, QUERIES)}
+
+    assert {relative: len(found) for relative, found in calls.items() if found} == {P_SERVICE: 1}
+    [call] = calls[P_SERVICE]
+    assert _is_the_event(call)
+    assert EVENT == "vs02.pipeline_view_built" and len(EVENT_FIELDS) == 8
+    assert not [name for name in EVENT_FIELDS
+                if any(word in name for word in ("amount", "total", "customer", "base"))]
+
+
+def test_only_the_service_names_the_missing_rate_error_and_it_only_raises_it():
+    """A7.5 item 4: the check of every currency is the service's, and its alone."""
+    named = {relative: [node for node in ast.walk(ast.parse(_source(relative)))
+                        if isinstance(node, ast.Name) and node.id == SERVICE_RAISES]
+             for relative in PIPELINE_MODULES}
+
+    assert {relative: len(found) for relative, found in named.items() if found} == {P_SERVICE: 1}
+    tree = ast.parse(_source(P_SERVICE))
+    assert len([node for node in ast.walk(tree) if isinstance(node, ast.Raise)]) == 1
+    assert not [node for node in ast.walk(tree) if isinstance(node, ast.Try)]
+
+
+def test_the_open_pipelines_key_is_written_once_beside_the_reserved_keys():
+    """A14.2, OD-8: one module, one statement, and the value is a reserved key."""
+    from app.pipeline import aggregation
+
+    assert _key_definers(CODE_SOURCES) == [P_AGGREGATION]
+    assert aggregation.OPEN_PIPELINE_KEY == "ALL"
+    assert aggregation.OPEN_PIPELINE_KEY in aggregation.RESERVED_KEYS
+    assert aggregation.OPEN_PIPELINE_KEY in default_config().currency_codes, (
+        "the exemption exists because the key is also a currency Layer 1 admits")
+    literals = {relative: [node for node in ast.walk(ast.parse(_source(relative)))
+                           if isinstance(node, ast.Constant) and node.value == "ALL"]
+                for relative in (*FX_MODULES, *PIPELINE_MODULES, QUERIES)}
+    assert {relative: len(found) for relative, found in literals.items() if found} == {
+        P_AGGREGATION: 2}
+
+
+def test_the_arithmetic_rules_of_m2_stand_as_m2_wrote_them():
+    """OD-M3-6: measures.py gained the arithmetic of A11 under the rules, not by an exception
+    to them. No module but measures.py rounds, converts or imports the arithmetic context, and
+    measures.py is still the one module the no-band rule is over."""
+    for relative, rules in PIPELINE_RULES.items():
+        assert (_arithmetic_violations in rules) is (relative != P_MEASURES), relative
+        assert (_band_violations in rules) is (relative == P_MEASURES), relative
+        assert _summing_violations in rules, relative
+    rounding = {relative: [node for node in ast.walk(ast.parse(_source(relative)))
+                           if isinstance(node, ast.Call) and _callee(node) == "quantize"]
+                for relative in PIPELINE_MODULES}
+    assert {relative for relative, found in rounding.items() if found} == {P_MEASURES}
+    assert [relative for relative in PIPELINE_MODULES
+            if "arithmetic_context" in {name for _, name, _ in _imports(ast.parse(
+                _source(relative)))}] == [P_MEASURES]
+    measures = ast.parse(_source(P_MEASURES))
+    assert {node.name for node in measures.body if isinstance(node, ast.FunctionDef)} == {
+        "weigh", "deal_values", "total", "share", "cumulative_share", "hhi"}
+    assert not [argument.arg for node in ast.walk(measures) if isinstance(node, ast.FunctionDef)
+                for argument in node.args.args
+                if argument.arg in {"customer", "holder", "key", "bucket", "kind"}]
+
+
+def test_vs02_m3_builds_no_route_no_response_model_and_no_error_code():
+    """Plan B6: the route, its response models, the ErrorCode member and the router
+    registration are VS02-M4's. M3 leaves every one of them as it was."""
+    api = APP_DIR / "api"
+
+    assert not [path.name for path in api.rglob("*.py") if "pipeline" in path.name]
+    assert "FX_RATE_MISSING" not in _source("app/api/errors.py")
+    assert "pipeline" not in _source("app/api/v1/router.py")
+    assert not (REPO / "scripts" / "vs02_acceptance.py").exists()
 
 
 def test_only_the_pipeline_package_imports_app_pipeline():

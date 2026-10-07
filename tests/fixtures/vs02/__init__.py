@@ -26,6 +26,19 @@ VS02-M2 by whether Layer 1 admits its rows:
 **The guard.** Every entry point refuses a database whose name ends in
 neither _test nor _vs02 before it touches the database, so no fixture can
 reach the development database. It follows tests/conftest.py's _test guard.
+
+**Stored rows (VS02-M3).** Some named tests and coverage rows of plan A25.2
+need rows that none of the ten entries holds and that neither Layer 1 nor
+VS-01's frozen writer can produce: an assessment that differs from the
+identity in one column, a stored band outside the vocabulary, an assessment
+whose customer is gone, a deal whose stage or currency Layer 1 would have
+rejected, and rows of a source system with no demo data. store_customer,
+store_deal and store_assessment store exactly such rows, in the loader form:
+SQLAlchemy Core over a session the caller owns, behind the same guard, and
+never committing. They are not entries: the manifest holds the ten of plan
+A24 and no eleventh. A test uses one only where its named test or coverage
+row needs a stored row, and reserves the deal ids DEAL-980 to DEAL-999 for
+the rows it adds to csv_demo.
 """
 
 from __future__ import annotations
@@ -40,12 +53,12 @@ from types import MappingProxyType
 from typing import Any
 
 import yaml
-from sqlalchemy import delete, insert
+from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.connectors.registry import build_connector
 from app.ingestion.orchestrator import IngestionRequest, RunSummary, run_ingestion
-from app.persistence.models import Deal, Document, Employee
+from app.persistence.models import Customer, Deal, Document, Employee, RiskAssessment
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 MANIFEST_PATH = PACKAGE_DIR / "manifest.yaml"
@@ -191,6 +204,97 @@ LOADERS: Mapping[str, Callable[[Session], None]] = MappingProxyType({
     "second_source_system": add_second_source_system,
     "no_doc004": remove_doc004,
 })
+
+
+# ---------------------------------------------------------------------------
+# Stored rows for VS02-M3 (plan A25.2, "Stored"): loaders, and not entries
+# ---------------------------------------------------------------------------
+
+#: Fixed ids for stored assessments, so that two builds are identical.
+_ASSESSMENT_NAMESPACE = uuid.UUID("00000000-0000-4000-8000-000000000980")
+
+
+def store_customer(session: Session, *, source_system: str, source_id: str) -> None:
+    """One customer row of the named source system. Core; never commits."""
+    check_database(session.get_bind().url.database)
+    session.execute(insert(Customer).values(
+        **_stored_provenance(source_system, "customers", source_id),
+        name=f"Stored customer {source_id}", is_active=True))
+
+
+def store_deal(
+    session: Session,
+    *,
+    source_system: str,
+    source_id: str,
+    stage: str | None,
+    is_active: bool = True,
+    amount: Decimal | None = None,
+    currency: str | None = None,
+    probability: Decimal | None = None,
+    expected_close_date: date | None = None,
+    owner_source_id: str | None = None,
+    customer: str | None = None,
+) -> None:
+    """
+    One deal row, as given. Layer 1 is not asked: a stage or a currency it
+    would have rejected is stored as written. `customer` is the source id of
+    a customer of the same source system, to which the deal's canonical
+    foreign key is set. Core; never commits.
+    """
+    check_database(session.get_bind().url.database)
+    session.execute(insert(Deal).values(
+        **_stored_provenance(source_system, "deals", source_id),
+        name=f"Stored deal {source_id}", stage=stage, is_active=is_active, amount=amount,
+        currency=currency, probability=probability, expected_close_date=expected_close_date,
+        owner_source_id=owner_source_id, customer_source_id=customer,
+        customer_id=None if customer is None else _customer_id(session, source_system, customer)))
+
+
+def store_assessment(
+    session: Session,
+    *,
+    source_system: str,
+    as_of: date,
+    layer1_fingerprint: str,
+    rules_version: int,
+    linker_version: str,
+    customer: str | None,
+    band: str,
+    executive_worthy: bool = False,
+    customer_system: str | None = None,
+) -> None:
+    """
+    One risk_assessments row at exactly the identity given, with the band as
+    written: VS-01's writer is not asked, so a band outside its vocabulary
+    is stored as it is. `customer` is a customer's source id in
+    `customer_system`, which is the assessment's own source system unless it
+    is named; None stores a row whose customer is gone. Core; never commits.
+    """
+    check_database(session.get_bind().url.database)
+    customer_id = None if customer is None else _customer_id(
+        session, customer_system or source_system, customer)
+    identity = (f"{source_system}|{as_of.isoformat()}|{layer1_fingerprint}|{rules_version}|"
+                f"{linker_version}|{customer_system or source_system}|{customer}")
+    session.execute(insert(RiskAssessment).values(
+        id=uuid.uuid5(_ASSESSMENT_NAMESPACE, identity), customer_id=customer_id, as_of=as_of,
+        source_system=source_system, layer1_fingerprint=layer1_fingerprint,
+        rules_version=rules_version, linker_version=linker_version, band=band,
+        executive_worthy=executive_worthy, signals={}, satisfied_rules=[],
+        ranking_key=[0, 0, 0, customer or ""]))
+
+
+def _customer_id(session: Session, source_system: str, source_id: str) -> uuid.UUID:
+    """The id of the one customer with this source id in the source system."""
+    return session.execute(
+        select(Customer.id).where(Customer.source_system == source_system,
+                                  Customer.source_entity == "customers",
+                                  Customer.source_id == source_id)).scalar_one()
+
+
+def _stored_provenance(source_system: str, entity_type: str, source_id: str) -> dict[str, object]:
+    """The provenance columns of a stored row, in any source system. Fixed values."""
+    return {**_provenance(entity_type, source_id), "source_system": source_system}
 
 
 def ingest_delta(name: str, sessions: sessionmaker[Session]) -> RunSummary:

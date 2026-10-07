@@ -27,10 +27,12 @@
 # csv_demo row. The customer id UNLINKED is the reserved bucket key of plan
 # A14.1 item 7, used as a customer id on purpose.
 #
-# Entries 9 and 10 are built here with the package (plan B6) and first serve a
-# named test at VS02-M3 (tests 3 and 24). Until then the proofs they list are
-# the effect and the M2 behaviour: M2 reads no document, and a customer's id
-# is not yet a generated key.
+# Entries 9 and 10 were built with the package at VS02-M2 (plan B6). Entry 9
+# serves named test 3 from VS02-M3, in tests/integration/test_vs02_service.py;
+# its proof here is that no document reaches a fact or a figure. Entry 10's
+# proof is the refusal itself: from VS02-M3 a customer's id is a generated key
+# (plan A10.5 item 1), so its deal fails the aggregation in stage 1. Named
+# test 24 shows the same refusal over HTTP at VS02-M4.
 
 version: 1
 
@@ -210,4 +212,4 @@ fixtures:
       deal DEAL-971, whose customer FK resolves to it; every other row is
       unchanged.
     proofs:
-      - tests/integration/test_vs02_dataset.py::test_a_customer_id_is_not_a_generated_key_before_the_customer_partition_exists
+      - tests/integration/test_vs02_dataset.py::test_a_customer_whose_id_is_a_reserved_key_fails_the_aggregation_in_stage_one

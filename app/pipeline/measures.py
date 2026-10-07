@@ -23,6 +23,15 @@ set elsewhere can change a figure.
 This module is pure. It receives no band, no session and no clock, and it
 never loads a rate set: it is handed one. The currency of an amount is
 never crossed except by convert().
+
+From VS02-M3 it also holds the arithmetic of concentration (plan A11 item
+5, OD-M3-6): the part an amount is of a whole, the part several amounts
+together are, and the sum of the squared parts. Each divides in the same
+context and is rounded once, to SHARE_QUANTUM, half-even. They are given
+amounts and a whole and nothing else: no band, no customer and no holder's
+key. Which amounts are a holder's, their order and how many are taken is
+decided where the buckets are built. A whole of zero has no parts, and
+nothing here is called with one.
 """
 
 from __future__ import annotations
@@ -91,3 +100,38 @@ def total(currency: str, values: Iterable[MoneyValue]) -> MoneyValue:
     """
     with localcontext(arithmetic_context()):
         return MoneyValue.total(currency, values)
+
+
+def share(amount: Decimal, whole: Decimal) -> Decimal:
+    """The part one amount is of a whole: divided, then rounded to SHARE_QUANTUM (plan A11)."""
+    with localcontext(arithmetic_context()):
+        return (amount / whole).quantize(SHARE_QUANTUM, rounding=ROUNDING_MODE)
+
+
+def cumulative_share(amounts: Iterable[Decimal], whole: Decimal) -> Decimal:
+    """
+    The part several amounts together are of a whole (plan A11 item 5).
+
+    The amounts are summed first, the sum is divided, and the quotient is
+    rounded once. It is not a sum of rounded shares, which can differ from
+    it in the last place.
+    """
+    with localcontext(arithmetic_context()):
+        summed = Decimal(0)
+        for amount in amounts:
+            summed += amount
+        return (summed / whole).quantize(SHARE_QUANTUM, rounding=ROUNDING_MODE)
+
+
+def hhi(amounts: Iterable[Decimal], whole: Decimal) -> Decimal:
+    """
+    The Herfindahl-Hirschman index of the amounts: the sum of their squared parts (plan A11).
+
+    Each part is squared unrounded, and only the sum is rounded.
+    """
+    with localcontext(arithmetic_context()):
+        index = Decimal(0)
+        for amount in amounts:
+            part = amount / whole
+            index += part * part
+        return index.quantize(SHARE_QUANTUM, rounding=ROUNDING_MODE)

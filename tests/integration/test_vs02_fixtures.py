@@ -24,6 +24,10 @@ are admitted by Layer 1 with nothing rejected, which is what makes it a
 delta; what Layer 1 cannot express is a loader (plan A24: the form is
 measured at VS02-M2 and recorded in the manifest). What each entry is *for*
 is proved in tests/integration/test_vs02_dataset.py.
+
+Stored rows (VS02-M3): the three loaders that store a customer, a deal or an
+assessment as written are behind the same guard, never commit, store exactly
+what they are given, and add no entry to the manifest (plan A25.2, "Stored").
 """
 
 from __future__ import annotations
@@ -33,6 +37,8 @@ import csv
 import importlib.util
 import re
 import sys
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -45,7 +51,7 @@ from app.ingestion.orchestrator import IngestionRequest, run_ingestion
 from app.intelligence.config import default_risk_rules
 from app.intelligence.scope import layer1_fingerprint
 from app.normalization.config import default_config
-from app.persistence.models import Customer, Deal, IngestionError
+from app.persistence.models import Customer, Deal, IngestionError, RiskAssessment
 from app.persistence.repositories.canonical import ENTITY_MODELS
 from app.persistence.repositories.runs import RunStatus
 from app.pipeline.aggregation import RESERVED_KEYS
@@ -64,6 +70,9 @@ from tests.fixtures.vs02 import (
     ingest_delta,
     load_manifest,
     remove_doc004,
+    store_assessment,
+    store_customer,
+    store_deal,
 )
 
 pytestmark = pytest.mark.integration
@@ -538,3 +547,116 @@ def test_a_loader_does_not_commit(demo):
 
     assert _table_counts(demo) == counts
     assert _fingerprint(demo) == PINNED
+
+
+# ---------------------------------------------------------------------------
+# Stored rows (VS02-M3): loaders that are not entries (plan A25.2, "Stored")
+# ---------------------------------------------------------------------------
+
+STORED_SYSTEM = "stored_demo"
+#: One call of each stored-row loader, with nothing left to a default that matters.
+STORED_CALLS = {
+    "store_customer": lambda session: store_customer(
+        session, source_system=STORED_SYSTEM, source_id="CUST-980"),
+    "store_deal": lambda session: store_deal(
+        session, source_system=STORED_SYSTEM, source_id="DEAL-980", stage="prospect",
+        amount=Decimal("12.50"), currency="XXX", probability=Decimal("40.00")),
+    "store_assessment": lambda session: store_assessment(
+        session, source_system=STORED_SYSTEM, as_of=date(2026, 9, 18),
+        layer1_fingerprint="f" * 64, rules_version=1, linker_version="1", customer=None,
+        band="SEVERE"),
+}
+
+
+def test_the_stored_row_loaders_add_no_entry_to_the_manifest():
+    """Plan A24 names ten entries, and the package still holds ten and two entry loaders."""
+    assert len(load_manifest()["fixtures"]) == len(A24) == 10
+    assert sorted(LOADERS) == ["no_doc004", "second_source_system"]
+    assert not {store_customer, store_deal, store_assessment} & set(LOADERS.values())
+    assert sorted(STORED_CALLS) == ["store_assessment", "store_customer", "store_deal"]
+
+
+@pytest.mark.parametrize("name", sorted(STORED_CALLS))
+def test_each_stored_row_loader_refuses_the_development_database_before_executing(
+        development_engine, name):
+    with Session(bind=development_engine) as session, pytest.raises(FixtureDatabaseRefusedError):
+        STORED_CALLS[name](session)
+
+
+def test_a_stored_row_loader_does_not_commit(demo):
+    """Core over the caller's session, never committing. A rollback undoes all three."""
+    counts = _table_counts(demo)
+
+    with demo() as session:
+        for name in sorted(STORED_CALLS):
+            STORED_CALLS[name](session)
+        held = {table.name: session.scalar(select(func.count()).select_from(table))
+                for table in Base.metadata.sorted_tables}
+        session.rollback()
+
+    assert held == {**counts, "customers": counts["customers"] + 1,
+                    "deals": counts["deals"] + 1, "risk_assessments": 1}
+    assert _table_counts(demo) == counts
+    assert _fingerprint(demo) == PINNED
+
+
+def test_the_stored_row_loaders_store_exactly_what_they_are_given(demo):
+    """
+    What Layer 1 and VS-01's writer would have refused is stored as written:
+    a stage and a currency outside the D1 vocabularies, and a band outside
+    RiskBand. A deal's canonical customer key is set from the customer named,
+    and an assessment with no customer is stored with a NULL key.
+    """
+    config = default_config()
+    assert "prospect" not in config.fields["deals"]["stage"].enum_values
+    assert "XXX" not in config.currency_codes
+
+    with demo() as session:
+        store_customer(session, source_system=STORED_SYSTEM, source_id="CUST-980")
+        store_deal(session, source_system=STORED_SYSTEM, source_id="DEAL-980", stage="prospect",
+                   is_active=False, amount=Decimal("12.50"), currency="XXX",
+                   probability=Decimal("40.00"), expected_close_date=date(2026, 12, 1),
+                   owner_source_id="EMP-980", customer="CUST-980")
+        store_deal(session, source_system=STORED_SYSTEM, source_id="DEAL-981", stage=None)
+        for customer, band, worthy in (("CUST-980", "SEVERE", True), (None, "WATCH", False)):
+            store_assessment(session, source_system=STORED_SYSTEM, as_of=date(2026, 9, 18),
+                             layer1_fingerprint="f" * 64, rules_version=7, linker_version="9",
+                             customer=customer, band=band, executive_worthy=worthy)
+        store_assessment(session, source_system="elsewhere", as_of=date(2026, 9, 18),
+                         layer1_fingerprint="f" * 64, rules_version=7, linker_version="9",
+                         customer="CUST-980", band="NONE", customer_system=STORED_SYSTEM)
+
+        [customer_id] = session.scalars(select(Customer.id).where(
+            Customer.source_system == STORED_SYSTEM)).all()
+        deals = [tuple(row) for row in session.execute(
+            select(Deal.source_id, Deal.source_entity, Deal.stage, Deal.is_active, Deal.amount,
+                   Deal.currency, Deal.probability, Deal.expected_close_date,
+                   Deal.owner_source_id, Deal.customer_source_id, Deal.customer_id)
+            .where(Deal.source_system == STORED_SYSTEM).order_by(Deal.source_id)).all()]
+        assessments = sorted(tuple(row) for row in session.execute(
+            select(RiskAssessment.source_system, RiskAssessment.customer_id.is_(None),
+                   RiskAssessment.band, RiskAssessment.executive_worthy,
+                   RiskAssessment.rules_version, RiskAssessment.linker_version,
+                   RiskAssessment.as_of, RiskAssessment.layer1_fingerprint)).all())
+        session.rollback()
+
+    assert deals == [
+        ("DEAL-980", "deals", "prospect", False, Decimal("12.50"), "XXX", Decimal("40.00"),
+         date(2026, 12, 1), "EMP-980", "CUST-980", customer_id),
+        ("DEAL-981", "deals", None, True, None, None, None, None, None, None, None)]
+    assert assessments == [
+        ("elsewhere", False, "NONE", False, 7, "9", date(2026, 9, 18), "f" * 64),
+        (STORED_SYSTEM, False, "SEVERE", True, 7, "9", date(2026, 9, 18), "f" * 64),
+        (STORED_SYSTEM, True, "WATCH", False, 7, "9", date(2026, 9, 18), "f" * 64)]
+
+
+def test_a_stored_assessment_has_one_id_however_often_it_is_built(demo):
+    """Fixed values, so two builds are identical: the id is derived from the identity."""
+    ids = []
+    for _ in range(2):
+        with demo() as session:
+            STORED_CALLS["store_assessment"](session)
+            ids.append(session.scalars(select(RiskAssessment.id)).one())
+            session.rollback()
+
+    assert ids[0] == ids[1]

@@ -56,8 +56,15 @@ from app.pipeline.aggregation import (
     PERIOD_HORIZON,
     RESERVED_KEYS,
     Amount,
+    BandBucket,
     Bucket,
+    Concentration,
+    ConcentrationPair,
+    Concentrations,
+    CumulativeShare,
     CurrencyBucket,
+    CustomerBucket,
+    Holder,
     OwnerBucket,
     Partitions,
     PeriodBucket,
@@ -210,7 +217,10 @@ def test_a_deal_fact_holds_exactly_its_eleven_fields_and_cannot_be_changed():
 
 @pytest.mark.parametrize("value_type", [
     DealFact, facts.ValuedDeal, DealNote, DealValues, Amount, Bucket, CurrencyBucket, OwnerBucket,
-    PeriodBucket, Partitions, aggregation._Measured], ids=lambda value_type: value_type.__name__)
+    PeriodBucket, Partitions, aggregation._Measured,
+    # VS02-M3: what the entry point's result gains, and the two band value types.
+    BandBucket, CustomerBucket, Holder, CumulativeShare, Concentration, ConcentrationPair,
+    Concentrations, facts.BandFact, facts.CustomerBand], ids=lambda value_type: value_type.__name__)
 def test_every_value_type_of_the_package_is_immutable(value_type):
     """Plan A19 item 1: a pure function of its inputs builds nothing that can be changed later."""
     assert dataclasses.is_dataclass(value_type)
@@ -1719,26 +1729,51 @@ def test_no_error_class_was_added_for_the_precedence():
 
 
 # ---------------------------------------------------------------------------
-# What the entry point does not do at M2
+# What the entry point returns, and what it still does not do
 # ---------------------------------------------------------------------------
 
 
-def test_the_entry_point_returns_the_four_partitions_and_nothing_more(rates):
-    """OD-4 and plan B6: no count, no band, no customer partition, no concentration."""
+def test_the_entry_point_returns_m2s_four_partitions_and_what_m3_adds_and_nothing_more(rates):
+    """
+    Plan A22.5 item 3, OD-M3-4. The four partitions of M2 are the first four
+    fields, under their M2 names and in their M2 order. M3 adds the bucket
+    over every deal, the band and customer partitions, coincidence,
+    concentration and each deal's own values. It still holds no count:
+    deal_counts is the view's (OD-4).
+    """
     partitions = build(PORTFOLIO, rates)
 
     assert [field.name for field in dataclasses.fields(partitions)] == [
-        "by_currency", "by_stage", "by_owner", "by_expected_close"]
+        "by_currency", "by_stage", "by_owner", "by_expected_close",
+        "open_pipeline", "by_risk_band", "by_customer", "risk_coincidence", "concentration",
+        "per_deal"]
+    assert not [field.name for field in dataclasses.fields(partitions) if "count" in field.name]
     assert [field.name for field in dataclasses.fields(Bucket)] == [
         "key", "deal_count", "deal_ids", "native", "base"]
     assert [field.name for field in dataclasses.fields(CurrencyBucket)][5:] == ["rate_to_base"]
     assert [field.name for field in dataclasses.fields(OwnerBucket)][5:] == [
         "kind", "basis", "carrier_field", "unresolved_keys"]
     assert [field.name for field in dataclasses.fields(PeriodBucket)][5:] == ["kind"]
+    assert [field.name for field in dataclasses.fields(BandBucket)][5:] == [
+        "customer_count", "customer_ids"]
+    assert [field.name for field in dataclasses.fields(CustomerBucket)][5:] == [
+        "kind", "band", "executive_worthy"]
     assert [field.name for field in dataclasses.fields(Amount)] == [
         "currency", "unweighted", "weighted"]
+    assert [field.name for field in dataclasses.fields(Concentration)] == [
+        "currency", "rate_set_version", "total", "holder_count", "top", "cumulative", "hhi",
+        "reason"]
+    assert [field.name for field in dataclasses.fields(Holder)] == [
+        "key", "pseudo", "amount", "share"]
+    assert [field.name for field in dataclasses.fields(CumulativeShare)] == ["holders", "share"]
+    assert [field.name for field in dataclasses.fields(ConcentrationPair)] == [
+        "unweighted", "weighted"]
+    assert [field.name for field in dataclasses.fields(Concentrations)] == [
+        "by_customer", "by_owner"]
     with pytest.raises(dataclasses.FrozenInstanceError):
         partitions.by_stage = ()  # type: ignore[misc]
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        partitions.by_risk_band = ()  # type: ignore[misc]
 
 
 def test_the_entry_point_checks_one_currency_at_a_time_and_names_only_that_one(tmp_path):

@@ -283,8 +283,14 @@ def test_the_digest_reads_the_constants_themselves_and_restates_none():
                 and getattr(node.func, "id", None) == "Decimal"], "no quantum is built here"
 
 
-def test_the_constants_m2_does_not_use_are_read_by_nothing_but_the_digest():
-    """OD-2: defined at M2 and consumed at M3. At M2 their only reader is the digest."""
+def test_the_three_concentration_constants_are_read_by_the_digest_and_by_concentration_alone():
+    """
+    OD-2: defined at M2 and consumed at M3. At M2 their only reader was the
+    digest. From M3 concentration reads them as well, each in the module
+    that defines it, and nothing else does: the quantum where a share is
+    rounded, three times, and the two counts where the holders are taken.
+    None is redefined (test_each_constant_is_defined_once_and_never_restated).
+    """
     readers = {}
     for name in ("SHARE_QUANTUM", "CONCENTRATION_TOP_N", "CUMULATIVE_POINTS"):
         readers[name] = sorted(
@@ -293,9 +299,11 @@ def test_the_constants_m2_does_not_use_are_read_by_nothing_but_the_digest():
             for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
             if isinstance(node, ast.Name) and node.id == name and isinstance(node.ctx, ast.Load))
 
-    assert readers == dict.fromkeys(
-        ("SHARE_QUANTUM", "CONCENTRATION_TOP_N", "CUMULATIVE_POINTS"),
-        ["app/pipeline/config.py"])
+    assert readers == {
+        "SHARE_QUANTUM": ["app/pipeline/config.py", *["app/pipeline/measures.py"] * 3],
+        "CONCENTRATION_TOP_N": ["app/pipeline/aggregation.py", "app/pipeline/config.py"],
+        "CUMULATIVE_POINTS": ["app/pipeline/aggregation.py", "app/pipeline/config.py"],
+    }
 
 
 # ---------------------------------------------------------------------------
