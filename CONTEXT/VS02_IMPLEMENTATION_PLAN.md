@@ -30,6 +30,14 @@ a home the boundary test allows. The owner directed its commit, alone, as
 `VS02: authorize M3 arithmetic substrate`. The version stays v2.2. It changes no code, test,
 fixture, configuration, migration, frontend or README file, and it starts nothing of VS02-M3.**
 
+**The amendment of 2026-10-09 records the owner's decision OD-M3-7 (§0.16). It was taken after the
+VS02-M3 implementation was committed and audited: the audit found that `band_rows` did not confine
+the customer it joins to the scope, so that two rows could come back under one customer
+`source_id`. The owner directed its commit, alone, as
+`VS02: isolate M3 band rows by customer source`. The version stays v2.2. It changes no code, test,
+fixture, configuration, migration, frontend or README file. The implementation of the decision is
+the commit that follows it (§B7).**
+
 | Milestone | Status | Evidence |
 |---|---|---|
 | **VS02-M0** — pre-flight baseline | COMPLETE (2026-10-01) | §0.11; measured at `b0fcaa2`; recorded by the commit `VS-02: record the M0 baseline` |
@@ -72,7 +80,7 @@ it that carries no tag of its own; an item's own tag replaces the heading's.
 | **[R]** | **REQUIRED** | Binding without a further choice inside VS-02. The source is named. |
 | **[SD-n]**, **[MD-n]**, **T-VS02-n** | **PROPOSED OWNER DECISION** | Authored by this specification where no authority exists. Every one has an id and is listed in §0.6 (six shaping decisions), §0.7 (methodology) or §B2.1 (edits to frozen tests). It binds nothing until the owner approves it. |
 | **[OD-n]** | **OWNER DECISION OF 2026-10-06** | One of the nine decisions the owner took on 2026-10-06: six on the VS02-M2 pre-implementation audit, two in the final hardening pass that followed it, and one, OD-9, after VS02-M2 closed, which closes U-8. OD-1 to OD-8 are recorded in §0.12 and OD-9 in §0.13, and §0.8 says what a later change would reopen. |
-| **[OD-M3-n]** | **OWNER DECISION OF 2026-10-07** | One of the six decisions the owner took on 2026-10-07 for VS02-M3. Five were taken on its pre-implementation audit, OD-M3-1 to OD-M3-5, and are recorded in §0.14. One was taken when its implementation pre-flight stopped, OD-M3-6, and is recorded in §0.15. §0.8 says what a later change would reopen. The series is its own: it continues no number of OD-1 to OD-9 and reuses none. |
+| **[OD-M3-n]** | **OWNER DECISION FOR VS02-M3** | One of the seven decisions the owner took for VS02-M3. Six were taken on 2026-10-07: five on its pre-implementation audit, OD-M3-1 to OD-M3-5, recorded in §0.14, and one when its implementation pre-flight stopped, OD-M3-6, recorded in §0.15. One was taken on 2026-10-09, on its post-commit audit, OD-M3-7, and is recorded in §0.16. §0.8 says what a later change would reopen. The series is its own: it continues no number of OD-1 to OD-9 and reuses none. |
 | **[U-n]** | **UNKNOWN/OPEN** | No authority exists and this specification proposes no value. §0.9 states what closes it. |
 
 **Standing in v2.1.** On 2026-10-01 the owner decided SD-1…SD-6 and approved MD-1…MD-22 as specified
@@ -103,6 +111,11 @@ the contradiction the VS02-M3 implementation pre-flight found (§0.15). A statem
 carries its **[OD-M3-6]** tag, and it binds as the owner stated it. It changes no measure, figure
 or constant of §A11: it says where that section's arithmetic is computed. No **[U-n]** was added,
 and none is open.
+
+**Standing after OD-M3-7 (2026-10-09).** The owner took one more decision, OD-M3-7, on the gap the
+post-commit audit of VS02-M3 found (§0.16). A statement it governs carries its **[OD-M3-7]** tag,
+and it binds as the owner stated it. It changes no band, figure or key of the view: it says which
+customers' assessments `band_rows` returns. No **[U-n]** was added, and none is open.
 
 **What makes a statement REQUIRED.** Two kinds of source:
 
@@ -453,6 +466,7 @@ dependants are not approved until the decision is.
 | OD-M3-4 | §B6's M3 change list and its entry on M2's substrate; the wording of two rows of §B1; the last paragraph of §B2.2; the last entry of §A22.5 item 3; part 4 of §A25.2; coverage row C-44 |
 | OD-M3-5 | §A25.2; the tests and gate entries of §B6's M3 |
 | OD-M3-6 | §A9.1 item 6; the *Where it is computed* entry of §A11; the entry under §A12.4 item 4; the wording of the `measures.py` and `aggregation.py` rows of §A22.2 and of §A28; the clause of §A22.5 item 3 that names it; the `measures.py` clause of §B1's row; §B6's M3 change list and its entry on `measures.py`; the amended entry of §0.14 on the surface; the paragraph of part 4 of §A25.2 on the arithmetic rules; and the wording of coverage rows C-27 and C-44 that names it |
+| OD-M3-7 | the customer side of `band_rows` in §A16.2, with the clause of its table row and of its *Statements* paragraph; §A12.2 item 4; the entry under *Which rows* of §A12.3 item 2; the band row of §A21.1 item 1 and the clause of its item 5; its row of §A17.2; the wording of coverage rows C-20, C-22 and C-39 that names it; the `band_rows` clause and the OD-M3-7 entry of §B6's M3; the wording of the reads row of §A28 |
 
 ## 0.9 Unknown and open
 
@@ -1023,6 +1037,118 @@ plan stays v2.2. No code, test, fixture, configuration, migration, frontend or R
 **Gate.** Nothing is still required of the owner before VS02-M3 (Owner Decisions). VS02-M3 has not
 started. It begins only on the owner's instruction, after this amendment is committed on its own
 (§B7).
+
+## 0.16 The VS02-M3 post-commit audit and customer-side isolation (2026-10-09)
+
+**The audit.** The VS02-M3 implementation was committed on 2026-10-07 as
+`VS02-M3: implement pipeline view and risk exposure`, on the contract of §0.14 and §0.15. On
+2026-10-08 it was audited as committed. One auditor worked alone and changed nothing: no code,
+test or plan file, and no commit. The audit ran the gate of §B5 again from the committed tree and
+found every measurement as the implementation had reported it; that run showed the intermittent
+third warning §B5 allows. It stopped on one point, which the owner decided on 2026-10-09. This amendment is the record of that decision and its only output. It
+changed no code, test, fixture, configuration, migration, frontend or README file. §0.15 stays as
+the record of OD-M3-6; where its point E says that the uniqueness guarantee of §A12.2 stands by
+itself, this record is the later one.
+
+**The finding.** OBSERVED 2026-10-08, and again on 2026-10-09 before anything was edited, in the
+suite's harness database, at that commit.
+
+| Point | As found |
+|---|---|
+| What `band_rows` filtered | The five columns of the identity on `risk_assessments`, its own `source_system` among them. An assessment stamped for another source system was never returned (coverage row C-21) |
+| What it did not | The customer it joined. It joined `customers` by id and stated that row's `source_id`, whichever source system and source entity the row belonged to |
+| The state | An assessment at exactly the scope's identity whose `customer_id` points at a `customers` row outside the scope: a row of another source system, or a row of the same source system under another source entity. When that row carries the `source_id` of a customer of the scope who is also assessed, two rows come back under one `source_id` |
+| What followed | The view stated the band of whichever of the two rows arrived last, and nothing fixed the order of two rows with one `source_id`. The same stored rows, inserted in the other order, gave another band and another `view_hash`. A band outside `RiskBand` on the outside row failed the request, and the error named the scope's own customer |
+| What the guarantee covered | §A12.2's: at most one row per customer row at one identity. It held, and the database refused a second row at one identity. It says nothing of two customer rows that share a `source_id` |
+| Reach | No code can write the state. VS-01's writer, the only writer of `risk_assessments`, finds the customer inside the row's own source system and under the entity `customers` (`app/persistence/repositories/risk_assessments.py`). A loader of §A24 can store it, as one can store a band outside the vocabulary |
+
+**How it was put.** The audit put two ways of closing the point: to accept the state as outside
+the contract and record its reach, or to close it in the contract. The owner chose to close it.
+The first instruction to do so described the state as two assessments that differ in their own
+`source_system`. The check made before any edit found that state already excluded by the identity
+of §A12.2, and stopped with nothing edited. The owner then decided the rule below.
+
+| ID | Decision (2026-10-09) | Specified in |
+|---|---|---|
+| OD-M3-7 | **Customer-side source isolation for `band_rows`.** `band_rows` returns a risk assessment only when the joined customer belongs to the resolved scope: `customers.source_system` equals the resolved scope's `source_system`, and `customers.source_entity` equals `customers` | §A16.2, §A12.2 item 4, §A12.3 item 2 |
+
+**What the owner stated.**
+
+| Point | As decided |
+|---|---|
+| The rule | `band_rows` shall return a risk assessment only when the joined customer belongs to the resolved scope, meaning `customers.source_system` equals the resolved scope's `source_system` and `customers.source_entity` equals `customers` |
+| Another source system | An assessment whose joined customer belongs to another source system is outside the resolved scope |
+| Another source entity | An assessment whose joined customer belongs to another source entity is outside the resolved scope |
+| Not returned | Such out-of-scope assessments are not returned |
+| Not validated | They are not validated for band vocabulary. An unknown band on an out-of-scope assessment does not raise |
+| Still raised | An unknown band on an applicable assessment continues to raise the existing `PipelineDataError`, naming the entity `customers` |
+| Never done | No band precedence is introduced, and no conflict resolution: no order of severity, no first or last row, no fallback to another source system, and no silent de-duplication of conflicting rows |
+| Unchanged | VS-01's six-column identity, and all of M2's behaviour |
+| The invariant wanted | Within one resolved scope, a customer has at most one applicable VS-01 assessment |
+| The status row | The owner authorised the update of VS02-M3's status row to COMPLETE once the decision is implemented and its gate has passed, by the convention M1's and M2's rows follow |
+| What it authorises | The implementation that follows, as its own commit. It does not begin VS02-M4 |
+
+*How it is read.*
+
+- **The scope and the entity.** The frozen `Scope` holds a `source_system` and no source entity: one
+  scope covers the seven entity types of one source system (§A4, `app/intelligence/scope.py`). "The
+  customer belongs to the scope" therefore means exactly the two things the owner's rule names. The
+  row's `source_system` is the scope's, and its `source_entity` is the name `customers`. The frozen
+  relationship model already says so of a row in scope (`_in_scope`, `app/relationships/edges.py`),
+  VS-01's writer finds the customer of an assessment that way, and `deal_rows` confines a deal the
+  same way (§A16.2). No field is added to `Scope`, and `band_rows` takes the parameters it took.
+- **Both sides are filtered.** The five columns of the identity are filtered as before, the
+  assessment's own `source_system` among them (C-21). The two customer-side conditions are added to
+  them and replace none.
+- **The invariant.** It follows from two constraints the database already enforces, and from
+  nothing else. VS-01's identity admits one row per customer row (§A12.2), and `customers` admits
+  one row per `source_system`, `source_entity` and `source_id`. So `band_rows` returns at most one
+  row per customer `source_id`, whatever the tables hold and in whatever order their rows are
+  stored.
+- **Outside, not outranked.** A row that is not returned is left out because its customer is not
+  in the scope. Its band is compared with no other row's, and nothing chooses between two rows.
+- **OD-M3-2 and the row not returned.** OD-M3-2 checks every row `band_rows` returns and drops
+  none of them. A row outside the scope is not one of them, as the row whose customer was set null
+  is not (§A16.2). It is not checked, so its band changes nothing, whether it is a `RiskBand` value
+  or not.
+- **The scope note.** OD-M3-3 is as it was: the note follows whether `band_rows` returns a row. A
+  scope whose only assessments at the identity point outside it has no row returned, and states the
+  note.
+- **§0.15, point E.** It made no rule for two band rows that name one customer, relied on §A12.2's
+  guarantee, and said to stop if the implementation found the guarantee insufficient. The audit
+  found the case above. OD-M3-7 answers it by making the case impossible. It still makes no rule
+  for choosing between two rows.
+
+**What this amendment changed.**
+
+| Where | Change |
+|---|---|
+| §A16.2 | the customer side of `band_rows`, as its own paragraph; one clause of its table row; one clause of *Statements* |
+| §A12.2 | item 4: the customer of the identity is a customer of the scope |
+| §A12.3 item 2 | one entry under *Which rows*: a row `band_rows` does not return is not checked |
+| §A17.2 | one row |
+| §A21.1 | the band row of item 1; one clause of item 5 |
+| §A25.2 | wording added to coverage rows C-20, C-22 and C-39. No row is added, and no row's number changes |
+| §A28 | the wording of the reads row |
+| §B6, VS02-M3 | one clause of the change list, and one entry on OD-M3-7 |
+| §B7 | this commit, the commit that implements it, and where VS02-M3's status row is recorded |
+| The header, Labels, §0.8, Owner Decisions | the standing of OD-M3-7 |
+
+**What this amendment did not change.** No figure, rate, appendix value or pinned digest. No band,
+no bucket, no key or shape of the view, and no order of any list. The identity of §A12.2 and its
+five filters. The check of OD-M3-2 and what its error names. The one rule of the scope note. No
+error class, note code or limitation text. No constant, so no entry of the methodology pin and no
+`pipeline_version`. No parameter of `band_rows`, and no field of `Scope`. No T-VS02 row, no named
+test and no acceptance criterion; no coverage row is added, and the numbering of §A25.2 stands.
+Nothing of M1 or M2: `deal_rows` and every module of `app/fx/` are as they were. No table,
+constraint or migration: the head stays `070e4968a497`. Nothing of the boundary between M3 and M4.
+No record of VS02-M0, VS02-M1 or VS02-M2, and no dated entry of §0.12 to §0.15. The version of this
+plan stays v2.2. No code, test, fixture, configuration, migration, frontend or README file changed.
+
+**Gate.** Nothing further is required of the owner for the contract of VS02-M3 (Owner Decisions).
+The decision is implemented by the commit that follows this one (§B7). VS02-M3's status row is
+recorded when that commit's gate has passed. VS02-M4 has not started and begins only on the owner's
+instruction.
 
 ---
 
@@ -1615,6 +1741,13 @@ constraint guarantees at most one such row per customer.
 1. VS-02 reads. It never runs an assessment, never computes a band, and never writes a risk table.
 2. An assessment of another date, snapshot or rule version is not joined.
 3. The view states the two versions it joined under, in `versions`.
+4. [OD-M3-7] **The customer of the identity is a customer of the scope.** `customer`, above, is a
+   row of `customers` whose `source_system` is the scope's and whose `source_entity` is
+   `customers`. An assessment at the identity whose customer is any other row is not joined:
+   `band_rows` does not return it (§A16.2). Inside one source system and entity a customer's
+   `source_id` is unique, so the guarantee above then holds per `source_id` as well: one scope, one
+   customer, at most one assessment. Nothing ranks two assessments against each other.
+   (Recorded on 2026-10-09, §0.16.)
 
 - *If rejected in favour of recomputing bands in process.* VS-02 would import M3's signal engine and
   band table, the cross-tabulation could disagree with the assessments a human approved, and §A22.4
@@ -1638,6 +1771,9 @@ coverage buckets.
    - *Which rows.* `band_rows` is where persisted assessments enter VS-02, and every row it returns
      is checked: the row of a customer who holds an open valued deal, of one who holds only closed
      or unvalued deals, and of one who holds no deal at all.
+     - [OD-M3-7] An assessment `band_rows` does not return is not checked: one whose customer was
+       set null, and one whose customer is not a customer of the scope (§A16.2). Its band changes
+       nothing, whether it is a `RiskBand` value or not, and it raises nothing.
    - *The outcome.* Fail closed. No view is returned, complete or partial.
    - *Never done.* The row is not dropped or skipped. The band is not renamed, and it is not mapped
      to `NONE`, to `UNASSESSED` or to any other bucket.
@@ -2134,7 +2270,7 @@ A new persistence-only module, `app/persistence/repositories/pipeline_queries.py
 | Function | Returns |
 |---|---|
 | `deal_rows(session, source_system)` | every row of `deals` with that `source_system` and `source_entity = 'deals'`, as plain rows of `(source_id, stage, is_active, amount, currency, probability, expected_close_date, owner_source_id, customer_source_id)`, ordered by `source_id` ascending by code point |
-| `band_rows(session, *, source_system, as_of, layer1_fingerprint, rules_version, linker_version)` | `(customer_source_id, band, executive_worthy)` for the identity of §A12.2, inner-joined to `customers`, ordered by customer `source_id` ascending by code point. An assessment whose customer was set null has no customer to attach a deal to and is not returned |
+| `band_rows(session, *, source_system, as_of, layer1_fingerprint, rules_version, linker_version)` | `(customer_source_id, band, executive_worthy)` for the identity of §A12.2, inner-joined to `customers`, ordered by customer `source_id` ascending by code point. An assessment whose customer was set null has no customer to attach a deal to and is not returned. Nor is one whose customer is not a customer of the scope (OD-M3-7, below) |
 
 It imports no `app.intelligence`, `app.fx` or `app.pipeline` module, names no domain type, decides
 nothing, writes nothing and logs nothing. `risk_queries.py` is not edited.
@@ -2149,8 +2285,34 @@ Python. No VS-02 module relies on the order rows arrive in for the order of anyt
 **Statements [OD-6].** The module holds `select` statements and nothing else (§A21.2). `deal_rows`
 selects exactly the nine columns above and filters on `source_system` and `source_entity`; it reads
 no other column of `deals`, the deal's `name` included. Of `app.persistence.models` the module names
-`Deal` alone at M2; `band_rows` adds `RiskAssessment` and `Customer` at M3 (§A21.1). It creates no
-engine, connection or session: the session is the caller's.
+`Deal` alone at M2; `band_rows` adds `RiskAssessment` and `Customer` at M3 (§A21.1). Of `Customer`
+it reads `source_id` and filters on `source_system` and `source_entity`, as `deal_rows` does of
+`Deal` (OD-M3-7). It creates no engine, connection or session: the session is the caller's.
+
+**The customer side of `band_rows` [OD-M3-7].** `band_rows` returns an assessment only when the
+customer it is joined to belongs to the resolved scope. Beside the five conditions of the identity,
+both of these hold of every row it returns:
+
+- `customers.source_system` equals the scope's `source_system`, the value `band_rows` already takes
+  for the identity;
+- `customers.source_entity` equals `customers`.
+
+So three things belong to the resolved scope together: the assessment's own source system, the
+joined customer's source system, and the joined customer's source entity.
+
+- **Excluded.** A `customers` row of another source system, or of another source entity, is outside
+  the scope, and so is an assessment that points at it. That assessment is not returned. It is not
+  validated for its band either (§A12.3 item 2), so a band outside `RiskBand` on it raises nothing.
+- **No precedence.** Nothing ranks one row against another. There is no order of severity, no
+  first or last row, no fallback to another source system and no resolution of duplicates. A row is
+  left out because its customer is outside the scope, and for no other reason.
+- **What it gives.** One scope holds at most one returned row per customer `source_id` (§A12.2
+  item 4), so no band can depend on the order in which rows are stored or returned.
+- **How.** The two conditions are part of the one `select` of `band_rows`, with its five identity
+  conditions, its inner join and its order. The function's parameters are unchanged. `Scope` holds
+  no source entity and gains none: the entity is the name `customers` (§0.16).
+
+(Recorded on 2026-10-09, §0.16.)
 
 #### A16.3 Writes [SD-2]
 
@@ -2220,6 +2382,7 @@ does not perform step 6's check of every currency.
 | A data-validity error and a missing rate in one request | the data-validity error: `500`, never `409` (§A10.5 item 6) | [OD-7] |
 | More than one data-validity condition in one request | the first in the order of §A17.1's step 5: stage 1, then OD-9's check, then the unknown band | [OD-M3-1] |
 | A stored band outside `RiskBand`, in any row `band_rows` returns | `PipelineDataError` naming the entity `customers` and every such customer; `500`; no partial view (§A12.3 item 2) | [OD-M3-2] |
+| An assessment at the identity whose customer is not a customer of the scope: a row of another source system, or of another source entity | not returned by `band_rows`, not validated and not joined; the view is what it is without that row, and no band is chosen between rows (§A16.2) | [OD-M3-7] |
 | No assessment for the scope, or partial coverage | `UNASSESSED` | [MD-9] |
 | Assessments at the identity, and no deal | `200`, the empty view, with `data_quality` `[]` (§A14.11) | [OD-M3-3] |
 | Invalid `fx_rates.yaml` or `pipeline_rules.yaml` | refused at first use naming the broken key; `500`; no partial view; other routes unaffected | [R] plan §A23 |
@@ -2378,7 +2541,7 @@ modules. Tests, the fixture package and the acceptance command are governed by �
    | nine columns of `deals`, filtered by `source_system` and `source_entity` | `deal_rows` (§A16.2) | M2 |
    | the `deal_owned_by` and `customer_has_deal` edges | `edges_of_type(EdgeType.DEAL_OWNED_BY, …)` and `edges_of_type(EdgeType.CUSTOMER_HAS_DEAL, …)` | M2 |
    | the scope: `source_id` and `record_hash` of the seven entity tables | the frozen `resolve_scope`, always with an explicit date (§A6) | M3, in `service.py`. At M2 only a test resolves a scope, and hands it to the facts reader |
-   | band, verdict and customer of the persisted assessments | `band_rows` (§A16.2) | M3 |
+   | band, verdict and customer `source_id` of the persisted assessments whose customer belongs to the scope (OD-M3-7) | `band_rows` (§A16.2) | M3 |
 
    Nothing else is read. OBSERVED: the two edge reads select `source_id` columns of `deals`,
    `employees` and `customers`, and touch no other table (`app/relationships/edges.py`).
@@ -2397,7 +2560,8 @@ modules. Tests, the fixture package and the acceptance command are governed by �
 4. **Models.** No module of `app/fx/` or `app/pipeline/` names an ORM model or the model registry
    `ENTITY_MODELS`, or imports `app.persistence.models`. `pipeline_queries.py` names the models
    §A16.2 allows it and no other.
-5. **Other sources.** No row of another source system (§A10.3 item 3). No engine, connection or
+5. **Other sources.** No row of another source system (§A10.3 item 3; for the band read, §A16.2
+   and OD-M3-7). No engine, connection or
    session of VS-02's own making: every module that reaches the database is handed the caller's
    session (§A19 item 5), so VS-02 cannot be pointed at a database its caller did not choose. No
    file but the configuration files that the frozen loaders and VS-02's two loaders read. No
@@ -2784,9 +2948,9 @@ restated here. The last column of part 3 says which of them a row stands beside.
 
 | # | Requirement | Input | Beside |
 |---|---|---|---|
-| C-20 | **Risk-band read.** `band_rows` returns plain rows of `(customer_source_id, band, executive_worthy)`: one for each assessment at the identity of §A12.2 whose customer exists. An assessment whose customer was set null is not returned. The rows are in code-point order of the customer's `source_id`, shown with ids that a case-insensitive or locale-aware order would arrange differently. On the dataset it returns no row before VS-01's assessment run, and after it the bands of Appendix 1: CUST-007 `CRITICAL`, CUST-025 and CUST-036 `WATCH`, and no customer `ELEVATED` | stored; dataset | 11 |
+| C-20 | **Risk-band read.** `band_rows` returns plain rows of `(customer_source_id, band, executive_worthy)`: one for each assessment at the identity of §A12.2 whose customer exists. An assessment whose customer was set null is not returned. Nor is one whose customer is not a customer of the scope (OD-M3-7): this is shown for a customer of another source system and for a `customers` row of another source entity, each carrying the `source_id` of a customer of the scope who is assessed, so that without the rule two rows would come back under one id. Exactly one row is then returned for that id, in the scope of each of two source systems that hold it, and with a third source system holding it as well. The rows are in code-point order of the customer's `source_id`, shown with ids that a case-insensitive or locale-aware order would arrange differently. On the dataset it returns no row before VS-01's assessment run, and after it the bands of Appendix 1: CUST-007 `CRITICAL`, CUST-025 and CUST-036 `WATCH`, and no customer `ELEVATED` | stored; dataset | 11 |
 | C-21 | **Source, linker and `as_of` filters.** A stored assessment that differs from the identity of §A12.2 in exactly one of `source_system`, `as_of`, `layer1_fingerprint`, `rules_version` and `linker_version` is not returned by `band_rows` and is not joined. This is shown for each of the five in turn; test 12 names three of them. With only such assessments stored, every linked deal is `UNASSESSED` and the scope note is present | stored | 12 |
-| C-22 | **Unknown-band validation** (OD-M3-2). A stored band outside `RiskBand` raises `PipelineDataError` and yields no view, whichever row holds it: that of a customer holding an open valued deal, of one holding only closed or unvalued deals, and of one holding no deal. The error names the entity `customers` and the `source_id` of every such customer, ascending by code point and once each, and it names no deal. Several such rows raise it once, and the same rows in another order identify the same customers. The band is given no bucket, neither `NONE` nor `UNASSESSED`, and its row is not skipped. An error M2's entry point raises still names the entity `deals`, with the condition, ids, keys and message it had | constructed; stored, through `pipeline_view` | 27 |
+| C-22 | **Unknown-band validation** (OD-M3-2). A stored band outside `RiskBand` raises `PipelineDataError` and yields no view, whichever row holds it: that of a customer holding an open valued deal, of one holding only closed or unvalued deals, and of one holding no deal. The error names the entity `customers` and the `source_id` of every such customer, ascending by code point and once each, and it names no deal. Several such rows raise it once, and the same rows in another order identify the same customers. The band is given no bucket, neither `NONE` nor `UNASSESSED`, and its row is not skipped. A band outside `RiskBand` on an assessment that `band_rows` does not return, because its customer is outside the scope, raises nothing (OD-M3-7); with such a row and one on a customer of the scope together, the error names the customer of the scope alone. An error M2's entry point raises still names the entity `deals`, with the condition, ids, keys and message it had | constructed; stored, through `pipeline_view` | 27 |
 | C-23 | **Risk-band cross-tabulation.** Appendix 1's by-band table in full: the six buckets in their order; each bucket's customer count and deal count, with the ids the table names; and its native unweighted figure per currency. Appendix 2's `CRITICAL`, `WATCH` and `NONE` base figures, unweighted and weighted. `ELEVATED`, `UNASSESSED` and `UNLINKED` present and empty. CUST-025 is `WATCH`, holds no deal and is in no bucket. On a constructed input: a deal with no customer is in `UNLINKED`, and a deal whose customer has no assessment is in `UNASSESSED`; neither bucket is merged with `NONE` or with the other | dataset; constructed | 4, 10, 11 |
 | C-24 | **Customer partition.** On the dataset: 23 `CUSTOMER` buckets, and `UNLINKED`, present, empty and last; the buckets in the order of §A12.6; each bucket's `kind`, and its `band` and `executive_worthy` equal to the stored assessment's. Test 17's equality with VS-01's `exposure_by_currency`, taken over `by_customer`. On a constructed input: two customers with equal base unweighted exposure are ordered by key ascending; a customer with only closed or unvalued deals has no bucket; a deal with no customer is in `UNLINKED`, whose `band` and `executive_worthy` are `null`; a customer with no assessment has `band` `UNASSESSED` and `executive_worthy` `null` | dataset; constructed | 4, 19 |
 | C-25 | **Reserved customer key.** §A14.1 item 7 and §A10.5 item 1. A customer whose `source_id` is a reserved key and who holds an open valued deal raises `PipelineDataError` in stage 1, identifies what §A10.5 item 5 says, and yields no partition and no view: with fixture 10, and for another reserved key on a constructed input. When an employee's key and a customer's key both collide, one error names every colliding key and every colliding deal. The same customer holding only closed or unvalued deals raises nothing. Test 24 shows fixture 10 over HTTP at M4; this row shows it at the M3 gate | fixture 10; constructed | — |
@@ -2803,7 +2967,7 @@ restated here. The last column of part 3 says which of them a row stands beside.
 | C-36 | **The service.** `pipeline_view(session, *, as_of, source_system)` returns the view of §A14.2, its hash, the limitation texts and the citations, with every key of §A14 present. `view_hash` is the SHA-256 of the canonical JSON of the view it returned (§A14.10 item 3). `scope` is `Scope.to_payload()`, with `as_of_source` `EXPLICIT`. `versions` holds the `pipeline_version` of the committed rules file and VS-01's current `rules_version` and `linker_version`. `fx` states the committed rate set, with its digest equal to the pin and `used_currencies` EUR, INR and USD. The stage rows are the D1 vocabulary's. `limitation_texts` gives the nine texts of §A13.1 in order, character for character, with their placeholders filled. The service obtains the default rate set and rules itself: its signature takes neither | dataset | 2, 5, 6, 20, 21 |
 | C-37 | **The event.** §A20. A view that is built emits `vs02.pipeline_view_built` exactly once, at INFO, through `log_event`, with exactly the eight fields of §A20 item 2, in that order. `source_system`, `as_of`, `layer1_fingerprint`, `pipeline_version`, `rate_set_version` and `view_hash` equal the view's. `open_deal_count` and `unvalued_deal_count` are the numbers of open and of unvalued deals as §A8.2 and §A8.3 define them, which the view states as `deal_counts.open` and `deal_counts.open_unvalued`. The line holds no monetary value and no customer identifier. A request that fails at step 2, 5 or 6 of §A17.1 emits nothing | dataset; a refused file, a data error and a missing rate | — |
 | C-38 | **Transaction and read-only behaviour.** §A21.2 and §A19 item 5. Building a view leaves the row count of every table as it was (test 20): on the dataset, on an empty source system, and for a request that fails. Every statement a view executes is a `select`, over the tables §A21.1 item 1 names and over no other. The service runs on the session it is given, and neither commits, rolls back, flushes, begins nor closes it. The boundary test's rows for `band_rows`, `view.py` and `service.py` hold, each with its negative control (§A25) | dataset; stored | 20 |
-| C-39 | **Deterministic order.** As C-16, for what M3 adds. The facts and the band rows supplied in reversed order, and in one other fixed permutation, give an identical view and one `view_hash`. Each list is in its stated order: the six buckets of `by_risk_band` and their `customer_ids`; `by_customer`; `risk_coincidence`; `top` and `cumulative`; `deal_counts.by_stage` and `unvalued_deal_ids`; `open_deals` and `closed_deals`; `data_quality`, by code and then id, a null id first; `limitations` and `limitation_texts`; `citations`, by id and then field; `fx.rates` and `fx.used_currencies`. An error names the same ids under any order of its rows (C-22, C-33) | constructed; stored | — |
+| C-39 | **Deterministic order.** As C-16, for what M3 adds. The facts and the band rows supplied in reversed order, and in one other fixed permutation, give an identical view and one `view_hash`. Each list is in its stated order: the six buckets of `by_risk_band` and their `customer_ids`; `by_customer`; `risk_coincidence`; `top` and `cumulative`; `deal_counts.by_stage` and `unvalued_deal_ids`; `open_deals` and `closed_deals`; `data_quality`, by code and then id, a null id first; `limitations` and `limitation_texts`; `citations`, by id and then field; `fx.rates` and `fx.used_currencies`. The same stored assessments, inserted in another order, give one view and one `view_hash`, shown where one of them points at a customer outside the scope (OD-M3-7). An error names the same ids under any order of its rows (C-22, C-33) | constructed; stored | — |
 | C-40 | **Multi-currency.** CUST-029, CUST-042 and CUST-050 each hold open deals in two currencies. Each of their buckets states one native Amount per currency, ascending and never summed, and one `base` Amount equal to the sum of its deals' per-deal base values; test 19 names CUST-042. The `NONE` band bucket states three native Amounts. Every concentration figure is in the base currency alone. On a constructed input with a rate that is not an integer: a customer's `base` and a band's `base` are each the sum of their deals' converted values and differ from the native totals converted once, and the shares are taken from those `base` amounts | dataset; constructed | 19 |
 | C-41 | **Empty view.** §A14.11 in full, through `pipeline_view`, with every key of §A14 present, for a source system with no row. Beside it, a source system whose deals are none of them open and valued: the partitions and the four concentration blocks are in the same empty form (§A17.2), while `deal_counts`, `open_deals` and `closed_deals` state those deals. Test 25 serves the empty view over HTTP at M4; this row proves it at the M3 gate | stored | — |
 | C-42 | **Scope note** (OD-M3-3). `NO_ASSESSMENT_FOR_SCOPE` is in `data_quality` when `band_rows` returns no row, and only then, with `entity` and `id` `null`, `fields` `[]` and `key` `null`. Present: before any assessment, on the dataset and on the empty source system, where it is the only note. Absent: after the assessment run; when every returned row belongs to a customer holding no open valued deal; and for a source system that holds assessments at the identity and no deal, whose `data_quality` is `[]` | dataset; stored | 11 |
@@ -2934,7 +3098,7 @@ killed, or proved equivalent in writing. The mutant list is fixed and hashed bef
 | Per-deal measures, and the arithmetic of concentration (OD-M3-6) | `app/pipeline/measures.py` |
 | Partitions, the structure of concentration, coincidence | `app/pipeline/aggregation.py`, `config/intelligence/pipeline_rules.yaml` |
 | Fact classification | `app/pipeline/facts.py` |
-| The reads, including the band identity filter | `app/persistence/repositories/pipeline_queries.py` |
+| The reads, including the band identity filter and its two customer-side conditions (OD-M3-7) | `app/persistence/repositories/pipeline_queries.py` |
 | The view, its hash, notes and citations | `app/pipeline/view.py` |
 
 Not targeted: `service.py`, the route and the response models, which the milestone tests and tests
@@ -3233,7 +3397,8 @@ Closed on 2026-10-01: §0.11 is its record.
 
 **VS02-M3 — Concentration, the band cross-tabulation and the view.** Its contract was hardened on
 2026-10-07 (§0.14), and amended the same day to give the arithmetic of §A11 its home (§0.15).
-- *Change.* `pipeline_queries.band_rows` and the band read in `facts.py`; §A12 and the structure
+- *Change.* `pipeline_queries.band_rows`, with its customer confined to the scope (OD-M3-7), and
+  the band read in `facts.py`; §A12 and the structure
   of §A11 in `aggregation.py`, with the customer's `source_id` joining the reserved-key check of
   stage 1 (§A10.5 item 1); the arithmetic of §A11 in `measures.py`, as an additive extension
   (OD-M3-6); the keyword-only `entity` parameter of `PipelineDataError` in `errors.py`, whose
@@ -3267,6 +3432,11 @@ Closed on 2026-10-01: §0.11 is its record.
   And through the service: where such a deal is present and an open valued deal is in a currency
   with no rate, the service raises `PipelineDataError` and never `FxRateMissingError` (§A17.1
   step 5).
+- *OD-M3-7.* [OD-M3-7] Decided on 2026-10-09, after the implementation was committed and audited
+  (§0.16). `band_rows` gains its two customer-side conditions, in `pipeline_queries.py` and in no
+  other production file, with the tests that coverage rows C-20, C-22 and C-39 now ask for. It
+  adds no named test, changes nothing else of M3, and is committed on its own after the record of
+  the decision (§B7).
 - *Evolutions.* §B2.2's M3 row.
 - *Gate.* §B5. In addition, the milestone's report names, for each row of §A25.2, the test that
   meets it.
@@ -3319,6 +3489,18 @@ and before `VS02-M3: …`.
 The record of OD-M3-6 (§0.15) is one more commit, `VS02: authorize M3 arithmetic substrate`: this
 file only, alone, on the owner's decision of 2026-10-07. It comes after
 `VS02: harden M3 specification` and before `VS02-M3: …`.
+
+The record of OD-M3-7 (§0.16) is one more commit, `VS02: isolate M3 band rows by customer source`:
+this file only, alone, on the owner's decision of 2026-10-09. It comes after the milestone's
+`VS02-M3: implement pipeline view and risk exposure` commit, because the decision was taken on that
+commit's audit.
+
+The implementation of OD-M3-7 is one more commit after that record,
+`VS02-M3: confine band rows to the scope's customers`: the two conditions of §A16.2, their tests,
+and the README's counts (T-VS02-3a). VS02-M3 therefore has two `VS02-M3: …` commits, and item 3,
+above, is read with that. The second also records VS02-M3's status row, which the owner authorised
+on 2026-10-09 for when its gate has passed. The row names both commits, as M1's and M2's rows each
+name theirs.
 
 ---
 
@@ -3471,7 +3653,19 @@ the arithmetic of §A11 and for nothing else. Every measure and constant it held
 The boundary rule M2 wrote is not weakened, and concentration arithmetic is not moved into
 `aggregation.py`. It needs no further ruling.
 
+### Decided on 2026-10-09, on the VS02-M3 post-commit audit
+
+Recorded in §0.16: OD-M3-7. `band_rows` returns an assessment only when the customer it is joined
+to belongs to the resolved scope: the customer's `source_system` is the scope's, and its
+`source_entity` is `customers`. An assessment outside that is not returned and not validated, and
+no precedence between rows is made. The owner also authorised the recording of VS02-M3's status row
+once the decision is implemented and its gate has passed. Neither needs a further ruling.
+
 ### Still required
+
+**As of OD-M3-7 (2026-10-09).** Nothing for the contract of VS02-M3. The gap its post-commit audit
+found is decided (§0.16), and the implementation follows in its own commit (§B7). VS02-M4 is a
+separate task and begins only on the owner's instruction.
 
 **As of OD-M3-6 (2026-10-07).** Nothing. The contradiction the VS02-M3 implementation pre-flight
 found is decided (§0.15). VS02-M3 has not started. It is a separate task and begins only on the
