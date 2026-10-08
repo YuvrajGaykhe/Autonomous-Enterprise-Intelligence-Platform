@@ -43,7 +43,7 @@ the commit that follows it (§B7).**
 | **VS02-M0** — pre-flight baseline | COMPLETE (2026-10-01) | §0.11; measured at `b0fcaa2`; recorded by the commit `VS-02: record the M0 baseline` |
 | **VS02-M1** — FX foundation | COMPLETE (2026-10-05) | §B6; T-VS02-1a and T-VS02-3a applied; gate of §B5 measured on 2026-10-05: 7311 tests, `app/` 100%; recorded by the commit `VS02-M1: add the FX foundation` |
 | **VS02-M2** — pipeline facts and aggregation | COMPLETE (2026-10-06) | §B6; T-VS02-1b and T-VS02-3a applied; every row of §A25.1 met; gate of §B5 measured on 2026-10-06: 8195 tests, `app/` 100%; recorded by the commit `VS02-M2: implement pipeline foundation` |
-| **VS02-M3** — concentration, risk-band cross-tabulation, the view | NOT STARTED | — |
+| **VS02-M3** — concentration, risk-band cross-tabulation, the view | COMPLETE (2026-10-09) | §B6; T-VS02-3a applied; every row of §A25.2 met; OD-M3-7 implemented (§0.16); gate of §B5 measured on 2026-10-09: 8704 tests, `app/` 100%; recorded by the commits `VS02-M3: implement pipeline view and risk exposure` and `VS02-M3: confine band rows to the scope's customers` |
 | **VS02-M4** — API | NOT STARTED | — |
 | **VS02-M5** — acceptance, evaluation and hardening | NOT STARTED | — |
 

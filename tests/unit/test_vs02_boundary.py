@@ -1330,16 +1330,23 @@ QUERIES_IMPORTERS = (P_FACTS,)
 #: Of Deal, the nine columns and the two it filters on, as at M2. band_rows
 #: adds two models at M3: of RiskAssessment the band, the verdict, the five
 #: columns of the identity and the key it is joined on; of Customer the
-#: source id and the key it is joined on.
+#: source id, the key it is joined on and, from OD-M3-7, the two columns
+#: that confine it to the scope, as the two filters of Deal confine a deal.
 QUERY_COLUMNS = {
     "Deal": {"source_id", "stage", "is_active", "amount", "currency", "probability",
              "expected_close_date", "owner_source_id", "customer_source_id",
              "source_system", "source_entity"},
     "RiskAssessment": {"band", "executive_worthy", "customer_id", "source_system", "as_of",
                        "layer1_fingerprint", "rules_version", "linker_version"},
-    "Customer": {"id", "source_id"},
+    "Customer": {"id", "source_id", "source_system", "source_entity"},
 }
 QUERY_MODELS = set(QUERY_COLUMNS)
+#: Plan A16.2, OD-M3-7: what band_rows holds of the customer it joins, each
+#: as (column, what it equals). The source system is the caller's own, the
+#: one the identity is filtered by; the entity is the one module-level name.
+BAND_CUSTOMER_FILTERS = (("Customer.source_system", "source_system"),
+                         ("Customer.source_entity", "CUSTOMERS"))
+BAND_CUSTOMER_ENTITY = "customers"
 #: The SQLAlchemy names each module that reaches the database may import.
 FACTS_SQLALCHEMY = {("sqlalchemy.orm", "Session")}
 QUERY_SQLALCHEMY = {("sqlalchemy", "select"), ("sqlalchemy.orm", "Session")}
@@ -1738,6 +1745,51 @@ def _query_statement_violations(tree: ast.Module) -> list[str]:
     return found
 
 
+def _band_scope_violations(tree: ast.Module) -> list[str]:
+    """A16.2, OD-M3-7: the band read confines the customer it joins to the scope. Its where()
+    holds `Customer.source_system == source_system`, the caller's own, and
+    `Customer.source_entity == CUSTOMERS`, and CUSTOMERS is the one module-level string
+    `customers`. Neither is left out, and no column of the customer is held to anything else.
+    The rule is over the band read: a module that defines none has nothing to confine."""
+    readers = [node for node in tree.body
+               if isinstance(node, ast.FunctionDef) and node.name == "band_rows"]
+    if not readers:
+        return []
+    named = [statement.value.value for statement in tree.body
+             if isinstance(statement, ast.Assign)
+             and [_dotted(target) for target in statement.targets] == ["CUSTOMERS"]
+             and isinstance(statement.value, ast.Constant)]
+    found = [] if named == [BAND_CUSTOMER_ENTITY] else [
+        f"CUSTOMERS is {named!r} and not the one name of the entity"]
+    held = {(_dotted(test.left), _dotted(test.comparators[0]))
+            for reader in readers
+            for call in ast.walk(reader)
+            if isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+            and call.func.attr == "where"
+            for test in call.args
+            if isinstance(test, ast.Compare) and len(test.ops) == 1
+            and isinstance(test.ops[0], ast.Eq)}
+    found += [f"band_rows does not hold {column} == {value}"
+              for column, value in BAND_CUSTOMER_FILTERS if (column, value) not in held]
+    found += [f"band_rows holds {column} to {value or 'something else'}"
+              for column, value in sorted(held)
+              if column.startswith("Customer.") and (column, value) not in BAND_CUSTOMER_FILTERS]
+    return found
+
+
+def _band_precedence_violations(tree: ast.Module) -> list[str]:
+    """A16.2, A12.2 item 4, OD-M3-7: where the stored bands are read and held against the
+    vocabulary, nothing ranks one against another and nothing picks one of two. No band's
+    rank is read, and no largest or smallest is taken. A row is left out because its
+    customer is outside the scope, never because another row outranks it."""
+    found = [f"{node.lineno}: .{node.attr}" for node in ast.walk(tree)
+             if isinstance(node, ast.Attribute) and node.attr in {"rank", "at_least"}]
+    found += [f"{node.lineno}: {_callee(node)}()" for node in ast.walk(tree)
+              if isinstance(node, ast.Call) and _callee(node) in {"max", "min", "nlargest",
+                                                                  "nsmallest"}]
+    return found
+
+
 #: The rules every module of the package answers to.
 _PIPELINE_SHARED: tuple[Rule, ...] = (
     _disguise_violations, _filesystem_violations, _context_violations, _state_violations,
@@ -1769,7 +1821,8 @@ PIPELINE_RULES: dict[str, tuple[Rule, ...]] = {
     P_MEASURES: (*_PIPELINE_PURE, _band_violations),
     P_FACTS: (*_PIPELINE_SHARED, _arithmetic_violations, _facts_first_party_violations,
               _facts_third_party_violations, _facts_sqlalchemy_violations,
-              _facts_session_violations, _facts_persistence_violations),
+              _facts_session_violations, _facts_persistence_violations,
+              _band_precedence_violations),
     # M3. The view is pure and answers to what aggregation.py answers to.
     P_VIEW: (*_PIPELINE_PURE, _arithmetic_violations),
     # M3. The service accepts a session, as facts.py does, and reads through no repository.
@@ -1782,7 +1835,7 @@ QUERY_RULES: tuple[Rule, ...] = (
     _disguise_violations, _filesystem_violations, _state_violations, _clock_violations,
     _randomness_violations, _environment_violations, _float_violations, _output_violations,
     _handler_violations, _write_violations, _query_import_violations, _query_model_violations,
-    _query_statement_violations,
+    _query_statement_violations, _band_scope_violations, _band_precedence_violations,
 )
 
 
@@ -1836,6 +1889,10 @@ _LAST_COLUMN = "            Deal.customer_source_id,\n        )"
 _BAND_ORDER = '.order_by(Customer.source_id.collate("C"))'
 _BAND_JOIN = ".join(Customer, Customer.id == RiskAssessment.customer_id)"
 _BAND_LAST_COLUMN = "            RiskAssessment.executive_worthy,\n        )"
+#: OD-M3-7: the two conditions that confine the joined customer, and the entity's name.
+_BAND_SYSTEM = "            Customer.source_system == source_system,\n"
+_BAND_ENTITY = "            Customer.source_entity == CUSTOMERS,\n"
+_BAND_ENTITY_NAME = 'CUSTOMERS = "customers"'
 _VIEW_CONTEXT = "Context(prec=digits, Emin=MIN_EMIN, Emax=MAX_EMAX)"
 _KEY = 'OPEN_PIPELINE_KEY = "ALL"'
 _SCOPE_READ = "resolve_scope(session, source_system=source_system, as_of=as_of)"
@@ -2306,6 +2363,53 @@ PIPELINE_FORBIDDEN_EDITS: list[tuple[str, Rule, str]] = [
      _query_statement_violations, _replaced(QUERIES, _BAND_ORDER, _BAND_ORDER + ".limit(50)")),
     ("the band read locks the assessments",
      _write_violations, _replaced(QUERIES, _BAND_ORDER, _BAND_ORDER + ".with_for_update()")),
+    # A16.2, OD-M3-7: the joined customer is confined to the scope
+    ("the band read joins a customer of any source system",
+     _band_scope_violations, _replaced(QUERIES, _BAND_SYSTEM, "")),
+    ("the band read joins a customers row of any source entity",
+     _band_scope_violations, _replaced(QUERIES, _BAND_ENTITY, "")),
+    ("the band read holds the customer's source system to itself",
+     _band_scope_violations,
+     _replaced(QUERIES, _BAND_SYSTEM,
+               "            Customer.source_system == Customer.source_system,\n")),
+    ("the band read holds the customer's source system to the assessment's",
+     _band_scope_violations,
+     _replaced(QUERIES, _BAND_SYSTEM,
+               "            Customer.source_system == RiskAssessment.source_system,\n")),
+    ("the band read keeps every customer but the scope's",
+     _band_scope_violations,
+     _replaced(QUERIES, _BAND_SYSTEM, "            Customer.source_system != source_system,\n")),
+    ("the band read holds the customer's entity to the deals'",
+     _band_scope_violations,
+     _replaced(QUERIES, _BAND_ENTITY, "            Customer.source_entity == DEALS,\n")),
+    ("the band read names another entity as the customers'",
+     _band_scope_violations, _replaced(QUERIES, _BAND_ENTITY_NAME, 'CUSTOMERS = "accounts"')),
+    ("the band read confines the customer in a statement it does not run",
+     _band_scope_violations,
+     _replaced(QUERIES, _BAND_SYSTEM + _BAND_ENTITY, "")
+     + "\n\ndef unused(source_system):\n    return (Customer.source_system == source_system,\n"
+       "            Customer.source_entity == CUSTOMERS)\n"),
+    # OD-M3-7: no precedence and no resolution of two rows, in the statement or after it
+    ("the band read keeps one row for each customer id",
+     _query_statement_violations,
+     _replaced(QUERIES, _BAND_ORDER, _BAND_ORDER + ".distinct(Customer.source_id)")),
+    ("the band read folds the rows of one customer id together",
+     _query_statement_violations,
+     _replaced(QUERIES, _BAND_ORDER, ".group_by(Customer.source_id)" + _BAND_ORDER)),
+    ("the band read keeps the gravest band of two",
+     _band_precedence_violations,
+     _appended(QUERIES, "def gravest(rows):\n    return max(rows, key=lambda row: row.band)\n")),
+    ("facts keeps the higher-ranked of two bands for one customer",
+     _band_precedence_violations,
+     _appended(P_FACTS, "def higher(one, other):\n"
+                        "    return one if RiskBand(one.band).rank >= RiskBand(other.band).rank"
+                        " else other\n")),
+    ("facts keeps the gravest of a customer's bands",
+     _band_precedence_violations,
+     _appended(P_FACTS, "def gravest(bands):\n    return max(bands, key=_by_customer)\n")),
+    ("facts asks whether one band is at least another",
+     _band_precedence_violations,
+     _appended(P_FACTS, "def outranks(one, other):\n    return one.band.at_least(other.band)\n")),
     # A21.2 item 3: facts.py hands the session to band_rows and to nothing new
     ("facts hands the session to the risk tables' own reader",
      _facts_session_violations,
@@ -2811,6 +2915,31 @@ def test_the_repository_module_breaks_no_rule(rule):
     assert rule(ast.parse(_source(QUERIES))) == []
 
 
+def test_the_band_read_holds_the_five_of_the_identity_and_the_two_of_the_customer():
+    """A16.2, A12.2, OD-M3-7. Not vacuous: the repository does define band_rows, and its one
+    where() holds seven equalities and nothing else. Five are the identity's, each a column of
+    the assessment held to the caller's own value of that name. Two confine the customer it
+    joins. The rule over them looks only where a band read is defined, and this is what would
+    notice the read being gone."""
+    tree = ast.parse(_source(QUERIES))
+    [reader] = [node for node in tree.body
+                if isinstance(node, ast.FunctionDef) and node.name == "band_rows"]
+    [where] = [call for call in ast.walk(reader)
+               if isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+               and call.func.attr == "where"]
+
+    assert not where.keywords
+    assert all(isinstance(test, ast.Compare) and [type(op) for op in test.ops] == [ast.Eq]
+               for test in where.args)
+    assert [(_dotted(test.left), _dotted(test.comparators[0])) for test in where.args] == [
+        *((f"RiskAssessment.{name}", name) for name in (
+            "source_system", "as_of", "layer1_fingerprint", "rules_version", "linker_version")),
+        *BAND_CUSTOMER_FILTERS]
+    assert BAND_CUSTOMER_FILTERS[0][1] == "source_system", (
+        "the customer is held to the one source system the identity is filtered by")
+    assert _band_scope_violations(ast.parse("x = 1\n")) == []
+
+
 def test_the_pipeline_imports_what_its_row_grants_and_no_package_beyond_it():
     """The allow-lists are not vacuous: the package does read M1, FX, the relationship model,
     the D1 vocabulary and, in facts.py alone, the repository. From M3 the service also reads
@@ -2895,7 +3024,7 @@ def test_the_model_names_this_file_refuses_are_every_model_there_is():
         models.RiskAssessment.__table__.columns.keys())
     assert not {"signals", "satisfied_rules", "ranking_key", "id"} & QUERY_COLUMNS["RiskAssessment"]
     assert "name" in models.Customer.__table__.columns.keys()
-    assert QUERY_COLUMNS["Customer"] == {"id", "source_id"}
+    assert QUERY_COLUMNS["Customer"] == {"id", "source_id", "source_system", "source_entity"}
 
 
 def test_each_loader_reads_one_file_one_way():

@@ -650,6 +650,45 @@ def test_the_stored_row_loaders_store_exactly_what_they_are_given(demo):
         (STORED_SYSTEM, True, "WATCH", False, 7, "9", date(2026, 9, 18), "f" * 64)]
 
 
+def test_a_stored_customer_may_be_under_another_entity_and_an_assessment_may_point_at_it(demo):
+    """
+    OD-M3-7 needs rows VS-01's writer cannot make: an assessment whose
+    customer is a row outside the scope it is stamped for. A customer is
+    stored under the entity it is given, `customers` unless one is named,
+    and an assessment points at exactly the row it names: by source system,
+    by entity and by id. Two that differ only in the entity pointed at are
+    two rows with two ids.
+    """
+    with demo() as session:
+        store_customer(session, source_system=STORED_SYSTEM, source_id="CUST-980")
+        store_customer(session, source_system=STORED_SYSTEM, source_id="CUST-980",
+                       source_entity="accounts")
+        store_customer(session, source_system="elsewhere", source_id="CUST-980")
+        for system, entity, band in ((None, "customers", "NONE"), (None, "accounts", "WATCH"),
+                                     ("elsewhere", "customers", "SEVERE")):
+            store_assessment(session, source_system=STORED_SYSTEM, as_of=date(2026, 9, 18),
+                             layer1_fingerprint="f" * 64, rules_version=7, linker_version="9",
+                             customer="CUST-980", band=band, customer_system=system,
+                             customer_entity=entity)
+        customers = sorted(tuple(row) for row in session.execute(
+            select(Customer.source_system, Customer.source_entity, Customer.source_id)
+            .where(Customer.source_id == "CUST-980")).all())
+        pointed = sorted(tuple(row) for row in session.execute(
+            select(RiskAssessment.source_system, Customer.source_system, Customer.source_entity,
+                   RiskAssessment.band)
+            .join(Customer, Customer.id == RiskAssessment.customer_id)).all())
+        ids = session.scalars(select(RiskAssessment.id)).all()
+        session.rollback()
+
+    assert customers == [("elsewhere", "customers", "CUST-980"),
+                         (STORED_SYSTEM, "accounts", "CUST-980"),
+                         (STORED_SYSTEM, "customers", "CUST-980")]
+    assert pointed == [(STORED_SYSTEM, "elsewhere", "customers", "SEVERE"),
+                       (STORED_SYSTEM, STORED_SYSTEM, "accounts", "WATCH"),
+                       (STORED_SYSTEM, STORED_SYSTEM, "customers", "NONE")]
+    assert len(set(ids)) == 3
+
+
 def test_a_stored_assessment_has_one_id_however_often_it_is_built(demo):
     """Fixed values, so two builds are identical: the id is derived from the identity."""
     ids = []

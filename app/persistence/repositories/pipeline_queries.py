@@ -19,9 +19,14 @@ session.
                 assessment at one identity (plan A12.2): one source system,
                 one as_of, one Layer 1 snapshot, one rules version and one
                 linker version. An assessment is joined to its customer, so
-                one whose customer was set NULL is not returned. The band is
-                returned as stored: whether it is a band at all is the
-                caller's to decide.
+                one whose customer was set NULL is not returned. The
+                customer must be a customer of that source system: a row of
+                another source system, or of another source entity, is
+                outside the scope, and an assessment that points at one is
+                not returned either (OD-M3-7). So one scope holds at most
+                one row per customer source id, and nothing ranks one row
+                against another. The band is returned as stored: whether it
+                is a band at all is the caller's to decide.
 
 Every read is ordered inside its statement with the `C` collation on
 `source_id`. `C` compares bytes, which for UTF-8 text is code-point order,
@@ -41,6 +46,8 @@ from app.persistence.models import Customer, Deal, RiskAssessment
 
 #: The Layer 1 entity the deal read is confined to.
 DEALS = "deals"
+#: The Layer 1 entity the band read's customer is confined to (plan A16.2, OD-M3-7).
+CUSTOMERS = "customers"
 
 
 class DealRow(NamedTuple):
@@ -94,7 +101,10 @@ def band_rows(
     rules_version: int,
     linker_version: str,
 ) -> list[BandRow]:
-    """Every assessment at exactly this identity, ascending by its customer's `source_id`."""
+    """
+    Every assessment at exactly this identity whose customer belongs to the source system,
+    ascending by that customer's `source_id`.
+    """
     rows = session.execute(
         select(
             Customer.source_id,
@@ -108,6 +118,8 @@ def band_rows(
             RiskAssessment.layer1_fingerprint == layer1_fingerprint,
             RiskAssessment.rules_version == rules_version,
             RiskAssessment.linker_version == linker_version,
+            Customer.source_system == source_system,
+            Customer.source_entity == CUSTOMERS,
         )
         .order_by(Customer.source_id.collate("C"))
     ).all()

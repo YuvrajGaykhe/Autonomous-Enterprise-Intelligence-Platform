@@ -31,7 +31,9 @@ reach the development database. It follows tests/conftest.py's _test guard.
 need rows that none of the ten entries holds and that neither Layer 1 nor
 VS-01's frozen writer can produce: an assessment that differs from the
 identity in one column, a stored band outside the vocabulary, an assessment
-whose customer is gone, a deal whose stage or currency Layer 1 would have
+whose customer is gone, an assessment whose customer is a row outside the
+scope it is stamped for (another source system's, or one under another
+source entity; OD-M3-7), a deal whose stage or currency Layer 1 would have
 rejected, and rows of a source system with no demo data. store_customer,
 store_deal and store_assessment store exactly such rows, in the loader form:
 SQLAlchemy Core over a session the caller owns, behind the same guard, and
@@ -88,6 +90,10 @@ OTHER_EMPLOYEE = "EMP-960"
 #: The second source system's deal. It carries the id of a committed deal of
 #: the first, so a read that lost its scope would count it twice or replace it.
 OTHER_DEAL = "DEAL-001"
+
+#: The source entity of every customer Layer 1 stores, and so of every
+#: customer of a scope. A stored row may be given another (OD-M3-7).
+CUSTOMERS = "customers"
 
 #: Provenance for loader rows: fixed values, so two builds are identical.
 _RUN_ID = uuid.UUID("00000000-0000-4000-8000-000000000960")
@@ -214,11 +220,18 @@ LOADERS: Mapping[str, Callable[[Session], None]] = MappingProxyType({
 _ASSESSMENT_NAMESPACE = uuid.UUID("00000000-0000-4000-8000-000000000980")
 
 
-def store_customer(session: Session, *, source_system: str, source_id: str) -> None:
-    """One customer row of the named source system. Core; never commits."""
+def store_customer(session: Session, *, source_system: str, source_id: str,
+                   source_entity: str = CUSTOMERS) -> None:
+    """
+    One row of `customers` in the named source system. Core; never commits.
+
+    Its source entity is `customers` unless another is named. Layer 1 stores
+    no other; a row under another entity is in the table and is a customer
+    of no scope (plan A16.2, OD-M3-7).
+    """
     check_database(session.get_bind().url.database)
     session.execute(insert(Customer).values(
-        **_stored_provenance(source_system, "customers", source_id),
+        **_stored_provenance(source_system, source_entity, source_id),
         name=f"Stored customer {source_id}", is_active=True))
 
 
@@ -263,19 +276,25 @@ def store_assessment(
     band: str,
     executive_worthy: bool = False,
     customer_system: str | None = None,
+    customer_entity: str = CUSTOMERS,
 ) -> None:
     """
     One risk_assessments row at exactly the identity given, with the band as
     written: VS-01's writer is not asked, so a band outside its vocabulary
     is stored as it is. `customer` is a customer's source id in
     `customer_system`, which is the assessment's own source system unless it
-    is named; None stores a row whose customer is gone. Core; never commits.
+    is named, under `customer_entity`, which is `customers` unless it is
+    named. Naming either stores what VS-01's writer cannot: an assessment
+    that points at a row outside the scope it is stamped for (OD-M3-7). None
+    stores a row whose customer is gone. Core; never commits.
     """
     check_database(session.get_bind().url.database)
     customer_id = None if customer is None else _customer_id(
-        session, customer_system or source_system, customer)
+        session, customer_system or source_system, customer, customer_entity)
     identity = (f"{source_system}|{as_of.isoformat()}|{layer1_fingerprint}|{rules_version}|"
                 f"{linker_version}|{customer_system or source_system}|{customer}")
+    if customer_entity != CUSTOMERS:
+        identity += f"|{customer_entity}"
     session.execute(insert(RiskAssessment).values(
         id=uuid.uuid5(_ASSESSMENT_NAMESPACE, identity), customer_id=customer_id, as_of=as_of,
         source_system=source_system, layer1_fingerprint=layer1_fingerprint,
@@ -284,11 +303,12 @@ def store_assessment(
         ranking_key=[0, 0, 0, customer or ""]))
 
 
-def _customer_id(session: Session, source_system: str, source_id: str) -> uuid.UUID:
-    """The id of the one customer with this source id in the source system."""
+def _customer_id(session: Session, source_system: str, source_id: str,
+                 source_entity: str = CUSTOMERS) -> uuid.UUID:
+    """The id of the one `customers` row with this source id in the source system and entity."""
     return session.execute(
         select(Customer.id).where(Customer.source_system == source_system,
-                                  Customer.source_entity == "customers",
+                                  Customer.source_entity == source_entity,
                                   Customer.source_id == source_id)).scalar_one()
 
 

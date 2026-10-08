@@ -867,10 +867,13 @@ def test_deal_rows_returns_a_row_with_every_nullable_value_null(demo):
 def test_the_repository_names_three_models_and_nothing_of_layer_2():
     """
     Plan A16.2: Deal from M2, and RiskAssessment and Customer with band_rows
-    from M3. No other model, no domain type and no third read.
+    from M3. No other model, no domain type and no third read. CUSTOMERS is
+    the entity the band read's customer is confined to (OD-M3-7), beside
+    DEALS, which confines the deal read.
     """
+    assert pipeline_queries.CUSTOMERS == "customers" and pipeline_queries.DEALS == "deals"
     assert sorted(name for name in vars(pipeline_queries) if not name.startswith("_")) == [
-        "BandRow", "Customer", "DEALS", "Deal", "DealRow", "Decimal", "NamedTuple",
+        "BandRow", "CUSTOMERS", "Customer", "DEALS", "Deal", "DealRow", "Decimal", "NamedTuple",
         "RiskAssessment", "Session", "annotations", "band_rows", "date", "deal_rows", "select"]
     assert sorted(name for name, value in vars(pipeline_queries).items()
                   if callable(value) and getattr(value, "__module__", None) == (

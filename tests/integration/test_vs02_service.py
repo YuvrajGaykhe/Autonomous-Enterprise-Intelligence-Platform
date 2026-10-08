@@ -322,8 +322,10 @@ def test_band_rows_returns_no_row_before_the_assessment_run_and_appendix_1s_band
 def test_band_rows_runs_one_select_of_three_columns_joined_to_the_customers(assessed):
     """
     Plan A16.2: three columns, an inner join to customers, the five columns
-    of the identity, and the order inside the statement in the C collation.
-    It reads no signal, no rule and no ranking key of an assessment.
+    of the identity, the two that confine the joined customer to the scope
+    (OD-M3-7), and the order inside the statement in the C collation. It
+    reads no signal, no rule and no ranking key of an assessment, and it
+    takes no first row and folds no two rows together.
     """
     with assessed() as session:
         scope = identity(session)
@@ -340,10 +342,12 @@ def test_band_rows_runs_one_select_of_three_columns_joined_to_the_customers(asse
     assert [condition.split(" = ")[0] for condition in conditions] == [
         "risk_assessments.source_system", "risk_assessments.as_of",
         "risk_assessments.layer1_fingerprint", "risk_assessments.rules_version",
-        "risk_assessments.linker_version"]
+        "risk_assessments.linker_version", "customers.source_system",
+        "customers.source_entity"]
     assert statement.endswith('ORDER BY customers.source_id COLLATE "C"')
     assert not re.search(r"\b(LEFT|OUTER|FOR UPDATE|LIMIT|signals|ranking_key|satisfied_rules)\b",
                          statement)
+    assert not re.search(r"\b(DISTINCT|GROUP BY|HAVING|MAX|MIN|UNION|OR)\b", statement)
 
 
 def test_band_rows_takes_its_identity_by_keyword_alone():
@@ -503,6 +507,255 @@ def test_stale_assessments_made_by_vs01_itself_are_not_joined(demo):
     assert moved["risk_coincidence"] == []
     assert {"code": "NO_ASSESSMENT_FOR_SCOPE", "entity": None, "id": None, "fields": [],
             "key": None} in moved["data_quality"]
+
+
+# ---------------------------------------------------------------------------
+# The customer side of the band read (plan A16.2, OD-M3-7; C-20, C-22, C-39)
+# ---------------------------------------------------------------------------
+
+OTHER_SYSTEM, THIRD_SYSTEM = "other_demo", "third_demo"
+#: A customer of csv_demo who holds an open valued deal, DEAL-030, and whom VS-01 assesses NONE.
+SHARED_ID = "CUST-001"
+#: A source entity Layer 1 stores no customer under.
+OTHER_ENTITY = "accounts"
+
+
+def rows_sharing_the_id(session: Session, scope: dict) -> list[tuple[str, str, str]]:
+    """
+    The control: every assessment at the identity whose customer row carries
+    the shared id, whichever source system and entity that row belongs to,
+    as (the row's source system, its entity, the band). It is what a join
+    that did not confine the customer would return under one id.
+    """
+    return sorted(tuple(row) for row in session.execute(
+        select(Customer.source_system, Customer.source_entity, RiskAssessment.band)
+        .join(Customer, Customer.id == RiskAssessment.customer_id)
+        .where(*(getattr(RiskAssessment, name) == value for name, value in scope.items()),
+               Customer.source_id == SHARED_ID)).all())
+
+
+def test_an_assessment_that_points_at_another_systems_customer_is_not_returned(assessed):
+    """
+    C-20, OD-M3-7: the state the post-commit audit stopped on. Two customer
+    rows carry one source id, in two source systems, and two assessments are
+    stamped csv_demo at exactly the identity: VS-01's own, NONE, and one
+    that points at the other system's row, CRITICAL. The control shows both
+    are there to be joined. One row is returned, that of the scope's own
+    customer, and the view is the one the dataset gives without the other.
+    """
+    plain = built(assessed)
+    with stored(assessed) as session:
+        scope = identity(session)
+        store_customer(session, source_system=OTHER_SYSTEM, source_id=SHARED_ID)
+        store_assessment(session, **scope, customer=SHARED_ID, band="CRITICAL",
+                         executive_worthy=True, customer_system=OTHER_SYSTEM)
+        control = rows_sharing_the_id(session, scope)
+        still = identity(session)
+        rows = band_rows(session, **scope)
+        found = pipeline_view(session, as_of=AS_OF, source_system=SOURCE_SYSTEM)
+
+    assert still == scope, "another system's customer does not move this system's snapshot"
+    assert control == [("csv_demo", "customers", "NONE"), ("other_demo", "customers", "CRITICAL")]
+    assert [row for row in rows if row.customer_source_id == SHARED_ID] == [
+        BandRow(SHARED_ID, "NONE", False)]
+    assert len(rows) == 50 and len({row.customer_source_id for row in rows}) == 50
+    assert keyed(found.view["by_customer"])[SHARED_ID]["band"] == "NONE"
+    assert found.view["risk_coincidence"] == ["CUST-007", "CUST-036"]
+    assert (found.view, found.view_hash) == (plain.view, plain.view_hash)
+
+
+def test_in_the_other_systems_scope_its_own_customers_assessment_is_the_one_returned(assessed):
+    """
+    The reverse scope. other_demo holds the id as its own customer, with one
+    open valued deal. Two assessments are stamped other_demo at its
+    identity: its own customer's, CRITICAL, and one that points at
+    csv_demo's customer of the same id, WATCH. Only the first is returned,
+    and csv_demo's own read is what it was.
+    """
+    with stored(assessed) as session:
+        store_customer(session, source_system=OTHER_SYSTEM, source_id=SHARED_ID)
+        store_deal(session, source_system=OTHER_SYSTEM, source_id="DEAL-990",
+                   stage="negotiation", amount=Decimal("100.00"), currency="INR",
+                   probability=Decimal("50.00"), expected_close_date=date(2026, 12, 1),
+                   customer=SHARED_ID)
+        scope = identity(session, OTHER_SYSTEM)
+        store_assessment(session, **scope, customer=SHARED_ID, band="CRITICAL",
+                         executive_worthy=True)
+        store_assessment(session, **scope, customer=SHARED_ID, band="WATCH",
+                         customer_system=SOURCE_SYSTEM)
+        control = rows_sharing_the_id(session, scope)
+        rows = band_rows(session, **scope)
+        found = pipeline_view(session, as_of=AS_OF, source_system=OTHER_SYSTEM).view
+        here = [row for row in band_rows(session, **identity(session))
+                if row.customer_source_id == SHARED_ID]
+
+    assert control == [("csv_demo", "customers", "WATCH"), ("other_demo", "customers", "CRITICAL")]
+    assert rows == [BandRow(SHARED_ID, "CRITICAL", True)]
+    bucket = keyed(found["by_customer"])[SHARED_ID]
+    assert (bucket["band"], bucket["executive_worthy"], bucket["deal_ids"]) == (
+        "CRITICAL", True, ["DEAL-990"])
+    assert keyed(found["by_risk_band"])["CRITICAL"]["customer_ids"] == [SHARED_ID]
+    assert keyed(found["by_risk_band"])["WATCH"]["deal_count"] == 0
+    assert found["risk_coincidence"] == [SHARED_ID]
+    assert "NO_ASSESSMENT_FOR_SCOPE" not in [note["code"] for note in found["data_quality"]]
+    assert here == [BandRow(SHARED_ID, "NONE", False)]
+
+
+def test_the_order_the_assessments_were_stored_in_changes_no_band_and_no_hash(demo):
+    """
+    C-39, OD-M3-7. The same two assessments stamped csv_demo, stored in one
+    order and then in the other. Without the rule the view stated the band
+    of whichever row arrived last, so the two orders gave two bands and two
+    hashes. With it each order gives the one row, one view and one view_hash.
+    """
+    stamped = [(SOURCE_SYSTEM, "NONE"), (OTHER_SYSTEM, "CRITICAL")]
+    results = []
+    for order in (stamped, stamped[::-1]):
+        with stored(demo) as session:
+            scope = identity(session)
+            store_customer(session, source_system=OTHER_SYSTEM, source_id=SHARED_ID)
+            for system, band in order:
+                store_assessment(session, **scope, customer=SHARED_ID, band=band,
+                                 customer_system=system)
+            found = pipeline_view(session, as_of=AS_OF, source_system=SOURCE_SYSTEM)
+            results.append((rows_sharing_the_id(session, scope), band_rows(session, **scope),
+                            found.view, found.view_hash))
+
+    for control, rows, found, _ in results:
+        assert control == [("csv_demo", "customers", "NONE"),
+                           ("other_demo", "customers", "CRITICAL")]
+        assert rows == [BandRow(SHARED_ID, "NONE", False)]
+        assert keyed(found["by_customer"])[SHARED_ID]["band"] == "NONE"
+        assert keyed(found["by_risk_band"])["CRITICAL"]["deal_count"] == 0
+    assert results[0] == results[1]
+
+
+def test_an_unknown_band_outside_the_scope_raises_nothing_and_one_inside_it_still_does(demo):
+    """
+    C-22, OD-M3-7. A band outside RiskBand on an assessment whose customer
+    is another system's row is not returned, so it is not validated and the
+    view is built. The same band on a customer of the scope fails closed as
+    it did, and the error names that customer alone: not the customer whose
+    id the row outside the scope shares.
+    """
+    with stored(demo) as session:
+        scope = identity(session)
+        store_customer(session, source_system=OTHER_SYSTEM, source_id=SHARED_ID)
+        store_assessment(session, **scope, customer=SHARED_ID, band="SEVERE",
+                         customer_system=OTHER_SYSTEM)
+        store_assessment(session, **scope, customer=SHARED_ID, band="WATCH")
+        control = rows_sharing_the_id(session, scope)
+        rows = band_rows(session, **scope)
+        found = pipeline_view(session, as_of=AS_OF, source_system=SOURCE_SYSTEM).view
+
+        store_assessment(session, **scope, customer="CUST-036", band="SEVERE")
+        with pytest.raises(PipelineDataError) as raised:
+            pipeline_view(session, as_of=AS_OF, source_system=SOURCE_SYSTEM)
+
+    assert control == [("csv_demo", "customers", "WATCH"), ("other_demo", "customers", "SEVERE")]
+    assert rows == [BandRow(SHARED_ID, "WATCH", False)]
+    assert keyed(found["by_customer"])[SHARED_ID]["band"] == "WATCH"
+    assert found["risk_coincidence"] == [SHARED_ID]
+    error = raised.value
+    assert (error.condition, error.entity, error.source_ids, error.keys) == (
+        "BAND_OUTSIDE_VOCABULARY", "customers", ("CUST-036",), ())
+    assert str(error) == "BAND_OUTSIDE_VOCABULARY; customers CUST-036"
+
+
+def test_a_scope_whose_only_assessments_point_outside_it_reads_no_row_and_says_so(demo):
+    """
+    OD-M3-7 with OD-M3-3. The one assessment at the identity points at
+    another system's customer, and its band is no band at all. No row is
+    returned, so nothing is validated, every linked deal is UNASSESSED and
+    the scope note is stated: the note follows what band_rows returns.
+    """
+    with stored(demo) as session:
+        scope = identity(session)
+        store_customer(session, source_system=OTHER_SYSTEM, source_id=SHARED_ID)
+        store_assessment(session, **scope, customer=SHARED_ID, band="SEVERE",
+                         customer_system=OTHER_SYSTEM)
+        held = session.scalar(select(func.count()).select_from(RiskAssessment))
+        rows = band_rows(session, **scope)
+        found = pipeline_view(session, as_of=AS_OF, source_system=SOURCE_SYSTEM).view
+
+    assert held == 1 and rows == []
+    assert keyed(found["by_risk_band"])["UNASSESSED"]["deal_count"] == 30
+    assert keyed(found["by_customer"])[SHARED_ID]["band"] == "UNASSESSED"
+    assert found["data_quality"] == [{"code": "NO_ASSESSMENT_FOR_SCOPE", "entity": None,
+                                      "id": None, "fields": [], "key": None}]
+
+
+def test_a_customers_row_under_another_source_entity_is_outside_the_scope(demo):
+    """
+    OD-M3-7: the same source system and the same source id, under another
+    source entity. The row is in the customers table and is a customer of no
+    scope. An assessment that points at it is not returned, and its band,
+    which is no band at all, is not validated. No error is made for it.
+    """
+    with stored(demo) as session:
+        store_customer(session, source_system=SOURCE_SYSTEM, source_id=SHARED_ID,
+                       source_entity=OTHER_ENTITY)
+        scope = identity(session)
+        store_assessment(session, **scope, customer=SHARED_ID, band="NONE")
+        store_assessment(session, **scope, customer=SHARED_ID, band="SEVERE",
+                         customer_entity=OTHER_ENTITY)
+        control = rows_sharing_the_id(session, scope)
+        rows = band_rows(session, **scope)
+        found = pipeline_view(session, as_of=AS_OF, source_system=SOURCE_SYSTEM).view
+
+    assert scope["layer1_fingerprint"] != PINNED, "one more row of customers moves the snapshot"
+    assert found["scope"]["entity_counts"]["customers"] == 51
+    assert control == [("csv_demo", "accounts", "SEVERE"), ("csv_demo", "customers", "NONE")]
+    assert rows == [BandRow(SHARED_ID, "NONE", False)]
+    assert keyed(found["by_customer"])[SHARED_ID]["band"] == "NONE"
+    assert keyed(found["by_risk_band"])["NONE"]["customer_ids"] == [SHARED_ID]
+    assert found["data_quality"] == []
+
+
+#: (the system an assessment is stamped for, the system of the customer row it
+#: points at) -> its band. On each diagonal is the scope's own customer.
+THREE_SYSTEMS = {
+    (SOURCE_SYSTEM, SOURCE_SYSTEM): "NONE",
+    (SOURCE_SYSTEM, OTHER_SYSTEM): "CRITICAL",
+    (SOURCE_SYSTEM, THIRD_SYSTEM): "SEVERE",
+    (OTHER_SYSTEM, SOURCE_SYSTEM): "ELEVATED",
+    (OTHER_SYSTEM, OTHER_SYSTEM): "WATCH",
+    (OTHER_SYSTEM, THIRD_SYSTEM): "CRITICAL",
+    (THIRD_SYSTEM, SOURCE_SYSTEM): "severe",
+    (THIRD_SYSTEM, OTHER_SYSTEM): "NONE",
+    (THIRD_SYSTEM, THIRD_SYSTEM): "ELEVATED",
+}
+
+
+@pytest.mark.parametrize("reverse", [False, True], ids=["stored in order", "stored reversed"])
+def test_with_three_systems_holding_one_id_each_scope_reads_its_own_customers_row(demo, reverse):
+    """
+    Three source systems hold the id, and nine assessments are stored: for
+    each system's identity, one per customer row, each with a band of its
+    own and two of them no band at all. Each scope reads exactly one row,
+    its own customer's, in whichever order the nine were stored. NONE beside
+    CRITICAL, WATCH beside ELEVATED and a valid band beside an unknown one
+    are all among them, and none is ranked against another.
+    """
+    systems = (SOURCE_SYSTEM, OTHER_SYSTEM, THIRD_SYSTEM)
+    with stored(demo) as session:
+        for system in systems[1:]:
+            store_customer(session, source_system=system, source_id=SHARED_ID)
+        scopes = {system: identity(session, system) for system in systems}
+        for (stamp, pointed), band in sorted(THREE_SYSTEMS.items(), reverse=reverse):
+            store_assessment(session, **scopes[stamp], customer=SHARED_ID, band=band,
+                             customer_system=pointed)
+        held = session.scalar(select(func.count()).select_from(RiskAssessment))
+        controls = {system: rows_sharing_the_id(session, scopes[system]) for system in systems}
+        read = {system: band_rows(session, **scopes[system]) for system in systems}
+        found = pipeline_view(session, as_of=AS_OF, source_system=SOURCE_SYSTEM).view
+
+    assert held == 9
+    assert all(len(control) == 3 for control in controls.values())
+    assert read == {system: [BandRow(SHARED_ID, THREE_SYSTEMS[system, system], False)]
+                    for system in systems}
+    assert keyed(found["by_customer"])[SHARED_ID]["band"] == "NONE"
+    assert found["risk_coincidence"] == []
 
 
 # ---------------------------------------------------------------------------
