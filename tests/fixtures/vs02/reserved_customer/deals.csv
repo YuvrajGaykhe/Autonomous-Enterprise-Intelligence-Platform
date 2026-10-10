@@ -1,0 +1,2 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-971,Fixture - Deal Of The Reserved Key Customer,UNLINKED,EMP-010,qualification,10000.00,INR,50.00,2026-12-15,true

@@ -1,0 +1,3 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-965,Fixture - Deal With No Customer,,EMP-007,negotiation,4000.00,INR,10.00,2026-10-20,true
+DEAL-966,Fixture - Deal For No Known Customer,CUST-960,EMP-007,negotiation,5000.00,EUR,20.00,2026-10-21,true

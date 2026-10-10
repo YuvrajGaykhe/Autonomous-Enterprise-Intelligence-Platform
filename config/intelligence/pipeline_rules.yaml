@@ -1,0 +1,24 @@
+# =============================================================================
+# The pipeline rules (VS-02 plan A22.3).
+#
+# Loaded and validated by app/pipeline/config.py, on first use and never at
+# startup.
+#
+# pipeline_version is bumped whenever anything that can change a figure
+# changes: closed_stages below, or any of the eight methodology constants in
+# code (the arithmetic precision, the rounding mode, the weight, base and
+# share quanta, the period horizon, and the two concentration constants). The
+# methodology digest covers all nine, and tests/unit/test_vs02_config.py pins
+# it per pipeline_version, so a change without a new version fails the build.
+#
+# A deal is open when is_active is true, whatever its stage (plan A8.2).
+# closed_stages only names the stages a closed deal is expected to be in, so
+# that a deal whose stage and activity disagree is reported.
+#
+# This file names no rate-set version: config/intelligence/fx_rates.yaml is
+# the one place a rate set is named.
+# =============================================================================
+
+version: 1            # file format
+pipeline_version: 1   # bumped whenever anything that can change a figure changes
+closed_stages: [won]  # each must be a D1 stage value

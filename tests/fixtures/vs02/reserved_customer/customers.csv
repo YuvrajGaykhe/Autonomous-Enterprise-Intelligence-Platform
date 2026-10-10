@@ -1,0 +1,2 @@
+customer_id,customer_name,email_address,customer_segment,industry_name,account_owner_id,status,created_date
+UNLINKED,Reserved Key Customer,contact@reserved-key.example,SMB,Technology,EMP-010,active,2026-01-15

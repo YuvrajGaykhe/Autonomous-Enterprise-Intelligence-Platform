@@ -1,0 +1,2 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-962,Fixture - Deal With A Negative Amount,CUST-005,EMP-009,negotiation,-1500.00,USD,60.00,2026-11-15,true

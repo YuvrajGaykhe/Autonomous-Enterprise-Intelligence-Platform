@@ -1,0 +1,3 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-968,Fixture - Active Deal In A Closed Stage,CUST-014,EMP-008,won,7000.00,INR,100.00,2026-10-30,true
+DEAL-969,Fixture - Inactive Deal In An Open Stage,CUST-014,EMP-008,negotiation,8000.00,INR,60.00,2026-10-31,false

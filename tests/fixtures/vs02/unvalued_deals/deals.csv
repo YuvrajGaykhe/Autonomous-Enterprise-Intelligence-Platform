@@ -1,0 +1,3 @@
+deal_id,deal_name,customer_id,owner_id,stage,amount,currency,probability,expected_close_date,is_active
+DEAL-960,Fixture - Deal Without An Amount,CUST-003,EMP-008,qualification,,INR,40.00,2026-12-01,true
+DEAL-961,Fixture - Deal Without A Probability,CUST-003,EMP-008,qualification,1250.00,INR,,2026-12-01,true
