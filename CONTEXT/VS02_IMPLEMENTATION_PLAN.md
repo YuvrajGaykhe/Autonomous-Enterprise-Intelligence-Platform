@@ -1150,6 +1150,42 @@ The decision is implemented by the commit that follows this one (§B7). VS02-M3'
 recorded when that commit's gate has passed. VS02-M4 has not started and begins only on the owner's
 instruction.
 
+## 0.17 The full-suite warning excursion (2026-10-11)
+
+**The excursion.** The first full verification run on merge commit
+`f55c777093c0012de72ddcdc65481961754e967c` completed with 8,704 passed, zero failures, zero skips,
+and four warnings, exceeding the warning allowance in §B5.
+
+**The investigation.** Both additional warnings were instances of the known intermittent Pydantic
+warning associated with the frozen M8 concurrency test
+`test_two_concurrent_identical_requests_converge_on_one_result_set`. The relevant application code
+and test file were byte-identical to the previously audited M3 tree. An isolated investigation on
+that tree ran the test 60 times: 48 runs emitted no warning, 12 emitted one warning, and none
+emitted two.
+
+**The repeat run.** A second full run on the same merged tree completed with 8,704 passed, zero
+failures, zero skips, and two warnings, satisfying the existing threshold.
+
+**Disposition.** Accept the gate based on the successful repeat run while retaining the initial
+excursion in the audit record. This disposition does not change §B5 or waive its threshold for
+future runs. Any future run exceeding the stated allowance must stop for review.
+
+**The measurements.** OBSERVED 2026-10-11. The counts of the isolated runs are of the Pydantic
+warning alone.
+
+| Point | As observed |
+|---|---|
+| The tree | Merge commit `f55c777093c0012de72ddcdc65481961754e967c`: the remote's `main` at `c3b8801`, which carries the 30 files of `SRS/`, merged into `main` at `106b510`, the audited VS02-M3 tree. Both full runs were made from a clean checkout of it |
+| First full run | 8,704 passed, 0 failed, 0 skipped, 4 warnings: the two standing warnings of §B5, and the Pydantic `UnsupportedFieldAttributeWarning` twice in the one test, once naming the alias `source_system` and once `limit` |
+| Second full run | 8,704 passed, 0 failed, 0 skipped, 2 warnings: the two standing warnings |
+| What was identical | Every file of `app/`, and `tests/integration/test_m8_api.py`, in `106b510` and in `f55c777`. Outside `SRS/` the merge changed no file |
+| The isolated runs | The one test, 60 times, on `106b510`; every run passed. The Pydantic warning appeared in none of 48 runs, once in 12, and twice in none; the two standing warnings are not counted. Eight runs made before those 60, of the same test on the same tree, gave it in none of 6 and once in 2 |
+
+**The record.** The disposition is the owner's, of 2026-10-11. This section is its record and the
+only change of its commit, `VS02: record the full-suite warning excursion`: this file only. §B5 is
+as it was, its allowance of 2 warnings, or 3, included. No code, test, fixture, configuration,
+migration, frontend or README file changed, and VS02-M4 has not started.
+
 ---
 
 # Part A — Specification
